@@ -50,4 +50,11 @@ smart-grama-sewa/<br>
 
 This project is for academic purposes at Sabaragamuwa University of Sri Lanka.
 
+##  UI/UX Design
+
+The UI wireframes and high-fidelity designs for this project were created using **Figma**.
+
+🔗 **Figma Prototype:**  
+https://www.figma.com/design/l6eETaR37bEVnpUX5SyfwK/Smart-Grama-Sewa?node-id=154-21&t=RdO4cTzlulxBE2gq-1
+
 
