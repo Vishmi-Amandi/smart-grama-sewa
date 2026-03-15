@@ -1,1 +1,79 @@
+# Grama Niladhari Module - Wireframes
+*Grama Niladhari Registration, Profile Management & Admin Verification System*
+
+## 📋 Overview
+This repository contains the complete wireframing documentation for the **Grama Niladhari (GN) Module** of the **Smart Grama Sewa** . Both low-fidelity and high-fidelity wireframes are included to showcase the design evolution from conceptual layouts to final polished interfaces.
+
+The Grama Niladhari Module is designed to digitize and streamline the workflow of Grama Niladhari officers, enabling efficient citizen service management, administrative oversight, and community communication.
+
+---
+
+## 🎯 Module Objectives
+- **GN Registration & Profile Management:** Streamlined onboarding and profile maintenance for Grama Niladhari officers
+- **Request & Appointment Management:** Efficient handling of citizen requests and appointments
+- **Community Communication:** Broadcast announcements, service updates, and urgent notices
+- **Real-time Status Updates:** Dynamic availability tracking (Available / Busy / On Field)
+
+---
+
+## 📁 Repository Structure
+
+📦 grama-niladhari-module-wireframes
+┣ 📂 low-fidelity
+┃ ┣ 📜 GN1-Dashboard
+┃ ┣ 📜 GN2-Appointment List
+┃ ┣ 📜 GN3-Appointment Details
+┃ ┣ 📜 GN4-Availability Toggle
+┃ ┣ 📜 GN5-Announcement Form
+┃ ┣ 📜 GN6-Schedule View
+┃ ┗ 📜 GN7-Announcement List
+┃ ┗ 📜 GN8-Citizen Search 
+┃ ┗ 📜 GN9-Registration1
+┃ ┗ 📜 GN9-Registration2
+┃ ┗ 📜 GN9-Registration3
+┃ ┗ 📜 Gn9-Registration4
+┃ ┗ 📜 GN10-Profile1
+┃ ┗ 📜 GN10-Profile2
+┃ ┗ 📜 GN10-Profile3
+┃ ┗ 📜 GN11-Settings1
+┃ ┗ 📜 GN11-Settings2
+┃ ┗ 📜 GN11-Settings3
+┃ ┗ 📜 GN11-Settings4
+┃ ┗ 📜 GN11-Transfer1
+┃ ┗ 📜 GN11-Transfer2
+┣ 📂 high-fidelity
+┃ ┣ 📜 GN1-Dashboard
+┃ ┣ 📜 GN2-Appointment List
+┃ ┣ 📜 GN3-Appointment Details
+┃ ┣ 📜 GN4-Availability Toggle
+┃ ┣ 📜 GN5-Announcement Form
+┃ ┣ 📜 GN6-Schedule View
+┃ ┗ 📜 GN7-Announcement List
+┃ ┗ 📜 GN8-Citizen Search 
+┃ ┗ 📜 GN9-Registration1
+┃ ┗ 📜 GN9-Registration2
+┃ ┗ 📜 GN9-Registration3
+┃ ┗ 📜 Gn9-Registration4
+┃ ┗ 📜 GN10-Profile1
+┃ ┗ 📜 GN10-Profile2
+┃ ┗ 📜 GN10-Profile3
+┃ ┗ 📜 GN10-Profile4
+┃ ┗ 📜 GN11-Settings1
+┃ ┗ 📜 GN11-Settings2
+┃ ┗ 📜 GN11-Settings3
+┃ ┗ 📜 GN11-Settings4
+┃ ┗ 📜 GN11-Transfer1
+┃ ┗ 📜 GN11-Transfer2
+┗ 📜 README.md
+
+## 👀 How to View the Wireframes
+
+You can view all wireframes directly in this repository by clicking on any file name. GitHub has a built-in viewer for images, so you can see them without downloading anything.
+
+## 🛠️ Tools Used
+
+- **Low-Fidelity:** [Figma]
+- **High-Fidelity:** [Figma]
+- **Format:** JPEG Image files
+
 
