@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../../firebase';
 
 const Login = () => {
   const [email, setEmail]               = useState('');
@@ -7,6 +10,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState('');
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,10 +28,33 @@ const Login = () => {
 
     setLoading(true);
     try {
-      console.log('Login attempt:', { email, password, rememberMe });
-      await new Promise((r) => setTimeout(r, 1000));
+      // Actual Firebase authentication
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Login successful:', userCredential.user.email);
+      
+      // Redirect to dashboard on success
+      navigate('/dashboard');
+      
     } catch (err) {
-      setError('Incorrect credentials. Please try again.');
+      console.error('Login error:', err);
+      
+      // Handle Firebase error codes with user-friendly messages
+      switch(err.code) {
+        case 'auth/invalid-email':
+          setError('Invalid email format');
+          break;
+        case 'auth/user-not-found':
+          setError('No account found with this email');
+          break;
+        case 'auth/wrong-password':
+          setError('Incorrect password');
+          break;
+        case 'auth/too-many-requests':
+          setError('Too many failed attempts. Try again later');
+          break;
+        default:
+          setError('Incorrect credentials. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
