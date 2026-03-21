@@ -1,8 +1,8 @@
 import GNLayout from "../components/gnlayout";
 
-const AppointmentList = () => {
+const AppointmentList = ({ gnStatus }) => {
   return (
-    <GNLayout>
+    <GNLayout gnStatus={gnStatus}>
 
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">

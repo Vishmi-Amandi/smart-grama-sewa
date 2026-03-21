@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { LayoutDashboard, CalendarDays, Clock, Megaphone, Search, User, Settings, LogOut } from "lucide-react";
+import { Link, useLocation } from 'react-router-dom';
 
-const GNLayout = ({ children }) => {
+  const GNLayout = ({ children, gnStatus }) => {
+  const location = useLocation();
   const [showLang, setShowLang] = useState(false);
   const [selectedLang, setSelectedLang] = useState("English");
   const [showAnnouncements, setShowAnnouncements] = useState(false);
@@ -26,24 +28,29 @@ const GNLayout = ({ children }) => {
           </div>
 
           {/* Status Badge */}
-          <div className="mx-4 mt-4 bg-[#9B4D00] rounded-lg px-4 py-3">
-            <p className="text-xs text-gray-300">Current Status</p>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-              <span className="text-white font-semibold text-sm">Available</span>
-            </div>
-          </div>
+          <Link to="/current-status" className="mx-4 mt-4 bg-[#9B4D00] rounded-lg px-4 py-3 block hover:bg-[#7a3b00] transition">
+  <p className="text-xs text-gray-300">Current Status</p>
+  <div className="flex items-center gap-2 mt-1">
+    <span className={`w-2 h-2 rounded-full
+      ${gnStatus === "Available" ? "bg-green-400" : ""}
+      ${gnStatus === "In Meeting" ? "bg-orange-400" : ""}
+      ${gnStatus === "On Field" ? "bg-red-400" : ""}
+    `}></span>
+    <span className="text-white font-semibold text-sm">{gnStatus}</span>
+  </div>
+</Link>
 
           {/* Navigation */}
           <nav className="flex-1 mt-6 px-4 space-y-1">
-            <a href="#" className="flex items-center gap-3 bg-[#E5A800] text-black font-semibold rounded-lg px-4 py-2">
-              <LayoutDashboard size={18} />
-              Dashboard
-            </a>
-            <a href="#" className="flex items-center gap-3 text-white px-4 py-2 rounded-lg hover:bg-[#9B4D00]">
-              <CalendarDays size={18} />
-              Appointments
-            </a>
+            <Link to="/" className={`flex items-center gap-3 rounded-lg px-4 py-2 ${location.pathname === "/" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
+  <LayoutDashboard size={18} />
+  Dashboard
+</Link>
+
+<Link to="/appointments" className={`flex items-center gap-3 rounded-lg px-4 py-2 ${location.pathname === "/appointments" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
+  <CalendarDays size={18} />
+  Appointments
+</Link>
             <a href="#" className="flex items-center gap-3 text-white px-4 py-2 rounded-lg hover:bg-[#9B4D00]">
               <Clock size={18} />
               Schedule

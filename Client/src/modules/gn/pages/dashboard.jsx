@@ -1,9 +1,10 @@
 import GNLayout from "../components/gnlayout";
 import { CalendarCheck, ClipboardList, Megaphone, TrendingUp, AlertCircle, Clock, ArrowLeftRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
-const GNDashboard = () => {
+const GNDashboard = ({ gnStatus }) => {
   return (
-    <GNLayout>
+    <GNLayout gnStatus={gnStatus}>
 
       {/* Page Title */}
       <h1 className="text-2xl font-bold text-[#8B4513] mb-6">Dashboard</h1>
@@ -85,10 +86,10 @@ const GNDashboard = () => {
       ⚡ Quick Actions
     </p>
     <div className="grid grid-cols-2 gap-4">
-      <button className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
-        <CalendarCheck size={22} />
-        View Appointments
-      </button>
+      <Link to="/appointments" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
+  <CalendarCheck size={22} />
+  View Appointments
+</Link>
       <button className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
         <Clock size={22} />
         Update Schedule
