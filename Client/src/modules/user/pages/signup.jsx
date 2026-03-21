@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../../../firebase';
 
 // Step Progress Indicator
 const StepIndicator = ({ current }) => {
@@ -59,25 +63,27 @@ const StepIndicator = ({ current }) => {
 
 // Shared input style 
 const inp = {
-  width: '100%',
-  padding: '13px 16px',
-  fontSize: '14px',
-  fontWeight: 500,
-  color: '#1a1a1a',
-  backgroundColor: '#ffffff',
-  border: '1.5px solid #d4c9a8',
-  borderRadius: '10px',
-  outline: 'none',
-  boxSizing: 'border-box',
-  transition: 'border-color 0.15s',
+    fontFamily: 'Seoge',
+    width: '100%',
+    padding: '13px 16px',
+    fontSize: '14px',
+    fontWeight: 500,
+    color: '#1a1a1a',
+    backgroundColor: '#ffffff',
+    border: '1.5px solid #d4c9a8',
+    borderRadius: '10px',
+    outline: 'none',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.15s',
 };
 
 const labelStyle = {
-  display: 'block',
-  fontSize: '13px',
-  fontWeight: 700,
-  color: '#1a1a1a',
-  marginBottom: '7px',
+    fontFamily: 'Seoge',
+    display: 'block',
+    fontSize: '13px',
+    fontWeight: 700,
+    color: '#1a1a1a',
+    marginBottom: '7px',
 };
 
 // Dark brown pill button
@@ -589,16 +595,91 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
   const handleCreate = async () => {
     if (!validate()) return;
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1200)); // TODO: replace with real API
-    setLoading(false);
+    setErrors({});
+    
+    try {
+
+        console.log('🔵 1. Starting account creation...');
+        console.log('Email:', data.email);
+        
+        const credential = await createUserWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password,
+      );
+    
+    try {
+        await updateProfile(credential.user, {
+          displayName: data.username,
+        });
+        console.log('✅ 3. updateProfile SUCCESS');
+      } catch (e) {
+        console.warn('⚠️ 3. updateProfile FAILED:', e.message);
+      }
+
+    try {
+        await setDoc(doc(db, 'users', credential.user.uid), {
+          uid:       credential.user.uid,
+          username:  data.username,
+          fullName:  data.fullName,
+          nic:       data.nic,
+          dob:       data.dob,
+          address:   data.address,
+          email:     data.email,
+          mobile:    data.mobile,
+          district:  data.district,
+          dsDiv:     data.dsDiv,
+          gnDiv:     data.gnDiv,
+          role:      'citizen',
+          createdAt: serverTimestamp(),
+        });
+        console.log('✅ 4. Firestore setDoc SUCCESS');
+      } catch (e) {
+        console.warn('⚠️ 4. Firestore setDoc FAILED:', e.message);
+    }
+
+    console.log('🟢 5. Calling onSubmit — going to success screen...');
     onSubmit();
-  };
+ 
+    } catch (err) {
+
+        console.error('❌ Firebase Auth FAILED:', err.code, err.message);
+    const friendlyError = {
+      'auth/email-already-in-use': 'This email is already registered. Please sign in instead.',
+      'auth/invalid-email':        'The email address is not valid.',
+      'auth/weak-password':        'Password is too weak. Use at least 8 characters.',
+      'auth/network-request-failed': 'Network error. Please check your connection.',
+    }[err.code] || `Something went wrong: ${err.message}`;
+    setErrors((prev) => ({ ...prev, firebase: friendlyError }));
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div>
       <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#1a1a1a', marginBottom: '22px' }}>
         Secure Your Account
       </h2>
+
+    {errors.firebase && (
+        <div style={{
+          backgroundColor: '#fff0f0',
+          border: '1.5px solid #f0a0a0',
+          borderRadius: '10px',
+          padding: '12px 16px',
+          marginBottom: '18px',
+          fontSize: '13px',
+          fontWeight: 600,
+          color: '#c00',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '8px',
+        }}>
+          <span style={{ fontSize: '16px', flexShrink: 0 }}>⚠</span>
+          {errors.firebase}
+        </div>
+      )}
 
       {/* Username */}
       <div style={{ marginBottom: '18px' }}>
