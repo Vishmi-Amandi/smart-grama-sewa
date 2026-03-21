@@ -1,32 +1,16 @@
+// src/App.jsx
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { auth } from './firebase';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './modules/user/pages/login';
-import Dashboard from './modules/user/pages/dashboard';
-
-// Protected Route component
-const ProtectedRoute = ({ children }) => {
-  const user = auth.currentUser;
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-  return children;
-};
+import Signup from './modules/user/pages/signup';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route path="/" element={<Navigate to="/dashboard" />} />
+        <Route path="/signup" element={<Signup />} />
       </Routes>
     </BrowserRouter>
   );
