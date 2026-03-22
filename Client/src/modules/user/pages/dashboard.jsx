@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 
-//  Icons  
+// Icons 
 const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
@@ -30,7 +30,7 @@ const Icons = {
   chevRight:     'M9 18l6-6-6-6',
 };
 
-//  Nav item 
+// Nav item 
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button
     onClick={onClick}
@@ -107,7 +107,7 @@ const QuickCard = ({ iconPath, label, onClick }) => (
   </button>
 );
 
-//  Appointment row 
+// Appointment row
 const AppointmentRow = ({ month, day, title, time, last }) => (
   <div style={{
     display: 'flex', alignItems: 'center', gap: '14px',
@@ -132,7 +132,7 @@ const AppointmentRow = ({ month, day, title, time, last }) => (
   </div>
 );
 
-//  Announcement card (carousel) 
+// Announcement card (carousel) 
 const announcements = [
   {
     title: 'Income Certificate Service Resumed',
@@ -148,12 +148,111 @@ const announcements = [
   },
 ];
 
-// ─── Main Dashboard 
+// Main Dashboard
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [activePage, setActivePage]   = useState('dashboard');
-  const [announcIdx, setAnnouncIdx]   = useState(0);
-  const userName = 'Amandi'; // TODO: pull from Firebase Auth currentUser.displayName
+  const [activePage, setActivePage] = useState('dashboard');
+  const [announcIdx, setAnnouncIdx] = useState(0);
+
+  // Firebase auth state
+  const [currentUser, setCurrentUser] = useState(null);  // Firebase Auth user
+  const [userData,    setUserData]    = useState(null);  // Firestore /users/{uid}
+  const [gnOfficer,   setGnOfficer]   = useState(null);  // Firestore /gnOfficers/{gnDiv}
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setCurrentUser(user);
+
+        try {
+          // 1. Fetch this user's profile from Firestore
+          const userSnap = await getDoc(doc(db, 'users', user.uid));
+          if (userSnap.exists()) {
+            const data = userSnap.data();
+            setUserData(data);
+
+            // 2. Fetch their assigned GN officer using their gnDiv field
+            //    Firestore collection: gnOfficers / document ID = gnDiv name
+            //    e.g. /gnOfficers/Colombo → { name: "Mr. Perera", available: true }
+            if (data.gnDiv) {
+              try {
+                const gnSnap = await getDoc(doc(db, 'gnOfficers', data.gnDiv));
+                if (gnSnap.exists()) {
+                  setGnOfficer(gnSnap.data());
+                } else {
+                  // Fallback: try matching by dsDiv if gnDiv doc not found
+                  if (data.dsDiv) {
+                    const dsSnap = await getDoc(doc(db, 'gnOfficers', data.dsDiv));
+                    if (dsSnap.exists()) setGnOfficer(dsSnap.data());
+                  }
+                }
+              } catch (gnErr) {
+                console.warn('Could not load GN officer:', gnErr.message);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('Could not load user profile:', err.message);
+        }
+      } else {
+        // Not logged in → redirect to login
+        navigate('/login');
+      }
+      setAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
+
+  // Logout handler 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout error:', err.message);
+    }
+  };
+
+  // Derived display values
+  // Priority: Firestore fullName → Auth displayName → email prefix → 'User'
+  const fullName  = userData?.fullName
+                 || currentUser?.displayName
+                 || currentUser?.email?.split('@')[0]
+                 || 'User';
+
+  // First name only for the welcome greeting
+  const firstName = fullName.split(' ')[0];
+
+  // Topbar chip — show username if set, otherwise full name
+  const chipName  = userData?.username || fullName;
+
+  // GN officer — from Firestore gnOfficers collection, fallback to user's gnDiv name
+  const gnName      = gnOfficer?.name        || `GN Officer (${userData?.gnDiv || 'N/A'})`;
+  const gnAvailable = gnOfficer?.available   ?? true;   // default to true if field missing
+  const gnDivLabel  = userData?.gnDiv        || userData?.dsDiv || '';
+
+  // Show loading screen while auth resolves
+  if (authLoading) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+        backgroundColor: '#f8f6f0', fontFamily: 'Nunito, sans-serif',
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '48px', height: '48px', borderRadius: '50%',
+            border: '4px solid #F5C400', borderTopColor: 'transparent',
+            animation: 'spin 0.8s linear infinite', margin: '0 auto 16px',
+          }} />
+          <div style={{ fontSize: '15px', fontWeight: 600, color: '#888' }}>Loading…</div>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   const prev = () => setAnnouncIdx((i) => (i === 0 ? announcements.length - 1 : i - 1));
   const next = () => setAnnouncIdx((i) => (i === announcements.length - 1 ? 0 : i + 1));
@@ -181,7 +280,7 @@ const Dashboard = () => {
       backgroundColor: '#f8f6f0',
     }}>
 
-      {/* ── Shell ── */}
+      {/* Shell */}
       <div style={{ flex: 1, display: 'flex' }}>
 
         {/* SIDEBAR */}
@@ -199,7 +298,7 @@ const Dashboard = () => {
 
           {/* Logo */}
           <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-            <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '80px', width: 'auto' }} />
+            <img src="/logo.jpg" alt="Smart Grama Sewa" style={{ height: '64px', width: 'auto' }} />
           </div>
 
           {/* Main nav */}
@@ -224,7 +323,7 @@ const Dashboard = () => {
                 label={item.label}
                 active={activePage === item.key}
                 onClick={() => {
-                  if (item.key === 'logout') navigate('/login');
+                  if (item.key === 'logout') handleLogout();
                   else setActivePage(item.key);
                 }}
               />
@@ -235,7 +334,7 @@ const Dashboard = () => {
         {/* MAIN COLUMN */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
-          {/*  Top bar  */}
+          {/* Top bar */}
           <div style={{
             height: '64px',
             backgroundColor: '#fff',
@@ -311,7 +410,7 @@ const Dashboard = () => {
               onMouseOut={(e)  => (e.currentTarget.style.borderColor = '#e8d8b0')}
             >
               <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e1200' }}>
-                W A V Amandi
+                {chipName}
               </span>
               {/* Avatar circle */}
               <div style={{
@@ -325,7 +424,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/*  Content  */}
+          {/* Content */}
           <div style={{ padding: '28px 30px', flex: 1 }}>
 
             {/* ① Welcome banner */}
@@ -357,7 +456,7 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: '22px', fontWeight: 900, color: '#1e1200', letterSpacing: '-0.3px' }}>
-                    Welcome Back, {userName}!
+                    Welcome Back, {firstName}!
                   </div>
                 </div>
               </div>
@@ -376,22 +475,34 @@ const Dashboard = () => {
                 <div style={{ fontSize: '13px', fontWeight: 700, color: '#888', marginBottom: '4px' }}>
                   GN officer
                 </div>
-                <div style={{ fontSize: '16px', fontWeight: 900, color: '#1e1200', marginBottom: '8px' }}>
-                  Mr. Wijesooriya
+                <div style={{ fontSize: '16px', fontWeight: 900, color: '#1e1200', marginBottom: '4px' }}>
+                  {gnName}
                 </div>
+                {gnDivLabel && (
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#aaa', marginBottom: '8px' }}>
+                    {gnDivLabel}
+                  </div>
+                )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
                   <div style={{
                     width: '9px', height: '9px', borderRadius: '50%',
-                    backgroundColor: '#22c55e',
-                    boxShadow: '0 0 0 3px rgba(34,197,94,0.2)',
+                    backgroundColor: gnAvailable ? '#22c55e' : '#f87171',
+                    boxShadow: gnAvailable
+                      ? '0 0 0 3px rgba(34,197,94,0.2)'
+                      : '0 0 0 3px rgba(248,113,113,0.2)',
                     animation: 'pulse 2s infinite',
                   }} />
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#22c55e' }}>Available</span>
+                  <span style={{
+                    fontSize: '14px', fontWeight: 700,
+                    color: gnAvailable ? '#22c55e' : '#f87171',
+                  }}>
+                    {gnAvailable ? 'Available' : 'Unavailable'}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* ② Quick Actions */}
+            {/* Quick Actions */}
             <div style={{ marginBottom: '26px' }}>
               <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e1200', marginBottom: '14px' }}>
                 Quick Actions
@@ -404,7 +515,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Appointments & Announcements */}
+            {/* Appointments + Announcements */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}>
 
               {/* Upcoming Appointments */}
@@ -504,7 +615,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/*  Footer  */}
+      {/* Footer */}
       <footer style={{
         backgroundColor: '#6A2301',
         color: '#fff',
