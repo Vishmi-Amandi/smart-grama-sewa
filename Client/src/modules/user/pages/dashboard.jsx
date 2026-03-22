@@ -184,9 +184,7 @@ const Dashboard = () => {
       {/* ── Shell ── */}
       <div style={{ flex: 1, display: 'flex' }}>
 
-        {/* ════════════════════════════
-            SIDEBAR
-        ════════════════════════════ */}
+        {/* SIDEBAR */}
         <div style={{
           width: '220px',
           flexShrink: 0,
@@ -201,7 +199,7 @@ const Dashboard = () => {
 
           {/* Logo */}
           <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-            <img src="/logo.jpg" alt="Smart Grama Sewa" style={{ height: '64px', width: 'auto' }} />
+            <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '80px', width: 'auto' }} />
           </div>
 
           {/* Main nav */}
@@ -234,12 +232,10 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* ════════════════════════════
-            MAIN COLUMN
-        ════════════════════════════ */}
+        {/* MAIN COLUMN */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
-          {/* ── Top bar ── */}
+          {/*  Top bar  */}
           <div style={{
             height: '64px',
             backgroundColor: '#fff',
@@ -329,7 +325,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* ── Content ── */}
+          {/*  Content  */}
           <div style={{ padding: '28px 30px', flex: 1 }}>
 
             {/* ① Welcome banner */}
@@ -408,7 +404,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* ③ Appointments + Announcements */}
+            {/* Appointments & Announcements */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}>
 
               {/* Upcoming Appointments */}
@@ -508,7 +504,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* ── Footer ── */}
+      {/*  Footer  */}
       <footer style={{
         backgroundColor: '#6A2301',
         color: '#fff',
