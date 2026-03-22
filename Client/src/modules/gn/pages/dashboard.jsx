@@ -94,10 +94,10 @@ const GNDashboard = ({ gnStatus }) => {
         <Clock size={22} />
         Update Schedule
       </button>
-      <button className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
-        <Megaphone size={22} />
-        Create Announcement
-      </button>
+      <Link to="/create-announcement" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
+  <Megaphone size={22} />
+  Create Announcement
+</Link>
       <button className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
         <ArrowLeftRight size={22} />
         Transfer Request

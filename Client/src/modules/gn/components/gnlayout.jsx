@@ -59,21 +59,25 @@ import { Link, useLocation } from 'react-router-dom';
             {/* Announcements Dropdown */}
             <div>
               <div
-                onClick={() => setShowAnnouncements(!showAnnouncements)}
-                className="flex items-center gap-3 text-white px-4 py-2 rounded-lg hover:bg-[#9B4D00] cursor-pointer"
-              >
+  onClick={() => setShowAnnouncements(!showAnnouncements)}
+  className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer
+    ${location.pathname === "/create-announcement" || location.pathname === "/announcement-list"
+      ? "bg-[#E5A800] text-black font-semibold"
+      : "text-white hover:bg-[#9B4D00]"
+    }`}
+>
                 <Megaphone size={18} />
                 <span className="flex-1">Announcements</span>
                 <span className="text-xs">{showAnnouncements ? "▲" : "▼"}</span>
               </div>
               {showAnnouncements && (
                 <div className="ml-8 mt-1 space-y-1">
-                  <a href="#" className="flex items-center gap-2 text-orange-200 px-4 py-2 rounded-lg hover:bg-[#9B4D00] text-sm">
-                    Create Announcement
-                  </a>
-                  <a href="#" className="flex items-center gap-2 text-orange-200 px-4 py-2 rounded-lg hover:bg-[#9B4D00] text-sm">
-                    Announcement List
-                  </a>
+                  <Link to="/create-announcement" className="flex items-center gap-2 text-orange-200 px-4 py-2 rounded-lg hover:bg-[#9B4D00] text-sm">
+  Create Announcement
+</Link>
+                  <Link to="/announcement-list" className="flex items-center gap-2 text-orange-200 px-4 py-2 rounded-lg hover:bg-[#9B4D00] text-sm">
+  Announcement List
+</Link>
                 </div>
               )}
             </div>
