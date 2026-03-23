@@ -324,6 +324,7 @@ const Dashboard = () => {
                 active={activePage === item.key}
                 onClick={() => {
                   if (item.key === 'logout') handleLogout();
+                  else if (item.key === 'profile')  navigate('/profile');
                   else setActivePage(item.key);
                 }}
               />
