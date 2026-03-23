@@ -298,7 +298,7 @@ const Dashboard = () => {
 
           {/* Logo */}
           <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-            <img src="/logo.jpg" alt="Smart Grama Sewa" style={{ height: '64px', width: 'auto' }} />
+            <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '80px', width: 'auto' }} />
           </div>
 
           {/* Main nav */}
@@ -427,7 +427,7 @@ const Dashboard = () => {
           {/* Content */}
           <div style={{ padding: '28px 30px', flex: 1 }}>
 
-            {/* ① Welcome banner */}
+            {/* Welcome banner */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr auto',
