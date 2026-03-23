@@ -515,7 +515,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Appointments + Announcements */}
+            {/* Appointments & Announcements */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}>
 
               {/* Upcoming Appointments */}
