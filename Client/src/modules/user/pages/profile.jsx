@@ -181,7 +181,7 @@ const Sidebar = ({ activePage, onNavigate, onLogout }) => {
       position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
     }}>
       <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-        <img src="/logo.jpg" alt="Smart Grama Sewa" style={{ height: '64px', width: 'auto' }} />
+        <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '64px', width: 'auto' }} />
       </div>
       <div style={{ flex: 1, padding: '12px 10px' }}>
         {navItems.map((item) => (
@@ -253,7 +253,7 @@ const Profile = () => {
     return () => unsub();
   }, [navigate]);
 
-  // ── Logout 
+  // Logout 
   const handleLogout = async () => {
     await signOut(auth);
     navigate('/login');
