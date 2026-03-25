@@ -444,7 +444,7 @@ const Profile = () => {
                     <InfoRow label="Date Of Birth" value={userData?.dob}       />
                     <InfoRow label="Gender"        value={userData?.gender}    />
                     <InfoRow label="Home Address"  value={userData?.address}   />
-                  </div>
+                    <InfoRow label="Occupation"  value={userData?.occupation}   />                  </div>
 
                   {/* Contact Details */}
                   <div style={{
@@ -530,7 +530,6 @@ const Profile = () => {
                     <textarea
                       value={form.address}
                       onChange={(e) => update('address')(e.target.value)}
-                      placeholder="No. 45, Akarawita, Gampaha."
                       rows={3}
                       style={{
                         width: '100%', padding: '12px 14px',
@@ -557,6 +556,17 @@ const Profile = () => {
                     * Email address cannot be changed here for security reasons.
                   </p>
 
+                  <div style={{ fontSize: '16px', fontWeight: 900, color: '#1e1200', margin: '22px 0 14px' }}>
+                    Location
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#aaa', marginLeft: '8px' }}>
+                      (set during sign up — contact support to change)
+                    </span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+                    <Field label="District"    value={form.district} onChange={() => {}} disabled={true} />
+                    <Field label="DS Division" value={form.dsDiv}    onChange={() => {}} disabled={true} />
+                    <Field label="GN Division" value={form.gnDiv}    onChange={() => {}} disabled={true} />
+                  </div>
                 </div>
 
                 {/* Cancel + Save buttons */}
