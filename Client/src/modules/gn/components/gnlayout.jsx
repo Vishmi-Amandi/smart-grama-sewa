@@ -51,10 +51,11 @@ import { Link, useLocation } from 'react-router-dom';
   <CalendarDays size={18} />
   Appointments
 </Link>
-            <a href="#" className="flex items-center gap-3 text-white px-4 py-2 rounded-lg hover:bg-[#9B4D00]">
-              <Clock size={18} />
-              Schedule
-            </a>
+           <Link to="/schedule" className={`flex items-center gap-3 px-4 py-2 rounded-lg
+  ${location.pathname === "/schedule" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
+  <Clock size={18} />
+  Schedule
+</Link>
 
             {/* Announcements Dropdown */}
             <div>
