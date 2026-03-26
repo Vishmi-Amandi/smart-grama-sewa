@@ -64,7 +64,70 @@ const AppointmentBooking = () => {
 
         <div className="bg-white rounded-xl shadow p-6">
           <form onSubmit={handleSubmit}>
-            {/* We'll add form fields here */}
+            {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg">
+                    {error}
+                </div>
+                )}
+
+                {/* Date Selection */}
+                <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Date
+                </label>
+                <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFB347]"
+                />
+                </div>
+
+                {/* Time Slot Selection */}
+                <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Time
+                </label>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                    {timeSlots.map((time) => (
+                    <button
+                        key={time}
+                        type="button"
+                        onClick={() => setSelectedTime(time)}
+                        className={`py-2 px-3 rounded-lg border transition ${
+                        selectedTime === time
+                            ? 'bg-[#FFB347] text-white border-[#FFB347]'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-[#FFB347]'
+                        }`}
+                    >
+                        {time}
+                    </button>
+                    ))}
+                </div>
+                </div>
+
+                {/* Purpose */}
+                <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Purpose of Appointment
+                </label>
+                <textarea
+                    value={purpose}
+                    onChange={(e) => setPurpose(e.target.value)}
+                    rows="3"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFB347]"
+                    placeholder="e.g., Residence Certificate, Birth Certificate, Document Signing..."
+                />
+                </div>
+
+                <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#FFB347] hover:bg-[#E67E22] text-white font-semibold py-3 px-4 rounded-lg transition disabled:opacity-50"
+                >
+                {loading ? 'Booking...' : 'Book Appointment'}
+                </button>
           </form>
         </div>
       </div>
