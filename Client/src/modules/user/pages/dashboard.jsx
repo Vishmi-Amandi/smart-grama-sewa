@@ -309,7 +309,10 @@ const Dashboard = () => {
                 iconPath={item.icon}
                 label={item.label}
                 active={activePage === item.key}
-                onClick={() => setActivePage(item.key)}
+                onClick={() => {
+                  if (item.key === 'appointments')  navigate('/appointments/Book');
+                  else setActivePage(item.key);
+                }}
               />
             ))}
           </div>
