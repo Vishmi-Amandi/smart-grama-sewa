@@ -512,8 +512,7 @@ const Dashboard = () => {
                 Quick Actions
               </div>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <QuickCard iconPath={Icons.calendar}  label="Book Appointment" />
-                <QuickCard iconPath={Icons.download}  label="Download forms"   />
+                <QuickCard iconPath={Icons.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} />                <QuickCard iconPath={Icons.download}  label="Download forms"   />
                 <QuickCard iconPath={Icons.ai}        label="AI assistant"     />
                 <QuickCard iconPath={Icons.phone}     label="Contact GN"       />
               </div>
