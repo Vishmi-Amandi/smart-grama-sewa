@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { auth } from './firebase';
@@ -6,7 +5,7 @@ import Login from './modules/user/pages/login';
 import Signup from './modules/user/pages/signup';
 import Dashboard from './modules/user/pages/dashboard';
 import Profile from './modules/user/pages/profile';
-import AppointmentBooking from './modules/user/pages/appointmentBooking';
+import Appointments from './modules/user/pages/appointments';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -60,10 +59,10 @@ function App() {
           } 
         />
         <Route 
-          path="/appointments/book" 
+          path="/appointments" 
           element={
             <ProtectedRoute>
-              <AppointmentBooking />
+              <Appointments />
             </ProtectedRoute>
           } 
         />
