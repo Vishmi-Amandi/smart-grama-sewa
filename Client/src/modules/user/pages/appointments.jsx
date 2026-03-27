@@ -1,11 +1,10 @@
-// src/modules/user/pages/Appointments.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 
-// ─── Icons ────────────────────────────────────────────────────────────────
+// Icons
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -37,7 +36,7 @@ const IC = {
   x:            'M18 6L6 18M6 6l12 12',
 };
 
-// ─── Service categories (from spec) ──────────────────────────────────────
+// Service categories (from spec)
 const SERVICE_CATS = [
   {
     key: 'personal', label: 'Personal Documents', services: [
@@ -86,7 +85,7 @@ const SERVICE_CATS = [
   },
 ];
 
-// ─── Shared styles ────────────────────────────────────────────────────────
+// Shared styles
 const S = {
   page: { minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'Nunito, system-ui, sans-serif', backgroundColor: '#f5f0e8' },
   shell: { flex: 1, display: 'flex' },
@@ -98,7 +97,7 @@ const S = {
   card: { backgroundColor: '#fff', border: '1.5px solid #e8d5ac', borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' },
 };
 
-// ─── NavItem ──────────────────────────────────────────────────────────────
+// NavItem
 const NavItem = ({ d, label, active, onClick }) => (
   <button onClick={onClick} style={{
     width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
@@ -117,7 +116,7 @@ const NavItem = ({ d, label, active, onClick }) => (
   </button>
 );
 
-// ─── Sidebar ─────────────────────────────────────────────────────────────
+// Sidebar
 const Sidebar = ({ active, navigate, onLogout }) => (
   <div style={S.sidebar}>
     <div style={{ padding: '18px 18px 14px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
@@ -148,7 +147,7 @@ const Sidebar = ({ active, navigate, onLogout }) => (
   </div>
 );
 
-// ─── Topbar ──────────────────────────────────────────────────────────────
+// Topbar 
 const Topbar = ({ chipName }) => (
   <div style={S.topbar}>
     <div style={{ flex: 1, maxWidth: 420, display: 'flex', alignItems: 'center', gap: 10, backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: 999, padding: '9px 18px' }}>
@@ -169,7 +168,7 @@ const Topbar = ({ chipName }) => (
   </div>
 );
 
-// ─── Step Indicator ───────────────────────────────────────────────────────
+// Step Indicator 
 const StepBar = ({ step }) => {
   const steps = ['Select Service', 'Date & Time', 'Review & Submit'];
   return (
@@ -204,7 +203,7 @@ const StepBar = ({ step }) => {
   );
 };
 
-// ─── Brown pill button ────────────────────────────────────────────────────
+// Brown pill button 
 const BrownBtn = ({ onClick, children, disabled }) => (
   <button onClick={onClick} disabled={disabled} style={{
     display: 'flex', alignItems: 'center', gap: 8, padding: '14px 28px',
@@ -217,7 +216,7 @@ const BrownBtn = ({ onClick, children, disabled }) => (
   >{children}</button>
 );
 
-// ─── Yellow pill button ───────────────────────────────────────────────────
+// Yellow pill button 
 const YellowBtn = ({ onClick, children, disabled }) => (
   <button onClick={onClick} disabled={disabled} style={{
     display: 'flex', alignItems: 'center', gap: 8, padding: '14px 28px',
@@ -230,9 +229,7 @@ const YellowBtn = ({ onClick, children, disabled }) => (
   >{children}</button>
 );
 
-// ═══════════════════════════════════════════════════════════════════
-//  SCREEN 1 — MY APPOINTMENTS LIST
-// ═══════════════════════════════════════════════════════════════════
+//  SCREEN — MY APPOINTMENTS LIST
 const AppointmentsList = ({ userData, onBook }) => {
   const [tab, setTab] = useState('All');
   const tabs = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled'];
@@ -345,9 +342,7 @@ const AppointmentsList = ({ userData, onBook }) => {
   );
 };
 
-// ═══════════════════════════════════════════════════════════════════
-//  SCREEN 2 — BOOK STEP 1: SELECT SERVICE
-// ═══════════════════════════════════════════════════════════════════
+// BOOK STEP 1: SELECT SERVICE
 const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
   const [openCats, setOpenCats] = useState({ personal: true });
   const [notes, setNotes] = useState(booking.notes || '');
@@ -464,9 +459,7 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
   );
 };
 
-// ═══════════════════════════════════════════════════════════════════
-//  SCREEN 3 — BOOK STEP 2: DATE & TIME
-// ═══════════════════════════════════════════════════════════════════
+// BOOK STEP 2: DATE & TIME
 const DAYS   = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -676,9 +669,7 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
   );
 };
 
-// ═══════════════════════════════════════════════════════════════════
-//  SCREEN 4 — BOOK STEP 3: REVIEW & SUBMIT
-// ═══════════════════════════════════════════════════════════════════
+// BOOK STEP 3: REVIEW & SUBMIT
 const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submitting }) => {
   const dateStr = booking.day
     ? `${MONTHS[booking.month]} ${booking.day}, ${booking.year}`
@@ -786,9 +777,7 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
   );
 };
 
-// ═══════════════════════════════════════════════════════════════════
-//  SCREEN 5 — SUCCESS
-// ═══════════════════════════════════════════════════════════════════
+//  SCREEN — SUCCESS
 const BookSuccess = ({ onBack }) => (
   <div style={{ ...S.content, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
     <div style={{ ...S.card, padding: '48px 40px', textAlign: 'center', maxWidth: 480 }}>
@@ -805,9 +794,8 @@ const BookSuccess = ({ onBack }) => (
   </div>
 );
 
-// ═══════════════════════════════════════════════════════════════════
+// 
 //  MAIN COMPONENT
-// ═══════════════════════════════════════════════════════════════════
 const Appointments = () => {
   const navigate = useNavigate();
 
