@@ -230,18 +230,59 @@ const YellowBtn = ({ onClick, children, disabled }) => (
 );
 
 //  SCREEN — MY APPOINTMENTS LIST
-const AppointmentsList = ({ userData, onBook }) => {
+const MONTHS_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const DAY_NAMES_SHORT = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
   const [tab, setTab] = useState('All');
+  const [appts,  setAppts]  = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const tabs = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled'];
 
-  // Sample appointments — in production fetch from Firestore
-  const appts = [
-    { id: 1, day: '4',  mon: 'APR', dow: 'Today · Thursday', time: '11.30 AM - 12.00 PM', title: 'Residence Certificate Application',          status: 'Confirmed' },
-    { id: 2, day: '10', mon: 'APR', dow: 'Wednesday',         time: '09.30 AM - 10.00 AM', title: 'Get recommendation for income certificates', status: 'Pending'   },
-    { id: 3, day: '28', mon: 'MAR', dow: 'Thursday',          time: '11.30 AM - 12.00 PM', title: 'Water Connection Follow-up',                 status: 'Confirmed' },
-  ];
+  // Fetch this user's appointments from Firestore
+  useEffect(() => {
+    if (!currentUser) return;
+    const fetchAppts = async () => {
+      setLoading(true);
+      try {
+        const q = query(
+          collection(db, 'appointments'),
+          where('uid', '==', currentUser.uid),
+        );
+        const snap = await getDocs(q);
+        const list = snap.docs.map(d => {
+          const data = d.data();
+          const [y, m, day] = (data.date || '').split('-').map(Number);
+          const dateObj = new Date(y, m - 1, day);
+          return {
+            id:     d.id,
+            day:    day   || '--',
+            mon:    MONTHS_SHORT[(m - 1)] || '---',
+            dow:    isNaN(dateObj) ? '' : DAY_NAMES_SHORT[dateObj.getDay()],
+            time:   data.slot    || '',
+            title:  data.service || 'Appointment',
+            status: data.status  || 'Pending',
+            date:   data.date    || '',
+          };
+        });
+        // Sort newest first
+        list.sort((a, b) => b.date.localeCompare(a.date));
+        setAppts(list);
+      } catch (e) {
+        console.error('Fetch appointments error:', e.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAppts();
+  }, [currentUser, refreshKey]); // re-fetch when refreshKey changes
 
   const filtered = tab === 'All' ? appts : appts.filter(a => a.status === tab);
+
+  // Counts for summary cards
+  const pendingCount   = appts.filter(a => a.status === 'Pending').length;
+  const confirmedCount = appts.filter(a => a.status === 'Confirmed').length;
 
   const statusColor = {
     Confirmed: { bg: '#e6f9ee', text: '#1a7a3a', border: '#7ec07e' },
@@ -277,12 +318,12 @@ const AppointmentsList = ({ userData, onBook }) => {
       {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 28 }}>
         <div style={{ backgroundColor: '#f0a060', borderRadius: 16, padding: '22px 24px' }}>
-          <div style={{ fontSize: 36, fontWeight: 900, color: '#fff', lineHeight: 1 }}>1</div>
+          <div style={{ fontSize: 36, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{pendingCount}</div>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginTop: 6 }}>Pending Announcements</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: 600, marginTop: 3 }}>Awaiting your attention</div>
         </div>
         <div style={{ backgroundColor: '#60b880', borderRadius: 16, padding: '22px 24px' }}>
-          <div style={{ fontSize: 36, fontWeight: 900, color: '#fff', lineHeight: 1 }}>2</div>
+          <div style={{ fontSize: 36, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{confirmedCount}</div>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginTop: 6 }}>Confirmed Appointments</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: 600, marginTop: 3 }}>Upcoming this week</div>
         </div>
@@ -301,47 +342,72 @@ const AppointmentsList = ({ userData, onBook }) => {
         ))}
       </div>
 
+      {/* Loading */}
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '48px 24px' }}>
+          <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #F5C400', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
+          <div style={{ fontSize: 14, color: '#aaa', fontWeight: 600 }}>Loading your appointments…</div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+
       {/* Appointment cards */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {filtered.map(a => (
-          <div key={a.id} style={{
-            ...S.card,
-            borderLeft: `5px solid ${accentColor[a.status]}`,
-            padding: '20px 24px',
-            display: 'flex', alignItems: 'center', gap: 20,
-          }}>
-            {/* Date block */}
-            <div style={{ textAlign: 'center', minWidth: 52 }}>
-              <div style={{ fontSize: 34, fontWeight: 900, color: '#1e1200', lineHeight: 1 }}>{a.day}</div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 0.5 }}>{a.mon}</div>
-            </div>
-            {/* Info */}
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#888', marginBottom: 4 }}>
-                {a.dow} &nbsp;·&nbsp; {a.time}
+      {!loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {filtered.map(a => (
+            <div key={a.id} style={{
+              ...S.card,
+              borderLeft: `5px solid ${accentColor[a.status]} || '#ccc'}`,
+              padding: '20px 24px',
+              display: 'flex', alignItems: 'center', gap: 20,
+            }}>
+              {/* Date block */}
+              <div style={{ textAlign: 'center', minWidth: 52 }}>
+                <div style={{ fontSize: 34, fontWeight: 900, color: '#1e1200', lineHeight: 1 }}>{a.day}</div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 0.5 }}>{a.mon}</div>
               </div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200' }}>{a.title}</div>
+              {/* Info */}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#888', marginBottom: 4 }}>
+                  {a.dow} {a.dow && a.time ? ' · ' : ''} {a.time}
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200' }}>{a.title}</div>
+              </div>
+              {/* Status chip */}
+              <div style={{
+                padding: '5px 14px', borderRadius: 999, fontSize: 12, fontWeight: 800,
+                backgroundColor: statusColor[a.status].bg,
+                color: statusColor[a.status].text,
+                border: `1px solid ${statusColor[a.status].border}`,
+                flexShrink: 0,
+              }}>{a.status}</div>
             </div>
-            {/* Status chip */}
-            <div style={{
-              padding: '5px 14px', borderRadius: 999, fontSize: 12, fontWeight: 800,
-              backgroundColor: statusColor[a.status].bg,
-              color: statusColor[a.status].text,
-              border: `1px solid ${statusColor[a.status].border}`,
-              flexShrink: 0,
-            }}>{a.status}</div>
-          </div>
-        ))}
-        {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '48px 24px', color: '#aaa', fontWeight: 600, fontSize: 14 }}>
-            No {tab.toLowerCase()} appointments found.
-          </div>
-        )}
-      </div>
+          ))}
+
+          {filtered.length === 0 && (
+            <div style={{ ...S.card, textAlign: 'center', padding: '52px 24px' }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>📅</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', marginBottom: 8 }}>
+                {tab === 'All' ? 'No appointments yet' : `No ${tab.toLowerCase()} appointments`}
+              </div>
+              <div style={{ fontSize: 13, color: '#aaa', fontWeight: 600, marginBottom: 20 }}>
+                {tab === 'All' ? 'Book your first appointment with your GN Officer.' : `You have no ${tab.toLowerCase()} appointments at the moment.`}
+              </div>
+              {tab === 'All' && (
+                <button onClick={onBook} style={{
+                  backgroundColor: '#F5C400', border: 'none', borderRadius: 999,
+                  padding: '11px 22px', fontSize: 14, fontWeight: 800,
+                  color: '#3d2a00', cursor: 'pointer',
+                }}>+ Book New Appointment</button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
-
+ 
 // BOOK STEP 1: SELECT SERVICE
 const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
   const [openCats, setOpenCats] = useState({ personal: true });
@@ -807,6 +873,7 @@ const Appointments = () => {
   // Screen: 'list' | 'step1' | 'step2' | 'step3' | 'success'
   const [screen, setScreen] = useState('list');
   const [submitting, setSubmitting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Booking state passed through all steps
   const [booking, setBooking] = useState({
@@ -855,6 +922,7 @@ const Appointments = () => {
         createdAt:   serverTimestamp(),
       });
       setScreen('success');
+      setRefreshKey(k => k + 1);
     } catch (e) {
       console.error('Submit error:', e.message);
       alert('Failed to submit. Please try again.');
