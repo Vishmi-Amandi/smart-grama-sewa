@@ -120,7 +120,7 @@ const NavItem = ({ d, label, active, onClick }) => (
 const Sidebar = ({ active, navigate, onLogout }) => (
   <div style={S.sidebar}>
     <div style={{ padding: '18px 18px 14px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-      <img src="/logo.jpg" alt="Smart Grama Sewa" style={{ height: '60px', width: 'auto' }} />
+      <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '80px', width: 'auto' }} />
     </div>
     <div style={{ flex: 1, padding: '12px 10px' }}>
       {[
