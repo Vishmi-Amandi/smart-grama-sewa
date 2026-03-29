@@ -231,12 +231,169 @@ const YellowBtn = ({ onClick, children, disabled }) => (
 
 //  SCREEN — MY APPOINTMENTS LIST
 const MONTHS_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const MONTHS_FULL  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAY_NAMES_SHORT = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
+// Details Modal
+const DetailsModal = ({ appt, onClose, onCancel, cancelling }) => {
+  if (!appt) return null;
+ 
+  const statusColor = {
+    Confirmed: { bg: '#e6f9ee', text: '#1a7a3a', border: '#7ec07e' },
+    Pending:   { bg: '#fff3dc', text: '#b45309', border: '#f0c060' },
+    Completed: { bg: '#e8f0fb', text: '#1a4a8a', border: '#90b4e8' },
+    Cancelled: { bg: '#f0f0f0', text: '#666',    border: '#ccc'    },
+  };
+  const sc = statusColor[appt.status] || statusColor.Pending;
+  const canCancel = appt.status === 'Pending' || appt.status === 'Confirmed';
+ 
+  return (
+    <>
+      {/* Backdrop */}
+      <div onClick={onClose} style={{
+        position: 'fixed', inset: 0,
+        backgroundColor: 'rgba(0,0,0,0.45)',
+        zIndex: 100,
+        animation: 'fadeIn .2s ease',
+      }} />
+ 
+      {/* Modal box */}
+      <div style={{
+        position: 'fixed', top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 101,
+        width: '100%', maxWidth: 520,
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+        overflow: 'hidden',
+        animation: 'slideUp .25s ease',
+      }}>
+ 
+        {/* Header */}
+        <div style={{
+          backgroundColor: '#8a6040',
+          padding: '18px 24px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: '#f0d890', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>
+              Appointment Details
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 900, color: '#fff' }}>{appt.title}</div>
+          </div>
+          <button onClick={onClose} style={{
+            width: 32, height: 32, borderRadius: '50%',
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            border: 'none', cursor: 'pointer', color: '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 18, fontWeight: 700,
+          }}>×</button>
+        </div>
+ 
+        {/* Body */}
+        <div style={{ padding: '22px 24px', backgroundColor: '#fffbe8' }}>
+ 
+          {/* Status */}
+          <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#888' }}>Status:</span>
+            <span style={{
+              padding: '4px 14px', borderRadius: 999, fontSize: 12, fontWeight: 800,
+              backgroundColor: sc.bg, color: sc.text, border: `1px solid ${sc.border}`,
+            }}>{appt.status}</span>
+          </div>
+ 
+          {/* Info rows */}
+          {[
+            { icon: '📅', label: 'Date',     value: `${DAY_NAMES_SHORT[new Date(appt.date).getDay()]}, ${appt.day} ${MONTHS_FULL[parseInt(appt.mon_num) - 1] || appt.mon} ${appt.year}` },
+            { icon: '🕐', label: 'Time',     value: appt.time },
+            { icon: '📋', label: 'Service',  value: appt.title },
+            { icon: '📍', label: 'Location', value: appt.location || 'Grama Niladhari Office' },
+          ].map(row => (
+            <div key={row.label} style={{
+              display: 'flex', alignItems: 'flex-start', gap: 12,
+              padding: '10px 0', borderBottom: '1px solid #f0e8d0',
+            }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>{row.icon}</span>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>{row.label}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#1e1200' }}>{row.value || '—'}</div>
+              </div>
+            </div>
+          ))}
+ 
+          {/* Notes */}
+          {appt.notes && (
+            <div style={{ padding: '10px 0', borderBottom: '1px solid #f0e8d0' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <span style={{ fontSize: 16 }}>📝</span>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Notes</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#666', fontStyle: 'italic', lineHeight: 1.5 }}>"{appt.notes}"</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+ 
+        {/* Footer buttons */}
+        <div style={{
+          padding: '16px 24px',
+          backgroundColor: '#fff',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          borderTop: '1px solid #f0e8d0',
+        }}>
+          <button onClick={onClose} style={{
+            padding: '10px 24px', borderRadius: 999,
+            border: '1.5px solid #e8d5ac', background: '#fff',
+            fontSize: 14, fontWeight: 700, color: '#888',
+            cursor: 'pointer', transition: 'all .15s',
+          }}
+            onMouseOver={e => e.currentTarget.style.borderColor = '#B46A02'}
+            onMouseOut={e  => e.currentTarget.style.borderColor = '#e8d5ac'}
+          >Close</button>
+ 
+          {/* Cancel button — only for Pending or Confirmed */}
+          {canCancel && (
+            <button onClick={onCancel} disabled={cancelling} style={{
+              padding: '10px 24px', borderRadius: 999,
+              border: '1.5px solid #f0a0a0',
+              backgroundColor: cancelling ? '#fde8e8' : '#fff',
+              fontSize: 14, fontWeight: 800, color: '#8b1a1a',
+              cursor: cancelling ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', gap: 7,
+              transition: 'all .15s',
+            }}
+              onMouseOver={e => { if (!cancelling) e.currentTarget.style.backgroundColor = '#fde8e8'; }}
+              onMouseOut={e  => { if (!cancelling) e.currentTarget.style.backgroundColor = '#fff'; }}
+            >
+              {cancelling ? (
+                <>
+                  <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #8b1a1a', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
+                  Cancelling…
+                </>
+              ) : '❌ Cancel Appointment'}
+            </button>
+          )}
+        </div>
+      </div>
+ 
+      <style>{`
+        @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+        @keyframes slideUp { from{transform:translate(-50%,-45%);opacity:0} to{transform:translate(-50%,-50%);opacity:1} }
+        @keyframes spin    { to{transform:rotate(360deg)} }
+      `}</style>
+    </>
+  );
+};
+
+// Appointments List
 const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
   const [tab, setTab] = useState('All');
   const [appts,  setAppts]  = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selAppt,    setSelAppt]    = useState(null);  // selected appt for modal
+  const [cancelling, setCancelling] = useState(false);
 
   const tabs = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled'];
 
@@ -266,11 +423,14 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
             id:     d.id,
             day:    day   || '--',
             mon:    MONTHS_SHORT[(m - 1)] || '---',
+            mon_num:  m,
+            year:     y,
             dow:    isNaN(dateObj) ? '' : DAY_NAMES_SHORT[dateObj.getDay()],
             time:   data.slot    || '',
             title:  data.service || 'Appointment',
             status: data.status  || 'Pending',
             date:   data.date    || '',
+            notes:    data.notes    || '',
           };
         });
         // Sort newest first
@@ -286,133 +446,205 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
     fetchAppts();
   }, [currentUser, refreshKey]); // re-fetch when refreshKey changes
 
+  // Cancel appointment 
+  const handleCancel = async () => {
+    if (!selAppt) return;
+    setCancelling(true);
+    try {
+      await updateDoc(doc(db, 'appointments', selAppt.id), {
+        status: 'Cancelled',
+      });
+      // Update local state immediately — no need to re-fetch
+      setAppts(prev => prev.map(a =>
+        a.id === selAppt.id ? { ...a, status: 'Cancelled' } : a
+      ));
+      setSelAppt(prev => ({ ...prev, status: 'Cancelled' }));
+    } catch (e) {
+      console.error('Cancel error:', e.message);
+      alert('Could not cancel appointment. Please try again.');
+    } finally {
+      setCancelling(false);
+    }
+  };
+ 
   const filtered = tab === 'All' ? appts : appts.filter(a => a.status === tab);
-
-  // Counts for summary cards
   const pendingCount   = appts.filter(a => a.status === 'Pending').length;
   const confirmedCount = appts.filter(a => a.status === 'Confirmed').length;
-
+ 
   const statusColor = {
     Confirmed: { bg: '#e6f9ee', text: '#1a7a3a', border: '#7ec07e' },
     Pending:   { bg: '#fff3dc', text: '#b45309', border: '#f0c060' },
     Completed: { bg: '#e8f0fb', text: '#1a4a8a', border: '#90b4e8' },
     Cancelled: { bg: '#f0f0f0', text: '#666',    border: '#ccc'    },
   };
-  const accentColor = { Confirmed: '#22c55e', Pending: '#f59e0b', Completed: '#3b82f6', Cancelled: '#ccc' };
-
+  const accentColor = {
+    Confirmed: '#22c55e', Pending: '#f59e0b',
+    Completed: '#3b82f6', Cancelled: '#ccc',
+  };
+ 
   return (
-    <div style={S.content}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1e1200', letterSpacing: '-0.4px', marginBottom: 4 }}>My Appointments</h1>
-          <p style={{ fontSize: 13, color: '#888', fontWeight: 600 }}>Manage your scheduled meetings with Grama Niladhari officers.</p>
-        </div>
-        <button onClick={onBook} style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          backgroundColor: '#F5C400', border: 'none', borderRadius: 999,
-          padding: '12px 22px', fontSize: 14, fontWeight: 800, color: '#3d2a00',
-          cursor: 'pointer', transition: 'all .15s',
-          boxShadow: '0 3px 12px rgba(245,196,0,0.35)',
-        }}
-          onMouseOver={e => e.currentTarget.style.backgroundColor = '#d4a800'}
-          onMouseOut={e  => e.currentTarget.style.backgroundColor = '#F5C400'}
-        >
-          <Icon d={IC.plus} size={16} color="#3d2a00" sw={2.5} />
-          Book New Appointment
-        </button>
-      </div>
-
-      {/* Summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 28 }}>
-        <div style={{ backgroundColor: '#f0a060', borderRadius: 16, padding: '22px 24px' }}>
-          <div style={{ fontSize: 36, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{pendingCount}</div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginTop: 6 }}>Pending Announcements</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: 600, marginTop: 3 }}>Awaiting your attention</div>
-        </div>
-        <div style={{ backgroundColor: '#60b880', borderRadius: 16, padding: '22px 24px' }}>
-          <div style={{ fontSize: 36, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{confirmedCount}</div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginTop: 6 }}>Confirmed Appointments</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: 600, marginTop: 3 }}>Upcoming this week</div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '2px solid #e8d5ac', marginBottom: 20 }}>
-        {tabs.map(t => (
-          <button key={t} onClick={() => setTab(t)} style={{
-            padding: '10px 20px', border: 'none', background: 'none',
-            fontSize: 15, fontWeight: tab === t ? 900 : 600,
-            color: tab === t ? '#3d2a00' : '#888', cursor: 'pointer',
-            borderBottom: tab === t ? '3px solid #F5C400' : '3px solid transparent',
-            marginBottom: -2, fontFamily: 'inherit', transition: 'all .15s',
-          }}>{t}</button>
-        ))}
-      </div>
-
-      {/* Loading */}
-      {loading && (
-        <div style={{ textAlign: 'center', padding: '48px 24px' }}>
-          <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #F5C400', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
-          <div style={{ fontSize: 14, color: '#aaa', fontWeight: 600 }}>Loading your appointments…</div>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
+    <>
+      {/* Details modal */}
+      {selAppt && (
+        <DetailsModal
+          appt={selAppt}
+          onClose={() => setSelAppt(null)}
+          onCancel={handleCancel}
+          cancelling={cancelling}
+        />
       )}
-
-      {/* Appointment cards */}
-      {!loading && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {filtered.map(a => (
-            <div key={a.id} style={{
-              ...S.card,
-              borderLeft: `5px solid ${accentColor[a.status]} || '#ccc'}`,
-              padding: '20px 24px',
-              display: 'flex', alignItems: 'center', gap: 20,
-            }}>
-              {/* Date block */}
-              <div style={{ textAlign: 'center', minWidth: 52 }}>
-                <div style={{ fontSize: 34, fontWeight: 900, color: '#1e1200', lineHeight: 1 }}>{a.day}</div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 0.5 }}>{a.mon}</div>
-              </div>
-              {/* Info */}
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#888', marginBottom: 4 }}>
-                  {a.dow} {a.dow && a.time ? ' · ' : ''} {a.time}
-                </div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200' }}>{a.title}</div>
-              </div>
-              {/* Status chip */}
-              <div style={{
-                padding: '5px 14px', borderRadius: 999, fontSize: 12, fontWeight: 800,
-                backgroundColor: statusColor[a.status].bg,
-                color: statusColor[a.status].text,
-                border: `1px solid ${statusColor[a.status].border}`,
-                flexShrink: 0,
-              }}>{a.status}</div>
-            </div>
+ 
+      <div style={S.content}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div>
+            <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1e1200', letterSpacing: '-0.4px', marginBottom: 4 }}>My Appointments</h1>
+            <p style={{ fontSize: 13, color: '#888', fontWeight: 600 }}>Manage your scheduled meetings with Grama Niladhari officers.</p>
+          </div>
+          <button onClick={onBook} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            backgroundColor: '#F5C400', border: 'none', borderRadius: 999,
+            padding: '12px 22px', fontSize: 14, fontWeight: 800, color: '#3d2a00',
+            cursor: 'pointer', transition: 'all .15s',
+            boxShadow: '0 3px 12px rgba(245,196,0,0.35)',
+          }}
+            onMouseOver={e => e.currentTarget.style.backgroundColor = '#d4a800'}
+            onMouseOut={e  => e.currentTarget.style.backgroundColor = '#F5C400'}
+          >
+            <Icon d={IC.plus} size={16} color="#3d2a00" sw={2.5} />
+            Book New Appointment
+          </button>
+        </div>
+ 
+        {/* Summary cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 28 }}>
+          <div style={{ backgroundColor: '#f0a060', borderRadius: 16, padding: '22px 24px' }}>
+            <div style={{ fontSize: 36, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{pendingCount}</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginTop: 6 }}>Pending Appointments</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: 600, marginTop: 3 }}>Awaiting GN Officer approval</div>
+          </div>
+          <div style={{ backgroundColor: '#60b880', borderRadius: 16, padding: '22px 24px' }}>
+            <div style={{ fontSize: 36, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{confirmedCount}</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginTop: 6 }}>Confirmed Appointments</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: 600, marginTop: 3 }}>Upcoming this week</div>
+          </div>
+        </div>
+ 
+        {/* Tabs */}
+        <div style={{ display: 'flex', borderBottom: '2px solid #e8d5ac', marginBottom: 20 }}>
+          {tabs.map(t => (
+            <button key={t} onClick={() => setTab(t)} style={{
+              padding: '10px 20px', border: 'none', background: 'none',
+              fontSize: 15, fontWeight: tab === t ? 900 : 600,
+              color: tab === t ? '#3d2a00' : '#888', cursor: 'pointer',
+              borderBottom: tab === t ? '3px solid #F5C400' : '3px solid transparent',
+              marginBottom: -2, fontFamily: 'inherit', transition: 'all .15s',
+            }}>{t}</button>
           ))}
-
-          {filtered.length === 0 && (
-            <div style={{ ...S.card, textAlign: 'center', padding: '52px 24px' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📅</div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', marginBottom: 8 }}>
-                {tab === 'All' ? 'No appointments yet' : `No ${tab.toLowerCase()} appointments`}
-              </div>
-              <div style={{ fontSize: 13, color: '#aaa', fontWeight: 600, marginBottom: 20 }}>
-                {tab === 'All' ? 'Book your first appointment with your GN Officer.' : `You have no ${tab.toLowerCase()} appointments at the moment.`}
-              </div>
-              {tab === 'All' && (
-                <button onClick={onBook} style={{
-                  backgroundColor: '#F5C400', border: 'none', borderRadius: 999,
-                  padding: '11px 22px', fontSize: 14, fontWeight: 800,
-                  color: '#3d2a00', cursor: 'pointer',
-                }}>+ Book New Appointment</button>
-              )}
-            </div>
-          )}
         </div>
-      )}
-    </div>
+ 
+        {/* Loading */}
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '48px 24px' }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #F5C400', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
+            <div style={{ fontSize: 14, color: '#aaa', fontWeight: 600 }}>Loading your appointments…</div>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        )}
+ 
+        {/* Appointment cards */}
+        {!loading && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {filtered.map(a => (
+              <div key={a.id} style={{
+                ...S.card,
+                borderLeft: `5px solid ${accentColor[a.status] || '#ccc'}`,
+                padding: '18px 22px',
+                display: 'flex', alignItems: 'center', gap: 20,
+                opacity: a.status === 'Cancelled' ? 0.65 : 1,
+                transition: 'all .15s',
+              }}>
+                {/* Date block */}
+                <div style={{ textAlign: 'center', minWidth: 52, flexShrink: 0 }}>
+                  <div style={{ fontSize: 34, fontWeight: 900, color: '#1e1200', lineHeight: 1 }}>{a.day}</div>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 0.5 }}>{a.mon}</div>
+                </div>
+ 
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#888', marginBottom: 4 }}>
+                    {a.dow}{a.dow && a.time ? ' · ' : ''}{a.time}
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {a.title}
+                  </div>
+                </div>
+ 
+                {/* Status chip */}
+                <div style={{
+                  padding: '5px 14px', borderRadius: 999, fontSize: 12, fontWeight: 800,
+                  backgroundColor: (statusColor[a.status] || statusColor.Pending).bg,
+                  color:           (statusColor[a.status] || statusColor.Pending).text,
+                  border: `1px solid ${(statusColor[a.status] || statusColor.Pending).border}`,
+                  flexShrink: 0,
+                }}>{a.status}</div>
+ 
+                {/* Action buttons */}
+                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                  {/* View Details */}
+                  <button onClick={() => setSelAppt(a)} style={{
+                    padding: '7px 16px', borderRadius: 999,
+                    border: '1.5px solid #e8d5ac', backgroundColor: '#fff',
+                    fontSize: 12, fontWeight: 800, color: '#3d2a00',
+                    cursor: 'pointer', transition: 'all .15s',
+                  }}
+                    onMouseOver={e => { e.currentTarget.style.borderColor = '#B46A02'; e.currentTarget.style.backgroundColor = '#fff8e0'; }}
+                    onMouseOut={e  => { e.currentTarget.style.borderColor = '#e8d5ac'; e.currentTarget.style.backgroundColor = '#fff'; }}
+                  >
+                    👁 Details
+                  </button>
+ 
+                  {/* Cancel — only Pending/Confirmed */}
+                  {(a.status === 'Pending' || a.status === 'Confirmed') && (
+                    <button onClick={() => { setSelAppt(a); }} style={{
+                      padding: '7px 16px', borderRadius: 999,
+                      border: '1.5px solid #f0a0a0', backgroundColor: '#fff',
+                      fontSize: 12, fontWeight: 800, color: '#8b1a1a',
+                      cursor: 'pointer', transition: 'all .15s',
+                    }}
+                      onMouseOver={e => { e.currentTarget.style.backgroundColor = '#fde8e8'; }}
+                      onMouseOut={e  => { e.currentTarget.style.backgroundColor = '#fff'; }}
+                    >
+                      ❌ Cancel
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+ 
+            {/* Empty state */}
+            {filtered.length === 0 && (
+              <div style={{ ...S.card, textAlign: 'center', padding: '52px 24px' }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📅</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', marginBottom: 8 }}>
+                  {tab === 'All' ? 'No appointments yet' : `No ${tab.toLowerCase()} appointments`}
+                </div>
+                <div style={{ fontSize: 13, color: '#aaa', fontWeight: 600, marginBottom: 20 }}>
+                  {tab === 'All' ? 'Book your first appointment with your GN Officer.' : `You have no ${tab.toLowerCase()} appointments at the moment.`}
+                </div>
+                {tab === 'All' && (
+                  <button onClick={onBook} style={{
+                    backgroundColor: '#F5C400', border: 'none', borderRadius: 999,
+                    padding: '11px 22px', fontSize: 14, fontWeight: 800,
+                    color: '#3d2a00', cursor: 'pointer',
+                  }}>+ Book New Appointment</button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </>
   );
 };
  
@@ -790,7 +1022,7 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
           padding: '22px 24px',
         }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-            {/* Left: appointment details */}
+            {/* Left - appointment details */}
             <div>
               <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>Appointment Details</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -810,7 +1042,7 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
                 </div>
               </div>
             </div>
-            {/* Right: applicant info */}
+            {/* Right - applicant info */}
             <div>
               <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>Applicant Information</div>
               <div style={{ fontSize: 15, fontWeight: 900, color: '#1e1200', marginBottom: 4 }}>
@@ -868,7 +1100,6 @@ const BookSuccess = ({ onBack }) => (
   </div>
 );
 
-// 
 //  MAIN COMPONENT
 const Appointments = () => {
   const navigate = useNavigate();
