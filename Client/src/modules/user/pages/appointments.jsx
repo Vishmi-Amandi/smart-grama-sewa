@@ -242,15 +242,22 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
 
   // Fetch this user's appointments from Firestore
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      setLoading(false);
+      return;
+    }
     const fetchAppts = async () => {
       setLoading(true);
       try {
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), 10000)
+        );
         const q = query(
           collection(db, 'appointments'),
           where('uid', '==', currentUser.uid),
         );
-        const snap = await getDocs(q);
+        const snap = await Promise.race([getDocs(q), timeoutPromise]);
+
         const list = snap.docs.map(d => {
           const data = d.data();
           const [y, m, day] = (data.date || '').split('-').map(Number);
@@ -270,7 +277,8 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
         list.sort((a, b) => b.date.localeCompare(a.date));
         setAppts(list);
       } catch (e) {
-        console.error('Fetch appointments error:', e.message);
+        console.error('Fetch appointments error:', e.code, e.message);
+        setAppts([]);
       } finally {
         setLoading(false);
       }
@@ -947,7 +955,7 @@ const Appointments = () => {
         <div style={S.main}>
           <Topbar chipName={chipName} />
 
-          {screen === 'list'    && <AppointmentsList userData={userData} onBook={() => { setBooking({ service: null, notes: '', day: null, month: null, year: null, slot: null }); setScreen('step1'); }} />}
+          {screen === 'list'    && <AppointmentsList currentUser={currentUser} refreshKey={refreshKey} onBook={() => { setBooking({ service: null, notes: '', day: null, month: null, year: null, slot: null }); setScreen('step1'); }} />}
           {screen === 'step1'   && <BookStep1  booking={booking} setBooking={setBooking} onNext={() => setScreen('step2')} onCancel={() => setScreen('list')} />}
           {screen === 'step2'   && <BookStep2  booking={booking} setBooking={setBooking} onNext={() => setScreen('step3')} onBack={() => setScreen('step1')} />}
           {screen === 'step3'   && <BookStep3  booking={booking} userData={userData} currentUser={currentUser} onBack={() => setScreen('step2')} onSubmit={handleSubmit} submitting={submitting} />}
