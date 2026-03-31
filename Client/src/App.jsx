@@ -1,8 +1,7 @@
-// src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-// ── Page imports ──────────────────────────────────────────────────────────
+// Page imports
 import Login       from './modules/user/pages/Login';
 import SignUp       from './modules/user/pages/SignUp';
 import Dashboard   from './modules/user/pages/dashboard';
@@ -10,7 +9,7 @@ import Profile     from './modules/user/pages/Profile';
 import Appointments from './modules/user/pages/appointments';
 import Announcements from './modules/user/pages/announcements';
 
-// ── Protected route wrapper ───────────────────────────────────────────────
+// Protected route wrapper
 // Redirects to /login if Firebase user is not logged in
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -50,7 +49,6 @@ const ProtectedRoute = ({ children }) => {
   return isAuth ? children : <Navigate to="/login" replace />;
 };
 
-// ─────────────────────────────────────────────────────────────────────────
 const App = () => {
   return (
     <Router>
