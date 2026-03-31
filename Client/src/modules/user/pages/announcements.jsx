@@ -3,6 +3,63 @@ import { useNavigate } from 'react-router-dom';
 import { collection, query, orderBy, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 
+// Icons 
+const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+    <path d={d} />
+  </svg>
+);
+
+const Icons = {
+  dashboard:     'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10',
+  announcement:  'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
+  appointments:  'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
+  forms:         'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
+  ai:            'M12 2a10 10 0 100 20A10 10 0 0012 2z M12 8v4l3 3',
+  profile:       'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8z',
+  settings:      'M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z',
+  logout:        'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4 M16 17l5-5-5-5 M21 12H9',
+  bell:          'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
+  search:        'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0',
+  calendar:      'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
+  download:      'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4 M7 10l5 5 5-5 M12 15V3',
+  phone:         'M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z',
+  chevLeft:      'M15 18l-6-6 6-6',
+  chevRight:     'M9 18l6-6-6-6',
+};
+
+// Nav item 
+const NavItem = ({ iconPath, label, active, onClick }) => (
+  <button
+    onClick={onClick}
+    style={{
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      padding: '11px 16px',
+      borderRadius: '10px',
+      border: 'none',
+      cursor: 'pointer',
+      backgroundColor: active ? 'rgba(255,255,255,0.9)' : 'transparent',
+      color: active ? '#3d2a00' : '#3d2a00',
+      fontWeight: active ? 800 : 600,
+      fontSize: '14px',
+      fontFamily: 'inherit',
+      transition: 'all 0.15s',
+      textAlign: 'left',
+      boxShadow: active ? '0 2px 8px rgba(0,0,0,0.12)' : 'none',
+      marginBottom: '2px',
+    }}
+    onMouseOver={(e) => { if (!active) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.4)'; }}
+    onMouseOut={(e)  => { if (!active) e.currentTarget.style.backgroundColor = 'transparent'; }}
+  >
+    <Icon d={iconPath} size={18} color={active ? '#B46A02' : '#5a3a00'} />
+    {label}
+  </button>
+);
+
 const Announcements = () => {
   const [announcements, setAnnouncements] = useState([]);
   const [filteredAnnouncements, setFilteredAnnouncements] = useState([]);
@@ -205,10 +262,18 @@ const Announcements = () => {
           </div>
         )}
       </div>
-
-      <div className="text-center text-gray-400 text-sm py-4">
+      
+      {/* Footer */}
+      <footer style={{
+        backgroundColor: '#6A2301',
+        color: '#fff',
+        textAlign: 'center',
+        padding: '13px 16px',
+        fontSize: '13px',
+        fontWeight: 600,
+      }}>
         ©2026 Smart Grama Sewa
-      </div>
+      </footer>
     </div>
   );
 };
