@@ -312,6 +312,7 @@ const Dashboard = () => {
                 onClick={() => {
                   if (item.key === 'announcements')  navigate('/announcements');
                   else if (item.key === 'appointments')  navigate('/appointments');
+                  else if (item.key === 'settings')  navigate('/settings');
                   else setActivePage(item.key);
                 }}
               />

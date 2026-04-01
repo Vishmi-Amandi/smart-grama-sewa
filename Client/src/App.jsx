@@ -8,6 +8,7 @@ import Dashboard   from './modules/user/pages/dashboard';
 import Profile     from './modules/user/pages/Profile';
 import Appointments from './modules/user/pages/appointments';
 import Announcements from './modules/user/pages/announcements';
+import Settings      from './modules/user/pages/settings';
 
 // Protected route wrapper
 // Redirects to /login if Firebase user is not logged in
@@ -70,6 +71,9 @@ const App = () => {
         } />
         <Route path="/announcements" element={
           <ProtectedRoute><Announcements /></ProtectedRoute>
+        } />
+        <Route path="/settings" element={
+          <ProtectedRoute><Settings /></ProtectedRoute>
         } />
 
         {/* ── Default redirect ── */}
