@@ -290,43 +290,48 @@ const Announcements = () => {
   }, [navigate]);
 
   // Fetch
+  const SAMPLE_DATA = [
+    { id: 's1',  tag: 'Urgent',       title: 'Water Supply Interruption — Ward 7',    body: 'There will be a temporary water supply interruption in Ward 7 on 3 April 2026 from 9 AM to 5 PM due to maintenance work on the main pipeline. Please store water in advance.',                                                        dateLabel: '28 Mar 2026' },
+    { id: 's2',  tag: 'Important',    title: 'Gram Sabha Meeting — April 2026',        body: 'Monthly Gram Sabha meeting is scheduled for 5 April 2026 at 10 AM in the Panchayat Hall. All ward citizens are requested to attend and raise local issues. Refreshments will be provided.',                                             dateLabel: '26 Mar 2026' },
+    { id: 's3',  tag: 'Information',  title: 'Income Certificate Service Resumed',     body: 'Income Certificate applications are now open again. Citizens who could not apply during the maintenance period may now submit their applications through the portal or visit the GN Office directly.',                                    dateLabel: '25 Mar 2026' },
+    { id: 's4',  tag: 'Urgent',       title: 'Road Repair — Main Street Closure',      body: 'Road repair work on Main Street will begin on 7 April 2026. Expect partial road closures from 8 AM to 6 PM daily for approximately one week. Alternative routes are available via Temple Road.',                                        dateLabel: '24 Mar 2026' },
+    { id: 's5',  tag: 'Important',    title: 'New GN Office Hours from April 2026',    body: 'Starting from April 2026, the Grama Niladhari Office will operate Monday to Friday from 8:30 AM to 4:30 PM. Saturday hours remain 9 AM to 1 PM. The office will be closed on all public holidays.',                                    dateLabel: '22 Mar 2026' },
+    { id: 's6',  tag: 'Information',  title: 'Digital Certificates Now Available',     body: 'You can now download your digitally signed certificates directly from the portal. No need to visit the office for certified copies. Navigate to Forms and Documents to download your certificates.',                                     dateLabel: '20 Mar 2026' },
+    { id: 's7',  tag: 'Urgent',       title: 'Electricity Shutdown — Zone 3',          body: 'Planned electricity shutdown in Zone 3 on 10 April 2026 from 8 AM to 2 PM for grid maintenance. Please make necessary arrangements in advance and store water if needed.',                                                              dateLabel: '18 Mar 2026' },
+    { id: 's8',  tag: 'Important',    title: 'Land Tax Payment Deadline',              body: 'The deadline for land tax payment for the first quarter of 2026 is 30 April 2026. Payments can be made at the Divisional Secretariat Office or online through the official government portal.',                                         dateLabel: '15 Mar 2026' },
+    { id: 's9',  tag: 'Information',  title: 'Free Health Camp — 15 April',            body: 'A free health camp will be held on 15 April 2026 at the Community Hall from 9 AM to 3 PM. Services include blood pressure checks, diabetes screening, eye tests, and general medical consultations.',                                  dateLabel: '12 Mar 2026' },
+    { id: 's10', tag: 'Important',    title: 'Voter Registration Drive',               body: 'A voter registration drive will be conducted from 1 to 15 April 2026. All eligible citizens who have not yet registered are encouraged to visit the GN Office with their National Identity Card to complete the registration process.',  dateLabel: '10 Mar 2026' },
+    { id: 's11', tag: 'Urgent',       title: 'Dengue Prevention Drive',                body: 'The local health authority will conduct a dengue prevention inspection in all wards from 12 to 20 April 2026. Citizens are requested to clear all stagnant water and maintain clean surroundings around their homes.',                  dateLabel: '08 Mar 2026' },
+    { id: 's12', tag: 'Information',  title: 'Community Tree Planting Programme',      body: 'A community tree planting programme is scheduled for 20 April 2026 at the school grounds. All community members are welcome to participate. Saplings will be provided free of charge by the divisional office.',                       dateLabel: '05 Mar 2026' },
+  ];
+
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
+      setAnnouncements(SAMPLE_DATA);
+      setLoading(false);
+      
       try {
-        const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 10000));
+        const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
         const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'));
         const snap = await Promise.race([getDocs(q), timeout]);
-        const list = snap.docs.map(d => {
-          const data = d.data();
-          const ts = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
-          return {
-            id:        d.id,
-            title:     data.title || 'Announcement',
-            body:      data.body  || data.message || '',
-            tag:       data.tag   || 'Information',
-            dateLabel: ts.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-          };
-        });
-        setAnnouncements(list);
+        
+        if (snap.docs.length > 0) {
+          const list = snap.docs.map(d => {
+            const data = d.data();
+            const ts = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+            return {
+              id:        d.id,
+              title:     data.title || 'Announcement',
+              body:      data.body  || data.message || '',
+              tag:       data.tag   || 'Information',
+              dateLabel: ts.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            };
+          });
+          setAnnouncements(list);
+        }
       } catch (e) {
         // Fallback sample data for development / missing Firestore index
-        setAnnouncements([
-          { id: 's1',  tag: 'Urgent',       title: 'Water Supply Interruption — Ward 7',    body: 'There will be a temporary water supply interruption in Ward 7 on 3 April 2026 from 9 AM to 5 PM due to maintenance work on the main pipeline. Please store water in advance.',                                                        dateLabel: '28 Mar 2026' },
-          { id: 's2',  tag: 'Important',    title: 'Gram Sabha Meeting — April 2026',        body: 'Monthly Gram Sabha meeting is scheduled for 5 April 2026 at 10 AM in the Panchayat Hall. All ward citizens are requested to attend and raise local issues. Refreshments will be provided.',                                             dateLabel: '26 Mar 2026' },
-          { id: 's3',  tag: 'Information',  title: 'Income Certificate Service Resumed',     body: 'Income Certificate applications are now open again. Citizens who could not apply during the maintenance period may now submit their applications through the portal or visit the GN Office directly.',                                    dateLabel: '25 Mar 2026' },
-          { id: 's4',  tag: 'Urgent',       title: 'Road Repair — Main Street Closure',      body: 'Road repair work on Main Street will begin on 7 April 2026. Expect partial road closures from 8 AM to 6 PM daily for approximately one week. Alternative routes are available via Temple Road.',                                        dateLabel: '24 Mar 2026' },
-          { id: 's5',  tag: 'Important',    title: 'New GN Office Hours from April 2026',    body: 'Starting from April 2026, the Grama Niladhari Office will operate Monday to Friday from 8:30 AM to 4:30 PM. Saturday hours remain 9 AM to 1 PM. The office will be closed on all public holidays.',                                    dateLabel: '22 Mar 2026' },
-          { id: 's6',  tag: 'Information',  title: 'Digital Certificates Now Available',     body: 'You can now download your digitally signed certificates directly from the portal. No need to visit the office for certified copies. Navigate to Forms and Documents to download your certificates.',                                     dateLabel: '20 Mar 2026' },
-          { id: 's7',  tag: 'Urgent',       title: 'Electricity Shutdown — Zone 3',          body: 'Planned electricity shutdown in Zone 3 on 10 April 2026 from 8 AM to 2 PM for grid maintenance. Please make necessary arrangements in advance and store water if needed.',                                                              dateLabel: '18 Mar 2026' },
-          { id: 's8',  tag: 'Important',    title: 'Land Tax Payment Deadline',              body: 'The deadline for land tax payment for the first quarter of 2026 is 30 April 2026. Payments can be made at the Divisional Secretariat Office or online through the official government portal.',                                         dateLabel: '15 Mar 2026' },
-          { id: 's9',  tag: 'Information',  title: 'Free Health Camp — 15 April',            body: 'A free health camp will be held on 15 April 2026 at the Community Hall from 9 AM to 3 PM. Services include blood pressure checks, diabetes screening, eye tests, and general medical consultations.',                                  dateLabel: '12 Mar 2026' },
-          { id: 's10', tag: 'Important',    title: 'Voter Registration Drive',               body: 'A voter registration drive will be conducted from 1 to 15 April 2026. All eligible citizens who have not yet registered are encouraged to visit the GN Office with their National Identity Card to complete the registration process.',  dateLabel: '10 Mar 2026' },
-          { id: 's11', tag: 'Urgent',       title: 'Dengue Prevention Drive',                body: 'The local health authority will conduct a dengue prevention inspection in all wards from 12 to 20 April 2026. Citizens are requested to clear all stagnant water and maintain clean surroundings around their homes.',                  dateLabel: '08 Mar 2026' },
-          { id: 's12', tag: 'Information',  title: 'Community Tree Planting Programme',      body: 'A community tree planting programme is scheduled for 20 April 2026 at the school grounds. All community members are welcome to participate. Saplings will be provided free of charge by the divisional office.',                       dateLabel: '05 Mar 2026' },
-        ]);
-      } finally {
-        setLoading(false);
+        console.warn('Firestore announcements not available, showing sample data.');
       }
     };
     fetchData();
@@ -343,42 +348,6 @@ const Announcements = () => {
     } catch (e) { console.warn('Mark read error:', e.message); }
   };
 
-  /*const markAllAsRead = async () => {
-  if (!currentUser) return;
-  
-  // Get all unread announcement IDs
-  const unreadIds = announcements
-    .filter(a => !readIds.has(a.id))
-    .map(a => a.id);
-  
-  if (unreadIds.length === 0) return;
-  
-  try {
-    await updateDoc(doc(db, 'users', currentUser.uid), {
-      readAnnouncements: arrayUnion(...unreadIds)
-    });
-    setReadIds(prev => new Set([...prev, ...unreadIds]));
-  } catch (error) {
-    console.error('Error marking all as read:', error);
-  }
-};
-
-<button
-  onClick={markAllAsRead}
-  style={{
-    padding: '8px 20px',
-    borderRadius: 999,
-    border: '1.5px solid #d4c9a8',
-    backgroundColor: '#fff',
-    fontSize: 13,
-    fontWeight: 700,
-    color: '#B46A02',
-    cursor: 'pointer',
-  }}
->
-  ✓ Mark all as read
-</button>
-*/
   const handleLogout = async () => { await signOut(auth); navigate('/login'); };
 
   // Filter
@@ -414,6 +383,33 @@ const Announcements = () => {
             <h1 style={{ fontSize: 28, fontWeight: 900, color: '#1e1200', marginBottom: 22, letterSpacing: '-0.4px' }}>
               Announcements
             </h1>
+
+            {/* Mark all as read button */}
+            {announcements.filter(a => !readIds.has(a.id)).length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                <button
+                  onClick={async () => {
+                    const allIds = announcements.map(a => a.id);
+                    setReadIds(new Set(allIds));
+                    if (currentUser) {
+                      await updateDoc(doc(db, 'users', currentUser.uid), {
+                        readAnnouncements: allIds,
+                      });
+                    }
+                  }}
+                  style={{
+                    padding: '8px 20px', borderRadius: 999,
+                    border: '1.5px solid #e8d5ac', backgroundColor: '#fff',
+                    fontSize: 13, fontWeight: 800, color: '#3d2a00',
+                    cursor: 'pointer', transition: 'all .15s',
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.backgroundColor = '#fff8e0'; e.currentTarget.style.borderColor = '#F5C400'; }}
+                  onMouseOut={e  => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#e8d5ac'; }}
+                >
+                  ✓ Mark all as read
+                </button>
+              </div>
+            )}
 
             {/* Pill filter tabs */}
             <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
