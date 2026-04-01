@@ -22,27 +22,46 @@ const IC = {
   logout:    'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4 M16 17l5-5-5-5 M21 12H9',
   search:    'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0',
   bell:      'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
-  check:     'M20 6L9 17l-5-5',
   globe:     'M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z M2 12h20',
-  moon:      'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z',
-  sun:       'M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42 M12 17a5 5 0 100-10 5 5 0 000 10z',
-  lock:      'M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2z M7 11V7a5 5 0 0110 0v4',
+  palette:   'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8z',
+  notif:     'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
+  shield:    'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
   user:      'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8z',
 };
 
-// Shared layout
-const S = {
-  page:    { minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'Nunito, system-ui, sans-serif', backgroundColor: '#f5f0e8' },
-  shell:   { flex: 1, display: 'flex' },
-  sidebar: { width: '235px', flexShrink: 0, backgroundColor: '#F5C400', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', overflowY: 'auto' },
-  main:    { flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 },
-  topbar:  { height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #e8d8b0', display: 'flex', alignItems: 'center', padding: '0 28px', gap: '14px', position: 'sticky', top: 0, zIndex: 40 },
-  content: { padding: '28px 32px', flex: 1 },
-  footer:  { backgroundColor: '#6A2301', color: '#fff', textAlign: 'center', padding: '13px 16px', fontSize: '13px', fontWeight: 600 },
-  card:    { backgroundColor: '#fff', border: '1.5px solid #e8d5ac', borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' },
+// Apply theme to the whole app
+const applySettings = (s) => {
+  const root = document.documentElement;
+
+  if (s.theme === 'dark') {
+    root.setAttribute('data-theme', 'dark');
+    root.style.colorScheme = 'dark';
+    // Apply dark CSS variables
+    root.style.setProperty('--bg-page',    '#1a1a2e');
+    root.style.setProperty('--bg-sidebar', '#16213e');
+    root.style.setProperty('--bg-card',    '#2d2d44');
+    root.style.setProperty('--bg-topbar',  '#16213e');
+    root.style.setProperty('--text-main',  '#f0f0f0');
+    root.style.setProperty('--text-sub',   '#aaaacc');
+    root.style.setProperty('--border',     '#3a3a5c');
+  } else {
+    root.setAttribute('data-theme', 'light');
+    root.style.colorScheme = 'light';
+    root.style.setProperty('--bg-page',    '#f5f0e8');
+    root.style.setProperty('--bg-sidebar', '#F5C400');
+    root.style.setProperty('--bg-card',    '#ffffff');
+    root.style.setProperty('--bg-topbar',  '#ffffff');
+    root.style.setProperty('--text-main',  '#1e1200');
+    root.style.setProperty('--text-sub',   '#888888');
+    root.style.setProperty('--border',     '#e8d5ac');
+  }
+
+  // Text size
+  const sizes = { small: '14px', normal: '16px', large: '18px' };
+  root.style.fontSize = sizes[s.textSize] || '16px';
 };
 
-// NavItem
+// NavItem 
 const NavItem = ({ d, label, active, onClick }) => (
   <button onClick={onClick} style={{
     width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
@@ -60,9 +79,9 @@ const NavItem = ({ d, label, active, onClick }) => (
   </button>
 );
 
-// Sidebar
+// Sidebar 
 const Sidebar = ({ active, navigate, onLogout }) => (
-  <div style={S.sidebar}>
+  <div style={{ width: '235px', flexShrink: 0, backgroundColor: '#F5C400', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', overflowY: 'auto' }}>
     <div style={{ padding: '18px 18px 14px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
       <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '80px', width: 'auto' }} />
     </div>
@@ -93,7 +112,7 @@ const Sidebar = ({ active, navigate, onLogout }) => (
 
 // Topbar
 const Topbar = ({ chipName }) => (
-  <div style={S.topbar}>
+  <div style={{ height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #e8d8b0', display: 'flex', alignItems: 'center', padding: '0 28px', gap: '14px', position: 'sticky', top: 0, zIndex: 40 }}>
     <div style={{ flex: 1, maxWidth: 420, display: 'flex', alignItems: 'center', gap: 10, backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: 999, padding: '9px 18px' }}>
       <Icon d={IC.search} size={16} color="#aaa" />
       <span style={{ fontSize: 14, color: '#bbb', fontWeight: 600 }}>search</span>
@@ -112,80 +131,85 @@ const Topbar = ({ chipName }) => (
   </div>
 );
 
-// Section heading
-const SectionTitle = ({ children }) => (
-  <div style={{ fontSize: 16, fontWeight: 900, color: '#1e1200', marginBottom: 16, paddingBottom: 10, borderBottom: '1.5px solid #f0e8d0' }}>
-    {children}
-  </div>
-);
-
-// Option card (selectable)
-const OptionCard = ({ selected, onClick, children }) => (
+// Radio option row
+const RadioOption = ({ selected, onClick, label, sub }) => (
   <div onClick={onClick} style={{
-    padding: '14px 18px',
-    border: selected ? '2px solid #F5C400' : '1.5px solid #e8d5ac',
+    display: 'flex', alignItems: 'center', gap: 16,
+    padding: '16px 20px',
+    backgroundColor: '#fff',
     borderRadius: 12,
-    backgroundColor: selected ? '#fff8e0' : '#fff',
+    marginBottom: 10,
     cursor: 'pointer',
+    border: '1.5px solid transparent',
     transition: 'all .15s',
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    boxShadow: selected ? '0 2px 10px rgba(245,196,0,0.2)' : 'none',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
   }}
-    onMouseOver={e => { if (!selected) { e.currentTarget.style.borderColor = '#B46A02'; e.currentTarget.style.backgroundColor = '#fffbe0'; } }}
-    onMouseOut={e  => { if (!selected) { e.currentTarget.style.borderColor = '#e8d5ac'; e.currentTarget.style.backgroundColor = '#fff'; } }}
+    onMouseOver={e => { if (!selected) e.currentTarget.style.border = '1.5px solid #F5C400'; }}
+    onMouseOut={e  => { if (!selected) e.currentTarget.style.border = '1.5px solid transparent'; }}
   >
-    {children}
-    {/* Checkmark */}
-    {selected && (
-      <div style={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: '#F5C400', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginLeft: 12 }}>
-        <Icon d={IC.check} size={12} color="#3d2a00" sw={2.5} />
-      </div>
-    )}
+    {/* Radio circle */}
+    <div style={{
+      width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+      border: selected ? '6px solid #1e1200' : '2px solid #ccc',
+      backgroundColor: '#fff',
+      transition: 'all .15s',
+    }} />
+    <div>
+      <div style={{ fontSize: 15, fontWeight: 700, color: '#1e1200' }}>{label}</div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: '#aaa', marginTop: 2 }}>{sub}</div>
+    </div>
   </div>
 );
 
-// Save toast
-const SaveToast = ({ show }) => (
+// Horizontal tab
+const HTab = ({ icon, label, active, onClick }) => (
+  <button onClick={onClick} style={{
+    display: 'flex', alignItems: 'center', gap: 7,
+    padding: '12px 18px', border: 'none', background: 'none',
+    fontSize: 14, fontWeight: active ? 800 : 600,
+    color: active ? '#1e1200' : '#888',
+    borderBottom: active ? '2.5px solid #1e1200' : '2.5px solid transparent',
+    marginBottom: -2, cursor: 'pointer', fontFamily: 'inherit',
+    transition: 'all .15s', flexShrink: 0,
+  }}
+    onMouseOver={e => { if (!active) e.currentTarget.style.color = '#3d2a00'; }}
+    onMouseOut={e  => { if (!active) e.currentTarget.style.color = '#888'; }}
+  >
+    <span style={{ fontSize: 16 }}>{icon}</span>
+    {label}
+  </button>
+);
+
+// Toast
+const Toast = ({ show }) => (
   <div style={{
-    position: 'fixed', bottom: 28, right: 28, zIndex: 200,
+    position: 'fixed', bottom: 28, right: 28, zIndex: 999,
     backgroundColor: '#1e1200', color: '#fff',
     padding: '12px 22px', borderRadius: 12,
     fontSize: 13, fontWeight: 700,
-    boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
     opacity: show ? 1 : 0,
     transform: show ? 'translateY(0)' : 'translateY(12px)',
     transition: 'all .3s ease',
     pointerEvents: 'none',
-    display: 'flex', alignItems: 'center', gap: 8,
   }}>
-    <Icon d={IC.check} size={15} color="#F5C400" sw={2.5} />
-    Settings saved!
+    ✓ Settings saved
   </div>
 );
 
-//  MAIN COMPONENT
+//  MAIN
 const Settings = () => {
   const navigate = useNavigate();
 
-  // Auth
   const [currentUser, setCurrentUser] = useState(null);
   const [userData,    setUserData]    = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // Settings tabs
   const [activeTab, setActiveTab] = useState('language');
-
-  // Settings values
-  const [settings, setSettings] = useState({
-    language: 'en',
-    theme:    'light',
-    textSize: 'normal',
-  });
-
-  // Toast
+  const [settings, setSettings]   = useState({ language: 'en', theme: 'light', textSize: 'normal' });
   const [showToast, setShowToast] = useState(false);
 
-  // Auth listener
+  // Auth
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -202,7 +226,7 @@ const Settings = () => {
     return () => unsub();
   }, [navigate]);
 
-  // Load saved settings from localStorage on mount
+  // Load saved settings on mount
   useEffect(() => {
     const saved = localStorage.getItem('userSettings');
     if (saved) {
@@ -210,43 +234,38 @@ const Settings = () => {
         const parsed = JSON.parse(saved);
         setSettings(parsed);
         applySettings(parsed);
-      } catch (e) { console.warn('Could not load settings'); }
+      } catch (e) {}
     }
   }, []);
 
-  // Apply settings to the DOM
   const applySettings = (s) => {
-    // Theme
-    if (s.theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    // Text size
-    const sizes = { small: '14px', normal: '16px', large: '18px' };
-    document.documentElement.style.fontSize = sizes[s.textSize] || '16px';
-  };
+  const root = document.documentElement;
 
-  // Update a single setting
+  // Theme (keep existing code)
+  if (s.theme === 'dark') {
+    root.setAttribute('data-theme', 'dark');
+    // ... rest of dark code
+  } else {
+    root.setAttribute('data-theme', 'light');
+    // ... rest of light code
+  }
+
+  // Text size — use data attribute so CSS can override px values
+  root.setAttribute('data-textsize', s.textSize || 'normal');
+};
+
+  // Update setting
   const updateSetting = (key, value) => {
-    const newSettings = { ...settings, [key]: value };
-    setSettings(newSettings);
-    localStorage.setItem('userSettings', JSON.stringify(newSettings));
-    applySettings(newSettings);
-    // Show save toast
+    const next = { ...settings, [key]: value };
+    setSettings(next);
+    localStorage.setItem('userSettings', JSON.stringify(next));
+    applySettings(next);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2000);
   };
 
   const handleLogout = async () => { await signOut(auth); navigate('/login'); };
   const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
-
-  const SETTING_TABS = [
-    { id: 'language',   icon: '🌐', label: 'Language'          },
-    { id: 'appearance', icon: '🎨', label: 'Appearance'        },
-    { id: 'security',   icon: '🔒', label: 'Privacy & Security'},
-    { id: 'account',    icon: '👤', label: 'Account'           },
-  ];
 
   if (authLoading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f5f0e8' }}>
@@ -255,191 +274,181 @@ const Settings = () => {
     </div>
   );
 
+  // Yellow content card
+  const ContentCard = ({ children }) => (
+    <div style={{
+      backgroundColor: '#fffbe8',
+      border: '1.5px solid #f0e4a0',
+      borderRadius: 16,
+      padding: '28px 28px',
+    }}>
+      {children}
+    </div>
+  );
+
+  const TABS = [
+    { id: 'language',   icon: '🌐', label: 'Language'          },
+    { id: 'appearance', icon: '🎨', label: 'Appearance'        },
+    { id: 'notif',      icon: '🔔', label: 'Notifications'     },
+    { id: 'security',   icon: '🛡️', label: 'Privacy & Security'},
+    { id: 'account',    icon: '👤', label: 'Account'           },
+  ];
+
   return (
-    <div style={S.page}>
-      <div style={S.shell}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'Nunito, system-ui, sans-serif', backgroundColor: '#f5f0e8' }}>
+      <div style={{ flex: 1, display: 'flex' }}>
 
         <Sidebar active="settings" navigate={navigate} onLogout={handleLogout} />
 
-        <div style={S.main}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <Topbar chipName={chipName} />
 
-          <div style={S.content}>
+          <div style={{ padding: '28px 32px', flex: 1 }}>
 
-            {/* Page title */}
+            {/* Title */}
             <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1e1200', marginBottom: 4, letterSpacing: '-0.4px' }}>Settings</h1>
-            <p style={{ fontSize: 13, color: '#888', fontWeight: 600, marginBottom: 28 }}>
-              Manage your account preferences and accessibility options.
+            <p style={{ fontSize: 13, color: '#888', fontWeight: 600, marginBottom: 24 }}>
+              Manage your account preferences and accessibility options
             </p>
 
-            <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-
-              {/* Settings sidebar tabs */}
-              <div style={{ ...S.card, width: 220, flexShrink: 0, padding: '12px 10px' }}>
-                {SETTING_TABS.map(tab => {
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-                      width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 14px', borderRadius: 10, border: 'none',
-                      backgroundColor: isActive ? '#fff8e0' : 'transparent',
-                      color: isActive ? '#B46A02' : '#555',
-                      fontWeight: isActive ? 800 : 600, fontSize: 14,
-                      fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer',
-                      marginBottom: 2, transition: 'all .15s',
-                      borderLeft: isActive ? '3px solid #F5C400' : '3px solid transparent',
-                    }}
-                      onMouseOver={e => { if (!isActive) e.currentTarget.style.backgroundColor = '#f8f4ec'; }}
-                      onMouseOut={e  => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'; }}
-                    >
-                      <span style={{ fontSize: 18 }}>{tab.icon}</span>
-                      {tab.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Settings content panel */}
-              <div style={{ ...S.card, flex: 1, padding: '26px 28px', minHeight: 400 }}>
-
-                {/* LANGUAGE TAB */}
-                {activeTab === 'language' && (
-                  <div>
-                    <SectionTitle>🌐 Language</SectionTitle>
-                    <p style={{ fontSize: 13, color: '#888', fontWeight: 600, marginBottom: 20 }}>
-                      Choose the language for the portal interface.
-                    </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      {[
-                        { code: 'si', flag: '🇱🇰', name: 'සිංහල', sub: 'Sinhala' },
-                        { code: 'ta', flag: '🇱🇰', name: 'தமிழ்', sub: 'Tamil'   },
-                        { code: 'en', flag: '🇬🇧', name: 'English', sub: 'English' },
-                      ].map(lang => (
-                        <OptionCard
-                          key={lang.code}
-                          selected={settings.language === lang.code}
-                          onClick={() => updateSetting('language', lang.code)}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                            <span style={{ fontSize: 28 }}>{lang.flag}</span>
-                            <div>
-                              <div style={{ fontSize: 15, fontWeight: 800, color: '#1e1200' }}>{lang.name}</div>
-                              <div style={{ fontSize: 12, fontWeight: 600, color: '#aaa' }}>{lang.sub}</div>
-                            </div>
-                          </div>
-                        </OptionCard>
-                      ))}
-                    </div>
-
-                    {/* Current selection note */}
-                    <div style={{ marginTop: 20, padding: '12px 16px', backgroundColor: '#f5f0e8', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#888' }}>
-                      ℹ️ Language changes will take effect after the next page load.
-                      Currently selected: <strong style={{ color: '#3d2a00' }}>
-                        {{ si: 'සිංහල (Sinhala)', ta: 'தமிழ் (Tamil)', en: 'English' }[settings.language]}
-                      </strong>
-                    </div>
-                  </div>
-                )}
-
-                {/* APPEARANCE TAB */}
-                {activeTab === 'appearance' && (
-                  <div>
-                    {/* Theme */}
-                    <SectionTitle>🎨 Theme</SectionTitle>
-                    <p style={{ fontSize: 13, color: '#888', fontWeight: 600, marginBottom: 16 }}>
-                      Choose how the portal looks.
-                    </p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 32 }}>
-                      {[
-                        { value: 'light', icon: '☀️', label: 'Light Mode',  desc: 'Bright and clean interface' },
-                        { value: 'dark',  icon: '🌙', label: 'Dark Mode',   desc: 'Easy on the eyes at night'  },
-                      ].map(t => (
-                        <OptionCard
-                          key={t.value}
-                          selected={settings.theme === t.value}
-                          onClick={() => updateSetting('theme', t.value)}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <span style={{ fontSize: 28 }}>{t.icon}</span>
-                            <div>
-                              <div style={{ fontSize: 14, fontWeight: 800, color: '#1e1200' }}>{t.label}</div>
-                              <div style={{ fontSize: 12, fontWeight: 600, color: '#aaa' }}>{t.desc}</div>
-                            </div>
-                          </div>
-                        </OptionCard>
-                      ))}
-                    </div>
-
-                    {/* Text Size */}
-                    <SectionTitle>🔤 Text Size</SectionTitle>
-                    <p style={{ fontSize: 13, color: '#888', fontWeight: 600, marginBottom: 16 }}>
-                      Adjust the text size for better readability.
-                    </p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-                      {[
-                        { value: 'small',  label: 'Small',  preview: 14, desc: '14px' },
-                        { value: 'normal', label: 'Normal', preview: 16, desc: '16px' },
-                        { value: 'large',  label: 'Large',  preview: 20, desc: '18px' },
-                      ].map(sz => (
-                        <OptionCard
-                          key={sz.value}
-                          selected={settings.textSize === sz.value}
-                          onClick={() => updateSetting('textSize', sz.value)}
-                        >
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-                            <span style={{ fontSize: sz.preview, fontWeight: 900, color: '#1e1200', lineHeight: 1 }}>Aa</span>
-                            <span style={{ fontSize: 13, fontWeight: 800, color: '#3d2a00' }}>{sz.label}</span>
-                            <span style={{ fontSize: 11, fontWeight: 600, color: '#aaa' }}>{sz.desc}</span>
-                          </div>
-                        </OptionCard>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* SECURITY TAB (placeholder) */}
-                {activeTab === 'security' && (
-                  <div>
-                    <SectionTitle>🔒 Privacy & Security</SectionTitle>
-                    <div style={{ textAlign: 'center', padding: '60px 24px' }}>
-                      <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', marginBottom: 8 }}>
-                        Security Settings
-                      </div>
-                      <div style={{ fontSize: 13, color: '#aaa', fontWeight: 600 }}>
-                        Change password, manage sessions, and security options coming in Day 5.
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ACCOUNT TAB (placeholder) */}
-                {activeTab === 'account' && (
-                  <div>
-                    <SectionTitle>👤 Account</SectionTitle>
-                    <div style={{ textAlign: 'center', padding: '60px 24px' }}>
-                      <div style={{ fontSize: 48, marginBottom: 16 }}>👤</div>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', marginBottom: 8 }}>
-                        Account Settings
-                      </div>
-                      <div style={{ fontSize: 13, color: '#aaa', fontWeight: 600 }}>
-                        Account summary, update mobile number, and danger zone coming in Day 5.
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-              </div>
+            {/* Horizontal tabs — underline style matching screenshot */}
+            <div style={{ display: 'flex', borderBottom: '2px solid #e8d5ac', marginBottom: 28, overflowX: 'auto' }}>
+              {TABS.map(t => (
+                <HTab key={t.id} icon={t.icon} label={t.label}
+                  active={activeTab === t.id}
+                  onClick={() => setActiveTab(t.id)} />
+              ))}
             </div>
+
+            {/* LANGUAGE */}
+            {activeTab === 'language' && (
+              <ContentCard>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#3d2a00', marginBottom: 16 }}>Portal Language</div>
+                <RadioOption
+                  selected={settings.language === 'si'}
+                  onClick={() => updateSetting('language', 'si')}
+                  label="Sinhala"
+                  sub="Use the system in Sinhala"
+                />
+                <RadioOption
+                  selected={settings.language === 'ta'}
+                  onClick={() => updateSetting('language', 'ta')}
+                  label="Tamil"
+                  sub="Use the system in Tamil"
+                />
+                <RadioOption
+                  selected={settings.language === 'en'}
+                  onClick={() => updateSetting('language', 'en')}
+                  label="English"
+                  sub="Use the system in English"
+                />
+              </ContentCard>
+            )}
+
+            {/* APPEARANCE */}
+            {activeTab === 'appearance' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+                {/* Theme */}
+                <ContentCard>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#3d2a00', marginBottom: 16 }}>Theme</div>
+                  <RadioOption
+                    selected={settings.theme === 'light'}
+                    onClick={() => updateSetting('theme', 'light')}
+                    label="☀️  Light Mode"
+                    sub="Bright and clean interface — default"
+                  />
+                  <RadioOption
+                    selected={settings.theme === 'dark'}
+                    onClick={() => updateSetting('theme', 'dark')}
+                    label="🌙  Dark Mode"
+                    sub="Dark background, easy on the eyes at night"
+                  />
+
+                  {/* Live preview badge */}
+                  <div style={{
+                    marginTop: 12, padding: '10px 16px', borderRadius: 10,
+                    backgroundColor: settings.theme === 'dark' ? '#2d2d44' : '#f5f0e8',
+                    border: '1.5px solid #e8d5ac',
+                    fontSize: 12, fontWeight: 600,
+                    color: settings.theme === 'dark' ? '#aaaacc' : '#888',
+                    display: 'flex', alignItems: 'center', gap: 8,
+                  }}>
+                    {settings.theme === 'dark' ? '🌙' : '☀️'}
+                    Currently: <strong style={{ color: settings.theme === 'dark' ? '#f0f0f0' : '#3d2a00' }}>
+                      {settings.theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                    </strong>
+                    — applied to entire app immediately
+                  </div>
+                </ContentCard>
+
+                {/* Text Size */}
+                <ContentCard>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#3d2a00', marginBottom: 16 }}>Text Size</div>
+                  <RadioOption
+                    selected={settings.textSize === 'small'}
+                    onClick={() => updateSetting('textSize', 'small')}
+                    label="Small"
+                    sub="Compact text — 14px"
+                  />
+                  <RadioOption
+                    selected={settings.textSize === 'normal'}
+                    onClick={() => updateSetting('textSize', 'normal')}
+                    label="Normal"
+                    sub="Default text size — 16px"
+                  />
+                  <RadioOption
+                    selected={settings.textSize === 'large'}
+                    onClick={() => updateSetting('textSize', 'large')}
+                    label="Large"
+                    sub="Larger text for better readability — 18px"
+                  />
+                </ContentCard>
+              </div>
+            )}
+
+            {/* NOTIFICATIONS (placeholder) */}
+            {activeTab === 'notif' && (
+              <ContentCard>
+                <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                  <div style={{ fontSize: 44, marginBottom: 14 }}>🔔</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', marginBottom: 8 }}>Notifications</div>
+                  <div style={{ fontSize: 13, color: '#aaa', fontWeight: 600 }}>Notification preferences coming in Day 4.</div>
+                </div>
+              </ContentCard>
+            )}
+
+            {/* SECURITY (placeholder) */}
+            {activeTab === 'security' && (
+              <ContentCard>
+                <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                  <div style={{ fontSize: 44, marginBottom: 14 }}>🛡️</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', marginBottom: 8 }}>Privacy & Security</div>
+                  <div style={{ fontSize: 13, color: '#aaa', fontWeight: 600 }}>Change password and security settings coming in Day 5.</div>
+                </div>
+              </ContentCard>
+            )}
+
+            {/* ACCOUNT (placeholder) */}
+            {activeTab === 'account' && (
+              <ContentCard>
+                <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                  <div style={{ fontSize: 44, marginBottom: 14 }}>👤</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', marginBottom: 8 }}>Account</div>
+                  <div style={{ fontSize: 13, color: '#aaa', fontWeight: 600 }}>Account management coming in Day 5.</div>
+                </div>
+              </ContentCard>
+            )}
+
           </div>
         </div>
       </div>
 
-      <footer style={S.footer}>©2026 Smart Grama Sewa</footer>
+      <footer style={{ backgroundColor: '#6A2301', color: '#fff', textAlign: 'center', padding: '13px 16px', fontSize: '13px', fontWeight: 600 }}>
+        ©2026 Smart Grama Sewa
+      </footer>
 
-      {/* Save toast */}
-      <SaveToast show={showToast} />
-
+      <Toast show={showToast} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
