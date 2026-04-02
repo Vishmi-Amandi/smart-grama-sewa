@@ -150,7 +150,7 @@ const RadioOption = ({ selected, onClick, label, sub }) => (
     {/* Radio circle */}
     <div style={{
       width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
-      border: selected ? '6px solid #1e1200' : '2px solid #ccc',
+      border: selected ? '5px solid #1e1200' : '2px solid #ccc',
       backgroundColor: '#fff',
       transition: 'all .15s',
     }} />
@@ -206,7 +206,17 @@ const Settings = () => {
   const [authLoading, setAuthLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState('language');
-  const [settings, setSettings]   = useState({ language: 'en', theme: 'light', textSize: 'normal' });
+  const [settings, setSettings]   = useState({ 
+    language: 'en', theme: 'light', textSize: 'normal',
+    // Notification toggles
+    notifReminders:    true,
+    notifUpdates:      false,
+    notifAnnouncements: true,
+    // Delivery methods — multi-select
+    deliveryEmail:   true,
+    deliveryBrowser: true,
+    deliverySMS:     false,
+  });
   const [showToast, setShowToast] = useState(false);
 
   // Auth
@@ -407,13 +417,109 @@ const Settings = () => {
               </div>
             )}
 
-            {/* NOTIFICATIONS (placeholder) */}
+            {/* NOTIFICATIONS */}
             {activeTab === 'notif' && (
               <ContentCard>
-                <div style={{ textAlign: 'center', padding: '48px 0' }}>
-                  <div style={{ fontSize: 44, marginBottom: 14 }}>🔔</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', marginBottom: 8 }}>Notifications</div>
-                  <div style={{ fontSize: 13, color: '#aaa', fontWeight: 600 }}>Notification preferences coming in Day 4.</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#3d2a00', marginBottom: 20 }}>
+                  Notifications
+                </div>
+ 
+                {/* Updates and Announcements */}
+                <div style={{
+                  backgroundColor: '#fff',
+                  borderRadius: 14,
+                  padding: '20px 22px',
+                  marginBottom: 16,
+                  boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+                }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#1e1200', marginBottom: 18 }}>
+                    Updates and Announcements
+                  </div>
+ 
+                  {/* Toggle rows */}
+                  {[
+                    { key: 'notifReminders',     label: 'Appointment reminders',  sub: 'Get notified 24 hours before your GN meeting'        },
+                    { key: 'notifUpdates',        label: 'Appointment updates',    sub: 'Instant alerts when your appointments are processed'  },
+                    { key: 'notifAnnouncements',  label: 'New announcements',      sub: 'Important notices and events'                        },
+                  ].map((item, i, arr) => (
+                    <div key={item.key} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      paddingBottom: i < arr.length - 1 ? 16 : 0,
+                      marginBottom:  i < arr.length - 1 ? 16 : 0,
+                      borderBottom:  i < arr.length - 1 ? '1px solid #f0ece4' : 'none',
+                    }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#1e1200', marginBottom: 3 }}>{item.label}</div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#B46A02' }}>{item.sub}</div>
+                      </div>
+ 
+                      {/* Toggle switch */}
+                      <div
+                        onClick={() => updateSetting(item.key, !settings[item.key])}
+                        style={{
+                          width: 48, height: 26, borderRadius: 999,
+                          backgroundColor: settings[item.key] ? '#1e1200' : '#d0ccc4',
+                          position: 'relative', cursor: 'pointer',
+                          transition: 'background-color .2s',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <div style={{
+                          position: 'absolute',
+                          top: 3, left: settings[item.key] ? 25 : 3,
+                          width: 20, height: 20, borderRadius: '50%',
+                          backgroundColor: '#fff',
+                          boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+                          transition: 'left .2s',
+                        }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+ 
+                {/* Delivery Methods — multi-select */}
+                <div style={{
+                  backgroundColor: '#fff',
+                  borderRadius: 14,
+                  padding: '20px 22px',
+                  boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+                }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#1e1200', marginBottom: 16 }}>
+                    Delivery Methods
+                  </div>
+                  <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                    {[
+                      { key: 'deliveryEmail',   label: 'Email notifications'                     },
+                      { key: 'deliveryBrowser', label: 'Browser Push notifications'              },
+                      { key: 'deliverySMS',     label: 'SMS notifications (message rates may apply)' },
+                    ].map(item => {
+                      const on = settings[item.key];
+                      return (
+                        <div
+                          key={item.key}
+                          onClick={() => updateSetting(item.key, !on)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            cursor: 'pointer', userSelect: 'none',
+                          }}
+                        >
+                          {/* Circle checkbox — filled yellow when on, empty when off */}
+                          <div style={{
+                            width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                            backgroundColor: on ? '#F5C400' : '#fff',
+                            border: on ? '2px solid #d4a800' : '2px solid #ccc',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            transition: 'all .15s',
+                          }}>
+                            {on && (
+                              <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#3d2a00' }} />
+                            )}
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#1e1200' }}>{item.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </ContentCard>
             )}
