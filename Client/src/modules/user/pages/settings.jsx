@@ -197,6 +197,279 @@ const Toast = ({ show }) => (
   </div>
 );
 
+//  SECURITY TAB COMPONENT
+const inp = {
+  width: '100%', padding: '13px 16px', fontSize: '14px', fontWeight: 500,
+  color: '#1e1200', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d5ac',
+  borderRadius: '10px', outline: 'none', boxSizing: 'border-box',
+  transition: 'border-color 0.15s', fontFamily: 'inherit',
+};
+ 
+const SecurityTab = ({ currentUser, userData, db }) => {
+  // Change Password state
+  const [currentPw,  setCurrentPw]  = useState('');
+  const [newPw,      setNewPw]      = useState('');
+  const [confirmPw,  setConfirmPw]  = useState('');
+  const [pwLoading,  setPwLoading]  = useState(false);
+  const [pwError,    setPwError]    = useState('');
+  const [pwSuccess,  setPwSuccess]  = useState(false);
+ 
+  // Update Mobile state
+  const [newMobile,  setNewMobile]  = useState('');
+  const [otp,        setOtp]        = useState('');
+  const [otpSent,    setOtpSent]    = useState(false);
+  const [mobLoading, setMobLoading] = useState(false);
+  const [mobError,   setMobError]   = useState('');
+  const [mobSuccess, setMobSuccess] = useState(false);
+ 
+  // Change Password
+  const handleChangePassword = async () => {
+    setPwError(''); setPwSuccess(false);
+    if (!currentPw || !newPw || !confirmPw) { setPwError('Please fill all fields.'); return; }
+    if (newPw.length < 8) { setPwError('New password must be at least 8 characters.'); return; }
+    if (newPw !== confirmPw) { setPwError("New passwords don't match."); return; }
+ 
+    setPwLoading(true);
+    try {
+      // Re-authenticate first (Firebase requires this before password change)
+      const credential = EmailAuthProvider.credential(currentUser.email, currentPw);
+      await reauthenticateWithCredential(currentUser, credential);
+      // Now update password
+      await updatePassword(currentUser, newPw);
+      setPwSuccess(true);
+      setCurrentPw(''); setNewPw(''); setConfirmPw('');
+      setTimeout(() => setPwSuccess(false), 3000);
+    } catch (e) {
+      if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        setPwError('Current password is incorrect.');
+      } else {
+        setPwError('Failed to change password. Please try again.');
+      }
+    } finally {
+      setPwLoading(false);
+    }
+  };
+ 
+  // Send OTP (simulated — real OTP needs Firebase Phone Auth or SMS API)
+  const handleSendOtp = () => {
+    setMobError('');
+    if (!newMobile.trim()) { setMobError('Please enter a new mobile number.'); return; }
+    if (!/^(\+94|0)?[0-9]{9,10}$/.test(newMobile.replace(/\s/g, ''))) {
+      setMobError('Please enter a valid Sri Lanka mobile number.'); return;
+    }
+    setMobLoading(true);
+    setTimeout(() => {
+      setMobLoading(false);
+      setOtpSent(true);
+      setMobError('');
+    }, 1000);
+  };
+ 
+  // Verify OTP and update mobile in Firestore
+  const handleVerifyOtp = async () => {
+    setMobError('');
+    if (otp.length !== 6) { setMobError('Please enter the 6-digit OTP.'); return; }
+    // Simulated OTP check — in production verify via Firebase Phone Auth
+    if (otp !== '123456') { setMobError('Incorrect OTP. Please try again.'); return; }
+    setMobLoading(true);
+    try {
+      if (currentUser) {
+        await updateDoc(doc(db, 'users', currentUser.uid), { mobile: newMobile });
+      }
+      setMobSuccess(true);
+      setNewMobile(''); setOtp(''); setOtpSent(false);
+      setTimeout(() => setMobSuccess(false), 3000);
+    } catch (e) {
+      setMobError('Failed to update mobile. Please try again.');
+    } finally {
+      setMobLoading(false);
+    }
+  };
+ 
+  const fieldStyle = (hasError) => ({
+    ...inp,
+    borderColor: hasError ? '#e05050' : '#e8d5ac',
+    marginBottom: '10px',
+  });
+ 
+  return (
+    <div style={{ backgroundColor: '#fffbe8', border: '1.5px solid #f0e4a0', borderRadius: 16, padding: '24px 24px' }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: '#3d2a00', marginBottom: 20 }}>
+        Privacy &amp; Security
+      </div>
+ 
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+ 
+        {/* ── Left: Change Password ── */}
+        <div style={{ backgroundColor: '#fff', borderRadius: 14, padding: '22px 22px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: '#1e1200', marginBottom: 18 }}>
+            Change password
+          </div>
+ 
+          {/* Success banner */}
+          {pwSuccess && (
+            <div style={{ backgroundColor: '#e6f9ee', border: '1px solid #7ec07e', borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, fontWeight: 700, color: '#1a5c1a' }}>
+              ✅ Password changed successfully!
+            </div>
+          )}
+ 
+          {/* Error banner */}
+          {pwError && (
+            <div style={{ backgroundColor: '#fde8e8', border: '1px solid #f0a0a0', borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, fontWeight: 700, color: '#8b1a1a' }}>
+              ⚠ {pwError}
+            </div>
+          )}
+ 
+          <input
+            type="password" value={currentPw}
+            onChange={e => { setCurrentPw(e.target.value); setPwError(''); }}
+            placeholder="Current Password"
+            style={fieldStyle(pwError && !currentPw)}
+            onFocus={e => e.target.style.borderColor = '#F5C400'}
+            onBlur={e  => e.target.style.borderColor = '#e8d5ac'}
+          />
+          <input
+            type="password" value={newPw}
+            onChange={e => { setNewPw(e.target.value); setPwError(''); }}
+            placeholder="New Password"
+            style={fieldStyle(pwError && !newPw)}
+            onFocus={e => e.target.style.borderColor = '#F5C400'}
+            onBlur={e  => e.target.style.borderColor = '#e8d5ac'}
+          />
+          <input
+            type="password" value={confirmPw}
+            onChange={e => { setConfirmPw(e.target.value); setPwError(''); }}
+            placeholder="Confirm New Password"
+            style={{ ...fieldStyle(pwError && !confirmPw), marginBottom: 18 }}
+            onFocus={e => e.target.style.borderColor = '#F5C400'}
+            onBlur={e  => e.target.style.borderColor = '#e8d5ac'}
+          />
+ 
+          <button
+            onClick={handleChangePassword}
+            disabled={pwLoading}
+            style={{
+              width: '100%', padding: '13px', borderRadius: 10,
+              backgroundColor: pwLoading ? '#555' : '#1e1200',
+              border: 'none', color: '#fff', fontSize: 14, fontWeight: 800,
+              cursor: pwLoading ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              transition: 'background-color .15s', fontFamily: 'inherit',
+            }}
+            onMouseOver={e => { if (!pwLoading) e.currentTarget.style.backgroundColor = '#3d2a00'; }}
+            onMouseOut={e  => { if (!pwLoading) e.currentTarget.style.backgroundColor = '#1e1200'; }}
+          >
+            {pwLoading ? (
+              <>
+                <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #fff', borderTopColor: 'transparent', animation: 'spin .7s linear infinite' }} />
+                Updating…
+              </>
+            ) : 'Confirm New Password'}
+          </button>
+        </div>
+ 
+        {/* Right: Update Mobile Number */}
+        <div style={{ backgroundColor: '#fff', borderRadius: 14, padding: '22px 22px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: '#1e1200', marginBottom: 18 }}>
+            Update Mobile Number
+          </div>
+ 
+          {/* Success */}
+          {mobSuccess && (
+            <div style={{ backgroundColor: '#e6f9ee', border: '1px solid #7ec07e', borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, fontWeight: 700, color: '#1a5c1a' }}>
+              ✅ Mobile number updated successfully!
+            </div>
+          )}
+ 
+          {/* Error */}
+          {mobError && (
+            <div style={{ backgroundColor: '#fde8e8', border: '1px solid #f0a0a0', borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, fontWeight: 700, color: '#8b1a1a' }}>
+              ⚠ {mobError}
+            </div>
+          )}
+ 
+          <input
+            type="tel" value={newMobile}
+            onChange={e => { setNewMobile(e.target.value); setMobError(''); setOtpSent(false); setOtp(''); }}
+            placeholder="New Number"
+            style={fieldStyle(false)}
+            onFocus={e => e.target.style.borderColor = '#F5C400'}
+            onBlur={e  => e.target.style.borderColor = '#e8d5ac'}
+          />
+ 
+          {/* Send OTP button */}
+          <button
+            onClick={handleSendOtp}
+            disabled={mobLoading || otpSent}
+            style={{
+              width: '100%', padding: '13px', borderRadius: 10, marginBottom: 10,
+              backgroundColor: (mobLoading || otpSent) ? '#e8d888' : '#F5C400',
+              border: 'none', color: '#3d2a00', fontSize: 14, fontWeight: 800,
+              cursor: (mobLoading || otpSent) ? 'not-allowed' : 'pointer',
+              transition: 'background-color .15s', fontFamily: 'inherit',
+            }}
+            onMouseOver={e => { if (!mobLoading && !otpSent) e.currentTarget.style.backgroundColor = '#d4a800'; }}
+            onMouseOut={e  => { if (!mobLoading && !otpSent) e.currentTarget.style.backgroundColor = '#F5C400'; }}
+          >
+            {mobLoading && !otpSent ? 'Sending OTP…' : otpSent ? '✓ OTP Sent' : 'Send OTP to new number'}
+          </button>
+ 
+          {/* OTP field — shown after OTP sent */}
+          <input
+            type="text" value={otp}
+            onChange={e => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setMobError(''); }}
+            placeholder="Enter 6-digit OTP"
+            disabled={!otpSent}
+            style={{
+              ...fieldStyle(false),
+              backgroundColor: otpSent ? '#f5f0e8' : '#f0ece8',
+              cursor: otpSent ? 'text' : 'not-allowed',
+              opacity: otpSent ? 1 : 0.6,
+              letterSpacing: otp ? '6px' : '0',
+              fontWeight: 800,
+            }}
+            onFocus={e => { if (otpSent) e.target.style.borderColor = '#F5C400'; }}
+            onBlur={e  => e.target.style.borderColor = '#e8d5ac'}
+          />
+ 
+          {/* Verify OTP button — shown after OTP sent */}
+          {otpSent && (
+            <button
+              onClick={handleVerifyOtp}
+              disabled={mobLoading || otp.length !== 6}
+              style={{
+                width: '100%', padding: '13px', borderRadius: 10, marginTop: 4,
+                backgroundColor: (mobLoading || otp.length !== 6) ? '#555' : '#1e1200',
+                border: 'none', color: '#fff', fontSize: 14, fontWeight: 800,
+                cursor: (mobLoading || otp.length !== 6) ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                fontFamily: 'inherit', transition: 'background-color .15s',
+              }}
+              onMouseOver={e => { if (!mobLoading && otp.length === 6) e.currentTarget.style.backgroundColor = '#3d2a00'; }}
+              onMouseOut={e  => { if (!mobLoading && otp.length === 6) e.currentTarget.style.backgroundColor = '#1e1200'; }}
+            >
+              {mobLoading ? (
+                <>
+                  <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #fff', borderTopColor: 'transparent', animation: 'spin .7s linear infinite' }} />
+                  Verifying…
+                </>
+              ) : 'Verify & Update'}
+            </button>
+          )}
+ 
+          {/* Demo hint */}
+          {otpSent && (
+            <p style={{ fontSize: 11, color: '#aaa', fontWeight: 600, marginTop: 8, textAlign: 'center' }}>
+              Demo OTP: <strong>123456</strong>
+            </p>
+          )}
+        </div>
+ 
+      </div>
+    </div>
+  );
+};
+ 
 //  MAIN
 const Settings = () => {
   const navigate = useNavigate();
@@ -524,15 +797,9 @@ const Settings = () => {
               </ContentCard>
             )}
 
-            {/* SECURITY (placeholder) */}
+            {/* SECURITY */}
             {activeTab === 'security' && (
-              <ContentCard>
-                <div style={{ textAlign: 'center', padding: '48px 0' }}>
-                  <div style={{ fontSize: 44, marginBottom: 14 }}>🛡️</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', marginBottom: 8 }}>Privacy & Security</div>
-                  <div style={{ fontSize: 13, color: '#aaa', fontWeight: 600 }}>Change password and security settings coming in Day 5.</div>
-                </div>
-              </ContentCard>
+              <SecurityTab currentUser={currentUser} userData={userData} db={db} />
             )}
 
             {/* ACCOUNT (placeholder) */}
