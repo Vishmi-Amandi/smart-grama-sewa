@@ -470,6 +470,240 @@ const SecurityTab = ({ currentUser, userData, db }) => {
   );
 };
  
+//  ACCOUNT TAB COMPONENT
+const AccountTab = ({ currentUser, userData, navigate }) => {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteInput,       setDeleteInput]       = useState('');
+  const [deleting,          setDeleting]          = useState(false);
+  const [signOutLoading,    setSignOutLoading]    = useState(false);
+ 
+  // Member since — from Firebase Auth metadata
+  const createdAt = currentUser?.metadata?.creationTime
+    ? new Date(currentUser.metadata.creationTime).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+    : 'N/A';
+ 
+  const gnDivLabel = userData?.gnDiv && userData?.dsDiv
+    ? `${userData.dsDiv} - ${userData.gnDiv}`
+    : userData?.gnDiv || userData?.dsDiv || '[GN Division not set]';
+ 
+  // Sign out of all devices — just signs out locally (Firebase doesn't support remote revocation easily)
+  const handleSignOutEverywhere = async () => {
+    setSignOutLoading(true);
+    try {
+      await signOut(auth);
+      navigate('/login');
+    } catch (e) {
+      console.error(e.message);
+    } finally {
+      setSignOutLoading(false);
+    }
+  };
+ 
+  // Request deletion — sets a flag in Firestore for GN Officer to review
+  const handleRequestDeletion = async () => {
+    if (deleteInput !== 'DELETE') return;
+    setDeleting(true);
+    try {
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        deletionRequested: true,
+        deletionRequestedAt: new Date().toISOString(),
+      });
+      await signOut(auth);
+      navigate('/login');
+    } catch (e) {
+      console.error(e.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+ 
+  const rowStyle = { paddingBottom: 16, marginBottom: 16, borderBottom: '1px solid #f0ece4' };
+  const labelStyle = { fontSize: 12, fontWeight: 700, color: '#B46A02', marginBottom: 4 };
+  const valueStyle = { fontSize: 15, fontWeight: 700, color: '#1e1200' };
+ 
+  return (
+    <div style={{ backgroundColor: '#fffbe8', border: '1.5px solid #f0e4a0', borderRadius: 16, padding: '24px 24px' }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: '#3d2a00', marginBottom: 20 }}>Account</div>
+ 
+      {/* ── Account Summary ── */}
+      <div style={{ backgroundColor: '#fff', borderRadius: 14, padding: '22px 24px', marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: '#1e1200' }}>Account Summary</div>
+          {/* Edit profile button */}
+          <button
+            onClick={() => navigate('/profile')}
+            style={{
+              padding: '10px 22px', borderRadius: 999,
+              backgroundColor: '#3d2a00', border: 'none',
+              fontSize: 13, fontWeight: 800, color: '#fff',
+              cursor: 'pointer', transition: 'all .15s',
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}
+            onMouseOver={e => e.currentTarget.style.backgroundColor = '#5a3a10'}
+            onMouseOut={e  => e.currentTarget.style.backgroundColor = '#3d2a00'}
+          >
+            Edit profile →
+          </button>
+        </div>
+ 
+        {/* Citizen row */}
+        <div style={rowStyle}>
+          <div style={labelStyle}>Citizen</div>
+          <div style={valueStyle}>{userData?.fullName || currentUser?.displayName || 'N/A'}</div>
+        </div>
+ 
+        {/* Member since row */}
+        <div style={rowStyle}>
+          <div style={labelStyle}>Member since</div>
+          <div style={valueStyle}>{createdAt}</div>
+        </div>
+ 
+        {/* GN Division row — last, no border */}
+        <div>
+          <div style={labelStyle}>GN division</div>
+          <div style={valueStyle}>{gnDivLabel}</div>
+        </div>
+      </div>
+ 
+      {/* ── Danger Zone ── */}
+      <div style={{
+        backgroundColor: '#fff',
+        borderRadius: 14,
+        padding: '22px 24px',
+        boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+        border: '1.5px solid #f0c0c0',
+      }}>
+        {/* Danger header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <span style={{ fontSize: 18 }}>⚠</span>
+          <span style={{ fontSize: 14, fontWeight: 900, color: '#c0392b' }}>Danger Zone</span>
+        </div>
+        <p style={{ fontSize: 12, fontWeight: 600, color: '#e05050', marginBottom: 22 }}>
+          These actions are permanent and cannot be undone
+        </p>
+ 
+        {/* Sign Out Everywhere */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, paddingBottom: 20, marginBottom: 20, borderBottom: '1px solid #f0ece4' }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#1e1200', marginBottom: 4 }}>Sign Out of All Devices</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#888' }}>Immediately ends all active sessions across every device.</div>
+          </div>
+          <button
+            onClick={handleSignOutEverywhere}
+            disabled={signOutLoading}
+            style={{
+              padding: '10px 20px', borderRadius: 999, flexShrink: 0,
+              backgroundColor: '#fde8e8', border: '1.5px solid #f0a0a0',
+              fontSize: 13, fontWeight: 800, color: '#c0392b',
+              cursor: signOutLoading ? 'not-allowed' : 'pointer',
+              transition: 'all .15s',
+            }}
+            onMouseOver={e => { if (!signOutLoading) e.currentTarget.style.backgroundColor = '#f0c0c0'; }}
+            onMouseOut={e  => { if (!signOutLoading) e.currentTarget.style.backgroundColor = '#fde8e8'; }}
+          >
+            {signOutLoading ? 'Signing out…' : 'Sign Out everywhere'}
+          </button>
+        </div>
+ 
+        {/* Delete My Account */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#1e1200', marginBottom: 4 }}>Delete My Account</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#888', maxWidth: 340 }}>
+              Permanently deletes your account and all data. This requires GN Officer approval and cannot be reversed.
+            </div>
+          </div>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            style={{
+              padding: '10px 20px', borderRadius: 999, flexShrink: 0,
+              backgroundColor: '#fde8e8', border: '1.5px solid #e05050',
+              fontSize: 13, fontWeight: 800, color: '#c0392b',
+              cursor: 'pointer', transition: 'all .15s',
+            }}
+            onMouseOver={e => e.currentTarget.style.backgroundColor = '#f0c0c0'}
+            onMouseOut={e  => e.currentTarget.style.backgroundColor = '#fde8e8'}
+          >
+            Request Deletion
+          </button>
+        </div>
+      </div>
+ 
+      {/* ── Delete Confirmation Modal ── */}
+      {showDeleteConfirm && (
+        <>
+          <div
+            onClick={() => { setShowDeleteConfirm(false); setDeleteInput(''); }}
+            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 100 }}
+          />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+            zIndex: 101, width: '100%', maxWidth: 440,
+            backgroundColor: '#fff', borderRadius: 20,
+            padding: '28px 28px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+            border: '2px solid #f0a0a0',
+          }}>
+            <div style={{ fontSize: 36, textAlign: 'center', marginBottom: 10 }}>⚠️</div>
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1e1200', textAlign: 'center', marginBottom: 8 }}>
+              Request Account Deletion?
+            </h2>
+            <p style={{ fontSize: 13, color: '#888', fontWeight: 600, textAlign: 'center', lineHeight: 1.6, marginBottom: 20 }}>
+              This will submit a deletion request to your GN Officer.<br />
+              Your account will remain active until approved.<br />
+              <strong style={{ color: '#c0392b' }}>This cannot be undone.</strong>
+            </p>
+ 
+            {/* Type DELETE to confirm */}
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 8 }}>
+              Type <strong>DELETE</strong> to confirm:
+            </p>
+            <input
+              type="text"
+              value={deleteInput}
+              onChange={e => setDeleteInput(e.target.value)}
+              placeholder="Type DELETE here"
+              style={{
+                width: '100%', padding: '12px 14px', borderRadius: 10, boxSizing: 'border-box',
+                border: '1.5px solid #e8d5ac', fontSize: 14, fontWeight: 700,
+                fontFamily: 'inherit', outline: 'none', marginBottom: 16,
+                backgroundColor: '#f8f6f0',
+              }}
+              onFocus={e => e.target.style.borderColor = '#e05050'}
+              onBlur={e  => e.target.style.borderColor = '#e8d5ac'}
+            />
+ 
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                onClick={() => { setShowDeleteConfirm(false); setDeleteInput(''); }}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: 999,
+                  border: '1.5px solid #e8d5ac', backgroundColor: '#fff',
+                  fontSize: 14, fontWeight: 800, color: '#888', cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >Cancel</button>
+              <button
+                onClick={handleRequestDeletion}
+                disabled={deleteInput !== 'DELETE' || deleting}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: 999, border: 'none',
+                  backgroundColor: deleteInput === 'DELETE' ? '#c0392b' : '#f0c0c0',
+                  fontSize: 14, fontWeight: 800, color: '#fff',
+                  cursor: deleteInput !== 'DELETE' || deleting ? 'not-allowed' : 'pointer',
+                  fontFamily: 'inherit', transition: 'all .15s',
+                }}
+              >
+                {deleting ? 'Submitting…' : 'Request Deletion'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 //  MAIN
 const Settings = () => {
   const navigate = useNavigate();
@@ -802,15 +1036,9 @@ const Settings = () => {
               <SecurityTab currentUser={currentUser} userData={userData} db={db} />
             )}
 
-            {/* ACCOUNT (placeholder) */}
+            {/* ACCOUNT */}
             {activeTab === 'account' && (
-              <ContentCard>
-                <div style={{ textAlign: 'center', padding: '48px 0' }}>
-                  <div style={{ fontSize: 44, marginBottom: 14 }}>👤</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', marginBottom: 8 }}>Account</div>
-                  <div style={{ fontSize: 13, color: '#aaa', fontWeight: 600 }}>Account management coming in Day 5.</div>
-                </div>
-              </ContentCard>
+              <AccountTab currentUser={currentUser} userData={userData} navigate={navigate} />
             )}
 
           </div>
