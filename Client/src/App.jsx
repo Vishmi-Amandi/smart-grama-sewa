@@ -2,7 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 // Page imports
-import Login       from './modules/user/pages/Login';
+import Login       from './modules/user/pages/login';
+import SignUpSelect  from './modules/user/pages/signupSelect';  // ← role selection screen
 import SignUp       from './modules/user/pages/SignUp';
 import Dashboard   from './modules/user/pages/dashboard';
 import Profile     from './modules/user/pages/Profile';
@@ -55,11 +56,14 @@ const App = () => {
     <Router>
       <Routes>
 
-        {/* ── Public routes (no auth needed) ── */}
+        {/* Public routes (no auth needed) */}
         <Route path="/login"  element={<Login  />} />
+        {/* Role selection — shown when user clicks "Sign Up" from Login */}
+        <Route path="/signup-select" element={<SignUpSelect />} />
+        {/* Citizen signup — reached after selecting "Citizen" on role screen */}
         <Route path="/signup" element={<SignUp />} />
 
-        {/* ── Protected routes (must be logged in) ── */}
+        {/* Protected routes (must be logged in) */}
         <Route path="/dashboard" element={
           <ProtectedRoute><Dashboard /></ProtectedRoute>
         } />

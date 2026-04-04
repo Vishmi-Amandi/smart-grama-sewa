@@ -80,6 +80,7 @@ const Login = () => {
       {/* Background */}
       <div
         style={{
+          flex: 1,
           backgroundImage: 'url(/background.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -89,7 +90,6 @@ const Login = () => {
           position: 'relative',
         }}
       >
-
         <div
           style={{ 
             position: 'absolute', inset: 0,
@@ -98,11 +98,11 @@ const Login = () => {
         />
 
         {/* Logo */}
-        <div className="relative z-10 p-5">
+        <div style={{ position: 'relative', zIndex: 10, padding: '20px 24px' }}>
           <img
             src="/logo.png"
             alt="Smart Grama Sewa"
-            style={{ height: '80px', width: 'auto' }}
+            style={{ height: '100px', width: 'auto' }}
           />
         </div>
 
@@ -225,7 +225,7 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Keep me signed in + Forgot password */}
+            {/* Keep me signed in */}
             <div className="flex items-center justify-between mb-5">
               <label
                 className="flex items-center gap-2 cursor-pointer select-none text-sm font-semibold"
@@ -240,6 +240,7 @@ const Login = () => {
                 />
                 Keep me signed in
               </label>
+              {/* Forgot password */}
               <a
                 href="/forgot-password"
                 className="text-sm font-bold transition-colors"
@@ -300,7 +301,7 @@ const Login = () => {
 
             {/* Create your account ) */}
             <a
-              href="/signup"
+              href="/signup-select"
               style={{
                 display: 'block',
                 width: '100%',
@@ -329,19 +330,12 @@ const Login = () => {
       {/* Footer */}
       <footer
         style={{
-                display: 'block',
-                width: '100%',
                 textAlign: 'center',
                 backgroundColor: '#6A2301',
                 color: '#ffffff',
-                borderRadius: '12px',
-                padding: '15px',
-                fontSize: '17px',
-                fontWeight: 900,
-                textDecoration: 'none',
-                transition: 'background-color 0.15s',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
-                boxSizing: 'border-box',
+                padding: '14px 16px',
+                fontSize: '15px',
+                fontWeight: 600,
               }}>
         ©2026 Smart Grama Sewa
       </footer>
