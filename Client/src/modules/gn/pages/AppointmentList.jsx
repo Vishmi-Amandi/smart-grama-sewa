@@ -1,8 +1,10 @@
-import GNLayout from "../components/gnlayout";
+import GNLayout, { getThemeClasses } from "../components/gnlayout";
 
-const AppointmentList = ({ gnStatus }) => {
+const AppointmentList = ({ gnStatus, theme }) => {
+  const t = getThemeClasses(theme);
+
   return (
-    <GNLayout gnStatus={gnStatus}>
+    <GNLayout gnStatus={gnStatus} theme={theme}>
 
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
@@ -10,140 +12,123 @@ const AppointmentList = ({ gnStatus }) => {
       </div>
 
       {/* Filter Bar */}
-<div className="bg-white rounded-2xl shadow px-5 py-3 flex items-center gap-4 mb-6">
+      <div className={`${t.card} rounded-2xl shadow px-5 py-3 flex items-center gap-4 mb-6`}>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs uppercase font-semibold ${t.subtext}`}>Date</span>
+          <button className="bg-[#E5A800] text-black text-xs font-semibold px-3 py-1 rounded-full">Today</button>
+        </div>
+        <div className={`w-px h-5 ${t.border} bg-gray-200`}></div>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs uppercase font-semibold ${t.subtext}`}>Status</span>
+          <button className="bg-[#E5A800] text-black text-xs font-semibold px-3 py-1 rounded-full">All Status</button>
+        </div>
+        <div className={`w-px h-5 bg-gray-200`}></div>
+        <div className="flex items-center gap-2 ml-auto">
+          <span className={`text-xs uppercase font-semibold ${t.subtext}`}>Sort By</span>
+          <button className={`border ${t.border} text-xs font-semibold px-3 py-1 rounded-full ${t.subtext}`}>
+            Time (Asc) ▾
+          </button>
+        </div>
+      </div>
 
-  {/* Date Filter */}
-  <div className="flex items-center gap-2">
-    <span className="text-xs text-gray-400 uppercase font-semibold">Date</span>
-    <button className="bg-[#E5A800] text-black text-xs font-semibold px-3 py-1 rounded-full">
-      Today
-    </button>
-  </div>
+      {/* Table */}
+      <div className={`${t.card} rounded-2xl shadow overflow-hidden`}>
+        <table className="w-full text-sm">
+          <thead className={`${t.tableHead} uppercase text-xs`}>
+            <tr>
+              <th className="px-6 py-3 text-left">Time</th>
+              <th className="px-6 py-3 text-left">Citizen</th>
+              <th className="px-6 py-3 text-left">Service</th>
+              <th className="px-6 py-3 text-left">Status</th>
+              <th className="px-6 py-3 text-left">Action</th>
+            </tr>
+          </thead>
 
-  {/* Divider */}
-  <div className="w-px h-5 bg-gray-200"></div>
+          <tbody className={t.divider}>
 
-  {/* Status Filter */}
-  <div className="flex items-center gap-2">
-    <span className="text-xs text-gray-400 uppercase font-semibold">Status</span>
-    <button className="bg-[#E5A800] text-black text-xs font-semibold px-3 py-1 rounded-full">
-      All Status
-    </button>
-  </div>
+            {/* Row 1 */}
+            <tr className={t.tableRow}>
+              <td className={`px-6 py-4 ${t.subtext}`}>09:00 AM</td>
+              <td className="px-6 py-4">
+                <p className="font-semibold text-[#8B4513]">Amara Siriwardena</p>
+                <p className={`text-xs ${t.subtext}`}>NIC: 947320634V</p>
+              </td>
+              <td className={`px-6 py-4 ${t.subtext}`}>Land Registry</td>
+              <td className="px-6 py-4">
+                <span className="bg-yellow-100 text-yellow-700 text-xs font-semibold px-3 py-1 rounded-full">Pending</span>
+              </td>
+              <td className="px-6 py-4 flex items-center gap-3">
+                <button className="text-gray-400 hover:text-gray-600">👁</button>
+                <button className="text-gray-400 hover:text-gray-600">✏️</button>
+              </td>
+            </tr>
 
-  {/* Divider */}
-  <div className="w-px h-5 bg-gray-200"></div>
+            {/* Row 2 */}
+            <tr className={t.tableRow}>
+              <td className={`px-6 py-4 ${t.subtext}`}>10:30 AM</td>
+              <td className="px-6 py-4">
+                <p className="font-semibold text-[#8B4513]">Sunil Perera</p>
+                <p className={`text-xs ${t.subtext}`}>NIC: 910237465V</p>
+              </td>
+              <td className={`px-6 py-4 ${t.subtext}`}>Identity Card Renewal</td>
+              <td className="px-6 py-4">
+                <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">Confirmed</span>
+              </td>
+              <td className="px-6 py-4 flex items-center gap-3">
+                <button className="text-gray-400 hover:text-gray-600">👁</button>
+                <button className="text-gray-400 hover:text-gray-600">✏️</button>
+              </td>
+            </tr>
 
-  {/* Sort By */}
-  <div className="flex items-center gap-2 ml-auto">
-    <span className="text-xs text-gray-400 uppercase font-semibold">Sort By</span>
-    <button className="border text-xs font-semibold px-3 py-1 rounded-full text-gray-600">
-      Time (Asc) ▾
-    </button>
-  </div>
+            {/* Row 3 */}
+            <tr className={t.tableRow}>
+              <td className={`px-6 py-4 ${t.subtext}`}>01:15 PM</td>
+              <td className="px-6 py-4">
+                <p className="font-semibold text-[#8B4513]">Komal Gunaratne</p>
+                <p className={`text-xs ${t.subtext}`}>NIC: 885643210V</p>
+              </td>
+              <td className={`px-6 py-4 ${t.subtext}`}>Character Certificate</td>
+              <td className="px-6 py-4">
+                <span className="bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">Arrived</span>
+              </td>
+              <td className="px-6 py-4 flex items-center gap-3">
+                <button className="text-gray-400 hover:text-gray-600">👁</button>
+                <button className="text-gray-400 hover:text-gray-600">✏️</button>
+              </td>
+            </tr>
 
-</div>
+            {/* Row 4 */}
+            <tr className={t.tableRow}>
+              <td className={`px-6 py-4 ${t.subtext}`}>02:45 PM</td>
+              <td className="px-6 py-4">
+                <p className="font-semibold text-[#8B4513]">Nimmi Fernando</p>
+                <p className={`text-xs ${t.subtext}`}>NIC: 956789043V</p>
+              </td>
+              <td className={`px-6 py-4 ${t.subtext}`}>Residency Verification</td>
+              <td className="px-6 py-4">
+                <span className="bg-yellow-100 text-yellow-700 text-xs font-semibold px-3 py-1 rounded-full">Pending</span>
+              </td>
+              <td className="px-6 py-4 flex items-center gap-3">
+                <button className="text-gray-400 hover:text-gray-600">👁</button>
+                <button className="text-gray-400 hover:text-gray-600">✏️</button>
+              </td>
+            </tr>
 
-{/* Table */}
-<div className="bg-white rounded-2xl shadow overflow-hidden">
-  
-  {/* Table Header */}
-  <table className="w-full text-sm">
-    <thead className="bg-gray-50 text-gray-400 uppercase text-xs">
-      <tr>
-        <th className="px-6 py-3 text-left">Time</th>
-        <th className="px-6 py-3 text-left">Citizen</th>
-        <th className="px-6 py-3 text-left">Service</th>
-        <th className="px-6 py-3 text-left">Status</th>
-        <th className="px-6 py-3 text-left">Action</th>
-      </tr>
-    </thead>
+          </tbody>
+        </table>
 
-    <tbody className="divide-y divide-gray-100">
+        {/* Pagination */}
+        <div className={`px-6 py-4 flex items-center justify-between border-t ${t.border}`}>
+          <p className={`text-xs ${t.subtext}`}>Showing 1-4 of 24 appointments</p>
+          <div className="flex items-center gap-2">
+            <button className="w-7 h-7 rounded-full bg-[#E5A800] text-black text-xs font-bold">1</button>
+            <button className={`w-7 h-7 rounded-full ${t.tableRow} ${t.subtext} text-xs`}>2</button>
+            <button className={`w-7 h-7 rounded-full ${t.tableRow} ${t.subtext} text-xs`}>3</button>
+            <button className={`w-7 h-7 rounded-full ${t.tableRow} ${t.subtext} text-xs`}>›</button>
+          </div>
+        </div>
 
-      {/* Row 1 */}
-      <tr className="hover:bg-gray-50">
-        <td className="px-6 py-4 text-gray-600">09:00 AM</td>
-        <td className="px-6 py-4">
-          <p className="font-semibold text-[#8B4513]">Amara Siriwardena</p>
-          <p className="text-xs text-gray-400">NIC: 947320634V</p>
-        </td>
-        <td className="px-6 py-4 text-gray-600">Land Registry</td>
-        <td className="px-6 py-4">
-          <span className="bg-yellow-100 text-yellow-700 text-xs font-semibold px-3 py-1 rounded-full">Pending</span>
-        </td>
-        <td className="px-6 py-4 flex items-center gap-3">
-          <button className="text-gray-400 hover:text-gray-600">👁</button>
-          <button className="text-gray-400 hover:text-gray-600">✏️</button>
-        </td>
-      </tr>
-
-      {/* Row 2 */}
-      <tr className="hover:bg-gray-50">
-        <td className="px-6 py-4 text-gray-600">10:30 AM</td>
-        <td className="px-6 py-4">
-          <p className="font-semibold text-[#8B4513]">Sunil Perera</p>
-          <p className="text-xs text-gray-400">NIC: 910237465V</p>
-        </td>
-        <td className="px-6 py-4 text-gray-600">Identity Card Renewal</td>
-        <td className="px-6 py-4">
-          <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">Confirmed</span>
-        </td>
-        <td className="px-6 py-4 flex items-center gap-3">
-          <button className="text-gray-400 hover:text-gray-600">👁</button>
-          <button className="text-gray-400 hover:text-gray-600">✏️</button>
-        </td>
-      </tr>
-
-      {/* Row 3 */}
-      <tr className="hover:bg-gray-50">
-        <td className="px-6 py-4 text-gray-600">01:15 PM</td>
-        <td className="px-6 py-4">
-          <p className="font-semibold text-[#8B4513]">Komal Gunaratne</p>
-          <p className="text-xs text-gray-400">NIC: 885643210V</p>
-        </td>
-        <td className="px-6 py-4 text-gray-600">Character Certificate</td>
-        <td className="px-6 py-4">
-          <span className="bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">Arrived</span>
-        </td>
-        <td className="px-6 py-4 flex items-center gap-3">
-          <button className="text-gray-400 hover:text-gray-600">👁</button>
-          <button className="text-gray-400 hover:text-gray-600">✏️</button>
-        </td>
-      </tr>
-
-      {/* Row 4 */}
-      <tr className="hover:bg-gray-50">
-        <td className="px-6 py-4 text-gray-600">02:45 PM</td>
-        <td className="px-6 py-4">
-          <p className="font-semibold text-[#8B4513]">Nimmi Fernando</p>
-          <p className="text-xs text-gray-400">NIC: 956789043V</p>
-        </td>
-        <td className="px-6 py-4 text-gray-600">Residency Verification</td>
-        <td className="px-6 py-4">
-          <span className="bg-yellow-100 text-yellow-700 text-xs font-semibold px-3 py-1 rounded-full">Pending</span>
-        </td>
-        <td className="px-6 py-4 flex items-center gap-3">
-          <button className="text-gray-400 hover:text-gray-600">👁</button>
-          <button className="text-gray-400 hover:text-gray-600">✏️</button>
-        </td>
-      </tr>
-
-    </tbody>
-  </table>
-
-  {/* Pagination */}
-  <div className="px-6 py-4 flex items-center justify-between border-t">
-    <p className="text-xs text-gray-400">Showing 1-4 of 24 appointments</p>
-    <div className="flex items-center gap-2">
-      <button className="w-7 h-7 rounded-full bg-[#E5A800] text-black text-xs font-bold">1</button>
-      <button className="w-7 h-7 rounded-full hover:bg-gray-100 text-gray-600 text-xs">2</button>
-      <button className="w-7 h-7 rounded-full hover:bg-gray-100 text-gray-600 text-xs">3</button>
-      <button className="w-7 h-7 rounded-full hover:bg-gray-100 text-gray-600 text-xs">›</button>
-    </div>
-  </div>
-
-</div>
+      </div>
 
     </GNLayout>
   );

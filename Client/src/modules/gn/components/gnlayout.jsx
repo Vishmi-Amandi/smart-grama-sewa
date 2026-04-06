@@ -1,15 +1,27 @@
+export const getThemeClasses = (theme) => ({
+  bg: theme === "dark" ? "bg-gray-900" : "bg-[#F5F0DC]",
+  card: theme === "dark" ? "bg-gray-800 text-white" : "bg-white text-gray-800",
+  text: theme === "dark" ? "text-white" : "text-gray-800",
+  subtext: theme === "dark" ? "text-gray-300" : "text-gray-500",
+  border: theme === "dark" ? "border-gray-700" : "border-gray-200",
+  input: theme === "dark" ? "bg-gray-700 text-white border-gray-600" : "bg-white text-gray-600 border-gray-200",
+  tableHead: theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-gray-50 text-gray-400",
+  tableRow: theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-50",
+  divider: theme === "dark" ? "divide-gray-700" : "divide-gray-100",
+});
+
 import { useState } from "react";
 import { LayoutDashboard, CalendarDays, Clock, Megaphone, Search, User, Settings, LogOut } from "lucide-react";
 import { Link, useLocation } from 'react-router-dom';
 
-  const GNLayout = ({ children, gnStatus }) => {
+  const GNLayout = ({ children, gnStatus, theme }) => {
   const location = useLocation();
   const [showLang, setShowLang] = useState(false);
   const [selectedLang, setSelectedLang] = useState("English");
   const [showAnnouncements, setShowAnnouncements] = useState(false);
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className={`flex flex-col h-screen ${theme === "dark" ? "bg-gray-900 text-white" : ""}`}>
 
       {/* Main Area: Sidebar + Right Side */}
       <div className="flex flex-1 overflow-hidden">
@@ -83,22 +95,25 @@ import { Link, useLocation } from 'react-router-dom';
               )}
             </div>
 
-            <a href="#" className="flex items-center gap-3 text-white px-4 py-2 rounded-lg hover:bg-[#9B4D00]">
-              <Search size={18} />
-              Citizen Search
-            </a>
+           <Link to="/citizen-search" className={`flex items-center gap-3 px-4 py-2 rounded-lg
+  ${location.pathname === "/citizen-search" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
+  <Search size={18} />
+  Citizen Search
+</Link>
 
             {/* Divider */}
             <hr className="border-[#9B4D00] my-2" />
 
-            <a href="#" className="flex items-center gap-3 text-white px-4 py-2 rounded-lg hover:bg-[#9B4D00]">
-              <User size={18} />
-              Profile
-            </a>
-            <a href="#" className="flex items-center gap-3 text-white px-4 py-2 rounded-lg hover:bg-[#9B4D00]">
-              <Settings size={18} />
-              Settings
-            </a>
+            <Link to="/profile" className={`flex items-center gap-3 px-4 py-2 rounded-lg
+  ${location.pathname === "/profile" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
+  <User size={18} />
+  Profile
+</Link>
+           <Link to="/settings" className={`flex items-center gap-3 px-4 py-2 rounded-lg
+  ${location.pathname === "/settings" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
+  <Settings size={18} />
+  Settings
+</Link>
           </nav>
 
           {/* Sign Out */}
@@ -115,7 +130,7 @@ import { Link, useLocation } from 'react-router-dom';
         <div className="flex flex-col flex-1 overflow-hidden">
 
           {/* Header */}
-          <header className="h-16 bg-white shadow z-10 flex items-center justify-between px-6 flex-shrink-0">
+          <header className={`h-16 shadow z-10 flex items-center justify-between px-6 flex-shrink-0 ${theme === "dark" ? "bg-gray-900 text-white" : "bg-white"}`}>
 
             {/* Search Bar */}
             <div className="flex items-center bg-gray-100 rounded-full px-4 py-2 w-80">
@@ -186,7 +201,7 @@ import { Link, useLocation } from 'react-router-dom';
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 bg-[#F5F0DC] p-6 overflow-y-auto">
+          <main className={`flex-1 p-6 overflow-y-auto ${theme === "dark" ? "bg-gray-800" : "bg-[#F5F0DC]"}`}>
             {children}
           </main>
 
