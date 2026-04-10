@@ -61,7 +61,7 @@ const NavItem = ({ iconPath, label, active, onClick }) => (
   </button>
 );
 
-//  Quick action card 
+// Quick action card 
 const QuickCard = ({ iconPath, label, onClick }) => (
   <button
     onClick={onClick}
@@ -107,16 +107,22 @@ const QuickCard = ({ iconPath, label, onClick }) => (
   </button>
 );
 
-// Appointment row
-const AppointmentRow = ({ month, day, title, time, last }) => (
+// Enhanced AppointmentRow with status badge
+const AppointmentRow = ({ month, day, title, time, status, last }) => (
   <div style={{
-    display: 'flex', alignItems: 'center', gap: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
     padding: '14px 0',
     borderBottom: last ? 'none' : '1px solid #f0e8d0',
   }}>
     <div style={{
-      width: '48px', flexShrink: 0, textAlign: 'center',
-      backgroundColor: '#f5f0e8', borderRadius: '10px', padding: '6px 4px',
+      width: '48px',
+      flexShrink: 0,
+      textAlign: 'center',
+      backgroundColor: '#f5f0e8',
+      borderRadius: '10px',
+      padding: '6px 4px',
     }}>
       <div style={{ fontSize: '10px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
         {month}
@@ -125,26 +131,137 @@ const AppointmentRow = ({ month, day, title, time, last }) => (
         {day}
       </div>
     </div>
-    <div>
+    <div style={{ flex: 1 }}>
       <div style={{ fontSize: '14px', fontWeight: 800, color: '#1e1200', marginBottom: '3px' }}>{title}</div>
       <div style={{ fontSize: '12px', fontWeight: 600, color: '#888' }}>{time}</div>
+    </div>
+    {status && (
+      <div style={{
+        padding: '4px 10px',
+        borderRadius: '20px',
+        fontSize: '10px',
+        fontWeight: 700,
+        backgroundColor: status === 'confirmed' ? '#2ecc7120' : '#f39c1220',
+        color: status === 'confirmed' ? '#27ae60' : '#e67e22',
+      }}>
+        {status === 'confirmed' ? '✓ Confirmed' : 'Pending'}
+      </div>
+    )}
+  </div>
+);
+
+// Loading Skeleton for Appointments
+const AppointmentsSkeleton = () => (
+  <div>
+    {[1, 2, 3].map(i => (
+      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 0' }}>
+        <div style={{
+          width: '48px',
+          height: '58px',
+          backgroundColor: '#f0f0f0',
+          borderRadius: '10px',
+          animation: 'pulse 1.5s ease-in-out infinite',
+        }} />
+        <div style={{ flex: 1 }}>
+          <div style={{
+            height: '16px',
+            backgroundColor: '#f0f0f0',
+            borderRadius: '4px',
+            width: '70%',
+            marginBottom: '8px',
+            animation: 'pulse 1.5s ease-in-out infinite',
+          }} />
+          <div style={{
+            height: '12px',
+            backgroundColor: '#f0f0f0',
+            borderRadius: '4px',
+            width: '40%',
+            animation: 'pulse 1.5s ease-in-out infinite',
+          }} />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+// Loading Skeleton for Announcements
+const AnnouncementsSkeleton = () => (
+  <div>
+    <div style={{
+      height: '18px',
+      backgroundColor: '#f0f0f0',
+      borderRadius: '4px',
+      width: '80%',
+      marginBottom: '12px',
+      animation: 'pulse 1.5s ease-in-out infinite',
+    }} />
+    <div style={{
+      height: '12px',
+      backgroundColor: '#f0f0f0',
+      borderRadius: '4px',
+      width: '95%',
+      marginBottom: '8px',
+      animation: 'pulse 1.5s ease-in-out infinite',
+    }} />
+    <div style={{
+      height: '12px',
+      backgroundColor: '#f0f0f0',
+      borderRadius: '4px',
+      width: '60%',
+      marginBottom: '16px',
+      animation: 'pulse 1.5s ease-in-out infinite',
+    }} />
+    <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginTop: '20px' }}>
+      {[1, 2, 3].map(i => (
+        <div key={i} style={{
+          width: '7px',
+          height: '7px',
+          borderRadius: '50%',
+          backgroundColor: '#f0f0f0',
+          animation: 'pulse 1.5s ease-in-out infinite',
+        }} />
+      ))}
     </div>
   </div>
 );
 
-// Announcement card (carousel) 
-const announcements = [
+// Empty State Component
+const EmptyState = ({ type }) => (
+  <div style={{
+    textAlign: 'center',
+    padding: '40px 20px',
+  }}>
+    <div style={{ fontSize: '48px', marginBottom: '12px', opacity: 0.5 }}>
+      {type === 'appointments' ? '📅' : '📭'}
+    </div>
+    <div style={{ fontSize: '14px', fontWeight: 600, color: '#888' }}>
+      No {type} available
+    </div>
+    <div style={{ fontSize: '12px', color: '#aaa', marginTop: '4px' }}>
+      Check back later for updates
+    </div>
+  </div>
+);
+
+// Announcement card data
+const defaultAnnouncements = [
   {
+    id: 1,
     title: 'Income Certificate Service Resumed',
     body: 'Applications are now open again. Citizens who couldn\'t apply during maintenance may now submit their requests.',
+    date: '2026-04-01',
   },
   {
+    id: 2,
     title: 'Gram Sabha Meeting — 5 April 2026',
     body: 'Monthly Gram Sabha meeting at 10 AM in the Panchayat Hall. All ward citizens are requested to attend.',
+    date: '2026-03-28',
   },
   {
+    id: 3,
     title: 'Digital Certificates Now Available',
     body: 'Download your digitally signed certificates directly from the portal — no need to visit the office.',
+    date: '2026-03-25',
   },
 ];
 
@@ -153,35 +270,93 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState('dashboard');
   const [announcIdx, setAnnouncIdx] = useState(0);
+  
+  // NEW: Loading and data states for enhanced widgets
+  const [appointments, setAppointments] = useState([]);
+  const [announcements, setAnnouncements] = useState(defaultAnnouncements);
+  const [loadingAppointments, setLoadingAppointments] = useState(true);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
+  const [refreshingAppointments, setRefreshingAppointments] = useState(false);
+  const [refreshingAnnouncements, setRefreshingAnnouncements] = useState(false);
 
   // Firebase auth state
-  const [currentUser, setCurrentUser] = useState(null);  // Firebase Auth user
-  const [userData,    setUserData]    = useState(null);  // Firestore /users/{uid}
-  const [gnOfficer,   setGnOfficer]   = useState(null);  // Firestore /gnOfficers/{gnDiv}
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [gnOfficer, setGnOfficer] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+
+  // NEW: Fetch appointments from Firebase
+  const fetchAppointments = async (showRefresh = false) => {
+    if (showRefresh) {
+      setRefreshingAppointments(true);
+    } else {
+      setLoadingAppointments(true);
+    }
+    
+    try {
+      // Simulate API call - Replace with actual Firebase query
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Demo appointments data
+      const demoAppointments = [
+        { id: 1, month: 'APR', day: '02', title: 'Cutting jack trees', time: '11:30 AM', status: 'confirmed' },
+        { id: 2, month: 'APR', day: '07', title: 'Recommendations for electricity & water', time: '10:20 AM', status: 'pending' },
+        { id: 3, month: 'APR', day: '15', title: 'Document verification', time: '2:00 PM', status: 'confirmed' },
+      ];
+      setAppointments(demoAppointments);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    } finally {
+      setLoadingAppointments(false);
+      setRefreshingAppointments(false);
+    }
+  };
+
+  // NEW: Fetch announcements from Firebase
+  const fetchAnnouncements = async (showRefresh = false) => {
+    if (showRefresh) {
+      setRefreshingAnnouncements(true);
+    } else {
+      setLoadingAnnouncements(true);
+    }
+    
+    try {
+      // Simulate API call - Replace with actual Firebase query
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Using default announcements for demo
+      setAnnouncements(defaultAnnouncements);
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+    } finally {
+      setLoadingAnnouncements(false);
+      setRefreshingAnnouncements(false);
+    }
+  };
+
+  // NEW: Refresh handlers
+  const handleRefreshAppointments = () => {
+    fetchAppointments(true);
+  };
+
+  const handleRefreshAnnouncements = () => {
+    fetchAnnouncements(true);
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
-
         try {
-          // 1. Fetch this user's profile from Firestore
           const userSnap = await getDoc(doc(db, 'users', user.uid));
           if (userSnap.exists()) {
             const data = userSnap.data();
             setUserData(data);
-
-            // 2. Fetch their assigned GN officer using their gnDiv field
-            //    Firestore collection: gnOfficers / document ID = gnDiv name
-            //    e.g. /gnOfficers/Colombo → { name: "Mr. Perera", available: true }
             if (data.gnDiv) {
               try {
                 const gnSnap = await getDoc(doc(db, 'gnOfficers', data.gnDiv));
                 if (gnSnap.exists()) {
                   setGnOfficer(gnSnap.data());
                 } else {
-                  // Fallback: try matching by dsDiv if gnDiv doc not found
                   if (data.dsDiv) {
                     const dsSnap = await getDoc(doc(db, 'gnOfficers', data.dsDiv));
                     if (dsSnap.exists()) setGnOfficer(dsSnap.data());
@@ -196,16 +371,18 @@ const Dashboard = () => {
           console.warn('Could not load user profile:', err.message);
         }
       } else {
-        // Not logged in → redirect to login
         navigate('/login');
       }
       setAuthLoading(false);
     });
-
     return () => unsubscribe();
   }, [navigate]);
 
-  // Logout handler 
+  // NEW: Load appointments on mount
+  useEffect(() => {
+    fetchAppointments(false);
+  }, []);
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -215,25 +392,17 @@ const Dashboard = () => {
     }
   };
 
-  // Derived display values
-  // Priority: Firestore fullName → Auth displayName → email prefix → 'User'
-  const fullName  = userData?.fullName
-                 || currentUser?.displayName
-                 || currentUser?.email?.split('@')[0]
-                 || 'User';
+  const fullName = userData?.fullName
+    || currentUser?.displayName
+    || currentUser?.email?.split('@')[0]
+    || 'User';
 
-  // First name only for the welcome greeting
   const firstName = fullName.split(' ')[0];
+  const chipName = userData?.username || fullName;
+  const gnName = gnOfficer?.name || `GN Officer (${userData?.gnDiv || 'N/A'})`;
+  const gnAvailable = gnOfficer?.available ?? true;
+  const gnDivLabel = userData?.gnDiv || userData?.dsDiv || '';
 
-  // Topbar chip — show username if set, otherwise full name
-  const chipName  = userData?.username || fullName;
-
-  // GN officer — from Firestore gnOfficers collection, fallback to user's gnDiv name
-  const gnName      = gnOfficer?.name        || `GN Officer (${userData?.gnDiv || 'N/A'})`;
-  const gnAvailable = gnOfficer?.available   ?? true;   // default to true if field missing
-  const gnDivLabel  = userData?.gnDiv        || userData?.dsDiv || '';
-
-  // Show loading screen while auth resolves
   if (authLoading) {
     return (
       <div style={{
@@ -280,7 +449,6 @@ const Dashboard = () => {
       backgroundColor: '#f8f6f0',
     }}>
 
-      {/* Shell */}
       <div style={{ flex: 1, display: 'flex' }}>
 
         {/* SIDEBAR */}
@@ -295,13 +463,9 @@ const Dashboard = () => {
           height: '100vh',
           overflowY: 'auto',
         }}>
-
-          {/* Logo */}
           <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
             <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '80px', width: 'auto' }} />
           </div>
-
-          {/* Main nav */}
           <div style={{ flex: 1, padding: '12px 10px' }}>
             {navItems.map((item) => (
               <NavItem
@@ -310,16 +474,14 @@ const Dashboard = () => {
                 label={item.label}
                 active={activePage === item.key}
                 onClick={() => {
-                  if (item.key === 'announcements')  navigate('/announcements');
-                  else if (item.key === 'appointments')  navigate('/appointments');
-                  else if (item.key === 'settings')  navigate('/settings');
+                  if (item.key === 'announcements') navigate('/announcements');
+                  else if (item.key === 'appointments') navigate('/appointments');
+                  else if (item.key === 'settings') navigate('/settings');
                   else setActivePage(item.key);
                 }}
               />
             ))}
           </div>
-
-          {/* Bottom nav */}
           <div style={{ padding: '10px 10px 20px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
             {bottomNav.map((item) => (
               <NavItem
@@ -329,7 +491,7 @@ const Dashboard = () => {
                 active={activePage === item.key}
                 onClick={() => {
                   if (item.key === 'logout') handleLogout();
-                  else if (item.key === 'profile')  navigate('/profile');
+                  else if (item.key === 'profile') navigate('/profile');
                   else setActivePage(item.key);
                 }}
               />
@@ -354,8 +516,6 @@ const Dashboard = () => {
             zIndex: 40,
             boxShadow: '0 1px 0 #ede8d8',
           }}>
-
-            {/* Search */}
             <div style={{
               flex: 1,
               maxWidth: '400px',
@@ -370,18 +530,13 @@ const Dashboard = () => {
               transition: 'border-color 0.15s',
             }}
               onMouseOver={(e) => (e.currentTarget.style.borderColor = '#F5C400')}
-              onMouseOut={(e)  => (e.currentTarget.style.borderColor = '#e8d8b0')}
+              onMouseOut={(e) => (e.currentTarget.style.borderColor = '#e8d8b0')}
             >
               <Icon d={Icons.search} size={16} color="#aaa" />
               <span style={{ fontSize: '14px', color: '#bbb', fontWeight: 600 }}>search</span>
             </div>
-
             <div style={{ flex: 1 }} />
-
-            {/* Language */}
             <span style={{ fontSize: '14px', fontWeight: 800, color: '#1e1200', cursor: 'pointer' }}>EN</span>
-
-            {/* Bell */}
             <div style={{
               width: '38px', height: '38px', borderRadius: '50%',
               backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
@@ -390,10 +545,9 @@ const Dashboard = () => {
               transition: 'border-color 0.15s',
             }}
               onMouseOver={(e) => (e.currentTarget.style.borderColor = '#F5C400')}
-              onMouseOut={(e)  => (e.currentTarget.style.borderColor = '#e8d8b0')}
+              onMouseOut={(e) => (e.currentTarget.style.borderColor = '#e8d8b0')}
             >
               <Icon d={Icons.bell} size={18} color="#5a3a00" />
-              {/* Red dot */}
               <div style={{
                 position: 'absolute', top: '4px', right: '4px',
                 width: '8px', height: '8px', borderRadius: '50%',
@@ -401,8 +555,6 @@ const Dashboard = () => {
                 border: '1.5px solid #fff',
               }} />
             </div>
-
-            {/* User chip */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: '8px',
               padding: '5px 14px 5px 6px',
@@ -413,12 +565,11 @@ const Dashboard = () => {
               transition: 'border-color 0.15s',
             }}
               onMouseOver={(e) => (e.currentTarget.style.borderColor = '#F5C400')}
-              onMouseOut={(e)  => (e.currentTarget.style.borderColor = '#e8d8b0')}
+              onMouseOut={(e) => (e.currentTarget.style.borderColor = '#e8d8b0')}
             >
               <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e1200' }}>
                 {chipName}
               </span>
-              {/* Avatar circle */}
               <div style={{
                 width: '30px', height: '30px', borderRadius: '50%',
                 backgroundColor: '#F5C400',
@@ -433,14 +584,13 @@ const Dashboard = () => {
           {/* Content */}
           <div style={{ padding: '28px 30px', flex: 1 }}>
 
-            {/* Welcome banner */}
+            {/* Welcome banner - UNCHANGED */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr auto',
               gap: '16px',
               marginBottom: '26px',
             }}>
-              {/* Welcome card */}
               <div style={{
                 backgroundColor: '#fff8dc',
                 border: '1.5px solid #f0d870',
@@ -450,7 +600,6 @@ const Dashboard = () => {
                 alignItems: 'center',
                 gap: '18px',
               }}>
-                {/* Avatar */}
                 <div style={{
                   width: '62px', height: '62px', borderRadius: '50%',
                   backgroundColor: '#e8e0d0',
@@ -466,8 +615,6 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-
-              {/* GN Officer card */}
               <div style={{
                 backgroundColor: '#fff',
                 border: '1.5px solid #e8d5ac',
@@ -508,113 +655,182 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Quick Actions */}
+            {/* Quick Actions - UNCHANGED */}
             <div style={{ marginBottom: '26px' }}>
               <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e1200', marginBottom: '14px' }}>
                 Quick Actions
               </div>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <QuickCard iconPath={Icons.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} />                <QuickCard iconPath={Icons.download}  label="Download forms"   />
-                <QuickCard iconPath={Icons.ai}        label="AI assistant"     />
-                <QuickCard iconPath={Icons.phone}     label="Contact GN"       />
+                <QuickCard iconPath={Icons.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} />
+                <QuickCard iconPath={Icons.download} label="Download forms" onClick={() => navigate('/forms')} />
+                <QuickCard iconPath={Icons.ai} label="AI assistant" onClick={() => navigate('/ai')} />
+                <QuickCard iconPath={Icons.phone} label="Contact GN" onClick={() => window.location.href = 'tel:+94...'} />
               </div>
             </div>
 
-            {/* Appointments & Announcements */}
+            {/* ENHANCED: Appointments & Announcements with Loading States */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}>
 
-              {/* Upcoming Appointments */}
+              {/* Upcoming Appointments - WITH LOADING AND EMPTY STATES */}
               <div style={{
                 backgroundColor: '#c8a882',
                 borderRadius: '18px',
                 overflow: 'hidden',
                 boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
               }}>
-                <div style={{ padding: '16px 20px 12px' }}>
+                <div style={{
+                  padding: '16px 20px 12px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
                   <div style={{ fontSize: '15px', fontWeight: 900, color: '#fff' }}>
                     Upcoming Appointments
                   </div>
+                  {/* Refresh button */}
+                  <button
+                    onClick={handleRefreshAppointments}
+                    disabled={refreshingAppointments}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: refreshingAppointments ? 'not-allowed' : 'pointer',
+                      fontSize: '16px',
+                      color: '#fff',
+                      transition: 'transform 0.3s',
+                      transform: refreshingAppointments ? 'rotate(180deg)' : 'none',
+                      opacity: refreshingAppointments ? 0.7 : 1,
+                    }}
+                  >
+                    🔄
+                  </button>
                 </div>
-                <div style={{ backgroundColor: '#fff', margin: '0 0 0 0', borderRadius: '0 0 16px 16px', padding: '6px 20px 12px' }}>
-                  <AppointmentRow month="APR" day="02" title="Cutting jack trees"                    time="11.30 AM"           />
-                  <AppointmentRow month="APR" day="07" title="Recommendations for electricity & water" time="10.20 AM" last />
+                <div style={{
+                  backgroundColor: '#fff',
+                  margin: '0 0 0 0',
+                  borderRadius: '0 0 16px 16px',
+                  padding: '6px 20px 12px',
+                  minHeight: '220px',
+                }}>
+                  {loadingAppointments ? (
+                    <AppointmentsSkeleton />
+                  ) : appointments.length === 0 ? (
+                    <EmptyState type="appointments" />
+                  ) : (
+                    appointments.map((app, idx) => (
+                      <AppointmentRow
+                        key={app.id}
+                        month={app.month}
+                        day={app.day}
+                        title={app.title}
+                        time={app.time}
+                        status={app.status}
+                        last={idx === appointments.length - 1}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
 
-              {/* Latest Announcements */}
+              {/* Latest Announcements - WITH LOADING AND EMPTY STATES */}
               <div style={{
                 backgroundColor: '#c8a882',
                 borderRadius: '18px',
                 overflow: 'hidden',
                 boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
               }}>
-                <div style={{ padding: '16px 20px 12px' }}>
+                <div style={{
+                  padding: '16px 20px 12px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
                   <div style={{ fontSize: '15px', fontWeight: 900, color: '#fff' }}>
                     Latest Announcements
                   </div>
+                  {/* Refresh button */}
+                  <button
+                    onClick={handleRefreshAnnouncements}
+                    disabled={refreshingAnnouncements}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: refreshingAnnouncements ? 'not-allowed' : 'pointer',
+                      fontSize: '16px',
+                      color: '#fff',
+                      transition: 'transform 0.3s',
+                      transform: refreshingAnnouncements ? 'rotate(180deg)' : 'none',
+                      opacity: refreshingAnnouncements ? 0.7 : 1,
+                    }}
+                  >
+                    🔄
+                  </button>
                 </div>
                 <div style={{
                   backgroundColor: '#fff',
                   borderRadius: '0 0 16px 16px',
                   padding: '16px 20px',
-                  minHeight: '130px',
+                  minHeight: '220px',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
                 }}>
-                  {/* Text */}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#1e1200', marginBottom: '8px' }}>
-                      {announcements[announcIdx].title}
-                    </div>
-                    <p style={{ fontSize: '13px', color: '#666', fontWeight: 500, lineHeight: 1.6, margin: 0 }}>
-                      {announcements[announcIdx].body}
-                    </p>
-                  </div>
-
-                  {/* Prev / Next arrows */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px' }}>
-                    <button onClick={prev} style={{
-                      width: '30px', height: '30px', borderRadius: '50%',
-                      border: '1.5px solid #e8d5ac', background: '#fff',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', transition: 'all 0.15s',
-                    }}
-                      onMouseOver={(e) => { e.currentTarget.style.borderColor = '#F5C400'; e.currentTarget.style.background = '#fff8dc'; }}
-                      onMouseOut={(e)  => { e.currentTarget.style.borderColor = '#e8d5ac'; e.currentTarget.style.background = '#fff'; }}
-                    >
-                      <Icon d={Icons.chevLeft} size={14} color="#888" />
-                    </button>
-
-                    {/* Dot indicators */}
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      {announcements.map((_, i) => (
-                        <div key={i} onClick={() => setAnnouncIdx(i)} style={{
-                          width: i === announcIdx ? '18px' : '7px',
-                          height: '7px',
-                          borderRadius: '999px',
-                          backgroundColor: i === announcIdx ? '#F5C400' : '#ddd',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                        }} />
-                      ))}
-                    </div>
-
-                    <button onClick={next} style={{
-                      width: '30px', height: '30px', borderRadius: '50%',
-                      border: '1.5px solid #e8d5ac', background: '#fff',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', transition: 'all 0.15s',
-                    }}
-                      onMouseOver={(e) => { e.currentTarget.style.borderColor = '#F5C400'; e.currentTarget.style.background = '#fff8dc'; }}
-                      onMouseOut={(e)  => { e.currentTarget.style.borderColor = '#e8d5ac'; e.currentTarget.style.background = '#fff'; }}
-                    >
-                      <Icon d={Icons.chevRight} size={14} color="#888" />
-                    </button>
-                  </div>
+                  {loadingAnnouncements ? (
+                    <AnnouncementsSkeleton />
+                  ) : announcements.length === 0 ? (
+                    <EmptyState type="announcements" />
+                  ) : (
+                    <>
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 800, color: '#1e1200', marginBottom: '8px' }}>
+                          {announcements[announcIdx]?.title}
+                        </div>
+                        <p style={{ fontSize: '13px', color: '#666', fontWeight: 500, lineHeight: 1.6, margin: 0 }}>
+                          {announcements[announcIdx]?.body}
+                        </p>
+                      </div>
+                      {announcements.length > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px' }}>
+                          <button onClick={prev} style={{
+                            width: '30px', height: '30px', borderRadius: '50%',
+                            border: '1.5px solid #e8d5ac', background: '#fff',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', transition: 'all 0.15s',
+                          }}
+                            onMouseOver={(e) => { e.currentTarget.style.borderColor = '#F5C400'; e.currentTarget.style.background = '#fff8dc'; }}
+                            onMouseOut={(e) => { e.currentTarget.style.borderColor = '#e8d5ac'; e.currentTarget.style.background = '#fff'; }}
+                          >
+                            <Icon d={Icons.chevLeft} size={14} color="#888" />
+                          </button>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            {announcements.map((_, i) => (
+                              <div key={i} onClick={() => setAnnouncIdx(i)} style={{
+                                width: i === announcIdx ? '18px' : '7px',
+                                height: '7px',
+                                borderRadius: '999px',
+                                backgroundColor: i === announcIdx ? '#F5C400' : '#ddd',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                              }} />
+                            ))}
+                          </div>
+                          <button onClick={next} style={{
+                            width: '30px', height: '30px', borderRadius: '50%',
+                            border: '1.5px solid #e8d5ac', background: '#fff',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', transition: 'all 0.15s',
+                          }}
+                            onMouseOver={(e) => { e.currentTarget.style.borderColor = '#F5C400'; e.currentTarget.style.background = '#fff8dc'; }}
+                            onMouseOut={(e) => { e.currentTarget.style.borderColor = '#e8d5ac'; e.currentTarget.style.background = '#fff'; }}
+                          >
+                            <Icon d={Icons.chevRight} size={14} color="#888" />
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
-
             </div>
           </div>
         </div>
@@ -632,14 +848,18 @@ const Dashboard = () => {
         ©2026 Smart Grama Sewa
       </footer>
 
-      {/* Pulse animation for GN dot */}
+      {/* Updated styles with pulse animation for skeletons */}
       <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+        @keyframes pulse-gn {
           0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
-          50%       { box-shadow: 0 0 0 6px rgba(34,197,94,0.08); }
+          50% { box-shadow: 0 0 0 6px rgba(34,197,94,0.08); }
         }
       `}</style>
-
     </div>
   );
 };
