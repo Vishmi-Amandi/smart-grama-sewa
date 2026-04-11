@@ -58,7 +58,15 @@ const applySettings = (s) => {
 
   // Text size
   const sizes = { small: '14px', normal: '16px', large: '18px' };
-  root.style.fontSize = sizes[s.textSize] || '16px';
+  if (s.textSize === 'small') {
+    document.body.style.fontSize = '14px';
+  } else if (s.textSize === 'large') {
+    document.body.style.fontSize = '18px';
+  } else {
+    document.body.style.fontSize = '16px';
+  }
+
+  root.setAttribute('data-textsize', s.textSize || 'normal');
 };
 
 // NavItem 

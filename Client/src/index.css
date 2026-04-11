@@ -21,61 +21,134 @@
 }
 
 /* Dark mode — override page background */
+/* ── Dark Mode ── */
 [data-theme="dark"] body,
 [data-theme="dark"] #root {
-  background-color: #1a1a2e;
-  color: #f0f0f0;
+  background-color: #2a2a2a !important;
 }
 
-/* Dark mode — white backgrounds become dark cards */
-[data-theme="dark"] .bg-white,
-[data-theme="dark"] [style*="background-color: rgb(255, 255, 255)"],
-[data-theme="dark"] [style*="backgroundColor: #fff"],
-[data-theme="dark"] [style*="backgroundColor: white"] {
-  background-color: #2d2d44 !important;
+/* Page backgrounds */
+[data-theme="dark"] div {
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* White cards → dark */
+[data-theme="dark"] div[style*="background-color: rgb(255, 255, 255)"],
+[data-theme="dark"] div[style*="backgroundColor: #fff"],
+[data-theme="dark"] div[style*="backgroundColor: white"] {
+  background-color: #3d3d3d !important;
+  border-color: #555555 !important;
+}
+
+/* Cream/beige backgrounds → dark page */
+[data-theme="dark"] div[style*="background-color: rgb(245, 240, 232)"],
+[data-theme="dark"] div[style*="background-color: rgb(248, 246, 240)"],
+[data-theme="dark"] div[style*="background-color: rgb(255, 251, 232)"],
+[data-theme="dark"] div[style*="background-color: rgb(255, 248, 220)"] {
+  background-color: #2a2a2a !important;
+}
+
+/* Widget headers brown → dark brown */
+[data-theme="dark"] div[style*="background-color: rgb(200, 168, 130)"] {
+  background-color: #5a3218 !important;
+}
+
+/* Input / search backgrounds */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: #3d3d3d !important;
+  color: #f0f0f0 !important;
+  border-color: #555555 !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: #888888 !important;
+}
+
+/* Main dark text → white */
+[data-theme="dark"] *[style*="color: rgb(30, 18, 0)"] {
   color: #f0f0f0 !important;
 }
 
-/* Dark mode — borders */
-[data-theme="dark"] [style*="border-color: #e8d5ac"],
-[data-theme="dark"] [style*="borderColor: #e8d5ac"] {
-  border-color: #3a3a5c !important;
+/* Grey text → lighter */
+[data-theme="dark"] *[style*="color: rgb(136, 136, 136)"],
+[data-theme="dark"] *[style*="color: rgb(102, 102, 102)"] {
+  color: #cccccc !important;
 }
 
-/* Dark mode — page background */
-[data-theme="dark"] [style*="background-color: #f5f0e8"],
-[data-theme="dark"] [style*="backgroundColor: #f5f0e8"] {
-  background-color: #1a1a2e !important;
+/* Borders → dark */
+[data-theme="dark"] *[style*="border-color: rgb(232, 213, 172)"],
+[data-theme="dark"] *[style*="border-bottom: 1px solid rgb(237, 232, 216)"] {
+  border-color: #555555 !important;
 }
 
-/* Dark mode — topbar */
-[data-theme="dark"] [style*="background-color: #fff"],
-[data-theme="dark"] [style*="backgroundColor: #fff"] {
-  background-color: #16213e !important;
+/* Footer → very dark */
+[data-theme="dark"] footer {
+  background-color: #1a0a00 !important;
 }
 
-/* Dark mode — text colours */
-[data-theme="dark"] [style*="color: #1e1200"],
-[data-theme="dark"] [style*="color: rgb(30, 18, 0)"] {
-  color: #f0f0f0 !important;
+/* Topbar white → dark */
+[data-theme="dark"] div[style*="background-color: rgb(255, 255, 255)"][style*="border-bottom"] {
+  background-color: #2a2a2a !important;
 }
 
-[data-theme="dark"] [style*="color: #888"],
-[data-theme="dark"] [style*="color: rgb(136, 136, 136)"] {
-  color: #aaaacc !important;
+/* Keep yellow sidebar unchanged */
+[data-theme="dark"] div[style*="background-color: rgb(245, 196, 0)"] {
+  background-color: #F5C400 !important;
 }
 
-/* Text size — Small */
-[data-textsize="small"] * {
-  font-size: 96% !important;
+/* Keep yellow buttons unchanged */
+[data-theme="dark"] button[style*="background-color: rgb(245, 196, 0)"] {
+  background-color: #F5C400 !important;
 }
 
-/* Text size — Normal (default, no change needed) */
-[data-textsize="normal"] * {
-  font-size: 100% !important;
+/* Keep dark brown buttons unchanged */
+[data-theme="dark"] button[style*="background-color: rgb(30, 18, 0)"],
+[data-theme="dark"] button[style*="background-color: rgb(61, 42, 0)"],
+[data-theme="dark"] button[style*="background-color: rgb(138, 96, 64)"] {
+  /* keep as-is */
 }
 
-/* Text size — Large */
-[data-textsize="large"] * {
+/* Text size - ONLY affects body text, NOT headings */
+[data-textsize="small"] body,
+[data-textsize="small"] p,
+[data-textsize="small"] span,
+[data-textsize="small"] label,
+[data-textsize="small"] input,
+[data-textsize="small"] button:not(.no-scale),
+[data-textsize="small"] div:not(h1):not(h2):not(h3):not(h4) {
+  font-size: 98% !important;
+}
+
+[data-textsize="large"] body,
+[data-textsize="large"] p,
+[data-textsize="large"] span,
+[data-textsize="large"] label,
+[data-textsize="large"] input,
+[data-textsize="large"] button:not(.no-scale),
+[data-textsize="large"] div:not(h1):not(h2):not(h3):not(h4) {
   font-size: 102% !important;
+}
+
+/* Headings stay at original size */
+[data-textsize="small"] h1,
+[data-textsize="small"] h2,
+[data-textsize="small"] h3,
+[data-textsize="small"] h4,
+[data-textsize="small"] .heading,
+[data-textsize="small"] [style*="font-weight: 900"],
+[data-textsize="small"] [style*="fontWeight: 900"] {
+  font-size: inherit !important;
+}
+
+[data-textsize="large"] h1,
+[data-textsize="large"] h2,
+[data-textsize="large"] h3,
+[data-textsize="large"] h4,
+[data-textsize="large"] .heading,
+[data-textsize="large"] [style*="font-weight: 900"],
+[data-textsize="large"] [style*="fontWeight: 900"] {
+  font-size: inherit !important;
 }
