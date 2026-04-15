@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 
 // Icons 
@@ -285,55 +285,81 @@ const Dashboard = () => {
   const [gnOfficer, setGnOfficer] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // NEW: Fetch appointments from Firebase
+  // Fetch appointments from Firebase
   const fetchAppointments = async (showRefresh = false) => {
-    if (showRefresh) {
-      setRefreshingAppointments(true);
-    } else {
-      setLoadingAppointments(true);
-    }
-    
-    try {
-      // Simulate API call - Replace with actual Firebase query
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Demo appointments data
-      const demoAppointments = [
-        { id: 1, month: 'APR', day: '02', title: 'Cutting jack trees', time: '11:30 AM', status: 'confirmed' },
-        { id: 2, month: 'APR', day: '07', title: 'Recommendations for electricity & water', time: '10:20 AM', status: 'pending' },
-        { id: 3, month: 'APR', day: '15', title: 'Document verification', time: '2:00 PM', status: 'confirmed' },
-      ];
-      setAppointments(demoAppointments);
-    } catch (error) {
-      console.error('Error fetching appointments:', error);
-    } finally {
-      setLoadingAppointments(false);
-      setRefreshingAppointments(false);
-    }
-  };
+  if (showRefresh) {
+    setRefreshingAppointments(true);
+  } else {
+    setLoadingAppointments(true);
+  }
 
-  // NEW: Fetch announcements from Firebase
+  try {
+    if (!currentUser) return;
+    const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
+    const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
+    const q = query(
+      collection(db, 'appointments'),
+      where('uid', '==', currentUser.uid),
+      where('status', 'in', ['Pending', 'Confirmed']),
+    );
+    const snap = await Promise.race([getDocs(q), timeout]);
+    const list = snap.docs
+      .map(d => {
+        const data = d.data();
+        const [y, m, day] = (data.date || '').split('-').map(Number);
+        return {
+          id:     d.id,
+          day:    String(day).padStart(2, '0'),
+          month:  ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][(m - 1)] || '',
+          title:  data.service || 'Appointment',
+          time:   data.slot    || '',
+          date:   data.date    || '',
+          status: data.status  || 'Pending',
+        };
+      })
+      .filter(a => a.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(0, 3);
+    setAppointments(list);
+  } catch (error) {
+    console.error('Error fetching appointments:', error);
+  } finally {
+    setLoadingAppointments(false);
+    setRefreshingAppointments(false);
+  }
+};
+
+  // Fetch announcements from Firebase
   const fetchAnnouncements = async (showRefresh = false) => {
-    if (showRefresh) {
-      setRefreshingAnnouncements(true);
-    } else {
-      setLoadingAnnouncements(true);
-    }
-    
-    try {
-      // Simulate API call - Replace with actual Firebase query
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // Using default announcements for demo
-      setAnnouncements(defaultAnnouncements);
-    } catch (error) {
-      console.error('Error fetching announcements:', error);
-    } finally {
-      setLoadingAnnouncements(false);
-      setRefreshingAnnouncements(false);
-    }
-  };
+  if (showRefresh) {
+    setRefreshingAnnouncements(true);
+  } else {
+    setLoadingAnnouncements(true);
+  }
 
-  // NEW: Refresh handlers
+  try {
+    const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
+    const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'), limit(3));
+    const snap = await Promise.race([getDocs(q), timeout]);
+    if (snap.docs.length > 0) {
+      setAnnouncements(snap.docs.map(d => ({
+        id:    d.id,
+        title: d.data().title || 'Announcement',
+        body:  d.data().body  || d.data().message || '',
+        date:  d.data().createdAt?.toDate?.().toISOString().split('T')[0] || '',
+      })));
+    }
+    // If 0 docs → keep defaultAnnouncements showing
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    // Keep defaultAnnouncements showing on error
+  } finally {
+    setLoadingAnnouncements(false);
+    setRefreshingAnnouncements(false);
+  }
+};
+
+  // Refresh handlers
   const handleRefreshAppointments = () => {
     fetchAppointments(true);
   };
@@ -378,11 +404,14 @@ const Dashboard = () => {
     return () => unsubscribe();
   }, [navigate]);
 
-  // NEW: Load appointments on mount
+  // Load appointments when currentUser is available
   useEffect(() => {
-    fetchAppointments(false);
-  }, []);
+    if (currentUser) {
+      fetchAppointments(false);
+    }
+  }, [currentUser]);  // ← depends on currentUser so it runs after login
 
+  
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -439,6 +468,35 @@ const Dashboard = () => {
     { key: 'settings', icon: Icons.settings, label: 'Settings' },
     { key: 'logout',   icon: Icons.logout,   label: 'Logout'   },
   ];
+
+  const [gnContact, setGnContact] = useState(null);
+  const [loadingContact, setLoadingContact] = useState(false);
+
+  const fetchGNContact = async () => {
+    setLoadingContact(true);
+    try {
+      const userId = auth.currentUser?.uid;
+      if (!userId) return;
+      
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      const gnDivision = userDoc.data()?.gnDiv;
+      
+      if (!gnDivision) return;
+      
+      const gnDoc = await getDoc(doc(db, 'gnOfficers', gnDivision));
+      if (gnDoc.exists()) {
+        setGnContact(gnDoc.data().phone || gnDoc.data().contactNo);
+      }
+    } catch (error) {
+      console.error('Error fetching GN contact:', error);
+    } finally {
+      setLoadingContact(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGNContact();
+  }, []);
 
   return (
     <div style={{
@@ -584,7 +642,7 @@ const Dashboard = () => {
           {/* Content */}
           <div style={{ padding: '28px 30px', flex: 1 }}>
 
-            {/* Welcome banner - UNCHANGED */}
+            {/* Welcome banner */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr auto',
@@ -655,7 +713,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Quick Actions - UNCHANGED */}
+            {/* Quick Actions */}
             <div style={{ marginBottom: '26px' }}>
               <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e1200', marginBottom: '14px' }}>
                 Quick Actions
@@ -664,7 +722,15 @@ const Dashboard = () => {
                 <QuickCard iconPath={Icons.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} />
                 <QuickCard iconPath={Icons.download} label="Download forms" onClick={() => navigate('/forms')} />
                 <QuickCard iconPath={Icons.ai} label="AI assistant" onClick={() => navigate('/ai')} />
-                <QuickCard iconPath={Icons.phone} label="Contact GN" onClick={() => window.location.href = 'tel:+94...'} />
+                <QuickCard iconPath={Icons.phone} label="Contact GN" 
+                      onClick={() => {
+                        if (gnContact) {
+                          window.location.href = `tel:${gnContact}`;
+                        } else {
+                          alert('GN contact number not available. Please visit the GN office.');
+                        }
+                      }}
+                    />
               </div>
             </div>
 
