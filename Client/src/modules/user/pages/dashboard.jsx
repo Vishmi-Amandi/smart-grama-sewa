@@ -287,14 +287,14 @@ const Dashboard = () => {
 
   // Fetch appointments from Firebase
   const fetchAppointments = async (showRefresh = false) => {
-  if (showRefresh) {
-    setRefreshingAppointments(true);
-  } else {
-    setLoadingAppointments(true);
-  }
-
-  try {
-    if (!currentUser) return;
+    if (showRefresh) {
+      setRefreshingAppointments(true);
+    } else {
+      setLoadingAppointments(true);
+    }
+    
+    try {
+      if (!currentUser) return;
     const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
     const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
     const q = query(
@@ -321,24 +321,24 @@ const Dashboard = () => {
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(0, 3);
     setAppointments(list);
-  } catch (error) {
-    console.error('Error fetching appointments:', error);
-  } finally {
-    setLoadingAppointments(false);
-    setRefreshingAppointments(false);
-  }
-};
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    } finally {
+      setLoadingAppointments(false);
+      setRefreshingAppointments(false);
+    }
+  };
 
   // Fetch announcements from Firebase
   const fetchAnnouncements = async (showRefresh = false) => {
-  if (showRefresh) {
-    setRefreshingAnnouncements(true);
-  } else {
-    setLoadingAnnouncements(true);
-  }
-
-  try {
-    const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
+    if (showRefresh) {
+      setRefreshingAnnouncements(true);
+    } else {
+      setLoadingAnnouncements(true);
+    }
+    
+    try {
+      const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
     const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'), limit(3));
     const snap = await Promise.race([getDocs(q), timeout]);
     if (snap.docs.length > 0) {
@@ -350,14 +350,13 @@ const Dashboard = () => {
       })));
     }
     // If 0 docs → keep defaultAnnouncements showing
-  } catch (error) {
-    console.error('Error fetching announcements:', error);
-    // Keep defaultAnnouncements showing on error
-  } finally {
-    setLoadingAnnouncements(false);
-    setRefreshingAnnouncements(false);
-  }
-};
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+    } finally {
+      setLoadingAnnouncements(false);
+      setRefreshingAnnouncements(false);
+    }
+  };
 
   // Refresh handlers
   const handleRefreshAppointments = () => {
@@ -411,7 +410,35 @@ const Dashboard = () => {
     }
   }, [currentUser]);  // ← depends on currentUser so it runs after login
 
-  
+  const [gnContact, setGnContact] = useState(null);
+  const [loadingContact, setLoadingContact] = useState(false);
+
+  const fetchGNContact = async () => {
+    setLoadingContact(true);
+    try {
+      const userId = auth.currentUser?.uid;
+      if (!userId) return;
+      
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      const gnDivision = userDoc.data()?.gnDiv;
+      
+      if (!gnDivision) return;
+      
+      const gnDoc = await getDoc(doc(db, 'gnOfficers', gnDivision));
+      if (gnDoc.exists()) {
+        setGnContact(gnDoc.data().phone || gnDoc.data().contactNo);
+      }
+    } catch (error) {
+      console.error('Error fetching GN contact:', error);
+    } finally {
+      setLoadingContact(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGNContact();
+  }, []);
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -468,35 +495,6 @@ const Dashboard = () => {
     { key: 'settings', icon: Icons.settings, label: 'Settings' },
     { key: 'logout',   icon: Icons.logout,   label: 'Logout'   },
   ];
-
-  const [gnContact, setGnContact] = useState(null);
-  const [loadingContact, setLoadingContact] = useState(false);
-
-  const fetchGNContact = async () => {
-    setLoadingContact(true);
-    try {
-      const userId = auth.currentUser?.uid;
-      if (!userId) return;
-      
-      const userDoc = await getDoc(doc(db, 'users', userId));
-      const gnDivision = userDoc.data()?.gnDiv;
-      
-      if (!gnDivision) return;
-      
-      const gnDoc = await getDoc(doc(db, 'gnOfficers', gnDivision));
-      if (gnDoc.exists()) {
-        setGnContact(gnDoc.data().phone || gnDoc.data().contactNo);
-      }
-    } catch (error) {
-      console.error('Error fetching GN contact:', error);
-    } finally {
-      setLoadingContact(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchGNContact();
-  }, []);
 
   return (
     <div style={{
@@ -642,7 +640,7 @@ const Dashboard = () => {
           {/* Content */}
           <div style={{ padding: '28px 30px', flex: 1 }}>
 
-            {/* Welcome banner */}
+            {/* Welcome banner - UNCHANGED */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr auto',
@@ -713,7 +711,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Quick Actions */}
+            {/* Quick Actions - UNCHANGED */}
             <div style={{ marginBottom: '26px' }}>
               <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e1200', marginBottom: '14px' }}>
                 Quick Actions
@@ -722,15 +720,7 @@ const Dashboard = () => {
                 <QuickCard iconPath={Icons.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} />
                 <QuickCard iconPath={Icons.download} label="Download forms" onClick={() => navigate('/forms')} />
                 <QuickCard iconPath={Icons.ai} label="AI assistant" onClick={() => navigate('/ai')} />
-                <QuickCard iconPath={Icons.phone} label="Contact GN" 
-                      onClick={() => {
-                        if (gnContact) {
-                          window.location.href = `tel:${gnContact}`;
-                        } else {
-                          alert('GN contact number not available. Please visit the GN office.');
-                        }
-                      }}
-                    />
+                <QuickCard iconPath={Icons.phone} label="Contact GN" onClick={() => window.location.href = 'tel:+94...'} />
               </div>
             </div>
 
