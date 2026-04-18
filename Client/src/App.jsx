@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-
+import ErrorBoundary from './modules/user/components/errorBoundary';
 // Page imports
 import Login       from './modules/user/pages/login';
 import SignUpSelect  from './modules/user/pages/signupSelect';  // ← role selection screen
@@ -54,40 +54,43 @@ const ProtectedRoute = ({ children }) => {
 const App = () => {
   return (
     <Router>
-      <Routes>
+      <ErrorBoundary>
+        <Routes>
 
-        {/* Public routes (no auth needed) */}
-        <Route path="/login"  element={<Login  />} />
-        {/* Role selection — shown when user clicks "Sign Up" from Login */}
-        <Route path="/signup-select" element={<SignUpSelect />} />
-        {/* Citizen signup — reached after selecting "Citizen" on role screen */}
-        <Route path="/signup" element={<SignUp />} />
+          {/* Public routes (no auth needed) */}
+          <Route path="/login"  element={<Login  />} />
+          {/* Role selection — shown when user clicks "Sign Up" from Login */}
+          <Route path="/signup-select" element={<SignUpSelect />} />
+          {/* Citizen signup — reached after selecting "Citizen" on role screen */}
+          <Route path="/signup" element={<SignUp />} />
 
-        {/* Protected routes (must be logged in) */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute><Dashboard /></ProtectedRoute>
-        } />
-        <Route path="/profile" element={
-          <ProtectedRoute><Profile /></ProtectedRoute>
-        } />
-        <Route path="/appointments" element={
-          <ProtectedRoute><Appointments /></ProtectedRoute>
-        } />
-        <Route path="/announcements" element={
-          <ProtectedRoute><Announcements /></ProtectedRoute>
-        } />
-        <Route path="/settings" element={
-          <ProtectedRoute><Settings /></ProtectedRoute>
-        } />
+          {/* Protected routes (must be logged in) */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute><Dashboard /></ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute><Profile /></ProtectedRoute>
+          } />
+          <Route path="/appointments" element={
+            <ProtectedRoute><Appointments /></ProtectedRoute>
+          } />
+          <Route path="/announcements" element={
+            <ProtectedRoute><Announcements /></ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute><Settings /></ProtectedRoute>
+          } />
 
-        {/* ── Default redirect ── */}
-        {/* Visiting "/" → go to dashboard (which redirects to login if not authed) */}
-        <Route path="/"   element={<Navigate to="/dashboard" replace />} />
+          {/* ── Default redirect ── */}
+          {/* Visiting "/" → go to dashboard (which redirects to login if not authed) */}
+          <Route path="/"   element={<Navigate to="/dashboard" replace />} />
 
-        {/* ── 404 fallback ── */}
-        <Route path="*"   element={<Navigate to="/dashboard" replace />} />
+          {/* ── 404 fallback ── */}
+          <Route path="*"   element={<Navigate to="/dashboard" replace />} />
 
-      </Routes>
+        </Routes>
+      </ErrorBoundary>
+      
     </Router>
   );
 };
