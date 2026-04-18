@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
+import { PageLoadingSkeleton } from '../components/skeleton';
 
 // Icons 
 const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
@@ -410,6 +411,7 @@ const Dashboard = () => {
     }
   }, [currentUser]);  // ← depends on currentUser so it runs after login
 
+  // GN officer status
   const [gnContact, setGnContact] = useState(null);
   const [loadingContact, setLoadingContact] = useState(false);
 
@@ -459,25 +461,7 @@ const Dashboard = () => {
   const gnAvailable = gnOfficer?.available ?? true;
   const gnDivLabel = userData?.gnDiv || userData?.dsDiv || '';
 
-  if (authLoading) {
-    return (
-      <div style={{
-        minHeight: '100vh', display: 'flex',
-        alignItems: 'center', justifyContent: 'center',
-        backgroundColor: '#f8f6f0', fontFamily: 'Nunito, sans-serif',
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: '48px', height: '48px', borderRadius: '50%',
-            border: '4px solid #F5C400', borderTopColor: 'transparent',
-            animation: 'spin 0.8s linear infinite', margin: '0 auto 16px',
-          }} />
-          <div style={{ fontSize: '15px', fontWeight: 600, color: '#888' }}>Loading…</div>
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
+  if (authLoading) return <PageLoadingSkeleton />;
 
   const prev = () => setAnnouncIdx((i) => (i === 0 ? announcements.length - 1 : i - 1));
   const next = () => setAnnouncIdx((i) => (i === announcements.length - 1 ? 0 : i + 1));
@@ -519,6 +503,7 @@ const Dashboard = () => {
           height: '100vh',
           overflowY: 'auto',
         }}>
+          {/* Logo */}
           <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
             <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '80px', width: 'auto' }} />
           </div>
@@ -711,7 +696,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Quick Actions - UNCHANGED */}
+            {/* Quick Actions */}
             <div style={{ marginBottom: '26px' }}>
               <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e1200', marginBottom: '14px' }}>
                 Quick Actions
@@ -724,7 +709,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* ENHANCED: Appointments & Announcements with Loading States */}
+            {/* Appointments & Announcements with Loading States */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}>
 
               {/* Upcoming Appointments - WITH LOADING AND EMPTY STATES */}
@@ -906,11 +891,6 @@ const Dashboard = () => {
 
       {/* Updated styles with pulse animation for skeletons */}
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
         @keyframes pulse-gn {
           0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
           50% { box-shadow: 0 0 0 6px rgba(34,197,94,0.08); }

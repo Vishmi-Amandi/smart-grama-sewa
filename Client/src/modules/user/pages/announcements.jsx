@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import {
-  collection, query, orderBy, getDocs,
-  doc, updateDoc, arrayUnion, getDoc
-} from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
+import { PageLoadingSkeleton, AnnouncementsListSkeleton } from '../components/skeleton';
 
 // Icons
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
@@ -361,12 +359,7 @@ const Announcements = () => {
   const paginated = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
   const chipName  = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
 
-  if (authLoading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f5f0e8' }}>
-      <div style={{ width: 44, height: 44, borderRadius: '50%', border: '4px solid #F5C400', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
-  );
+  if (authLoading) return <PageLoadingSkeleton />;
 
   return (
     <div style={S.page}>
@@ -433,13 +426,7 @@ const Announcements = () => {
             </div>
 
             {/* Loading */}
-            {loading && (
-              <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #F5C400', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
-                <div style={{ fontSize: 14, color: '#aaa', fontWeight: 600 }}>Loading announcements…</div>
-                <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-              </div>
-            )}
+            {loading && <AnnouncementsListSkeleton />}
 
             {/* Cards */}
             {!loading && (

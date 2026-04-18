@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut, updateEmail } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase'; // ← adjust path if needed
+import { PageLoadingSkeleton, ProfileSkeleton } from '../components/skeleton';
 
 // Icons
 const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
@@ -11,6 +12,7 @@ const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
     <path d={d} />
   </svg>
 );
+
 const Icons = {
   dashboard:    'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10',
   announcement: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
@@ -319,17 +321,7 @@ const Profile = () => {
     : 'XXXXXXXXXXXX';
 
   // Loading 
-  if (authLoading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8f6f0' }}>
-        <div style={{ textAlign: 'center', fontFamily: 'Nunito, sans-serif' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '4px solid #F5C400', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
-          <div style={{ fontSize: '15px', color: '#888', fontWeight: 600 }}>Loading profile…</div>
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
+  if (authLoading) return <PageLoadingSkeleton />;
 
   //  RENDER
   return (
@@ -351,8 +343,10 @@ const Profile = () => {
 
           <div style={{ padding: '28px 32px', flex: 1 }}>
 
+            {!userData && !isEditing && <ProfileSkeleton />}
+            
             {/* VIEW MODE */}
-            {!isEditing && (
+            {!isEditing && userData && (
               <>
                 <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#1e1200', marginBottom: '24px', letterSpacing: '-0.4px' }}>
                   My Profile
