@@ -29,6 +29,7 @@ const Icons = {
   phone:         'M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z',
   chevLeft:      'M15 18l-6-6 6-6',
   chevRight:     'M9 18l6-6-6-6',
+  hmMenu:        'M1,9h14V7H1V9z M1,14h14v-2H1V14z M1,2v2h14V2H1z',
 };
 
 // Nav item 
@@ -271,6 +272,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState('dashboard');
   const [announcIdx, setAnnouncIdx] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // NEW: Loading and data states for enhanced widgets
   const [appointments, setAppointments] = useState([]);
@@ -296,32 +298,32 @@ const Dashboard = () => {
     
     try {
       if (!currentUser) return;
-    const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
-    const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
-    const q = query(
-      collection(db, 'appointments'),
-      where('uid', '==', currentUser.uid),
-      where('status', 'in', ['Pending', 'Confirmed']),
-    );
-    const snap = await Promise.race([getDocs(q), timeout]);
-    const list = snap.docs
-      .map(d => {
-        const data = d.data();
-        const [y, m, day] = (data.date || '').split('-').map(Number);
-        return {
-          id:     d.id,
-          day:    String(day).padStart(2, '0'),
-          month:  ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][(m - 1)] || '',
-          title:  data.service || 'Appointment',
-          time:   data.slot    || '',
-          date:   data.date    || '',
-          status: data.status  || 'Pending',
-        };
-      })
-      .filter(a => a.date >= today)
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(0, 3);
-    setAppointments(list);
+      const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
+      const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
+      const q = query(
+        collection(db, 'appointments'),
+        where('uid', '==', currentUser.uid),
+        where('status', 'in', ['Pending', 'Confirmed']),
+      );
+      const snap = await Promise.race([getDocs(q), timeout]);
+      const list = snap.docs
+        .map(d => {
+          const data = d.data();
+          const [y, m, day] = (data.date || '').split('-').map(Number);
+          return {
+            id:     d.id,
+            day:    String(day).padStart(2, '0'),
+            month:  ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][(m - 1)] || '',
+            title:  data.service || 'Appointment',
+            time:   data.slot    || '',
+            date:   data.date    || '',
+            status: data.status  || 'Pending',
+          };
+        })
+        .filter(a => a.date >= today)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .slice(0, 3);
+      setAppointments(list);
     } catch (error) {
       console.error('Error fetching appointments:', error);
     } finally {
@@ -340,16 +342,16 @@ const Dashboard = () => {
     
     try {
       const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
-    const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'), limit(3));
-    const snap = await Promise.race([getDocs(q), timeout]);
-    if (snap.docs.length > 0) {
-      setAnnouncements(snap.docs.map(d => ({
-        id:    d.id,
-        title: d.data().title || 'Announcement',
-        body:  d.data().body  || d.data().message || '',
-        date:  d.data().createdAt?.toDate?.().toISOString().split('T')[0] || '',
-      })));
-    }
+      const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'), limit(3));
+      const snap = await Promise.race([getDocs(q), timeout]);
+      if (snap.docs.length > 0) {
+        setAnnouncements(snap.docs.map(d => ({
+          id:    d.id,
+          title: d.data().title || 'Announcement',
+          body:  d.data().body  || d.data().message || '',
+          date:  d.data().createdAt?.toDate?.().toISOString().split('T')[0] || '',
+        })));
+      }
     // If 0 docs → keep defaultAnnouncements showing
     } catch (error) {
       console.error('Error fetching announcements:', error);
@@ -491,8 +493,8 @@ const Dashboard = () => {
 
       <div style={{ flex: 1, display: 'flex' }}>
 
-        {/* SIDEBAR */}
-        <div style={{
+        {/* DESKTOP SIDEBAR */}
+        <div className="desktop-sidebar" style={{
           width: '220px',
           flexShrink: 0,
           backgroundColor: '#F5C400',
@@ -540,6 +542,69 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* MOBILE SIDEBAR OVERLAY */}
+        {mobileMenuOpen && (
+          <>
+            <div
+              onClick={() => setMobileMenuOpen(false)}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                zIndex: 1000
+              }}
+            />
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '250px',
+              height: '100vh',
+              backgroundColor: '#F5C400',
+              zIndex: 1001,
+              overflowY: 'auto',
+              padding: '20px 0'
+            }}>
+              <div style={{ padding: '0 20px 20px', textAlign: 'right' }}>
+                <button onClick={() => setMobileMenuOpen(false)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>✕</button>
+              </div>
+              {navItems.map((item) => (
+                <NavItem
+                  key={item.key}
+                  iconPath={item.icon}
+                  label={item.label}
+                  active={activePage === item.key}
+                  onClick={() => {
+                    if (item.key === 'announcements') navigate('/announcements');
+                    else if (item.key === 'appointments') navigate('/appointments');
+                    else if (item.key === 'settings') navigate('/settings');
+                    else setActivePage(item.key);
+                    setMobileMenuOpen(false);
+                  }}
+                />
+              ))}
+              <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', margin: '10px 0', paddingTop: '10px' }}>
+                {bottomNav.map((item) => (
+                  <NavItem
+                    key={item.key}
+                    iconPath={item.icon}
+                    label={item.label}
+                    active={activePage === item.key}
+                    onClick={() => {
+                      if (item.key === 'logout') handleLogout();
+                      else if (item.key === 'profile') navigate('/profile');
+                      else setActivePage(item.key);
+                      setMobileMenuOpen(false);
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
         {/* MAIN COLUMN */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
@@ -557,6 +622,20 @@ const Dashboard = () => {
             zIndex: 40,
             boxShadow: '0 1px 0 #ede8d8',
           }}>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{
+                display: 'none',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#1e1200'
+              }}
+              className="mobile-hamburger"
+            >
+              <Icon d={Icons.hmMenu} size={24} color="#5a3a00" />
+            </button>
+            {/* Search bar */}
             <div style={{
               flex: 1,
               maxWidth: '400px',
@@ -608,7 +687,7 @@ const Dashboard = () => {
               onMouseOver={(e) => (e.currentTarget.style.borderColor = '#F5C400')}
               onMouseOut={(e) => (e.currentTarget.style.borderColor = '#e8d8b0')}
             >
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e1200' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e1200', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {chipName}
               </span>
               <div style={{
@@ -625,10 +704,10 @@ const Dashboard = () => {
           {/* Content */}
           <div style={{ padding: '28px 30px', flex: 1 }}>
 
-            {/* Welcome banner - UNCHANGED */}
+            {/* Welcome banner */}
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr auto',
+              display: 'flex',
+              flexDirection: 'column',
               gap: '16px',
               marginBottom: '26px',
             }}>
@@ -656,20 +735,22 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
+              {/* GN officer */}
               <div style={{
                 backgroundColor: '#fff',
                 border: '1.5px solid #e8d5ac',
-                borderRadius: '18px',
-                padding: '18px 22px',
+                borderRadius: '14px',
+                padding: '14px 18px',
                 minWidth: '200px',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'center',
+                alignItems: 'center',
+                justifyContent: 'space-between'
               }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#888', marginBottom: '4px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#888', marginBottom: '2px' }}>
                   GN officer
                 </div>
-                <div style={{ fontSize: '16px', fontWeight: 900, color: '#1e1200', marginBottom: '4px' }}>
+                <div style={{ fontSize: '15px', fontWeight: 900, color: '#1e1200', marginBottom: '4px' }}>
                   {gnName}
                 </div>
                 {gnDivLabel && (
@@ -677,9 +758,9 @@ const Dashboard = () => {
                     {gnDivLabel}
                   </div>
                 )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <div style={{
-                    width: '9px', height: '9px', borderRadius: '50%',
+                    width: '8px', height: '8px', borderRadius: '50%',
                     backgroundColor: gnAvailable ? '#22c55e' : '#f87171',
                     boxShadow: gnAvailable
                       ? '0 0 0 3px rgba(34,197,94,0.2)'
@@ -697,11 +778,15 @@ const Dashboard = () => {
             </div>
 
             {/* Quick Actions */}
-            <div style={{ marginBottom: '26px' }}>
-              <div style={{ fontSize: '16px', fontWeight: 800, color: '#1e1200', marginBottom: '14px' }}>
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e1200', marginBottom: '14px' }}>
                 Quick Actions
               </div>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: '10px',
+              }}>
                 <QuickCard iconPath={Icons.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} />
                 <QuickCard iconPath={Icons.download} label="Download forms" onClick={() => navigate('/forms')} />
                 <QuickCard iconPath={Icons.ai} label="AI assistant" onClick={() => navigate('/ai')} />
@@ -710,7 +795,7 @@ const Dashboard = () => {
             </div>
 
             {/* Appointments & Announcements with Loading States */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '18px' }}>
 
               {/* Upcoming Appointments - WITH LOADING AND EMPTY STATES */}
               <div style={{
@@ -896,6 +981,70 @@ const Dashboard = () => {
           50% { box-shadow: 0 0 0 6px rgba(34,197,94,0.08); }
         }
       `}</style>
+
+      <style>{`
+        @keyframes spin  { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes pulse-gn {
+          0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+          50%       { box-shadow: 0 0 0 6px rgba(34,197,94,0.08); }
+        }
+ 
+        /* Mobile: hide sidebar, use bottom nav */
+        @media (max-width: 768px) {
+          .desktop-sidebar { display: none !important; }
+        }
+      `}</style>
+ 
+      {/* Mobile bottom navigation bar */}
+      <style>{`
+        @media (max-width: 768px) {
+          .mobile-bottom-nav {
+            display: flex !important;
+          }
+        }
+        .mobile-bottom-nav { display: none; }
+      `}</style>
+      <div className="mobile-bottom-nav" style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
+        backgroundColor: '#F5C400',
+        borderTop: '1px solid rgba(0,0,0,0.10)',
+        display: 'none', // overridden by media query above
+        justifyContent: 'space-around',
+        padding: '8px 0 12px',
+        boxShadow: '0 -2px 12px rgba(0,0,0,0.10)',
+      }}>
+        {[
+          { icon: Icons.dashboard,    label: 'Home',        key: 'dashboard',     action: () => setActivePage('dashboard') },
+          { icon: Icons.appointments, label: 'Appointments', key: 'appointments',  action: () => navigate('/appointments') },
+          { icon: Icons.announcement, label: 'News',         key: 'announcements', action: () => navigate('/announcements') },
+          { icon: Icons.profile,      label: 'Profile',      key: 'profile',       action: () => navigate('/profile') },
+          { icon: Icons.settings,     label: 'Settings',     key: 'settings',      action: () => navigate('/settings') },
+        ].map(item => (
+          <button key={item.key} onClick={item.action} style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: activePage === item.key ? '#1e1200' : '#5a3a00',
+            fontFamily: 'inherit',
+          }}>
+            <Icon d={item.icon} size={20} color={activePage === item.key ? '#1e1200' : '#5a3a00'} sw={activePage === item.key ? 2.5 : 1.8} />
+            <span style={{ fontSize: 10, fontWeight: activePage === item.key ? 800 : 600 }}>{item.label}</span>
+          </button>
+        ))}
+      </div>
+      <style>{`
+          @media (max-width: 768px) {
+            .mobile-hamburger {
+              display: block !important;
+            }
+            .desktop-sidebar {
+              display: none !important;
+            }
+            .mobile-bottom-nav {
+              display: flex !important;
+            }
+          }
+        `}</style>
     </div>
   );
 };
