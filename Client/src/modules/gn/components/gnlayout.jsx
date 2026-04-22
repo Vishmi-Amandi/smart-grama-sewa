@@ -187,15 +187,15 @@ import { Link, useLocation } from 'react-router-dom';
               <span className="text-gray-500 text-xl cursor-pointer">🔔</span>
 
               {/* User Info */}
-              <div className="flex items-center gap-2">
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-gray-800">Officer Perera</p>
-                  <p className="text-xs text-[#8B4513]">Grama Niladhari (A12)</p>
-                </div>
-                <div className="w-9 h-9 rounded-full bg-gray-300 overflow-hidden">
-                  <img src="/logo.png" alt="avatar" className="w-full h-full object-cover" />
-                </div>
-              </div>
+<Link to="/profile" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
+  <div className="text-right">
+    <p className="text-sm font-semibold text-gray-800">Officer Perera</p>
+    <p className="text-xs text-[#8B4513]">Grama Niladhari (A12)</p>
+  </div>
+  <div className="w-9 h-9 rounded-full bg-gray-300 overflow-hidden">
+    <img src="/logo.png" alt="avatar" className="w-full h-full object-cover" />
+  </div>
+</Link>
 
             </div>
           </header>

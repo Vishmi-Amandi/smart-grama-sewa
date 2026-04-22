@@ -13,9 +13,17 @@ import Settings from './modules/gn/pages/Settings.jsx';
 function App() {
   const [gnStatus, setGnStatus] = useState("Available");
   const [theme, setTheme] = useState("light");
+  const [fontSize, setFontSize] = useState("medium");
 
-  return (
-    <Routes>
+  const fontSizeMap = {
+  small: "12px",
+  medium: "16px",
+  large: "18px",
+};
+
+return (
+  <div style={{ fontSize: fontSizeMap[fontSize] }}>
+  <Routes>
       <Route path="/" element={<GNDashboard gnStatus={gnStatus} theme={theme} />} />
       <Route path="/appointments" element={<AppointmentList gnStatus={gnStatus} theme={theme} />} />
       <Route path="/current-status" element={<CurrentStatus gnStatus={gnStatus} setGnStatus={setGnStatus} theme={theme} />} />
@@ -24,9 +32,10 @@ function App() {
       <Route path="/schedule" element={<Schedule gnStatus={gnStatus} theme={theme} />} />
       <Route path="/citizen-search" element={<CitizenSearch gnStatus={gnStatus} theme={theme} />} />
       <Route path="/profile" element={<Profile gnStatus={gnStatus} theme={theme} />} />
-      <Route path="/settings" element={<Settings gnStatus={gnStatus} theme={theme} setTheme={setTheme} />} />
+      <Route path="/settings" element={<Settings gnStatus={gnStatus} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} />} />
     </Routes>
-  );
+  </div>
+);
 }
 
 export default App;
