@@ -576,22 +576,6 @@ const Dashboard = () => {
         ©2026 Smart Grama Sewa
       </footer>
 
-      {/* Mobile bottom nav */}
-      <div className="mobile-bottom-nav" style={{ display: 'none', position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, backgroundColor: '#F5C400', borderTop: '1px solid rgba(0,0,0,0.10)', justifyContent: 'space-around', padding: '8px 0 12px', boxShadow: '0 -2px 12px rgba(0,0,0,0.10)' }}>
-        {[
-          { icon: Icons.dashboard,    label: 'Home',         key: 'dashboard',     action: () => setActivePage('dashboard') },
-          { icon: Icons.appointments, label: 'Appointments', key: 'appointments',  action: () => navigate('/appointments') },
-          { icon: Icons.announcement, label: 'News',         key: 'announcements', action: () => navigate('/announcements') },
-          { icon: Icons.profile,      label: 'Profile',      key: 'profile',       action: () => navigate('/profile') },
-          { icon: Icons.settings,     label: 'Settings',     key: 'settings',      action: () => navigate('/settings') },
-        ].map(item => (
-          <button key={item.key} onClick={item.action} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
-            <Icon d={item.icon} size={20} color={activePage === item.key ? '#1e1200' : '#5a3a00'} strokeWidth={activePage === item.key ? 2.5 : 1.8} />
-            <span style={{ fontSize: 10, fontWeight: activePage === item.key ? 800 : 600, color: activePage === item.key ? '#1e1200' : '#5a3a00' }}>{item.label}</span>
-          </button>
-        ))}
-      </div>
-
       <style>{`
         @keyframes spin    { to { transform: rotate(360deg); } }
         @keyframes pulse   { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
@@ -600,7 +584,7 @@ const Dashboard = () => {
           50%       { box-shadow: 0 0 0 6px rgba(34,197,94,0.08); }
         }
 
-        /* Desktop: show desktop layout, hide mobile layout */
+        /* Desktop */
         @media (min-width: 769px) {
           .desktop-sidebar     { display: flex !important; }
           .desktop-topbar      { display: flex !important; }
@@ -608,11 +592,9 @@ const Dashboard = () => {
           .desktop-footer      { display: block !important; }
           .mobile-topbar       { display: none !important; }
           .mobile-content      { display: none !important; }
-          .mobile-bottom-nav   { display: none !important; }
-          .mobile-only         { display: none !important; }
         }
 
-        /* Mobile: hide desktop layout, show mobile layout */
+        /* Mobile */
         @media (max-width: 768px) {
           .desktop-sidebar     { display: none !important; }
           .desktop-topbar      { display: none !important; }
@@ -620,8 +602,6 @@ const Dashboard = () => {
           .desktop-footer      { display: none !important; }
           .mobile-topbar       { display: flex !important; }
           .mobile-content      { display: block !important; }
-          .mobile-bottom-nav   { display: flex !important; }
-          .mobile-only         { display: block !important; }
         }
       `}</style>
     </div>
