@@ -174,10 +174,10 @@ const Sidebar = ({ activePage, onNavigate, onLogout }) => {
   const bottomNav = [
     { key: 'profile',  icon: Icons.profile,  label: 'Profile'  },
     { key: 'settings', icon: Icons.settings, label: 'Settings' },
-    { key: 'logout',   icon: Icons.logout,   label: 'Logout'   },
+    { key: 'logout',   icon: Icons.logout,   label: 'Sign out'   },
   ];
   return (
-    <div style={{
+    <div className="desktop-sidebar" style={{
       width: '220px', flexShrink: 0, backgroundColor: '#F5C400',
       display: 'flex', flexDirection: 'column',
       position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
@@ -242,6 +242,9 @@ const Profile = () => {
               occupation: data.occupation || '',
               mobile:     data.mobile     || '',
               email:      user.email      || '',
+              district:   data.district  || '',
+              dsDiv:      data.dsDiv     || '',
+              gnDiv:      data.gnDiv     || '',
             });
           }
         } catch (e) {
@@ -306,6 +309,9 @@ const Profile = () => {
         occupation: userData.occupation || '',
         mobile:     userData.mobile     || '',
         email:      currentUser?.email  || '',
+        district:   userData.district  || '',
+        dsDiv:      userData.dsDiv     || '',
+        gnDiv:      userData.gnDiv     || '',
       });
     }
     setSaveError('');
@@ -341,7 +347,7 @@ const Profile = () => {
 
           <Topbar chipName={chipName} />
 
-          <div style={{ padding: '28px 32px', flex: 1 }}>
+          <div style={{ padding: '16px', flex: 1 }}>
 
             {!userData && !isEditing && <ProfileSkeleton />}
             
@@ -423,7 +429,7 @@ const Profile = () => {
                 </div>
 
                 {/* Info cards row */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginBottom: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '18px', marginBottom: '20px' }}>
 
                   {/* Personal Info */}
                   <div style={{
@@ -435,6 +441,8 @@ const Profile = () => {
                       Personal Info
                     </div>
                     <InfoRow label="Full Name"    value={userData?.fullName}   />
+                    <InfoRow label="Username"     value={userData?.username}  />
+                    <InfoRow label="NIC Number"   value={userData?.nic}       />                    
                     <InfoRow label="Date Of Birth" value={userData?.dob}       />
                     <InfoRow label="Gender"        value={userData?.gender}    />
                     <InfoRow label="Home Address"  value={userData?.address}   />
@@ -510,7 +518,7 @@ const Profile = () => {
                   <div style={{ marginBottom: '16px' }}>
                     <Field label="Full Name" value={form.fullName} onChange={update('fullName')} placeholder="Your full name" />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '24px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px', marginBottom: '24px' }}>
                     <Field  label="Date Of Birth" value={form.dob}        onChange={update('dob')}        type="date" />
                     <Field  label="Occupation"    value={form.occupation}  onChange={update('occupation')} placeholder="e.g. Teacher" />
                     <GenderSelect value={form.gender} onChange={update('gender')} />
@@ -550,20 +558,21 @@ const Profile = () => {
                     * Email address cannot be changed here for security reasons.
                   </p>
 
+                  {/* Location — read only */}
                   <div style={{ fontSize: '16px', fontWeight: 900, color: '#1e1200', margin: '22px 0 14px' }}>
                     Location
                     <span style={{ fontSize: '11px', fontWeight: 600, color: '#aaa', marginLeft: '8px' }}>
                       (set during sign up — contact support to change)
                     </span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px' }}>
                     <Field label="District"    value={form.district} onChange={() => {}} disabled={true} />
                     <Field label="DS Division" value={form.dsDiv}    onChange={() => {}} disabled={true} />
                     <Field label="GN Division" value={form.gnDiv}    onChange={() => {}} disabled={true} />
                   </div>
                 </div>
 
-                {/* Cancel + Save buttons */}
+                {/* Cancel, Save buttons */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                   <button
                     onClick={handleCancel}
@@ -618,7 +627,11 @@ const Profile = () => {
         ©2026 Smart Grama Sewa
       </footer>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }
+          @media (max-width: 768px) {
+            .desktop-sidebar { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 };
