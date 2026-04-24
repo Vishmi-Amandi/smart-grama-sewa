@@ -628,8 +628,30 @@ const Profile = () => {
       </footer>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }
-          @media (max-width: 768px) {
-            .desktop-sidebar { display: none !important; }
+          @keyframes pulse   { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes pulseGn {
+          0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+          50%       { box-shadow: 0 0 0 6px rgba(34,197,94,0.08); }
+        }
+
+        /* Desktop */
+        @media (min-width: 769px) {
+          .desktop-sidebar     { display: flex !important; }
+          .desktop-topbar      { display: flex !important; }
+          .desktop-content     { display: block !important; }
+          .desktop-footer      { display: block !important; }
+          .mobile-topbar       { display: none !important; }
+          .mobile-content      { display: none !important; }
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+          .desktop-sidebar     { display: none !important; }
+          .desktop-topbar      { display: none !important; }
+          .desktop-content     { display: none !important; }
+          .desktop-footer      { display: none !important; }
+          .mobile-topbar       { display: flex !important; }
+          .mobile-content      { display: block !important; }
         }
       `}</style>
     </div>
