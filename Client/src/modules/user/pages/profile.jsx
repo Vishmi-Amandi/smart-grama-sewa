@@ -117,51 +117,6 @@ const GenderSelect = ({ value, onChange }) => (
   </div>
 );
 
-// Shared Topbar
-const Topbar = ({ chipName }) => (
-  <div style={{
-    height: '64px', backgroundColor: '#fff',
-    borderBottom: '1px solid #ede8d8',
-    display: 'flex', alignItems: 'center',
-    padding: '0 28px', gap: '14px',
-    position: 'sticky', top: 0, zIndex: 40,
-    boxShadow: '0 1px 0 #ede8d8',
-  }}>
-    <div style={{
-      flex: 1, maxWidth: '400px', display: 'flex', alignItems: 'center', gap: '10px',
-      backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
-      borderRadius: '999px', padding: '9px 18px',
-    }}>
-      <Icon d={Icons.search} size={16} color="#aaa" />
-      <span style={{ fontSize: '14px', color: '#bbb', fontWeight: 600 }}>search</span>
-    </div>
-    <div style={{ flex: 1 }} />
-    <span style={{ fontSize: '14px', fontWeight: 800, color: '#1e1200' }}>EN</span>
-    <div style={{
-      width: '38px', height: '38px', borderRadius: '50%',
-      backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-    }}>
-      <Icon d={Icons.bell} size={18} color="#5a3a00" />
-    </div>
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px',
-      padding: '5px 14px 5px 6px',
-      backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
-      borderRadius: '999px', cursor: 'pointer',
-    }}>
-      <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e1200' }}>{chipName}</span>
-      <div style={{
-        width: '30px', height: '30px', borderRadius: '50%',
-        backgroundColor: '#F5C400',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <Icon d={Icons.profile} size={16} color="#3d2a00" />
-      </div>
-    </div>
-  </div>
-);
-
 // Shared Sidebar 
 const Sidebar = ({ activePage, onNavigate, onLogout }) => {
   const navItems = [
@@ -223,7 +178,7 @@ const Profile = () => {
     occupation: '', mobile: '', email: '',
   });
 
-  // Load auth + Firestore on mount
+  // Load auth, Firestore on mount
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -335,20 +290,153 @@ const Profile = () => {
 
       <div style={{ flex: 1, display: 'flex' }}>
 
-        {/* Sidebar */}
-        <Sidebar
-          activePage="profile"
-          onNavigate={(key) => navigate(`/${key}`)}
-          onLogout={handleLogout}
-        />
+        <div className="desktop-sidebar" style={{
+          width: '220px', flexShrink: 0, backgroundColor: '#F5C400',
+          display: 'flex', flexDirection: 'column',
+          position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
+        }}>
+          <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+            <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '80px', width: 'auto' }} />
+          </div>
+          <div style={{ flex: 1, padding: '12px 10px' }}>
+            {navItems.map(item => (
+              <NavItem key={item.key} iconPath={item.icon} label={item.label} active={activePage === item.key}
+                onClick={() => {
+                  if (item.key === 'dashboard') navigate('/dashboard');
+                  else if (item.key === 'announcements') navigate('/announcements');
+                  else if (item.key === 'appointments') navigate('/appointments');
+                  else if (item.key === 'settings') navigate('/settings');
+                  else setActivePage(item.key);
+                }}
+              />
+            ))}
+          </div>
+          <div style={{ padding: '10px 10px 20px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+            {bottomNav.map(item => (
+              <NavItem key={item.key} iconPath={item.icon} label={item.label} active={activePage === item.key}
+                onClick={() => {
+                  if (item.key === 'logout') handleLogout();
+                  else if (item.key === 'settings') navigate('/settings');
+                  else setActivePage(item.key);
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Mobile Sidebar Overlay */}
+        {mobileMenuOpen && (
+          <>
+            <div onClick={() => setMobileMenuOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000 }} />
+            <div style={{ position: 'fixed', top: 0, left: 0, width: '250px', height: '100vh', backgroundColor: '#F5C400', zIndex: 1001, overflowY: 'auto', padding: '20px 0' }}>
+              <div style={{ padding: '0 20px 20px', textAlign: 'right' }}>
+                <button onClick={() => setMobileMenuOpen(false)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>✕</button>
+              </div>
+              {[
+                { key: 'dashboard',     icon: Icons.dashboard,    label: 'Dashboard'     },
+                { key: 'announcements', icon: Icons.announcement, label: 'Announcements' },
+                { key: 'appointments',  icon: Icons.appointments, label: 'Appointments'  },
+                { key: 'forms',         icon: Icons.forms,        label: 'Forms'         },
+                { key: 'ai',            icon: Icons.ai,           label: 'AI assistant'  },
+              ].map(item => (
+                <NavItem key={item.key} iconPath={item.icon} label={item.label}
+                  active={item.key === 'profile'}
+                  onClick={() => { navigate(`/${item.key}`); setMobileMenuOpen(false); }}
+                />
+              ))}
+              <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', margin: '10px 0', paddingTop: '10px' }}>
+                {[
+                  { key: 'profile',  icon: Icons.profile,  label: 'Profile'  },
+                  { key: 'settings', icon: Icons.settings, label: 'Settings' },
+                  { key: 'logout',   icon: Icons.logout,   label: 'Logout'   },
+                ].map(item => (
+                  <NavItem key={item.key} iconPath={item.icon} label={item.label}
+                    active={item.key === 'profile'}
+                    onClick={() => {
+                      if (item.key === 'logout') handleLogout();
+                      else navigate(`/${item.key}`);
+                      setMobileMenuOpen(false);
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Main */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
-          <Topbar chipName={chipName} />
+          <div className="desktop-topbar" style={{ height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #ede8d8', display: 'flex', alignItems: 'center', padding: '0 28px', gap: '14px', position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 1px 0 #ede8d8' }}>
+            <div style={{ flex: 1, maxWidth: '400px', display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: '999px', padding: '9px 18px', cursor: 'text' }}
+              onMouseOver={e => e.currentTarget.style.borderColor = '#F5C400'}
+              onMouseOut={e  => e.currentTarget.style.borderColor = '#e8d8b0'}
+            >
+              <Icon d={Icons.search} size={16} color="#aaa" />
+              <span style={{ fontSize: '14px', color: '#bbb', fontWeight: 600 }}>search</span>
+            </div>
+            <div style={{ flex: 1 }} />
+            <span style={{ fontSize: '14px', fontWeight: 800, color: '#1e1200' }}>EN</span>
+            <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative' }}
+              onMouseOver={e => e.currentTarget.style.borderColor = '#F5C400'}
+              onMouseOut={e  => e.currentTarget.style.borderColor = '#e8d8b0'}
+            >
+              <Icon d={Icons.bell} size={18} color="#5a3a00" />
+              <div style={{ position: 'absolute', top: '4px', right: '4px', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#e05050', border: '1.5px solid #fff' }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 14px 5px 6px', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: '999px', cursor: 'pointer' }}
+              onMouseOver={e => e.currentTarget.style.borderColor = '#F5C400'}
+              onMouseOut={e  => e.currentTarget.style.borderColor = '#e8d8b0'}
+            >
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e1200', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chipName}</span>
+              <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: '#F5C400', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon d={Icons.profile} size={16} color="#3d2a00" />
+              </div>
+            </div>
+          </div>
 
-          <div style={{ padding: '16px', flex: 1 }}>
+          {/* MOBILE TOPBAR */}
+          <div className="mobile-topbar" style={{
+            display: 'none', /* shown via media query */
+            height: '64px', backgroundColor: '#F5C400',
+            alignItems: 'center', padding: '0 16px', gap: '12px',
+            position: 'sticky', top: 0, zIndex: 40,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+          }}>
+            {/* Hamburger */}
+            <button onClick={() => setMobileMenuOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+              <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2} strokeLinecap="round">
+                <line x1="3" y1="6"  x2="21" y2="6"  />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
 
+            {/* Logo — centred */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '48px', width: 'auto' }} />
+            </div>
+
+            {/* EN */}
+            <span style={{ fontSize: '14px', fontWeight: 900, color: '#1e1200', flexShrink: 0 }}>EN</span>
+
+            {/* Bell */}
+            <div style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', flexShrink: 0 }}>
+              <Icon d={Icons.bell} size={22} color="#1e1200" />
+              <div style={{ position: 'absolute', top: '2px', right: '2px', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#e05050', border: '1.5px solid #F5C400' }} />
+            </div>
+
+            {/* Avatar */}
+            <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+              onClick={() => navigate('/profile')}
+            >
+              <Icon d={Icons.profile} size={20} color="#3d2a00" />
+            </div>
+          </div>
+
+
+          <div style={{ padding: '16px', flex: 1, maxWidth: '100%', boxSizing: 'border-box' }}>
+ 
             {!userData && !isEditing && <ProfileSkeleton />}
             
             {/* VIEW MODE */}
@@ -399,7 +487,7 @@ const Profile = () => {
                     </div>
                   </div>
 
-                  {/* Name + NIC */}
+                  {/* Name, NIC */}
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '20px', fontWeight: 900, color: '#1e1200', marginBottom: '4px' }}>
                       {userData?.fullName || chipName}
@@ -448,7 +536,7 @@ const Profile = () => {
                     <InfoRow label="Home Address"  value={userData?.address}   />
                     <InfoRow label="Occupation"  value={userData?.occupation}   />                  </div>
 
-                  {/* Contact Details */}
+                  {/* Contact & Location Details */}
                   <div style={{
                     backgroundColor: '#fff', border: '1.5px solid #e8d5ac',
                     borderRadius: '18px', padding: '22px 24px',
@@ -459,6 +547,9 @@ const Profile = () => {
                     </div>
                     <InfoRow label="Mobile Number" value={userData?.mobile}         />
                     <InfoRow label="Email Address" value={currentUser?.email}       />
+                    <InfoRow label="District"       value={userData?.district}     />
+                    <InfoRow label="DS Division"    value={userData?.dsDiv}        />
+                    <InfoRow label="GN Division"    value={userData?.gnDiv}        />
                   </div>
                 </div>
 
@@ -551,11 +642,11 @@ const Profile = () => {
                     Contact Details
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                    <Field label="Mobile Number" value={form.mobile} onChange={update('mobile')} placeholder="+94 77 XXX XXXX" />
+                    <Field label="Mobile Number" value={form.mobile} onChange={update('mobile')} placeholder="+94 77 XXX XXXX" disabled={true} />
                     <Field label="Email Address" value={form.email}  onChange={update('email')}  type="email" disabled={true} />
                   </div>
                   <p style={{ fontSize: '12px', color: '#aaa', fontWeight: 600, marginTop: '8px' }}>
-                    * Email address cannot be changed here for security reasons.
+                    * Mobile number & Email address cannot be changed here for security reasons.
                   </p>
 
                   {/* Location — read only */}
@@ -628,30 +719,19 @@ const Profile = () => {
       </footer>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }
-          @keyframes pulse   { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        @keyframes pulseGn {
-          0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
-          50%       { box-shadow: 0 0 0 6px rgba(34,197,94,0.08); }
-        }
-
+          
         /* Desktop */
         @media (min-width: 769px) {
           .desktop-sidebar     { display: flex !important; }
           .desktop-topbar      { display: flex !important; }
-          .desktop-content     { display: block !important; }
-          .desktop-footer      { display: block !important; }
           .mobile-topbar       { display: none !important; }
-          .mobile-content      { display: none !important; }
         }
 
         /* Mobile */
         @media (max-width: 768px) {
           .desktop-sidebar     { display: none !important; }
           .desktop-topbar      { display: none !important; }
-          .desktop-content     { display: none !important; }
-          .desktop-footer      { display: none !important; }
           .mobile-topbar       { display: flex !important; }
-          .mobile-content      { display: block !important; }
         }
       `}</style>
     </div>
