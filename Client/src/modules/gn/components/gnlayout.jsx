@@ -12,10 +12,12 @@ export const getThemeClasses = (theme) => ({
 
 import { useState } from "react";
 import { LayoutDashboard, CalendarDays, Clock, Megaphone, Search, User, Settings, LogOut } from "lucide-react";
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+
 
   const GNLayout = ({ children, gnStatus, theme }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [showLang, setShowLang] = useState(false);
   const [selectedLang, setSelectedLang] = useState("English");
   const [showAnnouncements, setShowAnnouncements] = useState(false);
@@ -116,13 +118,10 @@ import { Link, useLocation } from 'react-router-dom';
 </Link>
           </nav>
 
-          {/* Sign Out */}
-          <div className="p-4 border-t border-[#9B4D00]">
-            <a href="#" className="flex items-center gap-3 text-white px-4 py-2 rounded-lg hover:bg-[#9B4D00]">
-              <LogOut size={18} />
-              Sign Out
-            </a>
-          </div>
+         <Link to="/signup" className="flex items-center gap-3 text-white px-4 py-2 rounded-lg hover:bg-[#9B4D00]">
+  <LogOut size={18} />
+  Sign Out
+</Link>
 
         </aside>
 
