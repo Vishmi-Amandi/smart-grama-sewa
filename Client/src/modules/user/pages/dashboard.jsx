@@ -358,7 +358,6 @@ const Dashboard = () => {
                   onClick={() => {
                     if (item.key === 'announcements') navigate('/announcements');
                     else if (item.key === 'appointments') navigate('/appointments');
-                    else if (item.key === 'settings') navigate('/settings');
                     else setActivePage(item.key);
                     setMobileMenuOpen(false);
                   }}
@@ -370,6 +369,7 @@ const Dashboard = () => {
                     onClick={() => {
                       if (item.key === 'logout') handleLogout();
                       else if (item.key === 'profile') navigate('/profile');
+                      else if (item.key === 'settings') navigate('/settings');
                       else setActivePage(item.key);
                       setMobileMenuOpen(false);
                     }}
@@ -430,7 +430,7 @@ const Dashboard = () => {
             </button>
 
             {/* Logo — centred */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'left' }}>
               <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '48px', width: 'auto' }} />
             </div>
 
