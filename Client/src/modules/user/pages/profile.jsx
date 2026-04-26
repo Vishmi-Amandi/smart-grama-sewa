@@ -178,6 +178,8 @@ const Profile = () => {
     occupation: '', mobile: '', email: '',
   });
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
   // Load auth, Firestore on mount
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -280,6 +282,20 @@ const Profile = () => {
   const nicMasked = userData?.nic
     ? userData.nic.slice(0, 3) + 'X'.repeat(Math.max(0, userData.nic.length - 3))
     : 'XXXXXXXXXXXX';
+
+    const navItems = [
+    { key: 'dashboard',     icon: Icons.dashboard,    label: 'Dashboard'     },
+    { key: 'announcements', icon: Icons.announcement, label: 'Announcements' },
+    { key: 'appointments',  icon: Icons.appointments, label: 'Appointments'  },
+    { key: 'forms',         icon: Icons.forms,        label: 'Forms'         },
+    { key: 'ai',            icon: Icons.ai,           label: 'AI assistant'  },
+  ];
+
+  const bottomNav = [
+    { key: 'profile',  icon: Icons.profile,  label: 'Profile'  },
+    { key: 'settings', icon: Icons.settings, label: 'Settings' },
+    { key: 'logout',   icon: Icons.logout,   label: 'Sign out'   },
+  ];
 
   // Loading 
   if (authLoading) return <PageLoadingSkeleton />;
