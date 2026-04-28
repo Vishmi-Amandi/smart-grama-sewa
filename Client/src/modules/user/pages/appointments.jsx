@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, query, where, getDocs, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton, AppointmentsListSkeleton } from '../components/skeleton';
 
@@ -35,6 +35,8 @@ const IC = {
   chevUp:       'M18 15l-6-6-6 6',
   info:         'M12 2a10 10 0 100 20A10 10 0 0012 2z M12 8v4 M12 16h.01',
   x:            'M18 6L6 18M6 6l12 12',
+  menu:         'M3 6h18M3 12h18M3 18h18',
+  close:        'M6 18L18 6M6 6l12 12',
 };
 
 // Service categories (from spec)
@@ -98,8 +100,200 @@ const S = {
   card: { backgroundColor: '#fff', border: '1.5px solid #e8d5ac', borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' },
 };
 
-// NavItem
-const NavItem = ({ d, label, active, onClick }) => (
+// NavItem for sidebar
+const NavItem = ({ iconPath, label, active, onClick }) => (
+  <button onClick={onClick} style={{
+    width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
+    padding: '11px 16px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+    backgroundColor: active ? 'rgba(255,255,255,0.9)' : 'transparent',
+    color: '#3d2a00', fontWeight: active ? 800 : 600, fontSize: '14px',
+    fontFamily: 'inherit', textAlign: 'left', marginBottom: '2px',
+    transition: 'background 0.15s',
+    boxShadow: active ? '0 2px 8px rgba(0,0,0,0.10)' : 'none',
+  }}>
+    <Icon d={iconPath} size={18} color={active ? '#B46A02' : '#5a3a00'} />
+    {label}
+  </button>
+);
+
+// Desktop Sidebar
+const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
+  const navItems = [
+    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard' },
+    { key: 'announcements', icon: IC.announce, label: 'Announcements' },
+    { key: 'appointments', icon: IC.appts, label: 'Appointments' },
+    { key: 'forms', icon: IC.forms, label: 'Forms' },
+    { key: 'ai', icon: IC.ai, label: 'AI assistant' },
+  ];
+  const bottomNav = [
+    { key: 'profile', icon: IC.profile, label: 'Profile' },
+    { key: 'settings', icon: IC.settings, label: 'Settings' },
+    { key: 'logout', icon: IC.logout, label: 'Logout' },
+  ];
+
+  return (
+    <div className="desktop-sidebar" style={{
+      width: '220px', flexShrink: 0, backgroundColor: '#F5C400',
+      display: 'flex', flexDirection: 'column',
+      position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
+    }}>
+      <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+        <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '80px', width: 'auto' }} />
+      </div>
+      <div style={{ flex: 1, padding: '12px 10px' }}>
+        {navItems.map((item) => (
+          <NavItem key={item.key} iconPath={item.icon} label={item.label}
+            active={activePage === item.key}
+            onClick={() => navigate(`/${item.key}`)} />
+        ))}
+      </div>
+      <div style={{ padding: '10px 10px 20px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+        {bottomNav.map((item) => (
+          <NavItem key={item.key} iconPath={item.icon} label={item.label}
+            active={activePage === item.key}
+            onClick={() => item.key === 'logout' ? onLogout() : navigate(`/${item.key}`)} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Desktop Topbar
+const DesktopTopbar = ({ chipName }) => (
+  <div className="desktop-topbar" style={{
+    height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #ede8d8',
+    display: 'flex', alignItems: 'center', padding: '0 28px', gap: '14px',
+    position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 1px 0 #ede8d8'
+  }}>
+    <div style={{
+      flex: 1, maxWidth: 400, display: 'flex', alignItems: 'center', gap: 10,
+      backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
+      borderRadius: 999, padding: '9px 18px'
+    }}>
+      <Icon d={IC.search} size={16} color="#aaa" />
+      <span style={{ fontSize: 14, color: '#bbb', fontWeight: 600 }}>search</span>
+    </div>
+    <div style={{ flex: 1 }} />
+    <span style={{ fontSize: 14, fontWeight: 800, color: '#1e1200' }}>EN</span>
+    <div style={{
+      width: 38, height: 38, borderRadius: '50%',
+      backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative'
+    }}>
+      <Icon d={IC.bell} size={18} color="#5a3a00" />
+      <div style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: '50%', backgroundColor: '#e05050', border: '1.5px solid #fff' }} />
+    </div>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 8, padding: '5px 14px 5px 6px',
+      backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
+      borderRadius: 999, cursor: 'pointer'
+    }}>
+      <span style={{ fontSize: 13, fontWeight: 700, color: '#1e1200' }}>{chipName}</span>
+      <div style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: '#F5C400', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon d={IC.profile} size={16} color="#3d2a00" />
+      </div>
+    </div>
+  </div>
+);
+
+// Mobile Topbar with Search Below
+const MobileTopbar = ({ chipName, onMenuClick }) => (
+  <div className="mobile-header" style={{
+    display: 'none',
+    backgroundColor: '#F5C400',
+    position: 'sticky',
+    top: 0,
+    zIndex: 100,
+  }}>
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '12px 16px', gap: '12px',
+    }}>
+      <button onClick={onMenuClick} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, flexShrink: 0 }}>
+        <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '14px', fontWeight: 800, color: '#3d2a00', lineHeight: 1.2 }}>
+            Smart<br />Grama Sewa
+          </div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+        <span style={{ fontSize: '14px', fontWeight: 800, color: '#3d2a00' }}>EN</span>
+        <div style={{ position: 'relative' }}>
+          <Icon d={IC.bell} size={20} color="#3d2a00" />
+          <div style={{ position: 'absolute', top: -2, right: -4, width: 8, height: 8, borderRadius: '50%', backgroundColor: '#e05050', border: '1.5px solid #F5C400' }} />
+        </div>
+        <div onClick={() => window.location.href = '/profile'} style={{
+          width: 32, height: 32, borderRadius: '50%',
+          backgroundColor: 'rgba(255,255,255,0.85)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+        }}>
+          <Icon d={IC.profile} size={18} color="#3d2a00" />
+        </div>
+      </div>
+    </div>
+    <div style={{ padding: '8px 16px 12px 16px', backgroundColor: '#F5C400' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        backgroundColor: '#fff', border: '1.5px solid #e8d8b0',
+        borderRadius: 999, padding: '10px 16px',
+      }}>
+        <Icon d={IC.search} size={16} color="#aaa" />
+        <span style={{ fontSize: 14, color: '#bbb', fontWeight: 600 }}>Search</span>
+      </div>
+    </div>
+  </div>
+);
+
+// Mobile Sidebar Overlay
+const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
+  const navItems = [
+    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard' },
+    { key: 'announcements', icon: IC.announce, label: 'Announcements' },
+    { key: 'appointments', icon: IC.appts, label: 'Appointments' },
+    { key: 'forms', icon: IC.forms, label: 'Forms' },
+    { key: 'ai', icon: IC.ai, label: 'AI assistant' },
+  ];
+  const bottomNav = [
+    { key: 'profile', icon: IC.profile, label: 'Profile' },
+    { key: 'settings', icon: IC.settings, label: 'Settings' },
+    { key: 'logout', icon: IC.logout, label: 'Logout' },
+  ];
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000 }} />
+      <div style={{ position: 'fixed', top: 0, left: 0, width: 250, height: '100vh', backgroundColor: '#F5C400', zIndex: 1001, overflowY: 'auto', padding: '20px 0' }}>
+        <div style={{ padding: '0 20px 20px', textAlign: 'right' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer' }}>✕</button>
+        </div>
+        {navItems.map((item) => (
+          <NavItem key={item.key} iconPath={item.icon} label={item.label}
+            active={activePage === item.key}
+            onClick={() => { navigate(`/${item.key}`); onClose(); }} />
+        ))}
+        <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', margin: '10px 0', paddingTop: '10px' }}>
+          {bottomNav.map((item) => (
+            <NavItem key={item.key} iconPath={item.icon} label={item.label}
+              active={activePage === item.key}
+              onClick={() => { if (item.key === 'logout') onLogout(); else navigate(`/${item.key}`); onClose(); }} />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+};
+
+// NavItem (original for sidebar)
+const OriginalNavItem = ({ d, label, active, onClick }) => (
   <button onClick={onClick} style={{
     width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
     padding: '11px 16px', borderRadius: '10px', border: 'none', cursor: 'pointer',
@@ -115,58 +309,6 @@ const NavItem = ({ d, label, active, onClick }) => (
     <Icon d={d} size={18} color={active ? '#B46A02' : '#5a3a00'} />
     {label}
   </button>
-);
-
-// Sidebar
-const Sidebar = ({ active, navigate, onLogout }) => (
-  <div style={S.sidebar}>
-    <div style={{ padding: '18px 18px 14px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-      <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '80px', width: 'auto' }} />
-    </div>
-    <div style={{ flex: 1, padding: '12px 10px' }}>
-      {[
-        { key: 'dashboard',     d: IC.dashboard, label: 'Dashboard'     },
-        { key: 'announcements', d: IC.announce,  label: 'Announcements' },
-        { key: 'appointments',  d: IC.appts,     label: 'Appointments'  },
-        { key: 'forms',         d: IC.forms,     label: 'Forms'         },
-        { key: 'ai',            d: IC.ai,        label: 'AI assistant'  },
-      ].map(i => (
-        <NavItem key={i.key} d={i.d} label={i.label} active={active === i.key}
-          onClick={() => navigate(`/${i.key}`)} />
-      ))}
-    </div>
-    <div style={{ padding: '10px 10px 20px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-      {[
-        { key: 'profile',  d: IC.profile,  label: 'Profile'  },
-        { key: 'settings', d: IC.settings, label: 'Settings' },
-        { key: 'logout',   d: IC.logout,   label: 'Logout'   },
-      ].map(i => (
-        <NavItem key={i.key} d={i.d} label={i.label} active={active === i.key}
-          onClick={() => i.key === 'logout' ? onLogout() : navigate(`/${i.key}`)} />
-      ))}
-    </div>
-  </div>
-);
-
-// Topbar 
-const Topbar = ({ chipName }) => (
-  <div style={S.topbar}>
-    <div style={{ flex: 1, maxWidth: 420, display: 'flex', alignItems: 'center', gap: 10, backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: 999, padding: '9px 18px' }}>
-      <Icon d={IC.search} size={16} color="#aaa" />
-      <span style={{ fontSize: 14, color: '#bbb', fontWeight: 600 }}>search</span>
-    </div>
-    <div style={{ flex: 1 }} />
-    <span style={{ fontSize: 14, fontWeight: 800, color: '#1e1200' }}>EN</span>
-    <div style={{ width: 38, height: 38, borderRadius: '50%', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-      <Icon d={IC.bell} size={18} color="#5a3a00" />
-    </div>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 14px 5px 6px', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: 999, cursor: 'pointer' }}>
-      <span style={{ fontSize: 13, fontWeight: 700, color: '#1e1200' }}>{chipName}</span>
-      <div style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: '#F5C400', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Icon d={IC.profile} size={16} color="#3d2a00" />
-      </div>
-    </div>
-  </div>
 );
 
 // Step Indicator 
@@ -1098,6 +1240,7 @@ const BookSuccess = ({ onBack }) => (
 //  MAIN COMPONENT
 const Appointments = () => {
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Auth + user data
   const [currentUser, setCurrentUser] = useState(null);
@@ -1171,10 +1314,26 @@ const Appointments = () => {
 
   return (
     <div style={S.page}>
-      <div style={S.shell}>
-        <Sidebar active="appointments" navigate={navigate} onLogout={handleLogout} />
+      <div style={{ flex: 1, display: 'flex' }}>
+
+        {/* Desktop Sidebar */}
+        <DesktopSidebar activePage="appointments" navigate={navigate} onLogout={handleLogout} />
+
+        {/* Mobile Sidebar Overlay */}
+        <MobileSidebar
+          isOpen={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          activePage="appointments"
+          navigate={navigate}
+          onLogout={handleLogout}
+        />
+
         <div style={S.main}>
-          <Topbar chipName={chipName} />
+          {/* Desktop Topbar */}
+          <DesktopTopbar chipName={chipName} />
+
+          {/* Mobile Topbar with Search Below */}
+          <MobileTopbar chipName={chipName} onMenuClick={() => setMobileMenuOpen(true)} />
 
           {screen === 'list'    && <AppointmentsList currentUser={currentUser} refreshKey={refreshKey} onBook={() => { setBooking({ service: null, notes: '', day: null, month: null, year: null, slot: null }); setScreen('step1'); }} />}
           {screen === 'step1'   && <BookStep1  booking={booking} setBooking={setBooking} onNext={() => setScreen('step2')} onCancel={() => setScreen('list')} />}
@@ -1184,6 +1343,24 @@ const Appointments = () => {
         </div>
       </div>
       <footer style={S.footer}>©2026 Smart Grama Sewa</footer>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Desktop */
+        @media (min-width: 769px) {
+          .desktop-sidebar { display: flex !important; }
+          .desktop-topbar { display: flex !important; }
+          .mobile-header { display: none !important; }
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+          .desktop-sidebar { display: none !important; }
+          .desktop-topbar { display: none !important; }
+          .mobile-header { display: block !important; }
+        }
+      `}</style>
     </div>
   );
 };
