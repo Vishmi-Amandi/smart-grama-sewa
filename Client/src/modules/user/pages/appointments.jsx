@@ -37,6 +37,10 @@ const IC = {
   x:            'M18 6L6 18M6 6l12 12',
   menu:         'M3 6h18M3 12h18M3 18h18',
   close:        'M6 18L18 6M6 6l12 12',
+  note:         'M12 4h8a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h8z M16 8v2M8 8v2M12 12v2M8 12v2M12 16v2M8 16v2',
+  message:      'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z',
+  edit:         'M17 3l4 4-7 7H10v-4l7-7z M4 20h16',
+  details:      'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
 };
 
 // Service categories (from spec)
@@ -241,7 +245,6 @@ const MobileSearchBar = () => (
   <div style={{
     padding: '12px 16px',
     backgroundColor: '#f5f0e8',
-    borderBottom: '1px solid #e8d8b0',
   }}>
     <div style={{
       display: 'flex', 
@@ -436,10 +439,10 @@ const DetailsModal = ({ appt, onClose, onCancel, cancelling }) => {
  
           {/* Info rows */}
           {[
-            { icon: '📅', label: 'Date',     value: `${DAY_NAMES_SHORT[new Date(appt.date).getDay()]}, ${appt.day} ${MONTHS_FULL[parseInt(appt.mon_num) - 1] || appt.mon} ${appt.year}` },
-            { icon: '🕐', label: 'Time',     value: appt.time },
-            { icon: '📋', label: 'Service',  value: appt.title },
-            { icon: '📍', label: 'Location', value: appt.location || 'Grama Niladhari Office' },
+            { icon: <Icon d={IC.calendar} size={16} color="#B46A02" />, label: 'Date',     value: `${DAY_NAMES_SHORT[new Date(appt.date).getDay()]}, ${appt.day} ${MONTHS_FULL[parseInt(appt.mon_num) - 1] || appt.mon} ${appt.year}` },
+            { icon: <Icon d={IC.clock} size={16} color="#B46A02" />, label: 'Time',     value: appt.time },
+            { icon: <Icon d={IC.doc} size={16} color="#B46A02" />, label: 'Service',  value: appt.title },
+            { icon: <Icon d={IC.location} size={16} color="#B46A02" />, label: 'Location', value: appt.location || 'Grama Niladhari Office' },
           ].map(row => (
             <div key={row.label} style={{
               display: 'flex', alignItems: 'flex-start', gap: 12,
@@ -457,7 +460,7 @@ const DetailsModal = ({ appt, onClose, onCancel, cancelling }) => {
           {appt.notes && (
             <div style={{ padding: '10px 0', borderBottom: '1px solid #f0e8d0' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                <span style={{ fontSize: 16 }}>📝</span>
+                <span style={{ fontSize: 16 }}><Icon d={IC.message} size={16} color="#B46A02" /></span>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Notes</div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#666', fontStyle: 'italic', lineHeight: 1.5 }}>"{appt.notes}"</div>
@@ -503,7 +506,12 @@ const DetailsModal = ({ appt, onClose, onCancel, cancelling }) => {
                   <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #8b1a1a', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
                   Cancelling…
                 </>
-              ) : '❌ Cancel Appointment'}
+              ) : (
+                <>
+                  <Icon d={IC.close} size={16} color="#8b1a1a" sw={2} />
+                  Cancel Appointment
+                </>
+              )}
             </button>
           )}
         </div>
@@ -840,7 +848,7 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
                   }}
                   onMouseOver={e => { e.currentTarget.style.backgroundColor = '#e2e9f2'; }}
                   onMouseOut={e => { e.currentTarget.style.backgroundColor = '#eff3f9'; }}>
-                    <span>📋</span> Details
+                    <Icon d={IC.details} size={14} color="#2c4c7c" /> Details
                   </button>
 
                   {/* Cancel Button */}
