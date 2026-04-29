@@ -131,11 +131,6 @@ const Step1 = ({ form, update, onNext }) => {
             <FieldError msg={errors.dob} />
           </div>
           <div>
-            <label className={labelClass}>Hair Tribe Type</label>
-            <input type="text" value={form.tribeType} onChange={(e) => update("tribeType", e.target.value)}
-              placeholder="e.g. Sinhalese" className={inputClass} />
-          </div>
-          <div>
             <label className={labelClass}>Gender</label>
             <select value={form.gender} onChange={(e) => update("gender", e.target.value)} className={selectClass}>
               <option value="">Select…</option>
@@ -155,11 +150,6 @@ const Step1 = ({ form, update, onNext }) => {
             <input type="tel" value={form.mobile} onChange={(e) => update("mobile", e.target.value)}
               placeholder="e.g. 071 123 4567" className={inputClass} />
             <FieldError msg={errors.mobile} />
-          </div>
-          <div>
-            <label className={labelClass}>Alternative Number (Optional)</label>
-            <input type="tel" value={form.altMobile} onChange={(e) => update("altMobile", e.target.value)}
-              placeholder="e.g. 011 234 5678" className={inputClass} />
           </div>
         </div>
         <div>
@@ -391,6 +381,11 @@ const Step4 = ({ form, update, onBack, onSubmit }) => {
         officeAddress: form.officeAddress, officeMobile: form.officeMobile,
         officialEmail: form.officialEmail, role: "gn_officer", createdAt: serverTimestamp(),
       });
+      await setDoc(doc(db, "users", credential.user.uid), {
+  role: "gn_officer",
+  email: form.email,
+  createdAt: serverTimestamp(),
+});
       onSubmit();
     } catch (err) {
       const msg = {
@@ -509,7 +504,7 @@ const SignUp = () => {
   const [step, setStep] = useState(1);
 
   const [form, setForm] = useState({
-    fullName: "", nic: "", address: "", dob: "", tribeType: "", gender: "",
+    fullName: "", nic: "", address: "", dob: "", gender: "",
     mobile: "", altMobile: "", email: "",
     gnDivisionName: "", serviceNumber: "", province: "", district: "",
     divisionalSecretariat: "", gnDivision: "",
@@ -549,7 +544,7 @@ const SignUp = () => {
           {step === 1 && <Step1 form={form} update={update} onNext={() => setStep(2)} />}
           {step === 2 && <Step2 form={form} update={update} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
           {step === 3 && <Step3 onNext={() => setStep(4)} onBack={() => setStep(2)} />}
-          {step === 4 && <Step4 form={form} update={update} onBack={() => setStep(3)} onSubmit={() => navigate("/dashboard")} />}
+          {step === 4 && <Step4 form={form} update={update} onBack={() => setStep(3)} onSubmit={() => navigate("/login")} />}
         </div>
       </main>
 

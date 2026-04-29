@@ -12,6 +12,7 @@ import Settings from './modules/gn/pages/Settings.jsx';
 import TransferRequest from './modules/gn/pages/TransferRequest.jsx';
 import Login  from './modules/gn/pages/Login.jsx';
 import SignUp from './modules/gn/pages/SignUp.jsx';
+import ProtectedRoute from './modules/gn/components/ProtectedRoute.jsx';
 
 
 function App() {
@@ -28,20 +29,23 @@ function App() {
 return (
   <div style={{ fontSize: fontSizeMap[fontSize] }}>
   <Routes>
-      <Route path="/" element={<GNDashboard gnStatus={gnStatus} theme={theme} />} />
-      <Route path="/appointments" element={<AppointmentList gnStatus={gnStatus} theme={theme} />} />
-      <Route path="/current-status" element={<CurrentStatus gnStatus={gnStatus} setGnStatus={setGnStatus} theme={theme} />} />
-      <Route path="/create-announcement" element={<CreateAnnouncement gnStatus={gnStatus} theme={theme} />} />
-      <Route path="/announcement-list" element={<AnnouncementList gnStatus={gnStatus} theme={theme} />} />
-      <Route path="/schedule" element={<Schedule gnStatus={gnStatus} theme={theme} />} />
-      <Route path="/citizen-search" element={<CitizenSearch gnStatus={gnStatus} theme={theme} />} />
-      <Route path="/profile" element={<Profile gnStatus={gnStatus} theme={theme} />} />
-      <Route path="/settings" element={<Settings gnStatus={gnStatus} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} />} />
-      <Route path="/transfer-request" element={<TransferRequest gnStatus={gnStatus} theme={theme} />} />
-      <Route path="/login"  element={<Login  gnStatus={gnStatus} theme={theme}/>} />
-      <Route path="/signup" element={<SignUp gnStatus={gnStatus} theme={theme}/>} />
-      <Route path="/signup-select" element={<SignUp gnStatus={gnStatus} theme={theme} />} />
-    </Routes>
+  {/* Public Routes */}
+  <Route path="/login" element={<Login />} />
+  <Route path="/signup" element={<SignUp />} />
+  <Route path="/signup-select" element={<SignUp />} />
+
+  {/* Protected Routes */}
+  <Route path="/" element={<ProtectedRoute><GNDashboard gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
+  <Route path="/appointments" element={<ProtectedRoute><AppointmentList gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
+  <Route path="/current-status" element={<ProtectedRoute><CurrentStatus gnStatus={gnStatus} setGnStatus={setGnStatus} theme={theme} /></ProtectedRoute>} />
+  <Route path="/create-announcement" element={<ProtectedRoute><CreateAnnouncement gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
+  <Route path="/announcement-list" element={<ProtectedRoute><AnnouncementList gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
+  <Route path="/schedule" element={<ProtectedRoute><Schedule gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
+  <Route path="/citizen-search" element={<ProtectedRoute><CitizenSearch gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
+  <Route path="/profile" element={<ProtectedRoute><Profile gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
+  <Route path="/settings" element={<ProtectedRoute><Settings gnStatus={gnStatus} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} /></ProtectedRoute>} />
+  <Route path="/transfer-request" element={<ProtectedRoute><TransferRequest gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
+</Routes>
   </div>
 );
 }

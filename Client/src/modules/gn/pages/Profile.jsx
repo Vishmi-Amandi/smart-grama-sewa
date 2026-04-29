@@ -1,10 +1,51 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { Pencil } from "lucide-react";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../../firebase";
+import { onAuthStateChanged } from "firebase/auth";
+
+const generateInitials = (fullName) => {
+  if (!fullName) return "N/A";
+  const words = fullName.trim().split(" ");
+  if (words.length === 1) return fullName;
+  const surname = words[words.length - 1];
+  const initials = words
+    .slice(0, -1)
+    .map((w) => w.charAt(0).toUpperCase() + ".")
+    .join(" ");
+  return `${initials} ${surname}`;
+};
 
 const Profile = ({ gnStatus, theme }) => {
   const [activeTab, setActiveTab] = useState("personal");
   const t = getThemeClasses(theme);
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const docRef = doc(db, "gn_officers", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setUserData(docSnap.data());
+        }
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <GNLayout gnStatus={gnStatus} theme={theme}>
+        <div className="flex items-center justify-center h-64">
+          <p className={`text-sm ${t.subtext}`}>Loading profile...</p>
+        </div>
+      </GNLayout>
+    );
+  }
 
   return (
     <GNLayout gnStatus={gnStatus} theme={theme}>
@@ -48,9 +89,9 @@ const Profile = ({ gnStatus, theme }) => {
                 </span>
               </div>
               <div>
-                <h3 className={`text-lg font-bold ${t.text}`}>Sarath Perera</h3>
+                <h3 className={`text-lg font-bold ${t.text}`}>{userData?.fullName || "N/A"}</h3>
                 <p className={`text-sm ${t.subtext}`}>Grama Niladhari Officer</p>
-                <p className={`text-xs ${t.subtext}`}>📍 GN Division: Colombo North (123A)</p>
+                <p className={`text-xs ${t.subtext}`}>📍 GN Division: {userData?.gnDivisionName || "N/A"}</p>
               </div>
             </div>
             <button className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition">
@@ -68,12 +109,11 @@ const Profile = ({ gnStatus, theme }) => {
               </p>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { label: "Full Name", value: "Kariyawasam Pathirage Anura Kumara Perera" },
-                  { label: "Name with Initials", value: "K. P. A. K. Perera" },
-                  { label: "NIC Number", value: "198504201234" },
-                  { label: "Date of Birth", value: "20th April 1985" },
-                  { label: "Gender", value: "Male" },
-                  { label: "Civil Status", value: "Married" },
+                 { label: "Full Name", value: userData?.fullName || "N/A" },
+                 { label: "Name with Initials", value: generateInitials(userData?.fullName) },
+                 { label: "NIC Number", value: userData?.nic || "N/A" },
+                 { label: "Date of Birth", value: userData?.dob || "N/A" },
+                 { label: "Gender", value: userData?.gender || "N/A" }
                 ].map((item) => (
                   <div key={item.label}>
                     <p className={`text-xs ${t.subtext}`}>{item.label}</p>
@@ -90,10 +130,10 @@ const Profile = ({ gnStatus, theme }) => {
               </p>
               <div className="space-y-4">
                 {[
-                  { icon: "📱", label: "Mobile Number", value: "+94 77 123 4567" },
-                  { icon: "📞", label: "Office Number", value: "+94 11 234 5678" },
-                  { icon: "📧", label: "Personal Email", value: "anura.p@example.com" },
-                  { icon: "🏢", label: "Office Email", value: "admin.kaduwela@gnportal.gov.lk" },
+                  { icon: "📱", label: "Mobile Number", value: userData?.mobile || "N/A" },
+                  { icon: "📞", label: "Office Number", value: userData?.officeMobile || "N/A" },
+                  { icon: "📧", label: "Personal Email", value: userData?.email || "N/A" },
+                  { icon: "🏢", label: "Office Email", value: userData?.officialEmail || "N/A" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center gap-3">
                     <span className="text-lg">{item.icon}</span>
@@ -118,12 +158,7 @@ const Profile = ({ gnStatus, theme }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className={`text-xs mb-1 ${t.subtext}`}>Permanent Address</p>
-                  <p className={`text-sm font-semibold ${t.text}`}>No. 45/A, Samagi Mawatha, Gampaha Road, Kaduwela, Sri Lanka</p>
-                </div>
-                <div>
-                  <p className={`text-xs mb-1 ${t.subtext}`}>Current Address</p>
-                  <p className={`text-sm font-semibold ${t.text}`}>No. 45/A, Samagi Mawatha, Gampaha Road, Kaduwela, Sri Lanka</p>
-                  <span className="text-xs text-green-600 font-semibold">✓ Same as Permanent</span>
+                  <p className={`text-sm font-semibold ${t.text}`}>{userData?.address || "N/A"}</p>
                 </div>
               </div>
             </div>
@@ -136,10 +171,14 @@ const Profile = ({ gnStatus, theme }) => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <p className={`text-xs ${t.subtext}`}>Current Status</p>
-                  <span className="flex items-center gap-1 text-sm font-semibold text-green-600">
-                    <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                    Available
-                  </span>
+                  <div className="flex items-center gap-2 mt-1">
+    <span className={`w-2 h-2 rounded-full
+      ${gnStatus === "Available" ? "bg-green-400" : ""}
+      ${gnStatus === "In Meeting" ? "bg-orange-400" : ""}
+      ${gnStatus === "On Field" ? "bg-red-400" : ""}`}>
+    </span>
+    <span className="text-sm font-semibold">{gnStatus}</span>
+  </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <p className={`text-xs ${t.subtext}`}>Member Since</p>
@@ -165,12 +204,12 @@ const Profile = ({ gnStatus, theme }) => {
             <p className={`text-sm font-semibold mb-4 ${t.text}`}>🏢 GN Division Information</p>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: "GN Division Name", value: "Homagama Town Center" },
-                { label: "GN Division Number", value: "123A" },
-                { label: "DS Division", value: "Homagama" },
-                { label: "District", value: "Colombo" },
-                { label: "Province", value: "Western Province" },
-                { label: "Appointment Date", value: "January 12, 2018" },
+                { label: "GN Division Name", value: userData?.gnDivisionName || "N/A" },
+                { label: "GN Division Number", value: userData?.serviceNumber || "N/A" },
+                { label: "DS Division", value: userData?.divisionalSecretariat || "N/A" },
+                { label: "District", value: userData?.district || "N/A" },
+                { label: "Province", value: userData?.province || "N/A" },
+                { label: "Appointment Date", value: "N/A" },
               ].map((item) => (
                 <div key={item.label}>
                   <p className={`text-xs ${t.subtext}`}>{item.label}</p>
@@ -214,7 +253,7 @@ const Profile = ({ gnStatus, theme }) => {
               <div className={`${t.card} rounded-2xl shadow p-6`}>
                 <p className={`text-sm font-semibold mb-3 ${t.text}`}>🏢 Office Details</p>
                 <p className={`text-xs ${t.subtext}`}>Office Address</p>
-                <p className={`text-sm font-semibold mb-3 ${t.text}`}>124/B, Awissawella Road, Homagama, Sri Lanka.</p>
+                <p className={`text-sm font-semibold mb-3 ${t.text}`}>{userData?.officeAddress || "N/A"}</p>
                 <button className="w-full bg-[#3B1F0A] text-white font-semibold py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-[#2a1506] transition text-sm">
                   🗺 View on Map
                 </button>

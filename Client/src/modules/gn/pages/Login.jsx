@@ -3,6 +3,8 @@ import { Link,useNavigate } from "react-router-dom";
 import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebase";
+import { getDoc, doc } from "firebase/firestore";
+import { db } from "../../firebase";
 
 const Login = () => {
   const [email, setEmail]               = useState("");
@@ -23,8 +25,27 @@ const Login = () => {
 
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate("/dashboard");
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+const user = userCredential.user;
+
+// Check role in Firestore
+const { getDoc, doc } = await import("firebase/firestore");
+const { db } = await import("../../firebase");
+
+const userDoc = await getDoc(doc(db, "users", user.uid));
+
+if (userDoc.exists()) {
+  const role = userDoc.data().role;
+  if (role === "gn") {
+    navigate("/");
+  } else if (role === "citizen") {
+    navigate("/citizen-dashboard");
+  } else {
+    setError("Unknown role. Please contact support.");
+  }
+} else {
+  setError("User profile not found. Please contact support.");
+}
     } catch (err) {
       switch (err.code) {
         case "auth/invalid-email":       setError("Invalid email format.");                        break;

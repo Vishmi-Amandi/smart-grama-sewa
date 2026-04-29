@@ -10,17 +10,33 @@ export const getThemeClasses = (theme) => ({
   divider: theme === "dark" ? "divide-gray-700" : "divide-gray-100",
 });
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LayoutDashboard, CalendarDays, Clock, Megaphone, Search, User, Settings, LogOut } from "lucide-react";
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../../firebase";
 
 
-  const GNLayout = ({ children, gnStatus, theme }) => {
+const GNLayout = ({ children, gnStatus, theme }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [showLang, setShowLang] = useState(false);
   const [selectedLang, setSelectedLang] = useState("English");
   const [showAnnouncements, setShowAnnouncements] = useState(false);
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const docRef = doc(db, "gn_officers", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setUserData(docSnap.data());
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className={`flex flex-col h-screen ${theme === "dark" ? "bg-gray-900 text-white" : ""}`}>
@@ -118,7 +134,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 </Link>
           </nav>
 
-         <Link to="/signup" className="flex items-center gap-3 text-white px-4 py-2 rounded-lg hover:bg-[#9B4D00]">
+         <Link to="/login" className="flex items-center gap-3 text-white px-4 py-2 rounded-lg hover:bg-[#9B4D00]">
   <LogOut size={18} />
   Sign Out
 </Link>
@@ -188,14 +204,19 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
               {/* User Info */}
 <Link to="/profile" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
   <div className="text-right">
-    <p className="text-sm font-semibold text-gray-800">Officer Perera</p>
-    <p className="text-xs text-[#8B4513]">Grama Niladhari (A12)</p>
+    <p className="text-sm font-semibold text-gray-800">
+      {userData?.fullName || "Officer"}
+    </p>
+    <p className="text-xs text-[#8B4513]">
+      {userData?.gnDivisionName || "Grama Niladhari"}
+    </p>
   </div>
-  <div className="w-9 h-9 rounded-full bg-gray-300 overflow-hidden">
-    <img src="/logo.png" alt="avatar" className="w-full h-full object-cover" />
+  <div className="w-9 h-9 rounded-full bg-gray-300 overflow-hidden flex items-center justify-center font-bold text-white bg-[#8B4513]">
+    {userData?.fullName
+      ? userData.fullName.charAt(0).toUpperCase()
+      : "G"}
   </div>
 </Link>
-
             </div>
           </header>
 
