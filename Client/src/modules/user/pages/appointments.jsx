@@ -765,7 +765,7 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
                   {/* Date Block */}
                   <div>
                     <div style={{
-                      fontSize: 42,
+                      fontSize: 40,
                       fontWeight: 900,
                       color: '#1e1200',
                       lineHeight: 1,
@@ -775,7 +775,7 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
                       fontWeight: 800,
                       color: '#B46A02',
                       textTransform: 'uppercase',
-                      letterSpacing: 0.8,
+                      letterSpacing: 8,
                     }}>{a.mon}</div>
                   </div>
 
