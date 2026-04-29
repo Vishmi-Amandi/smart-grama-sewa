@@ -128,7 +128,7 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
   const bottomNav = [
     { key: 'profile', icon: IC.profile, label: 'Profile' },
     { key: 'settings', icon: IC.settings, label: 'Settings' },
-    { key: 'logout', icon: IC.logout, label: 'Logout' },
+    { key: 'logout', icon: IC.logout, label: 'Sign out' },
   ];
 
   return (
@@ -196,7 +196,7 @@ const DesktopTopbar = ({ chipName }) => (
   </div>
 );
 
-// Mobile Topbar with Search Below
+// Mobile Topbar
 const MobileTopbar = ({ chipName, onMenuClick }) => (
   <div className="mobile-header" style={{
     display: 'none',
@@ -237,6 +237,27 @@ const MobileTopbar = ({ chipName, onMenuClick }) => (
   </div>
 );
 
+const MobileSearchBar = () => (
+  <div style={{
+    padding: '12px 16px',
+    backgroundColor: '#f5f0e8',
+    borderBottom: '1px solid #e8d8b0',
+  }}>
+    <div style={{
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: 10,
+      backgroundColor: '#fff', 
+      border: '1.5px solid #e8d8b0',
+      borderRadius: 999, 
+      padding: '12px 16px',
+    }}>
+      <Icon d={IC.search} size={16} color="#aaa" />
+      <span style={{ fontSize: 14, color: '#bbb', fontWeight: 600 }}>Search ...</span>
+    </div>
+  </div>
+);
+
 // Mobile Sidebar Overlay
 const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
   const navItems = [
@@ -249,7 +270,7 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
   const bottomNav = [
     { key: 'profile', icon: IC.profile, label: 'Profile' },
     { key: 'settings', icon: IC.settings, label: 'Settings' },
-    { key: 'logout', icon: IC.logout, label: 'Logout' },
+    { key: 'logout', icon: IC.logout, label: 'Sign out' },
   ];
 
   if (!isOpen) return null;
@@ -277,25 +298,6 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
     </>
   );
 };
-
-// NavItem (original for sidebar)
-const OriginalNavItem = ({ d, label, active, onClick }) => (
-  <button onClick={onClick} style={{
-    width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
-    padding: '11px 16px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-    backgroundColor: active ? 'rgba(255,255,255,0.9)' : 'transparent',
-    color: '#3d2a00', fontWeight: active ? 800 : 600, fontSize: '14px',
-    fontFamily: 'inherit', textAlign: 'left', marginBottom: '2px',
-    transition: 'background 0.15s',
-    boxShadow: active ? '0 2px 8px rgba(0,0,0,0.10)' : 'none',
-  }}
-    onMouseOver={e => { if (!active) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.4)'; }}
-    onMouseOut={e  => { if (!active) e.currentTarget.style.backgroundColor = 'transparent'; }}
-  >
-    <Icon d={d} size={18} color={active ? '#B46A02' : '#5a3a00'} />
-    {label}
-  </button>
-);
 
 // Step Indicator 
 const StepBar = ({ step }) => {
@@ -523,6 +525,14 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
   const [loading, setLoading] = useState(true);
   const [selAppt,    setSelAppt]    = useState(null);  // selected appt for modal
   const [cancelling, setCancelling] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile,       setIsMobile]      = useState(window.innerWidth <= 768);
+  
+  useEffect(() => {
+    const handle = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handle);
+    return () => window.removeEventListener('resize', handle);
+  }, []);
 
   const tabs = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled'];
 
@@ -613,17 +623,6 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
  
   return (
     <>
-    <div style={{ padding: '12px 16px' }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        backgroundColor: '#fff', border: '1.5px solid #e8d8b0',
-        borderRadius: 999, padding: '10px 16px',
-      }}>
-        <Icon d={IC.search} size={16} color="#aaa" />
-        <span style={{ fontSize: 14, color: '#bbb', fontWeight: 600 }}>Search</span>
-      </div>
-    </div>
-
       {/* Details modal */}
       {selAppt && (
         <DetailsModal
@@ -670,20 +669,78 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
           </div>
         </div>
  
-        {/* Tabs */}
-        <div style={{ display: 'flex', borderBottom: '2px solid #e8d5ac', marginBottom: 20, overflowX: 'auto', flexWrap: 'wrap' }}>
-          {tabs.map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{
-              padding: '10px 20px', border: 'none', background: 'none',
-              fontSize: 15, fontWeight: tab === t ? 900 : 600,
-              color: tab === t ? '#3d2a00' : '#888', cursor: 'pointer',
-              borderBottom: tab === t ? '3px solid #F5C400' : '3px solid transparent',
-              marginBottom: -2, fontFamily: 'inherit', transition: 'all .15s',
-              whiteSpace: 'nowrap',
-            }}>{t}</button>
-          ))}
+        {/* Filter Tabs */}
+        <div style={{
+          display: 'flex',
+          gap: isMobile ? 20 : 28,
+          marginBottom: 20,
+          borderBottom: '2px solid #e8d5ac',
+          overflowX: isMobile ? 'auto' : 'visible',
+          overflowY: 'hidden',
+          flexWrap: isMobile ? 'nowrap' : 'wrap',
+          WebkitOverflowScrolling: 'touch',
+        }}>
+          {tabs.map(t => {
+            const isActive = tab === t;
+            return (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                style={{
+                  padding: isMobile ? '10px 0' : '10px 0',
+                  border: 'none',
+                  background: 'none',
+                  fontSize: isMobile ? 15 : 16,
+                  fontWeight: isActive ? 800 : 600,
+                  color: isActive ? '#3d2a00' : '#888',
+                  cursor: 'pointer',
+                  borderBottom: isActive ? '3px solid #F5C400' : '3px solid transparent',
+                  marginBottom: -2,
+                  fontFamily: 'inherit',
+                  transition: 'all .15s',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+                onMouseOver={e => {
+                  if (!isActive) {
+                    e.currentTarget.style.color = '#3d2a00';
+                  }
+                }}
+                onMouseOut={e => {
+                  if (!isActive) {
+                    e.currentTarget.style.color = '#888';
+                  }
+                }}
+              >
+                {t}
+              </button>
+            );
+          })}
         </div>
- 
+
+        {/* Scroll hint (if tabs overflow) */}
+        {isMobile && (
+          <div style={{
+            textAlign: 'center',
+            marginTop: -8,
+            marginBottom: 16,
+            fontSize: 10,
+            color: '#ccc',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+          }}>
+            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth={2}>
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+            <span>scroll</span>
+            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth={2}>
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </div>
+        )}
+
         {/* Loading */}
         {loading && <AppointmentsListSkeleton />}
  
@@ -693,12 +750,12 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
             {filtered.map(a => (
               <div key={a.id} style={{
                 ...S.card,
-                borderLeft: `5px solid ${accentColor[a.status] || '#ccc'}`,
+                borderLeft: `8px solid ${accentColor[a.status] || '#ccc'}`,
                 padding: '18px 22px',
                 opacity: a.status === 'Cancelled' ? 0.65 : 1,
                 transition: 'all .15s',
               }}>
-                {/* Header Row: Date (30 APR) and Status Badge (stuck to right) */}
+                {/* Header Row */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'flex-start',
@@ -722,7 +779,7 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
                     }}>{a.mon}</div>
                   </div>
 
-                  {/* Status Badge - Stuck to the right */}
+                  {/* Status Badge */}
                   <div style={{
                     padding: '6px 16px',
                     borderRadius: 999,
@@ -756,7 +813,7 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
                   {a.title}
                 </div>
 
-                {/* Buttons Row - All three buttons */}
+                {/* Buttons Row */}
                 <div style={{
                   display: 'flex',
                   gap: 10,
@@ -844,6 +901,14 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
 const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
   const [openCats, setOpenCats] = useState({ personal: true });
   const [notes, setNotes] = useState(booking.notes || '');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const toggleCat = key => setOpenCats(p => ({ ...p, [key]: !p[key] }));
 
@@ -947,11 +1012,23 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
       </div>
 
       {/* Bottom buttons */}
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <BrownBtn onClick={onCancel}>Cancel</BrownBtn>
-        <BrownBtn onClick={onNext} disabled={!booking.service}>
-          Next → Pick a time &amp; date
-        </BrownBtn>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexDirection: isMobile ? 'column' : 'row' }}>
+        <button onClick={onCancel} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          padding: isMobile ? '14px 20px' : '14px 28px', backgroundColor: '#fff',
+          border: '2px solid #c0a888', borderRadius: 999, fontSize: isMobile ? 15 : 15,
+          fontWeight: 800, color: '#8a6040', cursor: 'pointer', width: isMobile ? '100%' : 'auto',
+        }}>
+          Cancel
+        </button>
+        <button onClick={onNext} disabled={!booking.service} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          padding: isMobile ? '16px 20px' : '14px 28px', backgroundColor: !booking.service ? '#c0a888' : '#8a6040',
+          border: 'none', borderRadius: 999, fontSize: isMobile ? 16 : 15, fontWeight: 800,
+          color: '#fff', cursor: !booking.service ? 'not-allowed' : 'pointer', width: isMobile ? '100%' : 'auto',
+        }}>
+          Next → Pick a time & date
+        </button>
       </div>
     </div>
   );
@@ -1333,16 +1410,26 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between',
-        alignItems: 'center',
         gap: 12,
-        flexDirection: 'row',
+        flexDirection: isMobile ? 'column' : 'row',
+        marginTop: 16,
       }}>
-        <BrownBtn onClick={onBack}>
-          <span>← Back</span>
-        </BrownBtn>
-        <BrownBtn onClick={onNext} disabled={!selDay || !selSlot}>
-          Next → Review &amp; submit
-        </BrownBtn>
+        <button onClick={onBack} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          padding: isMobile ? '14px 20px' : '14px 28px', backgroundColor: '#fff',
+          border: '2px solid #c0a888', borderRadius: 999, fontSize: isMobile ? 15 : 15,
+          fontWeight: 800, color: '#8a6040', cursor: 'pointer', width: isMobile ? '100%' : 'auto',
+        }}>
+          ← Back
+        </button>
+        <button onClick={onNext} disabled={!selDay || !selSlot} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          padding: isMobile ? '16px 20px' : '14px 28px', backgroundColor: (!selDay || !selSlot) ? '#c0a888' : '#8a6040',
+          border: 'none', borderRadius: 999, fontSize: isMobile ? 16 : 15, fontWeight: 800,
+          color: '#fff', cursor: (!selDay || !selSlot) ? 'not-allowed' : 'pointer', width: isMobile ? '100%' : 'auto',
+        }}>
+          Next → Review & submit
+        </button>
       </div>
     </div>
   );
@@ -1709,146 +1796,61 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
         </div>
       </div>
 
-      {/* Bottom Buttons - Inline on all devices */}
+      {/* Bottom Buttons */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between',
-        alignItems: 'center',
         gap: 12,
-        flexDirection: 'row',
+        flexDirection: isMobile ? 'column' : 'row',
       }}>
-        <BrownBtn onClick={onBack} style={{ 
-          width: isMobile ? '100%' : 'auto',
-          justifyContent: 'center',
+        <button onClick={onBack} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          padding: isMobile ? '14px 20px' : '14px 28px', backgroundColor: '#fff',
+          border: '2px solid #c0a888', borderRadius: 999, fontSize: isMobile ? 15 : 15,
+          fontWeight: 800, color: '#8a6040', cursor: 'pointer', width: isMobile ? '100%' : 'auto',
         }}>
-          <span>← Back</span>
-        </BrownBtn>
-        <YellowBtn 
-          onClick={onSubmit} 
-          disabled={submitting}
-          style={{ 
-            width: isMobile ? '100%' : 'auto',
-            justifyContent: 'center',
-          }}
-        >
+          ← Back
+        </button>
+        <button onClick={onSubmit} disabled={submitting} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          padding: isMobile ? '16px 20px' : '14px 28px', backgroundColor: submitting ? '#c0a888' : '#F5C400',
+          border: 'none', borderRadius: 999, fontSize: isMobile ? 16 : 15, fontWeight: 800,
+          color: '#3d2a00', cursor: submitting ? 'not-allowed' : 'pointer', width: isMobile ? '100%' : 'auto',
+        }}>
           {submitting ? 'Submitting…' : 'Submit appointment request'}
-        </YellowBtn>
-      </div>
-    </div>
-  );
-};
-
-//  SCREEN — SUCCESS
-const BookSuccess = ({ onBack }) => {
-  // Detect mobile for responsive adjustments
-  const [isMobile, setIsMobile] = useState(false);
-  
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return (
-    <div style={{ 
-      ...S.content, 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      minHeight: 'calc(100vh - 200px)',
-      padding: isMobile ? '16px' : '28px 32px',
-    }}>
-      <div style={{ 
-        ...S.card, 
-        padding: isMobile ? '28px 20px' : '30px 28px', 
-        textAlign: 'center', 
-        maxWidth: isMobile ? 360 : 400,
-        width: '90%',
-        margin: '0',
-      }}>
-        {/* Success Icon */}
-        <div style={{ 
-          width: isMobile ? 56 : 64, 
-          height: isMobile ? 56 : 64, 
-          borderRadius: '50%', 
-          backgroundColor: '#e6f9ee', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          margin: '0 auto 16px',
-        }}>
-          <Icon d={IC.check} size={isMobile ? 28 : 32} color="#1a7a3a" sw={2.5} />
-        </div>
-        
-        {/* Success Title */}
-        <h2 style={{ 
-          fontSize: isMobile ? 20 : 22, 
-          fontWeight: 900, 
-          color: '#1e1200', 
-          marginBottom: 12 
-        }}>
-          Appointment Requested!
-        </h2>
-        
-        {/* Success Messages */}
-        <p style={{ 
-          fontSize: isMobile ? 13 : 14, 
-          color: '#666', 
-          fontWeight: 500, 
-          lineHeight: 1.5, 
-          marginBottom: 8,
-        }}>
-          Your appointment request has been submitted.
-        </p>
-        
-        <p style={{ 
-          fontSize: isMobile ? 13 : 14, 
-          color: '#666', 
-          fontWeight: 500, 
-          lineHeight: 1.5, 
-          marginBottom: 24,
-        }}>
-          You will receive a confirmation once the GN Officer approves it.
-        </p>
-        
-        {/* Back Button */}
-        <button 
-          onClick={onBack}
-          style={{ 
-            width: '100%',
-            backgroundColor: '#F5C400',
-            border: 'none',
-            borderRadius: 999,
-            padding: isMobile ? '10px 16px' : '10px 20px',
-            fontSize: isMobile ? 14 : 13,
-            fontWeight: 800,
-            color: '#3d2a00',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            transition: 'all 0.2s',
-          }}
-          onMouseOver={e => e.currentTarget.style.backgroundColor = '#d4a800'}
-          onMouseOut={e => e.currentTarget.style.backgroundColor = '#F5C400'}
-        >
-          ← Back to My Appointments
         </button>
       </div>
     </div>
   );
 };
 
+//  SCREEN — SUCCESS
+const BookSuccess = ({ onBack }) => (
+  <div style={{ ...S.content, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+    <div style={{ ...S.card, padding: '48px 40px', textAlign: 'center', maxWidth: 480 }}>
+      <div style={{ width: 80, height: 80, borderRadius: '50%', backgroundColor: '#e6f9ee', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+        <Icon d={IC.check} size={36} color="#1a7a3a" sw={2.5} />
+      </div>
+      <h2 style={{ fontSize: 22, fontWeight: 900, color: '#1e1200', marginBottom: 10 }}>Appointment Requested!</h2>
+      <p style={{ fontSize: 14, color: '#666', fontWeight: 600, lineHeight: 1.7, marginBottom: 28 }}>
+        Your appointment request has been submitted.<br />
+        You will receive a confirmation once the GN Officer approves it.
+      </p>
+      <YellowBtn onClick={onBack}>← Back to My Appointments</YellowBtn>
+    </div>
+  </div>
+);
+
 //  MAIN COMPONENT
 const Appointments = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(() => {
+    const handle = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handle);
+    return () => window.removeEventListener('resize', handle);
+  }, []);
   // Auth + user data
   const [currentUser, setCurrentUser] = useState(null);
   const [userData,    setUserData]    = useState(null);
@@ -1924,7 +1926,7 @@ const Appointments = () => {
       <div style={{ flex: 1, display: 'flex' }}>
 
         {/* Desktop Sidebar */}
-        <DesktopSidebar activePage="appointments" navigate={navigate} onLogout={handleLogout} />
+        {!isMobile && <DesktopSidebar activePage="appointments" navigate={navigate} onLogout={handleLogout} />}
 
         {/* Mobile Sidebar Overlay */}
         <MobileSidebar
@@ -1936,11 +1938,11 @@ const Appointments = () => {
         />
 
         <div style={S.main}>
-          {/* Desktop Topbar */}
-          <DesktopTopbar chipName={chipName} />
-
-          {/* Mobile Topbar with Search Below */}
-          <MobileTopbar chipName={chipName} onMenuClick={() => setMobileMenuOpen(true)} />
+          {isMobile
+            ? <MobileTopbar chipName={chipName} onMenuClick={() => setMobileMenuOpen(true)} />
+            : <DesktopTopbar chipName={chipName} />
+          }
+          {isMobile && <MobileSearchBar />}
 
           {screen === 'list'    && <AppointmentsList currentUser={currentUser} refreshKey={refreshKey} onBook={() => { setBooking({ service: null, notes: '', day: null, month: null, year: null, slot: null }); setScreen('step1'); }} />}
           {screen === 'step1'   && <BookStep1  booking={booking} setBooking={setBooking} onNext={() => setScreen('step2')} onCancel={() => setScreen('list')} />}
