@@ -216,12 +216,8 @@ const MobileTopbar = ({ chipName, onMenuClick }) => (
           <line x1="3" y1="18" x2="21" y2="18" />
         </svg>
       </button>
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '14px', fontWeight: 800, color: '#3d2a00', lineHeight: 1.2 }}>
-            Smart<br />Grama Sewa
-          </div>
-        </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'left' }}>
+        <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '48px', width: 'auto' }} />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
         <span style={{ fontSize: '14px', fontWeight: 800, color: '#3d2a00' }}>EN</span>
@@ -236,16 +232,6 @@ const MobileTopbar = ({ chipName, onMenuClick }) => (
         }}>
           <Icon d={IC.profile} size={18} color="#3d2a00" />
         </div>
-      </div>
-    </div>
-    <div style={{ padding: '8px 16px 12px 16px', backgroundColor: '#F5C400' }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        backgroundColor: '#fff', border: '1.5px solid #e8d8b0',
-        borderRadius: 999, padding: '10px 16px',
-      }}>
-        <Icon d={IC.search} size={16} color="#aaa" />
-        <span style={{ fontSize: 14, color: '#bbb', fontWeight: 600 }}>Search</span>
       </div>
     </div>
   </div>
@@ -627,6 +613,17 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
  
   return (
     <>
+    <div style={{ padding: '12px 16px' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        backgroundColor: '#fff', border: '1.5px solid #e8d8b0',
+        borderRadius: 999, padding: '10px 16px',
+      }}>
+        <Icon d={IC.search} size={16} color="#aaa" />
+        <span style={{ fontSize: 14, color: '#bbb', fontWeight: 600 }}>Search</span>
+      </div>
+    </div>
+
       {/* Details modal */}
       {selAppt && (
         <DetailsModal
@@ -639,7 +636,7 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
  
       <div style={S.content}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>          
           <div>
             <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1e1200', letterSpacing: '-0.4px', marginBottom: 4 }}>My Appointments</h1>
             <p style={{ fontSize: 13, color: '#888', fontWeight: 600 }}>Manage your scheduled meetings with Grama Niladhari officers.</p>
@@ -674,7 +671,7 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
         </div>
  
         {/* Tabs */}
-        <div style={{ display: 'flex', borderBottom: '2px solid #e8d5ac', marginBottom: 20 }}>
+        <div style={{ display: 'flex', borderBottom: '2px solid #e8d5ac', marginBottom: 20, overflowX: 'auto', flexWrap: 'wrap' }}>
           {tabs.map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               padding: '10px 20px', border: 'none', background: 'none',
@@ -682,6 +679,7 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
               color: tab === t ? '#3d2a00' : '#888', cursor: 'pointer',
               borderBottom: tab === t ? '3px solid #F5C400' : '3px solid transparent',
               marginBottom: -2, fontFamily: 'inherit', transition: 'all .15s',
+              whiteSpace: 'nowrap',
             }}>{t}</button>
           ))}
         </div>
@@ -697,62 +695,119 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
                 ...S.card,
                 borderLeft: `5px solid ${accentColor[a.status] || '#ccc'}`,
                 padding: '18px 22px',
-                display: 'flex', alignItems: 'center', gap: 20,
                 opacity: a.status === 'Cancelled' ? 0.65 : 1,
                 transition: 'all .15s',
               }}>
-                {/* Date block */}
-                <div style={{ textAlign: 'center', minWidth: 52, flexShrink: 0 }}>
-                  <div style={{ fontSize: 34, fontWeight: 900, color: '#1e1200', lineHeight: 1 }}>{a.day}</div>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 0.5 }}>{a.mon}</div>
-                </div>
- 
-                {/* Info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#888', marginBottom: 4 }}>
-                    {a.dow}{a.dow && a.time ? ' · ' : ''}{a.time}
-                  </div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {a.title}
-                  </div>
-                </div>
- 
-                {/* Status chip */}
+                {/* Header Row: Date (30 APR) and Status Badge (stuck to right) */}
                 <div style={{
-                  padding: '5px 14px', borderRadius: 999, fontSize: 12, fontWeight: 800,
-                  backgroundColor: (statusColor[a.status] || statusColor.Pending).bg,
-                  color:           (statusColor[a.status] || statusColor.Pending).text,
-                  border: `1px solid ${(statusColor[a.status] || statusColor.Pending).border}`,
-                  flexShrink: 0,
-                }}>{a.status}</div>
- 
-                {/* Action buttons */}
-                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                  {/* View Details */}
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
+                }}>
+                  {/* Date Block */}
+                  <div>
+                    <div style={{
+                      fontSize: 42,
+                      fontWeight: 900,
+                      color: '#1e1200',
+                      lineHeight: 1,
+                    }}>{a.day}</div>
+                    <div style={{
+                      fontSize: 13,
+                      fontWeight: 800,
+                      color: '#B46A02',
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.8,
+                    }}>{a.mon}</div>
+                  </div>
+
+                  {/* Status Badge - Stuck to the right */}
+                  <div style={{
+                    padding: '6px 16px',
+                    borderRadius: 999,
+                    fontSize: 13,
+                    fontWeight: 800,
+                    backgroundColor: (statusColor[a.status] || statusColor.Pending).bg,
+                    color: (statusColor[a.status] || statusColor.Pending).text,
+                    border: `1px solid ${(statusColor[a.status] || statusColor.Pending).border}`,
+                    whiteSpace: 'nowrap',
+                    alignSelf: 'flex-start',
+                  }}>{a.status}</div>
+                </div>
+
+                {/* Time Row */}
+                <div style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: '#666',
+                  marginBottom: 10,
+                }}>
+                  {a.dow} - {a.time}
+                </div>
+
+                {/* Description Row */}
+                <div style={{
+                  fontSize: 16,
+                  fontWeight: 800,
+                  color: '#1e1200',
+                  marginBottom: 20,
+                }}>
+                  {a.title}
+                </div>
+
+                {/* Buttons Row - All three buttons */}
+                <div style={{
+                  display: 'flex',
+                  gap: 10,
+                  flexWrap: 'wrap',
+                }}>
+
+                  {/* Details Button */}
                   <button onClick={() => setSelAppt(a)} style={{
-                    padding: '7px 16px', borderRadius: 999,
-                    border: '1.5px solid #e8d5ac', backgroundColor: '#fff',
-                    fontSize: 12, fontWeight: 800, color: '#3d2a00',
-                    cursor: 'pointer', transition: 'all .15s',
+                    flex: '1 1 auto',
+                    minWidth: '100px',
+                    padding: '10px 16px',
+                    borderRadius: 40,
+                    backgroundColor: '#eff3f9',
+                    border: '1px solid #d4dfed',
+                    color: '#2c4c7c',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    transition: 'all 0.2s',
                   }}
-                    onMouseOver={e => { e.currentTarget.style.borderColor = '#B46A02'; e.currentTarget.style.backgroundColor = '#fff8e0'; }}
-                    onMouseOut={e  => { e.currentTarget.style.borderColor = '#e8d5ac'; e.currentTarget.style.backgroundColor = '#fff'; }}
-                  >
-                    👁 Details
+                  onMouseOver={e => { e.currentTarget.style.backgroundColor = '#e2e9f2'; }}
+                  onMouseOut={e => { e.currentTarget.style.backgroundColor = '#eff3f9'; }}>
+                    <span>📋</span> Details
                   </button>
- 
-                  {/* Cancel — only Pending/Confirmed */}
+
+                  {/* Cancel Button */}
                   {(a.status === 'Pending' || a.status === 'Confirmed') && (
                     <button onClick={() => { setSelAppt(a); }} style={{
-                      padding: '7px 16px', borderRadius: 999,
-                      border: '1.5px solid #f0a0a0', backgroundColor: '#fff',
-                      fontSize: 12, fontWeight: 800, color: '#8b1a1a',
-                      cursor: 'pointer', transition: 'all .15s',
+                      flex: '1 1 auto',
+                      minWidth: '100px',
+                      padding: '10px 16px',
+                      borderRadius: 40,
+                      backgroundColor: '#fef3f2',
+                      border: '1px solid #f3c1bc',
+                      color: '#bc3f2e',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      transition: 'all 0.2s',
                     }}
-                      onMouseOver={e => { e.currentTarget.style.backgroundColor = '#fde8e8'; }}
-                      onMouseOut={e  => { e.currentTarget.style.backgroundColor = '#fff'; }}
-                    >
-                      ❌ Cancel
+                    onMouseOver={e => { e.currentTarget.style.backgroundColor = '#fce4e1'; }}
+                    onMouseOut={e => { e.currentTarget.style.backgroundColor = '#fef3f2'; }}>
+                      <span>✖</span> Cancel
                     </button>
                   )}
                 </div>
@@ -955,123 +1010,273 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
     ? `${DAY_NAMES[new Date(viewYear, viewMonth, selDay).getDay()]}, ${MONTHS[viewMonth]} ${selDay}${['th','st','nd','rd'][Math.min(selDay % 10, 3)] || 'th'}`
     : 'No date selected';
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div style={S.content}>
-      <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1e1200', marginBottom: 20 }}>Book an appointment</h1>
+      <h1 style={{ 
+        fontSize: 26, 
+        fontWeight: 900, 
+        color: '#1e1200', 
+        marginBottom: 20 
+      }}>Book an appointment</h1>
       <StepBar step={2} />
 
-      <div style={{ ...S.card, padding: '26px 28px', marginBottom: 16 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1e1200', marginBottom: 22 }}>When would you like to visit?</h2>
+      <div style={{ 
+        ...S.card, 
+        padding: '26px 28px', 
+        marginBottom: 16 
+      }}>
+        <h2 style={{ 
+          fontSize: 18, 
+          fontWeight: 800, 
+          color: '#1e1200', 
+          marginBottom: 22 
+        }}>When would you like to visit?</h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        {/* Responsive Grid */}
+        <div style={{ 
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: 20,
+        }}>
 
-          {/* Calendar */}
-          <div style={{ border: '1.5px solid #e8d5ac', borderRadius: 14, padding: '20px 18px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          {/* Calendar Section */}
+          <div style={{ 
+            flex: 1,
+            border: '1.5px solid #e8d5ac', 
+            borderRadius: 14, 
+            padding: '20px 18px' 
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 8, 
+              marginBottom: 16 
+            }}>
               <Icon d={IC.calendar} size={18} color="#B46A02" />
               <span style={{ fontSize: 15, fontWeight: 800, color: '#1e1200' }}>Select Date</span>
             </div>
-            {/* Month nav */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <button onClick={prevMonth} style={{ width: 28, height: 28, borderRadius: '50%', border: '1.5px solid #e8d5ac', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            
+            {/* Month Navigation */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              marginBottom: 14 
+            }}>
+              <button onClick={prevMonth} style={{ 
+                width: 32, height: 32, borderRadius: '50%', 
+                border: '1.5px solid #e8d5ac', background: '#fff', 
+                cursor: 'pointer', display: 'flex', alignItems: 'center', 
+                justifyContent: 'center'
+              }}>
                 <Icon d={IC.chevL} size={14} color="#888" />
               </button>
-              <span style={{ fontSize: 15, fontWeight: 800 }}>{MONTHS[viewMonth]} {viewYear}</span>
-              <button onClick={nextMonth} style={{ width: 28, height: 28, borderRadius: '50%', border: '1.5px solid #e8d5ac', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 15, fontWeight: 800 }}>
+                {MONTHS[viewMonth]} {viewYear}
+              </span>
+              <button onClick={nextMonth} style={{ 
+                width: 32, height: 32, borderRadius: '50%', 
+                border: '1.5px solid #e8d5ac', background: '#fff', 
+                cursor: 'pointer', display: 'flex', alignItems: 'center', 
+                justifyContent: 'center'
+              }}>
                 <Icon d={IC.chevR} size={14} color="#888" />
               </button>
             </div>
-            {/* Day headers */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2, marginBottom: 4 }}>
-              {DAYS.map((d, i) => (
-                <div key={i} style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, color: '#aaa', padding: '4px 0' }}>{d}</div>
+            
+            {/* Day Headers */}
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(7, 1fr)', 
+              gap: 2, 
+              marginBottom: 8 
+            }}>
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                <div key={i} style={{ 
+                  textAlign: 'center', 
+                  fontSize: 11, 
+                  fontWeight: 800, 
+                  color: '#aaa', 
+                  padding: '4px 0' 
+                }}>{d}</div>
               ))}
             </div>
-            {/* Days grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2 }}>
+            
+            {/* Days Grid */}
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(7, 1fr)', 
+              gap: 2 
+            }}>
               {Array(firstDay).fill(null).map((_, i) => <div key={`e${i}`} />)}
               {Array(daysInMonth).fill(null).map((_, i) => {
                 const day = i + 1;
                 const weekend = isWeekend(day);
-                const past    = isPast(day);
-                const picked  = selDay === day && viewMonth === booking.month && viewYear === booking.year;
+                const past = isPast(day);
+                const picked = selDay === day && viewMonth === booking.month && viewYear === booking.year;
                 const disabled = weekend || past;
                 return (
-                  <div key={day} onClick={() => pickDay(day)} style={{
-                    width: 34, height: 34, borderRadius: '50%', margin: '1px auto',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, fontWeight: picked ? 900 : 600,
-                    backgroundColor: picked ? '#F5C400' : 'transparent',
-                    color: picked ? '#3d2a00' : disabled ? '#ccc' : '#1e1200',
-                    cursor: disabled ? 'not-allowed' : 'pointer',
-                    boxShadow: picked ? '0 2px 8px rgba(245,196,0,0.4)' : 'none',
-                    transition: 'all .12s',
-                  }}
+                  <div 
+                    key={day} 
+                    onClick={() => pickDay(day)} 
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: '50%',
+                      margin: '1px auto',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 13,
+                      fontWeight: picked ? 900 : 600,
+                      backgroundColor: picked ? '#F5C400' : 'transparent',
+                      color: picked ? '#3d2a00' : disabled ? '#ccc' : '#1e1200',
+                      cursor: disabled ? 'not-allowed' : 'pointer',
+                      boxShadow: picked ? '0 2px 8px rgba(245,196,0,0.4)' : 'none',
+                      transition: 'all 0.12s',
+                    }}
                     onMouseOver={e => { if (!disabled && !picked) e.currentTarget.style.backgroundColor = '#fff8e0'; }}
-                    onMouseOut={e  => { if (!disabled && !picked) e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >{day}</div>
+                    onMouseOut={e => { if (!disabled && !picked) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    {day}
+                  </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Time slots */}
-          <div style={{ border: '1.5px solid #e8d5ac', borderRadius: 14, padding: '20px 18px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          {/* Time Slots Section */}
+          <div style={{ 
+            flex: 1,
+            border: '1.5px solid #e8d5ac', 
+            borderRadius: 14, 
+            padding: '20px 18px' 
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 8, 
+              marginBottom: 16 
+            }}>
               <Icon d={IC.clock} size={18} color="#B46A02" />
-              <span style={{ fontSize: 15, fontWeight: 800, color: '#1e1200' }}>Select Date</span>
+              <span style={{ fontSize: 15, fontWeight: 800, color: '#1e1200' }}>Select Time</span>
             </div>
 
-            {/* Morning */}
-            <div style={{ fontSize: 12, fontWeight: 800, color: '#B46A02', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* Morning Slots */}
+            <div style={{ 
+              fontSize: 12, 
+              fontWeight: 800, 
+              color: '#B46A02', 
+              marginBottom: 10, 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 6 
+            }}>
               ☀️ Morning
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+              gap: 8, 
+              marginBottom: 16 
+            }}>
               {morningSlots.map(slot => {
-                const taken   = takenSlots.includes(slot);
-                const picked  = selSlot === slot;
+                const taken = takenSlots.includes(slot);
+                const picked = selSlot === slot;
                 return (
-                  <button key={slot} onClick={() => pickSlot(slot)} disabled={taken} style={{
-                    padding: '10px 4px', fontSize: 12, fontWeight: 800, textAlign: 'center',
-                    border: picked ? '2px solid #F5C400' : taken ? '1.5px dashed #ddd' : '1.5px solid #e8d5ac',
-                    borderRadius: 10, cursor: taken ? 'not-allowed' : 'pointer',
-                    backgroundColor: picked ? '#F5C400' : taken ? '#f5f0e8' : '#fff',
-                    color: picked ? '#3d2a00' : taken ? '#ccc' : '#1e1200',
-                    fontFamily: 'inherit', transition: 'all .12s',
-                  }}
+                  <button 
+                    key={slot} 
+                    onClick={() => pickSlot(slot)} 
+                    disabled={taken} 
+                    style={{
+                      padding: '10px 4px',
+                      fontSize: 12,
+                      fontWeight: 800,
+                      textAlign: 'center',
+                      border: picked ? '2px solid #F5C400' : taken ? '1.5px dashed #ddd' : '1.5px solid #e8d5ac',
+                      borderRadius: 10,
+                      cursor: taken ? 'not-allowed' : 'pointer',
+                      backgroundColor: picked ? '#F5C400' : taken ? '#f5f0e8' : '#fff',
+                      color: picked ? '#3d2a00' : taken ? '#ccc' : '#1e1200',
+                      fontFamily: 'inherit',
+                      transition: 'all 0.12s',
+                    }}
                     onMouseOver={e => { if (!taken && !picked) e.currentTarget.style.backgroundColor = '#fff8e0'; }}
-                    onMouseOut={e  => { if (!taken && !picked) e.currentTarget.style.backgroundColor = '#fff'; }}
-                  >{slot}</button>
+                    onMouseOut={e => { if (!taken && !picked) e.currentTarget.style.backgroundColor = '#fff'; }}
+                  >
+                    {slot}
+                  </button>
                 );
               })}
             </div>
 
-            {/* Afternoon */}
-            <div style={{ fontSize: 12, fontWeight: 800, color: '#B46A02', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* Afternoon Slots */}
+            <div style={{ 
+              fontSize: 12, 
+              fontWeight: 800, 
+              color: '#B46A02', 
+              marginBottom: 10, 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 6 
+            }}>
               🌤️ Afternoon
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+              gap: 8, 
+              marginBottom: 20 
+            }}>
               {afternoonSlots.map(slot => {
-                const taken  = takenSlots.includes(slot);
+                const taken = takenSlots.includes(slot);
                 const picked = selSlot === slot;
                 return (
-                  <button key={slot} onClick={() => pickSlot(slot)} disabled={taken} style={{
-                    padding: '10px 4px', fontSize: 12, fontWeight: 800, textAlign: 'center',
-                    border: picked ? '2px solid #F5C400' : taken ? '1.5px dashed #ddd' : '1.5px solid #e8d5ac',
-                    borderRadius: 10, cursor: taken ? 'not-allowed' : 'pointer',
-                    backgroundColor: picked ? '#F5C400' : taken ? '#f5f0e8' : '#fff',
-                    color: picked ? '#3d2a00' : taken ? '#ccc' : '#1e1200',
-                    fontFamily: 'inherit', transition: 'all .12s',
-                  }}
+                  <button 
+                    key={slot} 
+                    onClick={() => pickSlot(slot)} 
+                    disabled={taken} 
+                    style={{
+                      padding: '10px 4px',
+                      fontSize: 12,
+                      fontWeight: 800,
+                      textAlign: 'center',
+                      border: picked ? '2px solid #F5C400' : taken ? '1.5px dashed #ddd' : '1.5px solid #e8d5ac',
+                      borderRadius: 10,
+                      cursor: taken ? 'not-allowed' : 'pointer',
+                      backgroundColor: picked ? '#F5C400' : taken ? '#f5f0e8' : '#fff',
+                      color: picked ? '#3d2a00' : taken ? '#ccc' : '#1e1200',
+                      fontFamily: 'inherit',
+                      transition: 'all 0.12s',
+                    }}
                     onMouseOver={e => { if (!taken && !picked) e.currentTarget.style.backgroundColor = '#fff8e0'; }}
-                    onMouseOut={e  => { if (!taken && !picked) e.currentTarget.style.backgroundColor = '#fff'; }}
-                  >{slot}</button>
+                    onMouseOut={e => { if (!taken && !picked) e.currentTarget.style.backgroundColor = '#fff'; }}
+                  >
+                    {slot}
+                  </button>
                 );
               })}
             </div>
 
             {/* Legend */}
-            <div style={{ display: 'flex', gap: 16 }}>
+            <div style={{ 
+              display: 'flex', 
+              gap: 16,
+              justifyContent: 'center',
+              paddingTop: 8,
+              borderTop: '1px solid #e8d5ac',
+              flexWrap: 'wrap',
+            }}>
               {[
                 { color: '#F5C400', border: 'none', label: 'Selected' },
                 { color: '#fff', border: '1.5px solid #e8d5ac', label: 'Available' },
@@ -1086,24 +1291,55 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
           </div>
         </div>
 
-        {/* Notice bar */}
+        {/* Notice Bar */}
         <div style={{
-          marginTop: 20, backgroundColor: '#fff8e0', border: '1.5px solid #f0d870',
-          borderRadius: 10, padding: '12px 18px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginTop: 24,
+          backgroundColor: '#fff8e0',
+          border: '1.5px solid #f0d870',
+          borderRadius: 10,
+          padding: '12px 18px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 12,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#7a5a00' }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 8, 
+            fontSize: 13, 
+            fontWeight: 600, 
+            color: '#7a5a00'
+          }}>
             <Icon d={IC.info} size={16} color="#B46A02" />
             Appointments must be booked at least 24 hours in advance.
           </div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#3d2a00' }}>
+          <div style={{ 
+            fontSize: 13, 
+            fontWeight: 700, 
+            color: '#3d2a00',
+            backgroundColor: '#fff',
+            padding: '6px 12px',
+            borderRadius: 8,
+            border: '1px solid #f0d870'
+          }}>
             Selected date: <strong>{selDateLabel}</strong>
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <BrownBtn onClick={onBack}><span>← Back</span></BrownBtn>
+      {/* Bottom Buttons */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 12,
+        flexDirection: 'row',
+      }}>
+        <BrownBtn onClick={onBack}>
+          <span>← Back</span>
+        </BrownBtn>
         <BrownBtn onClick={onNext} disabled={!selDay || !selSlot}>
           Next → Review &amp; submit
         </BrownBtn>
@@ -1132,87 +1368,369 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
     ? 'X'.repeat(userData.nic.length)
     : 'XXXXXXXXXXXX';
 
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div style={S.content}>
-      <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1e1200', marginBottom: 20 }}>Book an appointment</h1>
+      <h1 style={{ 
+        fontSize: isMobile ? 'clamp(22px, 6vw, 26px)' : 26, 
+        fontWeight: 900, 
+        color: '#1e1200', 
+        marginBottom: 20 
+      }}>Book an appointment</h1>
       <StepBar step={3} />
 
-      <div style={{ ...S.card, padding: '26px 28px', marginBottom: 24 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1e1200', marginBottom: 20 }}>Review your request</h2>
+      <div style={{ 
+        ...S.card, 
+        padding: isMobile ? '20px' : '26px 28px', 
+        marginBottom: 24 
+      }}>
+        <h2 style={{ 
+          fontSize: isMobile ? 'clamp(18px, 5vw, 22px)' : 20, 
+          fontWeight: 900, 
+          color: '#1e1200', 
+          marginBottom: 20 
+        }}>Review your request</h2>
 
-        {/* Selected service banner */}
+        {/* Selected Service Banner */}
         <div style={{
-          backgroundColor: '#8a6040', borderRadius: '12px 12px 0 0',
-          padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12,
+          backgroundColor: '#8a6040',
+          borderRadius: '12px',
+          padding: isMobile ? '16px' : '14px 20px',
+          marginBottom: isMobile ? 16 : 0,
         }}>
-          <Icon d={IC.doc} size={18} color="#f0d890" />
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 800, color: '#f0d890', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Selected Service</div>
-            <div style={{ fontSize: 15, fontWeight: 900, color: '#fff' }}>{booking.service?.name || '—'}</div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 12,
+            flexDirection: isMobile ? 'column' : 'row',
+          }}>
+            <Icon d={IC.doc} size={isMobile ? 20 : 18} color="#f0d890" />
+            <div>
+              <div style={{ 
+                fontSize: isMobile ? 11 : 10, 
+                fontWeight: 800, 
+                color: '#f0d890', 
+                textTransform: 'uppercase', 
+                letterSpacing: 1, 
+                marginBottom: 4 
+              }}>
+                Selected Service
+              </div>
+              <div style={{ 
+                fontSize: isMobile ? 'clamp(15px, 4.5vw, 18px)' : 16, 
+                fontWeight: 900, 
+                color: '#fff' 
+              }}>
+                {booking.service?.name || '—'}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Details grid */}
+        {/* Details Container */}
         <div style={{
-          backgroundColor: '#fffbe8', border: '1.5px solid #f0e4b0',
-          borderTop: 'none', borderRadius: '0 0 12px 12px',
-          padding: '22px 24px',
+          backgroundColor: '#fffbe8',
+          border: '1.5px solid #f0e4b0',
+          borderRadius: '12px',
+          padding: isMobile ? '20px' : '22px 24px',
+          marginTop: isMobile ? 0 : -1,
         }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-            {/* Left - appointment details */}
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>Appointment Details</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Icon d={IC.calendar} size={16} color="#B46A02" />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#1e1200' }}>{dateStr}</span>
+          {/* Responsive Grid */}
+          <div style={{ 
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? 24 : 32,
+          }}>
+            {/* Left - Appointment Details */}
+            <div style={{ flex: 1 }}>
+              <div style={{ 
+                fontSize: isMobile ? 12 : 11, 
+                fontWeight: 800, 
+                color: '#B46A02', 
+                textTransform: 'uppercase', 
+                letterSpacing: 1, 
+                marginBottom: 14,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}>
+                <Icon d={IC.calendar} size={14} color="#B46A02" />
+                Appointment Details
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {/* Date */}
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 12,
+                  flexWrap: 'wrap',
+                }}>
+                  <div style={{ 
+                    width: 32, 
+                    height: 32, 
+                    borderRadius: '50%', 
+                    backgroundColor: '#fff0d0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <Icon d={IC.calendar} size={16} color="#B46A02" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#999', marginBottom: 2 }}>Date</div>
+                    <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: '#1e1200' }}>
+                      {dateStr}
+                    </div>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Icon d={IC.clock} size={16} color="#B46A02" />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#1e1200' }}>{timeStr}</span>
+
+                {/* Time */}
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 12,
+                  flexWrap: 'wrap',
+                }}>
+                  <div style={{ 
+                    width: 32, 
+                    height: 32, 
+                    borderRadius: '50%', 
+                    backgroundColor: '#fff0d0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <Icon d={IC.clock} size={16} color="#B46A02" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#999', marginBottom: 2 }}>Time</div>
+                    <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: '#1e1200' }}>
+                      {timeStr}
+                    </div>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Icon d={IC.location} size={16} color="#B46A02" />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#1e1200' }}>
-                    {userData?.dsDiv ? `Divisional Secretariat, ${userData.dsDiv}` : 'Divisional Secretariat Office'}
-                  </span>
+
+                {/* Location */}
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 12,
+                  flexWrap: 'wrap',
+                }}>
+                  <div style={{ 
+                    width: 32, 
+                    height: 32, 
+                    borderRadius: '50%', 
+                    backgroundColor: '#fff0d0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <Icon d={IC.location} size={16} color="#B46A02" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#999', marginBottom: 2 }}>Location</div>
+                    <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: '#1e1200' }}>
+                      {userData?.dsDiv ? `Divisional Secretariat, ${userData.dsDiv}` : 'Divisional Secretariat Office'}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            {/* Right - applicant info */}
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>Applicant Information</div>
-              <div style={{ fontSize: 15, fontWeight: 900, color: '#1e1200', marginBottom: 4 }}>
-                {userData?.fullName || currentUser?.displayName || 'User'}
+
+            {/* Vertical Divider - only on desktop */}
+            {!isMobile && (
+              <div style={{ width: 1, backgroundColor: '#f0e4b0', margin: '0 8px' }} />
+            )}
+
+            {/* Right - Applicant Information */}
+            <div style={{ flex: 1 }}>
+              <div style={{ 
+                fontSize: isMobile ? 12 : 11, 
+                fontWeight: 800, 
+                color: '#B46A02', 
+                textTransform: 'uppercase', 
+                letterSpacing: 1, 
+                marginBottom: 14,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}>
+                <Icon d={IC.profile} size={14} color="#B46A02" />
+                Applicant Information
               </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#888', marginBottom: 4 }}>NIC: {nicMasked}</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#888' }}>{userData?.mobile || currentUser?.email}</div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {/* Name */}
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#999', marginBottom: 4 }}>Full Name</div>
+                  <div style={{ 
+                    fontSize: isMobile ? 15 : 16, 
+                    fontWeight: 800, 
+                    color: '#1e1200',
+                    backgroundColor: '#fff',
+                    padding: isMobile ? '8px 12px' : 0,
+                    borderRadius: isMobile ? 8 : 0,
+                  }}>
+                    {userData?.fullName || currentUser?.displayName || 'User'}
+                  </div>
+                </div>
+
+                {/* NIC */}
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#999', marginBottom: 4 }}>NIC Number</div>
+                  <div style={{ 
+                    fontSize: isMobile ? 14 : 15, 
+                    fontWeight: 600, 
+                    color: '#555',
+                    fontFamily: 'monospace',
+                    backgroundColor: '#fff',
+                    padding: isMobile ? '8px 12px' : 0,
+                    borderRadius: isMobile ? 8 : 0,
+                  }}>
+                    {nicMasked}
+                  </div>
+                </div>
+
+                {/* Mobile */}
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#999', marginBottom: 4 }}>Mobile Number</div>
+                  <div style={{ 
+                    fontSize: isMobile ? 14 : 15, 
+                    fontWeight: 600, 
+                    color: '#555',
+                    backgroundColor: '#fff',
+                    padding: isMobile ? '8px 12px' : 0,
+                    borderRadius: isMobile ? 8 : 0,
+                  }}>
+                    {userData?.mobile || currentUser?.phoneNumber || 'Not provided'}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Notes */}
-          {booking.notes && (
-            <div style={{ marginTop: 20 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Additional Notes</div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#555', fontStyle: 'italic', lineHeight: 1.6, margin: 0 }}>
-                "{booking.notes}"
-              </p>
-            </div>
+          {/* Horizontal Divider for mobile */}
+          {isMobile && (
+            <div style={{ 
+              height: 1, 
+              backgroundColor: '#f0e4b0', 
+              margin: '20px 0' 
+            }} />
           )}
 
-          {/* Agreement checkbox */}
-          <div style={{ marginTop: 20, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-            <input type="checkbox" defaultChecked style={{ width: 16, height: 16, accentColor: '#F5C400', marginTop: 2, cursor: 'pointer', flexShrink: 0 }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#888', lineHeight: 1.5 }}>
+          {/* Additional Notes Section */}
+          {booking.notes && (
+            <>
+              <div style={{ marginTop: isMobile ? 0 : 20 }}>
+                <div style={{ 
+                  fontSize: 11, 
+                  fontWeight: 800, 
+                  color: '#B46A02', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: 1, 
+                  marginBottom: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}>
+                  <Icon d={IC.info} size={14} color="#B46A02" />
+                  Additional Notes
+                </div>
+                <div style={{
+                  backgroundColor: '#fff8e8',
+                  padding: isMobile ? '14px' : '12px 16px',
+                  borderRadius: 10,
+                  borderLeft: '3px solid #F5C400',
+                  fontSize: isMobile ? 13 : 14,
+                  fontWeight: 600,
+                  color: '#555',
+                  fontStyle: 'italic',
+                  lineHeight: 1.6,
+                }}>
+                  "{booking.notes}"
+                </div>
+              </div>
+              {isMobile && <div style={{ height: 1, backgroundColor: '#f0e4b0', margin: '20px 0' }} />}
+            </>
+          )}
+
+          {/* Agreement Checkbox */}
+          <div style={{ 
+            marginTop: isMobile ? 8 : 20,
+            display: 'flex', 
+            alignItems: 'flex-start', 
+            gap: 12,
+            backgroundColor: isMobile ? '#fff8e8' : 'transparent',
+            padding: isMobile ? '16px' : 0,
+            borderRadius: isMobile ? 12 : 0,
+            border: isMobile ? '1.5px solid #f0e4b0' : 'none',
+          }}>
+            <input 
+              type="checkbox" 
+              defaultChecked 
+              id="agreementCheckbox"
+              style={{ 
+                width: isMobile ? 20 : 18, 
+                height: isMobile ? 20 : 18, 
+                accentColor: '#F5C400', 
+                marginTop: 2, 
+                cursor: 'pointer', 
+                flexShrink: 0 
+              }} 
+            />
+            <label 
+              htmlFor="agreementCheckbox"
+              style={{ 
+                fontSize: isMobile ? 'clamp(12px, 3.5vw, 13px)' : 12, 
+                fontWeight: 600, 
+                color: '#666', 
+                lineHeight: 1.5,
+                cursor: 'pointer',
+              }}
+            >
               I confirm that the information provided is accurate and I agree to the appointment terms.
-            </span>
+            </label>
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <BrownBtn onClick={onBack}><span>← Back</span></BrownBtn>
-        <YellowBtn onClick={onSubmit} disabled={submitting}>
+      {/* Bottom Buttons - Inline on all devices */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 12,
+        flexDirection: 'row',
+      }}>
+        <BrownBtn onClick={onBack} style={{ 
+          width: isMobile ? '100%' : 'auto',
+          justifyContent: 'center',
+        }}>
+          <span>← Back</span>
+        </BrownBtn>
+        <YellowBtn 
+          onClick={onSubmit} 
+          disabled={submitting}
+          style={{ 
+            width: isMobile ? '100%' : 'auto',
+            justifyContent: 'center',
+          }}
+        >
           {submitting ? 'Submitting…' : 'Submit appointment request'}
         </YellowBtn>
       </div>
@@ -1221,21 +1739,110 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
 };
 
 //  SCREEN — SUCCESS
-const BookSuccess = ({ onBack }) => (
-  <div style={{ ...S.content, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-    <div style={{ ...S.card, padding: '48px 40px', textAlign: 'center', maxWidth: 480 }}>
-      <div style={{ width: 80, height: 80, borderRadius: '50%', backgroundColor: '#e6f9ee', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-        <Icon d={IC.check} size={36} color="#1a7a3a" sw={2.5} />
+const BookSuccess = ({ onBack }) => {
+  // Detect mobile for responsive adjustments
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return (
+    <div style={{ 
+      ...S.content, 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      minHeight: 'calc(100vh - 200px)',
+      padding: isMobile ? '16px' : '28px 32px',
+    }}>
+      <div style={{ 
+        ...S.card, 
+        padding: isMobile ? '28px 20px' : '30px 28px', 
+        textAlign: 'center', 
+        maxWidth: isMobile ? 360 : 400,
+        width: '90%',
+        margin: '0',
+      }}>
+        {/* Success Icon */}
+        <div style={{ 
+          width: isMobile ? 56 : 64, 
+          height: isMobile ? 56 : 64, 
+          borderRadius: '50%', 
+          backgroundColor: '#e6f9ee', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          margin: '0 auto 16px',
+        }}>
+          <Icon d={IC.check} size={isMobile ? 28 : 32} color="#1a7a3a" sw={2.5} />
+        </div>
+        
+        {/* Success Title */}
+        <h2 style={{ 
+          fontSize: isMobile ? 20 : 22, 
+          fontWeight: 900, 
+          color: '#1e1200', 
+          marginBottom: 12 
+        }}>
+          Appointment Requested!
+        </h2>
+        
+        {/* Success Messages */}
+        <p style={{ 
+          fontSize: isMobile ? 13 : 14, 
+          color: '#666', 
+          fontWeight: 500, 
+          lineHeight: 1.5, 
+          marginBottom: 8,
+        }}>
+          Your appointment request has been submitted.
+        </p>
+        
+        <p style={{ 
+          fontSize: isMobile ? 13 : 14, 
+          color: '#666', 
+          fontWeight: 500, 
+          lineHeight: 1.5, 
+          marginBottom: 24,
+        }}>
+          You will receive a confirmation once the GN Officer approves it.
+        </p>
+        
+        {/* Back Button */}
+        <button 
+          onClick={onBack}
+          style={{ 
+            width: '100%',
+            backgroundColor: '#F5C400',
+            border: 'none',
+            borderRadius: 999,
+            padding: isMobile ? '10px 16px' : '10px 20px',
+            fontSize: isMobile ? 14 : 13,
+            fontWeight: 800,
+            color: '#3d2a00',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            transition: 'all 0.2s',
+          }}
+          onMouseOver={e => e.currentTarget.style.backgroundColor = '#d4a800'}
+          onMouseOut={e => e.currentTarget.style.backgroundColor = '#F5C400'}
+        >
+          ← Back to My Appointments
+        </button>
       </div>
-      <h2 style={{ fontSize: 22, fontWeight: 900, color: '#1e1200', marginBottom: 10 }}>Appointment Requested!</h2>
-      <p style={{ fontSize: 14, color: '#666', fontWeight: 600, lineHeight: 1.7, marginBottom: 28 }}>
-        Your appointment request has been submitted.<br />
-        You will receive a confirmation once the GN Officer approves it.
-      </p>
-      <YellowBtn onClick={onBack}>← Back to My Appointments</YellowBtn>
     </div>
-  </div>
-);
+  );
+};
 
 //  MAIN COMPONENT
 const Appointments = () => {
