@@ -6,7 +6,7 @@ import Login       from './modules/user/pages/login';
 import SignUpSelect  from './modules/user/pages/signupSelect';  // ← role selection screen
 import SignUp       from './modules/user/pages/SignUp';
 import Dashboard   from './modules/user/pages/dashboard';
-import Profile     from './modules/user/pages/Profile';
+import Profile     from './modules/user/pages/profile';
 import Appointments from './modules/user/pages/appointments';
 import Announcements from './modules/user/pages/announcements';
 import Settings      from './modules/user/pages/settings';
