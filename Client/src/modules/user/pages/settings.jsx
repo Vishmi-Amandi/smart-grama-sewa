@@ -166,7 +166,7 @@ const DesktopTopbar = ({ chipName }) => (
   </div>
 );
 
-// Mobile Topbar with Search Below
+// Mobile Topbar
 const MobileTopbar = ({ chipName, onMenuClick }) => (
   <div className="mobile-header" style={{
     display: 'none',
@@ -186,12 +186,8 @@ const MobileTopbar = ({ chipName, onMenuClick }) => (
           <line x1="3" y1="18" x2="21" y2="18" />
         </svg>
       </button>
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '14px', fontWeight: 800, color: '#3d2a00', lineHeight: 1.2 }}>
-            Smart<br />Grama Sewa
-          </div>
-        </div>
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'left' }}>
+        <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '48px', width: 'auto' }} />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
         <span style={{ fontSize: '14px', fontWeight: 800, color: '#3d2a00' }}>EN</span>
@@ -208,15 +204,22 @@ const MobileTopbar = ({ chipName, onMenuClick }) => (
         </div>
       </div>
     </div>
-    <div style={{ padding: '8px 16px 12px 16px', backgroundColor: '#F5C400' }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        backgroundColor: '#fff', border: '1.5px solid #e8d8b0',
-        borderRadius: 999, padding: '10px 16px',
-      }}>
-        <Icon d={IC.search} size={16} color="#aaa" />
-        <span style={{ fontSize: 14, color: '#bbb', fontWeight: 600 }}>Search</span>
-      </div>
+  </div>
+);
+
+// Mobile Search Bar )
+const MobileSearchBar = () => (
+  <div style={{
+    padding: '12px 16px',
+    backgroundColor: '#f5f0e8',
+  }}>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10,
+      backgroundColor: '#fff', border: '1.5px solid #e8d8b0',
+      borderRadius: 999, padding: '12px 16px',
+    }}>
+      <Icon d={IC.search} size={16} color="#aaa" />
+      <span style={{ fontSize: 14, color: '#bbb', fontWeight: 600 }}>Search ...</span>
     </div>
   </div>
 );
@@ -294,17 +297,14 @@ const RadioOption = ({ selected, onClick, label, sub }) => (
 // Horizontal tab
 const HTab = ({ icon, label, active, onClick }) => (
   <button onClick={onClick} style={{
-    display: 'flex', alignItems: 'center', gap: 7,
+    display: 'flex', alignItems: 'center', gap: 8,
     padding: '12px 18px', border: 'none', background: 'none',
     fontSize: 14, fontWeight: active ? 800 : 600,
     color: active ? '#1e1200' : '#888',
     borderBottom: active ? '2.5px solid #1e1200' : '2.5px solid transparent',
     marginBottom: -2, cursor: 'pointer', fontFamily: 'inherit',
-    transition: 'all .15s', flexShrink: 0,
-  }}
-    onMouseOver={e => { if (!active) e.currentTarget.style.color = '#3d2a00'; }}
-    onMouseOut={e  => { if (!active) e.currentTarget.style.color = '#888'; }}
-  >
+    transition: 'all .15s', flexShrink: 0, whiteSpace: 'nowrap',
+  }}>
     <span style={{ fontSize: 16 }}>{icon}</span>
     {label}
   </button>
@@ -361,6 +361,15 @@ const SecurityTab = ({ currentUser, userData, db }) => {
   const [mobLoading, setMobLoading] = useState(false);
   const [mobError, setMobError] = useState('');
   const [mobSuccess, setMobSuccess] = useState(false);
+  
+  // mobile detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleChangePassword = async () => {
     setPwError(''); setPwSuccess(false);
@@ -427,40 +436,219 @@ const SecurityTab = ({ currentUser, userData, db }) => {
   });
 
   return (
-    <div style={{ backgroundColor: '#fffbe8', border: '1.5px solid #f0e4a0', borderRadius: 16, padding: '24px 24px' }}>
+    <div style={{ backgroundColor: '#fffbe8', border: '1.5px solid #f0e4a0', borderRadius: 16, padding: isMobile ? '20px' : '24px 24px' }}>
       <div style={{ fontSize: 15, fontWeight: 800, color: '#3d2a00', marginBottom: 20 }}>
         Privacy & Security
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+      
+      {/* Responsive Grid - Stacks on mobile, side by side on desktop */}
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: 18 
+      }}>
+        
         {/* Left: Change Password */}
-        <div style={{ backgroundColor: '#fff', borderRadius: 14, padding: '22px 22px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: '#1e1200', marginBottom: 18 }}>Change password</div>
-          {pwSuccess && <div style={{ backgroundColor: '#e6f9ee', border: '1px solid #7ec07e', borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, fontWeight: 700, color: '#1a5c1a' }}>✅ Password changed successfully!</div>}
-          {pwError && <div style={{ backgroundColor: '#fde8e8', border: '1px solid #f0a0a0', borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, fontWeight: 700, color: '#8b1a1a' }}>⚠ {pwError}</div>}
-          <input type="password" value={currentPw} onChange={e => { setCurrentPw(e.target.value); setPwError(''); }} placeholder="Current Password" style={fieldStyle(pwError && !currentPw)} onFocus={e => e.target.style.borderColor = '#F5C400'} onBlur={e => e.target.style.borderColor = '#e8d5ac'} />
-          <input type="password" value={newPw} onChange={e => { setNewPw(e.target.value); setPwError(''); }} placeholder="New Password" style={fieldStyle(pwError && !newPw)} onFocus={e => e.target.style.borderColor = '#F5C400'} onBlur={e => e.target.style.borderColor = '#e8d5ac'} />
-          <input type="password" value={confirmPw} onChange={e => { setConfirmPw(e.target.value); setPwError(''); }} placeholder="Confirm New Password" style={{ ...fieldStyle(pwError && !confirmPw), marginBottom: 18 }} onFocus={e => e.target.style.borderColor = '#F5C400'} onBlur={e => e.target.style.borderColor = '#e8d5ac'} />
-          <button onClick={handleChangePassword} disabled={pwLoading} style={{ width: '100%', padding: '13px', borderRadius: 10, backgroundColor: pwLoading ? '#555' : '#1e1200', border: 'none', color: '#fff', fontSize: 14, fontWeight: 800, cursor: pwLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'background-color .15s', fontFamily: 'inherit' }} onMouseOver={e => { if (!pwLoading) e.currentTarget.style.backgroundColor = '#3d2a00'; }} onMouseOut={e => { if (!pwLoading) e.currentTarget.style.backgroundColor = '#1e1200'; }}>
-            {pwLoading ? (<><div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #fff', borderTopColor: 'transparent', animation: 'spin .7s linear infinite' }} /> Updating…</>) : 'Confirm New Password'}
+        <div style={{ 
+          flex: 1,
+          backgroundColor: '#fff', 
+          borderRadius: 14, 
+          padding: isMobile ? '20px' : '22px 22px', 
+          boxShadow: '0 1px 6px rgba(0,0,0,0.06)' 
+        }}>
+          <div style={{ 
+            fontSize: isMobile ? 16 : 14, 
+            fontWeight: 800, 
+            color: '#1e1200', 
+            marginBottom: 18 
+          }}>🔐 Change password</div>
+          
+          {pwSuccess && (
+            <div style={{ 
+              backgroundColor: '#e6f9ee', border: '1px solid #7ec07e', 
+              borderRadius: 10, padding: '12px', marginBottom: 14, 
+              fontSize: 13, fontWeight: 700, color: '#1a5c1a' 
+            }}>
+              ✅ Password changed successfully!
+            </div>
+          )}
+          
+          {pwError && (
+            <div style={{ 
+              backgroundColor: '#fde8e8', border: '1px solid #f0a0a0', 
+              borderRadius: 10, padding: '12px', marginBottom: 14, 
+              fontSize: 13, fontWeight: 700, color: '#8b1a1a' 
+            }}>
+              ⚠ {pwError}
+            </div>
+          )}
+          
+          <input 
+            type="password" 
+            value={currentPw} 
+            onChange={e => { setCurrentPw(e.target.value); setPwError(''); }} 
+            placeholder="Current Password" 
+            style={fieldStyle(pwError && !currentPw)} 
+          />
+          
+          <input 
+            type="password" 
+            value={newPw} 
+            onChange={e => { setNewPw(e.target.value); setPwError(''); }} 
+            placeholder="New Password (min. 8 characters)" 
+            style={fieldStyle(pwError && !newPw)} 
+          />
+          
+          <input 
+            type="password" 
+            value={confirmPw} 
+            onChange={e => { setConfirmPw(e.target.value); setPwError(''); }} 
+            placeholder="Confirm New Password" 
+            style={{ ...fieldStyle(pwError && !confirmPw), marginBottom: 18 }} 
+          />
+          
+          <button 
+            onClick={handleChangePassword} 
+            disabled={pwLoading} 
+            style={{ 
+              width: '100%', 
+              padding: isMobile ? '14px' : '13px', 
+              borderRadius: 10, 
+              backgroundColor: pwLoading ? '#555' : '#1e1200', 
+              border: 'none', 
+              color: '#fff', 
+              fontSize: isMobile ? 15 : 14, 
+              fontWeight: 800, 
+              cursor: pwLoading ? 'not-allowed' : 'pointer', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: 8,
+              fontFamily: 'inherit',
+            }}
+          >
+            {pwLoading ? (
+              <><div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #fff', borderTopColor: 'transparent', animation: 'spin .7s linear infinite' }} /> Updating…</>
+            ) : 'Update Password'}
           </button>
         </div>
 
         {/* Right: Update Mobile Number */}
-        <div style={{ backgroundColor: '#fff', borderRadius: 14, padding: '22px 22px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: '#1e1200', marginBottom: 18 }}>Update Mobile Number</div>
-          {mobSuccess && <div style={{ backgroundColor: '#e6f9ee', border: '1px solid #7ec07e', borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, fontWeight: 700, color: '#1a5c1a' }}>✅ Mobile number updated successfully!</div>}
-          {mobError && <div style={{ backgroundColor: '#fde8e8', border: '1px solid #f0a0a0', borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, fontWeight: 700, color: '#8b1a1a' }}>⚠ {mobError}</div>}
-          <input type="tel" value={newMobile} onChange={e => { setNewMobile(e.target.value); setMobError(''); setOtpSent(false); setOtp(''); }} placeholder="New Number" style={fieldStyle(false)} onFocus={e => e.target.style.borderColor = '#F5C400'} onBlur={e => e.target.style.borderColor = '#e8d5ac'} />
-          <button onClick={handleSendOtp} disabled={mobLoading || otpSent} style={{ width: '100%', padding: '13px', borderRadius: 10, marginBottom: 10, backgroundColor: (mobLoading || otpSent) ? '#e8d888' : '#F5C400', border: 'none', color: '#3d2a00', fontSize: 14, fontWeight: 800, cursor: (mobLoading || otpSent) ? 'not-allowed' : 'pointer', transition: 'background-color .15s', fontFamily: 'inherit' }} onMouseOver={e => { if (!mobLoading && !otpSent) e.currentTarget.style.backgroundColor = '#d4a800'; }} onMouseOut={e => { if (!mobLoading && !otpSent) e.currentTarget.style.backgroundColor = '#F5C400'; }}>
-            {mobLoading && !otpSent ? 'Sending OTP…' : otpSent ? '✓ OTP Sent' : 'Send OTP to new number'}
+        <div style={{ 
+          flex: 1,
+          backgroundColor: '#fff', 
+          borderRadius: 14, 
+          padding: isMobile ? '20px' : '22px 22px', 
+          boxShadow: '0 1px 6px rgba(0,0,0,0.06)' 
+        }}>
+          <div style={{ 
+            fontSize: isMobile ? 16 : 14, 
+            fontWeight: 800, 
+            color: '#1e1200', 
+            marginBottom: 18 
+          }}>📱 Update Mobile Number</div>
+          
+          {mobSuccess && (
+            <div style={{ 
+              backgroundColor: '#e6f9ee', border: '1px solid #7ec07e', 
+              borderRadius: 10, padding: '12px', marginBottom: 14, 
+              fontSize: 13, fontWeight: 700, color: '#1a5c1a' 
+            }}>
+              ✅ Mobile number updated successfully!
+            </div>
+          )}
+          
+          {mobError && (
+            <div style={{ 
+              backgroundColor: '#fde8e8', border: '1px solid #f0a0a0', 
+              borderRadius: 10, padding: '12px', marginBottom: 14, 
+              fontSize: 13, fontWeight: 700, color: '#8b1a1a' 
+            }}>
+              ⚠ {mobError}
+            </div>
+          )}
+          
+          <input 
+            type="tel" 
+            value={newMobile} 
+            onChange={e => { setNewMobile(e.target.value); setMobError(''); setOtpSent(false); setOtp(''); }} 
+            placeholder="New Mobile Number" 
+            style={fieldStyle(false)} 
+          />
+          
+          <button 
+            onClick={handleSendOtp} 
+            disabled={mobLoading || otpSent} 
+            style={{ 
+              width: '100%', 
+              padding: isMobile ? '14px' : '13px', 
+              borderRadius: 10, 
+              marginBottom: 12, 
+              backgroundColor: (mobLoading || otpSent) ? '#e8d888' : '#F5C400', 
+              border: 'none', 
+              color: '#3d2a00', 
+              fontSize: isMobile ? 15 : 14, 
+              fontWeight: 800, 
+              cursor: (mobLoading || otpSent) ? 'not-allowed' : 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            {mobLoading && !otpSent ? 'Sending OTP…' : otpSent ? '✓ OTP Sent' : 'Send OTP'}
           </button>
-          <input type="text" value={otp} onChange={e => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setMobError(''); }} placeholder="Enter 6-digit OTP" disabled={!otpSent} style={{ ...fieldStyle(false), backgroundColor: otpSent ? '#f5f0e8' : '#f0ece8', cursor: otpSent ? 'text' : 'not-allowed', opacity: otpSent ? 1 : 0.6, letterSpacing: otp ? '6px' : '0', fontWeight: 800 }} onFocus={e => { if (otpSent) e.target.style.borderColor = '#F5C400'; }} onBlur={e => e.target.style.borderColor = '#e8d5ac'} />
+          
+          <input 
+            type="text" 
+            value={otp} 
+            onChange={e => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setMobError(''); }} 
+            placeholder="Enter 6-digit OTP" 
+            disabled={!otpSent} 
+            style={{ 
+              ...fieldStyle(false), 
+              backgroundColor: otpSent ? '#f5f0e8' : '#f0ece8', 
+              cursor: otpSent ? 'text' : 'not-allowed', 
+              opacity: otpSent ? 1 : 0.6, 
+              letterSpacing: otp ? (isMobile ? '4px' : '6px') : '0', 
+              fontWeight: 800,
+              textAlign: 'center',
+              fontSize: isMobile ? 16 : 14,
+            }} 
+          />
+          
           {otpSent && (
-            <button onClick={handleVerifyOtp} disabled={mobLoading || otp.length !== 6} style={{ width: '100%', padding: '13px', borderRadius: 10, marginTop: 4, backgroundColor: (mobLoading || otp.length !== 6) ? '#555' : '#1e1200', border: 'none', color: '#fff', fontSize: 14, fontWeight: 800, cursor: (mobLoading || otp.length !== 6) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: 'inherit', transition: 'background-color .15s' }} onMouseOver={e => { if (!mobLoading && otp.length === 6) e.currentTarget.style.backgroundColor = '#3d2a00'; }} onMouseOut={e => { if (!mobLoading && otp.length === 6) e.currentTarget.style.backgroundColor = '#1e1200'; }}>
-              {mobLoading ? (<><div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #fff', borderTopColor: 'transparent', animation: 'spin .7s linear infinite' }} /> Verifying…</>) : 'Verify & Update'}
+            <button 
+              onClick={handleVerifyOtp} 
+              disabled={mobLoading || otp.length !== 6} 
+              style={{ 
+                width: '100%', 
+                padding: isMobile ? '14px' : '13px', 
+                borderRadius: 10, 
+                marginTop: 4, 
+                backgroundColor: (mobLoading || otp.length !== 6) ? '#555' : '#1e1200', 
+                border: 'none', 
+                color: '#fff', 
+                fontSize: isMobile ? 15 : 14, 
+                fontWeight: 800, 
+                cursor: (mobLoading || otp.length !== 6) ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              {mobLoading ? (
+                <><div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #fff', borderTopColor: 'transparent', animation: 'spin .7s linear infinite' }} /> Verifying…</>
+              ) : 'Verify & Update'}
             </button>
           )}
-          {otpSent && <p style={{ fontSize: 11, color: '#aaa', fontWeight: 600, marginTop: 8, textAlign: 'center' }}>Demo OTP: <strong>123456</strong></p>}
+          
+          {otpSent && (
+            <p style={{ 
+              fontSize: isMobile ? 11 : 11, 
+              color: '#aaa', 
+              fontWeight: 600, 
+              marginTop: 12, 
+              textAlign: 'center' 
+            }}>
+              Demo OTP: <strong>123456</strong>
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -473,6 +661,15 @@ const AccountTab = ({ currentUser, userData, navigate }) => {
   const [deleteInput, setDeleteInput] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [signOutLoading, setSignOutLoading] = useState(false);
+  
+  // Detect mobile
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const createdAt = currentUser?.metadata?.creationTime
     ? new Date(currentUser.metadata.creationTime).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
@@ -511,51 +708,309 @@ const AccountTab = ({ currentUser, userData, navigate }) => {
     }
   };
 
-  const rowStyle = { paddingBottom: 16, marginBottom: 16, borderBottom: '1px solid #f0ece4' };
-  const labelStyle = { fontSize: 12, fontWeight: 700, color: '#B46A02', marginBottom: 4 };
-  const valueStyle = { fontSize: 15, fontWeight: 700, color: '#1e1200' };
+  const rowStyle = { 
+    paddingBottom: isMobile ? 14 : 16, 
+    marginBottom: isMobile ? 14 : 16, 
+    borderBottom: '1px solid #f0ece4' 
+  };
+  
+  const labelStyle = { 
+    fontSize: isMobile ? 11 : 12, 
+    fontWeight: 700, 
+    color: '#B46A02', 
+    marginBottom: 4 
+  };
+  
+  const valueStyle = { 
+    fontSize: isMobile ? 15 : 15, 
+    fontWeight: 700, 
+    color: '#1e1200' 
+  };
 
   return (
-    <div style={{ backgroundColor: '#fffbe8', border: '1.5px solid #f0e4a0', borderRadius: 16, padding: '24px 24px' }}>
-      <div style={{ fontSize: 15, fontWeight: 800, color: '#3d2a00', marginBottom: 20 }}>Account</div>
-
-      <div style={{ backgroundColor: '#fff', borderRadius: 14, padding: '22px 24px', marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: '#1e1200' }}>Account Summary</div>
-          <button onClick={() => navigate('/profile')} style={{ padding: '10px 22px', borderRadius: 999, backgroundColor: '#3d2a00', border: 'none', fontSize: 13, fontWeight: 800, color: '#fff', cursor: 'pointer', transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 6 }} onMouseOver={e => e.currentTarget.style.backgroundColor = '#5a3a10'} onMouseOut={e => e.currentTarget.style.backgroundColor = '#3d2a00'}>Edit profile →</button>
-        </div>
-        <div style={rowStyle}><div style={labelStyle}>Citizen</div><div style={valueStyle}>{userData?.fullName || currentUser?.displayName || 'N/A'}</div></div>
-        <div style={rowStyle}><div style={labelStyle}>Member since</div><div style={valueStyle}>{createdAt}</div></div>
-        <div><div style={labelStyle}>GN division</div><div style={valueStyle}>{gnDivLabel}</div></div>
+    <div style={{ 
+      backgroundColor: '#fffbe8', 
+      border: '1.5px solid #f0e4a0', 
+      borderRadius: 16, 
+      padding: isMobile ? '20px' : '24px 24px' 
+    }}>
+      <div style={{ fontSize: isMobile ? 16 : 15, fontWeight: 800, color: '#3d2a00', marginBottom: 20 }}>
+        Account
       </div>
 
-      <div style={{ backgroundColor: '#fff', borderRadius: 14, padding: '22px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)', border: '1.5px solid #f0c0c0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}><span style={{ fontSize: 18 }}>⚠</span><span style={{ fontSize: 14, fontWeight: 900, color: '#c0392b' }}>Danger Zone</span></div>
-        <p style={{ fontSize: 12, fontWeight: 600, color: '#e05050', marginBottom: 22 }}>These actions are permanent and cannot be undone</p>
-
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, paddingBottom: 20, marginBottom: 20, borderBottom: '1px solid #f0ece4' }}>
-          <div><div style={{ fontSize: 14, fontWeight: 800, color: '#1e1200', marginBottom: 4 }}>Sign Out of All Devices</div><div style={{ fontSize: 12, fontWeight: 600, color: '#888' }}>Immediately ends all active sessions across every device.</div></div>
-          <button onClick={handleSignOutEverywhere} disabled={signOutLoading} style={{ padding: '10px 20px', borderRadius: 999, flexShrink: 0, backgroundColor: '#fde8e8', border: '1.5px solid #f0a0a0', fontSize: 13, fontWeight: 800, color: '#c0392b', cursor: signOutLoading ? 'not-allowed' : 'pointer', transition: 'all .15s' }} onMouseOver={e => { if (!signOutLoading) e.currentTarget.style.backgroundColor = '#f0c0c0'; }} onMouseOut={e => { if (!signOutLoading) e.currentTarget.style.backgroundColor = '#fde8e8'; }}>{signOutLoading ? 'Signing out…' : 'Sign Out everywhere'}</button>
+      {/* Account Summary Card */}
+      <div style={{ 
+        backgroundColor: '#fff', 
+        borderRadius: 14, 
+        padding: isMobile ? '20px' : '22px 24px', 
+        marginBottom: 16, 
+        boxShadow: '0 1px 6px rgba(0,0,0,0.06)' 
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          marginBottom: 20,
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? 12 : 0,
+        }}>
+          <div style={{ fontSize: isMobile ? 15 : 14, fontWeight: 800, color: '#1e1200' }}>
+            Account Summary
+          </div>
+          <button 
+            onClick={() => navigate('/profile')} 
+            style={{ 
+              padding: isMobile ? '10px 20px' : '10px 22px', 
+              borderRadius: 999, 
+              backgroundColor: '#3d2a00', 
+              border: 'none', 
+              fontSize: isMobile ? 13 : 13, 
+              fontWeight: 800, 
+              color: '#fff', 
+              cursor: 'pointer', 
+              width: isMobile ? '100%' : 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+            }}
+          >
+            Edit profile →
+          </button>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
-          <div><div style={{ fontSize: 14, fontWeight: 800, color: '#1e1200', marginBottom: 4 }}>Delete My Account</div><div style={{ fontSize: 12, fontWeight: 600, color: '#888', maxWidth: 340 }}>Permanently deletes your account and all data. This requires GN Officer approval and cannot be reversed.</div></div>
-          <button onClick={() => setShowDeleteConfirm(true)} style={{ padding: '10px 20px', borderRadius: 999, flexShrink: 0, backgroundColor: '#fde8e8', border: '1.5px solid #e05050', fontSize: 13, fontWeight: 800, color: '#c0392b', cursor: 'pointer', transition: 'all .15s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = '#f0c0c0'} onMouseOut={e => e.currentTarget.style.backgroundColor = '#fde8e8'}>Request Deletion</button>
+        
+        <div style={rowStyle}>
+          <div style={labelStyle}>Citizen</div>
+          <div style={valueStyle}>{userData?.fullName || currentUser?.displayName || 'N/A'}</div>
+        </div>
+        
+        <div style={rowStyle}>
+          <div style={labelStyle}>Member since</div>
+          <div style={valueStyle}>{createdAt}</div>
+        </div>
+        
+        <div>
+          <div style={labelStyle}>GN division</div>
+          <div style={valueStyle}>{gnDivLabel}</div>
         </div>
       </div>
 
+      {/* Danger Zone Card */}
+      <div style={{ 
+        backgroundColor: '#fff', 
+        borderRadius: 14, 
+        padding: isMobile ? '20px' : '22px 24px', 
+        boxShadow: '0 1px 6px rgba(0,0,0,0.06)', 
+        border: '1.5px solid #f0c0c0' 
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <span style={{ fontSize: 18 }}>⚠️</span>
+          <span style={{ fontSize: isMobile ? 15 : 14, fontWeight: 900, color: '#c0392b' }}>Danger Zone</span>
+        </div>
+        <p style={{ 
+          fontSize: isMobile ? 11 : 12, 
+          fontWeight: 600, 
+          color: '#e05050', 
+          marginBottom: 22 
+        }}>
+          These actions are permanent and cannot be undone
+        </p>
+
+        {/* Sign Out Section */}
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'flex-start' : 'flex-start', 
+          justifyContent: 'space-between', 
+          gap: isMobile ? 16 : 16, 
+          paddingBottom: 20, 
+          marginBottom: 20, 
+          borderBottom: '1px solid #f0ece4' 
+        }}>
+          <div>
+            <div style={{ fontSize: isMobile ? 15 : 14, fontWeight: 800, color: '#1e1200', marginBottom: 4 }}>
+              Sign Out of All Devices
+            </div>
+            <div style={{ fontSize: isMobile ? 11 : 12, fontWeight: 600, color: '#888' }}>
+              Immediately ends all active sessions across every device.
+            </div>
+          </div>
+          <button 
+            onClick={handleSignOutEverywhere} 
+            disabled={signOutLoading} 
+            style={{ 
+              padding: isMobile ? '12px 20px' : '10px 20px', 
+              borderRadius: 999, 
+              flexShrink: 0, 
+              width: isMobile ? '100%' : 'auto',
+              backgroundColor: '#fde8e8', 
+              border: '1.5px solid #f0a0a0', 
+              fontSize: isMobile ? 14 : 13, 
+              fontWeight: 800, 
+              color: '#c0392b', 
+              cursor: signOutLoading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+            }}
+          >
+            {signOutLoading ? 'Signing out…' : '🚪 Sign Out everywhere'}
+          </button>
+        </div>
+
+        {/* Delete Account Section */}
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'flex-start' : 'flex-start', 
+          justifyContent: 'space-between', 
+          gap: isMobile ? 16 : 16 
+        }}>
+          <div>
+            <div style={{ fontSize: isMobile ? 15 : 14, fontWeight: 800, color: '#1e1200', marginBottom: 4 }}>
+              Delete My Account
+            </div>
+            <div style={{ fontSize: isMobile ? 11 : 12, fontWeight: 600, color: '#888' }}>
+              Permanently deletes your account and all data. This requires GN Officer approval and cannot be reversed.
+            </div>
+          </div>
+          <button 
+            onClick={() => setShowDeleteConfirm(true)} 
+            style={{ 
+              padding: isMobile ? '12px 20px' : '10px 20px', 
+              borderRadius: 999, 
+              flexShrink: 0, 
+              width: isMobile ? '100%' : 'auto',
+              backgroundColor: '#fde8e8', 
+              border: '1.5px solid #e05050', 
+              fontSize: isMobile ? 14 : 13, 
+              fontWeight: 800, 
+              color: '#c0392b', 
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+            }}
+          >
+            🗑️ Request Deletion
+          </button>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal - Mobile Responsive */}
       {showDeleteConfirm && (
         <>
-          <div onClick={() => { setShowDeleteConfirm(false); setDeleteInput(''); }} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 100 }} />
-          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 101, width: '100%', maxWidth: 440, backgroundColor: '#fff', borderRadius: 20, padding: '28px 28px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', border: '2px solid #f0a0a0' }}>
-            <div style={{ fontSize: 36, textAlign: 'center', marginBottom: 10 }}>⚠️</div>
-            <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1e1200', textAlign: 'center', marginBottom: 8 }}>Request Account Deletion?</h2>
-            <p style={{ fontSize: 13, color: '#888', fontWeight: 600, textAlign: 'center', lineHeight: 1.6, marginBottom: 20 }}>This will submit a deletion request to your GN Officer.<br />Your account will remain active until approved.<br /><strong style={{ color: '#c0392b' }}>This cannot be undone.</strong></p>
-            <p style={{ fontSize: 12, fontWeight: 700, color: '#555', marginBottom: 8 }}>Type <strong>DELETE</strong> to confirm:</p>
-            <input type="text" value={deleteInput} onChange={e => setDeleteInput(e.target.value)} placeholder="Type DELETE here" style={{ width: '100%', padding: '12px 14px', borderRadius: 10, boxSizing: 'border-box', border: '1.5px solid #e8d5ac', fontSize: 14, fontWeight: 700, fontFamily: 'inherit', outline: 'none', marginBottom: 16, backgroundColor: '#f8f6f0' }} onFocus={e => e.target.style.borderColor = '#e05050'} onBlur={e => e.target.style.borderColor = '#e8d5ac'} />
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button onClick={() => { setShowDeleteConfirm(false); setDeleteInput(''); }} style={{ flex: 1, padding: '12px', borderRadius: 999, border: '1.5px solid #e8d5ac', backgroundColor: '#fff', fontSize: 14, fontWeight: 800, color: '#888', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-              <button onClick={handleRequestDeletion} disabled={deleteInput !== 'DELETE' || deleting} style={{ flex: 1, padding: '12px', borderRadius: 999, border: 'none', backgroundColor: deleteInput === 'DELETE' ? '#c0392b' : '#f0c0c0', fontSize: 14, fontWeight: 800, color: '#fff', cursor: deleteInput !== 'DELETE' || deleting ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'all .15s' }}>{deleting ? 'Submitting…' : 'Request Deletion'}</button>
+          <div 
+            onClick={() => { setShowDeleteConfirm(false); setDeleteInput(''); }} 
+            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 100 }} 
+          />
+          <div style={{ 
+            position: 'fixed', 
+            top: '50%', 
+            left: '50%', 
+            transform: 'translate(-50%,-50%)', 
+            zIndex: 101, 
+            width: 'calc(100% - 32px)', 
+            maxWidth: 440, 
+            backgroundColor: '#fff', 
+            borderRadius: 20, 
+            padding: isMobile ? '24px' : '28px 28px', 
+            boxShadow: '0 20px 60px rgba(0,0,0,0.25)', 
+            border: '2px solid #f0a0a0' 
+          }}>
+            <div style={{ fontSize: isMobile ? 40 : 36, textAlign: 'center', marginBottom: 10 }}>⚠️</div>
+            <h2 style={{ 
+              fontSize: isMobile ? 18 : 18, 
+              fontWeight: 900, 
+              color: '#1e1200', 
+              textAlign: 'center', 
+              marginBottom: 8 
+            }}>
+              Request Account Deletion?
+            </h2>
+            <p style={{ 
+              fontSize: isMobile ? 13 : 13, 
+              color: '#888', 
+              fontWeight: 600, 
+              textAlign: 'center', 
+              lineHeight: 1.6, 
+              marginBottom: 20 
+            }}>
+              This will submit a deletion request to your GN Officer.<br />
+              Your account will remain active until approved.<br />
+              <strong style={{ color: '#c0392b' }}>This cannot be undone.</strong>
+            </p>
+            <p style={{ 
+              fontSize: isMobile ? 12 : 12, 
+              fontWeight: 700, 
+              color: '#555', 
+              marginBottom: 8 
+            }}>
+              Type <strong>DELETE</strong> to confirm:
+            </p>
+            <input 
+              type="text" 
+              value={deleteInput} 
+              onChange={e => setDeleteInput(e.target.value)} 
+              placeholder="Type DELETE here" 
+              style={{ 
+                width: '100%', 
+                padding: isMobile ? '14px' : '12px 14px', 
+                borderRadius: 10, 
+                boxSizing: 'border-box', 
+                border: '1.5px solid #e8d5ac', 
+                fontSize: isMobile ? 14 : 14, 
+                fontWeight: 700, 
+                fontFamily: 'inherit', 
+                outline: 'none', 
+                marginBottom: 20, 
+                backgroundColor: '#f8f6f0',
+                textAlign: 'center',
+                letterSpacing: deleteInput === 'DELETE' ? '2px' : '0',
+              }} 
+            />
+            <div style={{ 
+              display: 'flex', 
+              gap: 12, 
+              flexDirection: isMobile ? 'column' : 'row',
+            }}>
+              <button 
+                onClick={() => { setShowDeleteConfirm(false); setDeleteInput(''); }} 
+                style={{ 
+                  flex: 1, 
+                  padding: isMobile ? '14px' : '12px', 
+                  borderRadius: 999, 
+                  border: '1.5px solid #e8d5ac', 
+                  backgroundColor: '#fff', 
+                  fontSize: isMobile ? 14 : 14, 
+                  fontWeight: 800, 
+                  color: '#888', 
+                  cursor: 'pointer', 
+                  fontFamily: 'inherit' 
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleRequestDeletion} 
+                disabled={deleteInput !== 'DELETE' || deleting} 
+                style={{ 
+                  flex: 1, 
+                  padding: isMobile ? '14px' : '12px', 
+                  borderRadius: 999, 
+                  border: 'none', 
+                  backgroundColor: deleteInput === 'DELETE' ? '#c0392b' : '#f0c0c0', 
+                  fontSize: isMobile ? 14 : 14, 
+                  fontWeight: 800, 
+                  color: '#fff', 
+                  cursor: deleteInput !== 'DELETE' || deleting ? 'not-allowed' : 'pointer', 
+                  fontFamily: 'inherit',
+                }}
+              >
+                {deleting ? 'Submitting…' : 'Request Deletion'}
+              </button>
             </div>
           </div>
         </>
@@ -568,6 +1023,7 @@ const AccountTab = ({ currentUser, userData, navigate }) => {
 const Settings = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768); 
 
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -597,6 +1053,12 @@ const Settings = () => {
     return () => unsub();
   }, [navigate]);
 
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
   useEffect(() => {
     const saved = localStorage.getItem('userSettings');
     if (saved) {
@@ -657,8 +1119,12 @@ const Settings = () => {
           {/* Desktop Topbar */}
           <DesktopTopbar chipName={chipName} />
 
-          {/* Mobile Topbar with Search Below */}
+          {/* Mobile Topbar */}
           <MobileTopbar chipName={chipName} onMenuClick={() => setMobileMenuOpen(true)} />
+
+          {/* Mobile Search Bar */}
+          {isMobile && <MobileSearchBar />}
+
 
           {/* Content Area */}
           <div style={{ padding: '28px 32px', flex: 1 }}>
@@ -669,7 +1135,15 @@ const Settings = () => {
             </p>
 
             {/* Horizontal tabs */}
-            <div style={{ display: 'flex', borderBottom: '2px solid #e8d5ac', marginBottom: 28, overflowX: 'auto' }}>
+            <div style={{ 
+              display: 'flex', 
+              borderBottom: '2px solid #e8d5ac', 
+              marginBottom: 28, 
+              overflowX: 'auto',
+              // Hide scrollbar but keep scrolling functionality
+              scrollbarWidth: 'none',  // For Firefox
+              msOverflowStyle: 'none',  // For IE/Edge
+            }} className="hide-scrollbar">
               {TABS.map(t => (
                 <HTab key={t.id} icon={t.icon} label={t.label} active={activeTab === t.id} onClick={() => setActiveTab(t.id)} />
               ))}
