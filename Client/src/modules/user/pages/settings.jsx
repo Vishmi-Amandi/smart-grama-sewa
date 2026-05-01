@@ -98,7 +98,7 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
   const bottomNav = [
     { key: 'profile', icon: IC.profile, label: 'Profile' },
     { key: 'settings', icon: IC.settings, label: 'Settings' },
-    { key: 'logout', icon: IC.logout, label: 'Logout' },
+    { key: 'logout', icon: IC.logout, label: 'Signout' },
   ];
 
   return (
@@ -236,7 +236,7 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
   const bottomNav = [
     { key: 'profile', icon: IC.profile, label: 'Profile' },
     { key: 'settings', icon: IC.settings, label: 'Settings' },
-    { key: 'logout', icon: IC.logout, label: 'Logout' },
+    { key: 'logout', icon: IC.logout, label: 'Sign out' },
   ];
 
   if (!isOpen) return null;

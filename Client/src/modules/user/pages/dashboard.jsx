@@ -249,7 +249,7 @@ const Dashboard = () => {
   const bottomNav = [
     { key: 'profile',  icon: Icons.profile,  label: 'Profile'  },
     { key: 'settings', icon: Icons.settings, label: 'Settings' },
-    { key: 'logout',   icon: Icons.logout,   label: 'Logout'   },
+    { key: 'logout',   icon: Icons.logout,   label: 'Sign out'   },
   ];
 
   // Shared widget components

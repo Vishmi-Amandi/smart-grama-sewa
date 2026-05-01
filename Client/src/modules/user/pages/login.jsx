@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../../firebase';
@@ -10,8 +10,16 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState('');
+  const [isMobile, setIsMobile]         = useState(window.innerWidth <= 768);
 
   const navigate = useNavigate();
+
+  // Detect mobile screen
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,17 +36,11 @@ const Login = () => {
 
     setLoading(true);
     try {
-      // Actual Firebase authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log('Login successful:', userCredential.user.email);
-      
-      // Redirect to dashboard on success
       navigate('/dashboard');
-      
     } catch (err) {
       console.error('Login error:', err);
-      
-      // Handle Firebase error codes with user-friendly messages
       switch(err.code) {
         case 'auth/invalid-email':
           setError('Invalid email format');
@@ -66,8 +68,8 @@ const Login = () => {
     color: '#1e1200',
     border: '2.5px solid transparent',
     borderRadius: '12px',
-    padding: '13px 16px',
-    fontSize: '15px',
+    padding: isMobile ? '14px 16px' : '13px 16px',
+    fontSize: isMobile ? '16px' : '15px',
     fontWeight: '600',
     outline: 'none',
     boxSizing: 'border-box',
@@ -75,7 +77,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 
       {/* Background */}
       <div
@@ -94,15 +96,16 @@ const Login = () => {
           style={{ 
             position: 'absolute', inset: 0,
             backgroundColor: 'rgba(255, 255, 255, 0.6)',
-            pointerEvents: 'none' }}
+            pointerEvents: 'none'
+          }}
         />
 
         {/* Logo */}
-        <div style={{ position: 'relative', zIndex: 10, padding: '20px 24px' }}>
+        <div style={{ position: 'relative', zIndex: 10, padding: isMobile ? '16px 20px' : '20px 24px' }}>
           <img
             src="/logo.png"
             alt="Smart Grama Sewa"
-            style={{ height: '100px', width: 'auto' }}
+            style={{ height: isMobile ? '100px' : '120px', width: 'auto' }}
           />
         </div>
 
@@ -116,17 +119,17 @@ const Login = () => {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '0 16px 48px',
+            padding: isMobile ? '0 16px 40px' : '0 16px 48px',
           }}
         >
 
           {/* "Sign in" title */}
           <h1 style={{
-            fontSize: '48px',
+            fontSize: isMobile ? '36px' : '48px',
             fontWeight: 900,
             color: '#332421',
             letterSpacing: '-1px',
-            marginBottom: '28px',
+            marginBottom: isMobile ? '20px' : '28px',
             textAlign: 'center',
           }}>
             Sign in
@@ -134,11 +137,11 @@ const Login = () => {
 
           {/* Semi-transparent brown card */}
           <div style={{
-            width: '100%',
+            width: '90%',
             maxWidth: '440px',          
             backgroundColor: 'rgba(106, 35, 1, 0.6)',
-            borderRadius: '24px',
-            padding: '32px 32px 28px',
+            borderRadius: isMobile ? '20px' : '24px',
+            padding: isMobile ? '24px 20px' : '32px 32px 28px',
             boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
           }}>
 
@@ -150,7 +153,7 @@ const Login = () => {
                 borderRadius: '12px',
                 padding: '11px 16px',
                 color: '#fde8c8',
-                fontSize: '13px',
+                fontSize: isMobile ? '13px' : '13px',
                 fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
@@ -162,7 +165,13 @@ const Login = () => {
 
             {/* User name or email */}
             <div style={{ marginBottom: '18px' }}>
-              <label style={{ display: 'block', color: '#fdf0dc', fontSize: '13px', fontWeight: 700, marginBottom: '7px' }}>
+              <label style={{ 
+                display: 'block', 
+                color: '#fdf0dc', 
+                fontSize: isMobile ? '14px' : '13px', 
+                fontWeight: 700, 
+                marginBottom: '7px' 
+              }}>
                 User name or email
               </label>
               <input
@@ -179,10 +188,16 @@ const Login = () => {
 
             {/* Password */}
             <div style={{ marginBottom: '18px' }}>
-              <label style={{ display: 'block', color: '#fdf0dc', fontSize: '13px', fontWeight: 700, marginBottom: '7px' }}>
+              <label style={{ 
+                display: 'block', 
+                color: '#fdf0dc', 
+                fontSize: isMobile ? '14px' : '13px', 
+                fontWeight: 700, 
+                marginBottom: '7px' 
+              }}>
                 Password
               </label>
-              <div className="relative">
+              <div style={{ position: 'relative' }}>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
@@ -206,7 +221,6 @@ const Login = () => {
                   }}
                 >
                   {showPassword ? (
-                    /* Eye-slash (hide) */
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
@@ -214,7 +228,6 @@ const Login = () => {
                       <line x1="1" y1="1" x2="23" y2="23"/>
                     </svg>
                   ) : (
-                    /* Eye (show) */
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -225,26 +238,49 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Keep me signed in */}
-            <div className="flex items-center justify-between mb-5">
+            {/* Keep me signed in & Forgot password */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              marginBottom: '20px',
+              flexDirection: 'row',
+              gap: '12px',
+            }}>
               <label
-                className="flex items-center gap-2 cursor-pointer select-none text-sm font-semibold"
-                style={{ color: '#fdf0dc' }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  fontSize: isMobile ? '14px' : '13px',
+                  fontWeight: 600,
+                  color: '#fdf0dc',
+                  flexShrink: 0,
+                }}
               >
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded cursor-pointer"
-                  style={{ accentColor: '#F5C400' }}
+                  style={{
+                    width: '16px',
+                    height: '16px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    accentColor: '#F5C400'
+                  }}
                 />
                 Keep me signed in
               </label>
-              {/* Forgot password */}
               <a
                 href="/forgot-password"
-                className="text-sm font-bold transition-colors"
-                style={{ color: '#fdf0dc' }}
+                style={{
+                  fontSize: isMobile ? '14px' : '13px',
+                  fontWeight: 700,
+                  color: '#fdf0dc',
+                  textDecoration: 'none',
+                }}
                 onMouseOver={(e) => (e.target.style.color = '#ffffff')}
                 onMouseOut={(e)  => (e.target.style.color = '#fdf0dc')}
               >
@@ -263,8 +299,8 @@ const Login = () => {
                 color: '#F5C400',
                 border: 'none',
                 borderRadius: '12px',
-                padding: '15px',
-                fontSize: '17px',
+                padding: isMobile ? '16px' : '15px',
+                fontSize: isMobile ? '16px' : '17px',
                 fontWeight: 900,
                 cursor: loading ? 'not-allowed' : 'pointer',
                 opacity: loading ? 0.7 : 1,
@@ -295,11 +331,17 @@ const Login = () => {
             </button>
 
             {/* New here */}
-            <p style={{ textAlign: 'center', color: '#fdf0dc', fontSize: '13px', fontWeight: 600, margin: '0 0 12px' }}>
+            <p style={{ 
+              textAlign: 'center', 
+              color: '#fdf0dc', 
+              fontSize: isMobile ? '14px' : '13px', 
+              fontWeight: 600, 
+              margin: '0 0 12px' 
+            }}>
               New here ?
             </p>
 
-            {/* Create your account ) */}
+            {/* Create your account */}
             <a
               href="/signup-select"
               style={{
@@ -309,8 +351,8 @@ const Login = () => {
                 backgroundColor: '#F5C400',
                 color: '#3d2a00',
                 borderRadius: '12px',
-                padding: '15px',
-                fontSize: '17px',
+                padding: isMobile ? '16px' : '15px',
+                fontSize: isMobile ? '16px' : '17px',
                 fontWeight: 900,
                 textDecoration: 'none',
                 transition: 'background-color 0.15s',
@@ -330,18 +372,23 @@ const Login = () => {
       {/* Footer */}
       <footer
         style={{
-                textAlign: 'center',
-                backgroundColor: '#6A2301',
-                color: '#ffffff',
-                padding: '14px 16px',
-                fontSize: '15px',
-                fontWeight: 600,
-              }}>
+          textAlign: 'center',
+          backgroundColor: '#6A2301',
+          color: '#ffffff',
+          padding: isMobile ? '12px 16px' : '14px 16px',
+          fontSize: isMobile ? '13px' : '15px',
+          fontWeight: 600,
+        }}>
         ©2026 Smart Grama Sewa
       </footer>
 
       {/* Spin keyframe */}
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { 
+          from { transform: rotate(0deg); } 
+          to { transform: rotate(360deg); } 
+        }
+      `}</style>
 
     </div>
   );
