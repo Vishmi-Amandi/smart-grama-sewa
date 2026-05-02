@@ -4,7 +4,7 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 
-// Step Progress Indicator - Mobile Responsive
+// Step Progress Indicator
 const StepIndicator = ({ current }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
@@ -83,7 +83,7 @@ const StepIndicator = ({ current }) => {
   );
 };
 
-// Shared input style - responsive
+// Shared input style
 const inp = (isMobile, hasError = false) => ({
   fontFamily: 'Nunito, system-ui, sans-serif',
   width: '100%',
@@ -108,7 +108,7 @@ const labelStyle = (isMobile) => ({
   marginBottom: '7px',
 });
 
-// Dark brown pill button - responsive
+// Dark brown pill button
 const DarkBtn = ({ onClick, children, type = 'button', isMobile }) => (
   <button
     type={type}
@@ -135,7 +135,7 @@ const DarkBtn = ({ onClick, children, type = 'button', isMobile }) => (
   </button>
 );
 
-// Yellow pill button - responsive
+// Yellow pill button
 const YellowBtn = ({ onClick, children, disabled = false, isMobile }) => (
   <button
     type="button"
@@ -163,7 +163,7 @@ const YellowBtn = ({ onClick, children, disabled = false, isMobile }) => (
   </button>
 );
 
-// Privacy note - responsive
+// Privacy note
 const PrivacyNote = ({ isMobile }) => (
   <div style={{
     backgroundColor: '#fdf8e1',
@@ -239,7 +239,7 @@ const Step1 = ({ data, onChange, onNext }) => {
         {errors.fullName && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.fullName}</p>}
       </div>
 
-      {/* NIC & DOB - Stack on mobile */}
+      {/* NIC & DOB */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
@@ -400,7 +400,7 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         </div>
       </div>
 
-      {/* District, DS Division & GN Division - Stack on mobile */}
+      {/* District, DS Division & GN Division */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', 
@@ -464,7 +464,7 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         </div>
       </div>
 
-      {/* Back & Continue - Stack on mobile */}
+      {/* Back & Continue */}
       <div style={{ 
         display: 'flex', 
         flexDirection: isMobile ? 'column-reverse' : 'row',
@@ -481,7 +481,7 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
   );
 };
 
-// STEP 3 — Password (Mobile Responsive)
+// STEP 3 — Password
 const Step3 = ({ data, onChange, onSubmit, onBack }) => {
   const [showPw, setShowPw] = useState(false);
   const [showConf, setShowConf] = useState(false);
@@ -602,7 +602,7 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         {errors.username && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.username}</p>}
       </div>
 
-      {/* Password & Confirm - Stack on mobile */}
+      {/* Password & Confirm */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
@@ -671,7 +671,7 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         At least 8 characters, including numbers and symbols for better security.
       </p>
 
-      {/* Back & Create Account - Stack on mobile */}
+      {/* Back & Create Account */}
       <div style={{ 
         display: 'flex', 
         flexDirection: isMobile ? 'column-reverse' : 'row',
@@ -690,7 +690,7 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
   );
 };
 
-// STEP 4 — Success (Mobile Responsive)
+// STEP 4 — Success 
 const StepSuccess = ({ onDashboard }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
