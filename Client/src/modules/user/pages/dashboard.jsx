@@ -29,6 +29,7 @@ const Icons = {
   phone:        'M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z',
   chevLeft:     'M15 18l-6-6 6-6',
   chevRight:    'M9 18l6-6-6-6',
+  close:        'M18 6L6 18M6 6l12 12',
 };
 
 // NavItem 
@@ -124,12 +125,27 @@ const defaultAnnouncements = [
   { id: 3, title: 'Digital Certificates Now Available', body: 'Download your digitally signed certificates directly from the portal — no need to visit the office.', date: '2026-03-25' },
 ];
 
+// List of all pages/functions for search
+const PAGE_ACTIONS = [
+  { name: 'Dashboard', path: '/dashboard', icon: Icons.dashboard, keywords: ['home', 'main', 'overview'] },
+  { name: 'Announcements', path: '/announcements', icon: Icons.announcement, keywords: ['news', 'updates', 'notices'] },
+  { name: 'Appointments', path: '/appointments', icon: Icons.appointments, keywords: ['booking', 'schedule', 'meeting'] },
+  { name: 'Forms', path: '/forms', icon: Icons.forms, keywords: ['documents', 'applications', 'certificates'] },
+  { name: 'AI Assistant', path: '/ai', icon: Icons.ai, keywords: ['chatbot', 'help', 'support'] },
+  { name: 'Profile', path: '/profile', icon: Icons.profile, keywords: ['account', 'settings', 'my profile'] },
+  { name: 'Settings', path: '/settings', icon: Icons.settings, keywords: ['preferences', 'options', 'configuration'] },
+];
+
 //  MAIN DASHBOARD
 const Dashboard = () => {
   const navigate = useNavigate();
   const [activePage,   setActivePage]   = useState('dashboard');
   const [announcIdx,   setAnnouncIdx]   = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // SEARCH STATE - for page/function search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   const [appointments,          setAppointments]          = useState([]);
   const [announcements,         setAnnouncements]         = useState(defaultAnnouncements);
@@ -227,6 +243,27 @@ const Dashboard = () => {
 
   const handleLogout = async () => { try { await signOut(auth); navigate('/login'); } catch (e) { console.error(e); } };
 
+  // SEARCH FUNCTION - filters pages based on search query
+  const getFilteredPages = () => {
+    if (!searchQuery.trim()) return [];
+    const query = searchQuery.toLowerCase();
+    return PAGE_ACTIONS.filter(page => 
+      page.name.toLowerCase().includes(query) ||
+      page.keywords.some(keyword => keyword.toLowerCase().includes(query))
+    );
+  };
+
+  const filteredPages = getFilteredPages();
+
+  // Hide search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowSearchResults(false);
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   const fullName  = userData?.fullName || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User';
   const firstName = fullName.split(' ')[0];
   const chipName  = userData?.username || fullName;
@@ -251,6 +288,59 @@ const Dashboard = () => {
     { key: 'settings', icon: Icons.settings, label: 'Settings' },
     { key: 'logout',   icon: Icons.logout,   label: 'Sign out'   },
   ];
+
+  // Search Results Dropdown Component
+  const SearchResultsDropdown = () => {
+    if (!showSearchResults || filteredPages.length === 0) return null;
+    
+    return (
+      <div style={{
+        position: 'absolute',
+        top: '100%',
+        left: 0,
+        right: 0,
+        marginTop: '8px',
+        backgroundColor: '#fff',
+        borderRadius: '12px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        border: '1px solid #e8d5ac',
+        zIndex: 1000,
+        overflow: 'hidden',
+      }}>
+        {filteredPages.map((page, idx) => (
+          <button
+            key={page.path}
+            onClick={() => {
+              navigate(page.path);
+              setSearchQuery('');
+              setShowSearchResults(false);
+            }}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              border: 'none',
+              backgroundColor: idx === filteredPages.length - 1 ? '#fff' : '#fff',
+              borderBottom: idx === filteredPages.length - 1 ? 'none' : '1px solid #f0e8d0',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'background 0.15s',
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f5f0e8'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+          >
+            <Icon d={page.icon} size={18} color="#B46A02" />
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e1200' }}>{page.name}</div>
+              <div style={{ fontSize: '11px', color: '#888' }}>Click to go to {page.name}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    );
+  };
 
   // Shared widget components
   const AppointmentsWidget = () => (
@@ -383,14 +473,40 @@ const Dashboard = () => {
         {/* MAIN COLUMN */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
-          {/* DESKTOP TOPBAR */}
+          {/* DESKTOP TOPBAR - WITH PAGE/FUNCTION SEARCH */}
           <div className="desktop-topbar" style={{ height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #ede8d8', display: 'flex', alignItems: 'center', padding: '0 28px', gap: '14px', position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 1px 0 #ede8d8' }}>
-            <div style={{ flex: 1, maxWidth: '400px', display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: '999px', padding: '9px 18px', cursor: 'text' }}
-              onMouseOver={e => e.currentTarget.style.borderColor = '#F5C400'}
-              onMouseOut={e  => e.currentTarget.style.borderColor = '#e8d8b0'}
-            >
-              <Icon d={Icons.search} size={16} color="#aaa" />
-              <span style={{ fontSize: '14px', color: '#bbb', fontWeight: 600 }}>search</span>
+            <div style={{ flex: 1, maxWidth: '400px', position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: '999px', padding: '9px 18px' }}
+                onMouseOver={e => e.currentTarget.style.borderColor = '#F5C400'}
+                onMouseOut={e  => e.currentTarget.style.borderColor = '#e8d8b0'}
+              >
+                <Icon d={Icons.search} size={16} color="#aaa" />
+                <input
+                  type="text"
+                  placeholder="Search for a page or function..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSearchResults(true);
+                  }}
+                  onFocus={() => setShowSearchResults(true)}
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    outline: 'none',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#1e1200',
+                    background: 'transparent',
+                  }}
+                />
+                {searchQuery && (
+                  <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                    <Icon d={Icons.close} size={14} color="#aaa" />
+                  </button>
+                )}
+              </div>
+              <SearchResultsDropdown />
             </div>
             <div style={{ flex: 1 }} />
             <span style={{ fontSize: '14px', fontWeight: 800, color: '#1e1200' }}>EN</span>
@@ -456,8 +572,6 @@ const Dashboard = () => {
 
             {/* Welcome + GN side by side */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '16px', marginBottom: '22px' }}>
-
-              {/* Welcome card — yellow/cream, large */}
               <div style={{ backgroundColor: '#fff8dc', border: '1.5px solid #f0d870', borderRadius: '16px', padding: '22px 28px', display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <div style={{ width: '68px', height: '68px', borderRadius: '50%', backgroundColor: '#e0d8c8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #d4c090' }}>
                   <Icon d={Icons.profile} size={32} color="#8a7060" strokeWidth={1.5} />
@@ -467,7 +581,6 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* GN Officer card */}
               <div style={{ backgroundColor: '#fff', border: '1.5px solid #e8d5ac', borderRadius: '16px', padding: '18px 24px', minWidth: '190px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '4px' }}>
                 <div style={{ fontSize: '12px', fontWeight: 700, color: '#888' }}>GN officer</div>
                 <div style={{ fontSize: '16px', fontWeight: 900, color: '#1e1200' }}>{gnName}</div>
@@ -502,12 +615,79 @@ const Dashboard = () => {
           {/* MOBILE CONTENT */}
           <div className="mobile-content" style={{ flex: 1, display: 'none', backgroundColor: '#f5f0e8' }}>
 
-            {/* Search bar — below topbar */}
-            <div style={{ padding: '12px 14px 0' }}>
+            {/* Mobile Search Bar - WITH PAGE/FUNCTION SEARCH */}
+            <div style={{ padding: '12px 14px 0', position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, backgroundColor: '#fff', border: '1.5px solid #e8d8b0', borderRadius: 999, padding: '10px 16px' }}>
                 <Icon d={Icons.search} size={16} color="#aaa" />
-                <span style={{ fontSize: 14, color: '#bbb', fontWeight: 600 }}>search</span>
+                <input
+                  type="text"
+                  placeholder="Search for a page..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSearchResults(true);
+                  }}
+                  onFocus={() => setShowSearchResults(true)}
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    outline: 'none',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#1e1200',
+                    background: 'transparent',
+                  }}
+                />
+                {searchQuery && (
+                  <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                    <Icon d={Icons.close} size={14} color="#aaa" />
+                  </button>
+                )}
               </div>
+              {/* Search results for mobile */}
+              {showSearchResults && filteredPages.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '8px',
+                  backgroundColor: '#fff',
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                  border: '1px solid #e8d5ac',
+                  zIndex: 1000,
+                  overflow: 'hidden',
+                }}>
+                  {filteredPages.map((page, idx) => (
+                    <button
+                      key={page.path}
+                      onClick={() => {
+                        navigate(page.path);
+                        setSearchQuery('');
+                        setShowSearchResults(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '12px 16px',
+                        border: 'none',
+                        borderBottom: idx === filteredPages.length - 1 ? 'none' : '1px solid #f0e8d0',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <Icon d={page.icon} size={18} color="#B46A02" />
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e1200' }}>{page.name}</div>
+                        <div style={{ fontSize: '11px', color: '#888' }}>Click to go</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div style={{ padding: '12px 14px', paddingBottom: '90px' }}>

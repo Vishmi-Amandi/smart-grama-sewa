@@ -43,6 +43,17 @@ const IC = {
   details:      'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
 };
 
+// List of all pages/functions for search
+const PAGE_ACTIONS = [
+  { name: 'Dashboard', path: '/dashboard', icon: IC.dashboard },
+  { name: 'Announcements', path: '/announcements', icon: IC.announce },
+  { name: 'Appointments', path: '/appointments', icon: IC.appts },
+  { name: 'Forms', path: '/forms', icon: IC.forms },
+  { name: 'AI Assistant', path: '/ai', icon: IC.ai },
+  { name: 'Profile', path: '/profile', icon: IC.profile },
+  { name: 'Settings', path: '/settings', icon: IC.settings },
+];
+
 // Service categories (from spec)
 const SERVICE_CATS = [
   {
@@ -162,20 +173,111 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
   );
 };
 
-// Desktop Topbar
-const DesktopTopbar = ({ chipName }) => (
+// Search Results Dropdown Component
+const SearchResultsDropdown = ({ searchQuery, onNavigate, onClose }) => {
+  const [filteredPages, setFilteredPages] = useState([]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredPages([]);
+      return;
+    }
+    const query = searchQuery.toLowerCase();
+    const filtered = PAGE_ACTIONS.filter(page =>
+      page.name.toLowerCase().includes(query)
+    );
+    setFilteredPages(filtered);
+  }, [searchQuery]);
+
+  if (filteredPages.length === 0) return null;
+
+  return (
+    <div style={{
+      position: 'absolute',
+      top: '100%',
+      left: 0,
+      right: 0,
+      marginTop: '8px',
+      backgroundColor: '#fff',
+      borderRadius: '12px',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+      border: '1px solid #e8d5ac',
+      zIndex: 1000,
+      overflow: 'hidden',
+    }}>
+      {filteredPages.map((page, idx) => (
+        <button
+          key={page.path}
+          onClick={() => {
+            onNavigate(page.path);
+            onClose();
+          }}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '12px 16px',
+            border: 'none',
+            borderBottom: idx === filteredPages.length - 1 ? 'none' : '1px solid #f0e8d0',
+            cursor: 'pointer',
+            textAlign: 'left',
+            transition: 'background 0.15s',
+          }}
+          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f5f0e8'}
+          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+        >
+          <Icon d={page.icon} size={18} color="#B46A02" />
+          <div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e1200' }}>{page.name}</div>
+            <div style={{ fontSize: '11px', color: '#888' }}>Click to go to {page.name}</div>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// Desktop Topbar with Search
+const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate }) => (
   <div className="desktop-topbar" style={{
     height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #ede8d8',
     display: 'flex', alignItems: 'center', padding: '0 28px', gap: '14px',
     position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 1px 0 #ede8d8'
   }}>
-    <div style={{
-      flex: 1, maxWidth: 400, display: 'flex', alignItems: 'center', gap: 10,
-      backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
-      borderRadius: 999, padding: '9px 18px'
-    }}>
-      <Icon d={IC.search} size={16} color="#aaa" />
-      <span style={{ fontSize: 14, color: '#bbb', fontWeight: 600 }}>search</span>
+    <div style={{ flex: 1, maxWidth: 400, position: 'relative' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
+        borderRadius: 999, padding: '9px 18px'
+      }}>
+        <Icon d={IC.search} size={16} color="#aaa" />
+        <input
+          type="text"
+          placeholder="Search for a page or function..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setShowResults(true);
+          }}
+          onFocus={() => setShowResults(true)}
+          style={{
+            flex: 1,
+            border: 'none',
+            outline: 'none',
+            fontSize: '14px',
+            fontWeight: 500,
+            color: '#1e1200',
+            background: 'transparent',
+          }}
+        />
+        {searchQuery && (
+          <button onClick={() => { setSearchQuery(''); setShowResults(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+            <Icon d={IC.close} size={14} color="#aaa" />
+          </button>
+        )}
+      </div>
+      {showResults && <SearchResultsDropdown searchQuery={searchQuery} onNavigate={navigate} onClose={() => setShowResults(false)} />}
     </div>
     <div style={{ flex: 1 }} />
     <span style={{ fontSize: 14, fontWeight: 800, color: '#1e1200' }}>EN</span>
@@ -200,8 +302,8 @@ const DesktopTopbar = ({ chipName }) => (
   </div>
 );
 
-// Mobile Topbar
-const MobileTopbar = ({ chipName, onMenuClick }) => (
+// Mobile Topbar with Search
+const MobileTopbar = ({ chipName, onMenuClick, searchQuery, setSearchQuery, showResults, setShowResults, navigate }) => (
   <div className="mobile-header" style={{
     display: 'none',
     backgroundColor: '#F5C400',
@@ -238,25 +340,40 @@ const MobileTopbar = ({ chipName, onMenuClick }) => (
         </div>
       </div>
     </div>
-  </div>
-);
-
-const MobileSearchBar = () => (
-  <div style={{
-    padding: '12px 16px',
-    backgroundColor: '#f5f0e8',
-  }}>
-    <div style={{
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: 10,
-      backgroundColor: '#fff', 
-      border: '1.5px solid #e8d8b0',
-      borderRadius: 999, 
-      padding: '12px 16px',
-    }}>
-      <Icon d={IC.search} size={16} color="#aaa" />
-      <span style={{ fontSize: 14, color: '#bbb', fontWeight: 600 }}>Search ...</span>
+    {/* Mobile Search Bar */}
+    <div style={{ padding: '8px 16px 12px 16px', backgroundColor: '#f5f0e8', position: 'relative' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        backgroundColor: '#fff', border: '1.5px solid #e8d8b0',
+        borderRadius: 999, padding: '10px 16px',
+      }}>
+        <Icon d={IC.search} size={16} color="#aaa" />
+        <input
+          type="text"
+          placeholder="Search for a page..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setShowResults(true);
+          }}
+          onFocus={() => setShowResults(true)}
+          style={{
+            flex: 1,
+            border: 'none',
+            outline: 'none',
+            fontSize: '14px',
+            fontWeight: 500,
+            color: '#1e1200',
+            background: 'transparent',
+          }}
+        />
+        {searchQuery && (
+          <button onClick={() => { setSearchQuery(''); setShowResults(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+            <Icon d={IC.close} size={14} color="#aaa" />
+          </button>
+        )}
+      </div>
+      {showResults && <SearchResultsDropdown searchQuery={searchQuery} onNavigate={navigate} onClose={() => setShowResults(false)} />}
     </div>
   </div>
 );
@@ -1854,11 +1971,26 @@ const Appointments = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  // SEARCH STATE
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
   useEffect(() => {
     const handle = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handle);
     return () => window.removeEventListener('resize', handle);
   }, []);
+
+  // Click outside to close search results
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowSearchResults(false);
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   // Auth + user data
   const [currentUser, setCurrentUser] = useState(null);
   const [userData,    setUserData]    = useState(null);
@@ -1947,10 +2079,24 @@ const Appointments = () => {
 
         <div style={S.main}>
           {isMobile
-            ? <MobileTopbar chipName={chipName} onMenuClick={() => setMobileMenuOpen(true)} />
-            : <DesktopTopbar chipName={chipName} />
+            ? <MobileTopbar 
+                chipName={chipName} 
+                onMenuClick={() => setMobileMenuOpen(true)}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                showResults={showSearchResults}
+                setShowResults={setShowSearchResults}
+                navigate={navigate}
+              />
+            : <DesktopTopbar 
+                chipName={chipName}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                showResults={showSearchResults}
+                setShowResults={setShowSearchResults}
+                navigate={navigate}
+              />
           }
-          {isMobile && <MobileSearchBar />}
 
           {screen === 'list'    && <AppointmentsList currentUser={currentUser} refreshKey={refreshKey} onBook={() => { setBooking({ service: null, notes: '', day: null, month: null, year: null, slot: null }); setScreen('step1'); }} />}
           {screen === 'step1'   && <BookStep1  booking={booking} setBooking={setBooking} onNext={() => setScreen('step2')} onCancel={() => setScreen('list')} />}

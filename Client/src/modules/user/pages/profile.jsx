@@ -29,6 +29,83 @@ const Icons = {
   camera:       'M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z M12 17a4 4 0 100-8 4 4 0 000 8z',
   chevDown:     'M6 9l6 6 6-6',
   tick:         'M4 12l5 5L20 6',
+  close:        'M18 6L6 18M6 6l12 12',
+};
+
+// List of all pages/functions for search
+const PAGE_ACTIONS = [
+  { name: 'Dashboard', path: '/dashboard', icon: Icons.dashboard },
+  { name: 'Announcements', path: '/announcements', icon: Icons.announcement },
+  { name: 'Appointments', path: '/appointments', icon: Icons.appointments },
+  { name: 'Forms', path: '/forms', icon: Icons.forms },
+  { name: 'AI Assistant', path: '/ai', icon: Icons.ai },
+  { name: 'Profile', path: '/profile', icon: Icons.profile },
+  { name: 'Settings', path: '/settings', icon: Icons.settings },
+];
+
+// Search Results Dropdown Component
+const SearchResultsDropdown = ({ searchQuery, onNavigate, onClose }) => {
+  const [filteredPages, setFilteredPages] = useState([]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredPages([]);
+      return;
+    }
+    const query = searchQuery.toLowerCase();
+    const filtered = PAGE_ACTIONS.filter(page =>
+      page.name.toLowerCase().includes(query)
+    );
+    setFilteredPages(filtered);
+  }, [searchQuery]);
+
+  if (filteredPages.length === 0) return null;
+
+  return (
+    <div style={{
+      position: 'absolute',
+      top: '100%',
+      left: 0,
+      right: 0,
+      marginTop: '8px',
+      backgroundColor: '#fff',
+      borderRadius: '12px',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+      border: '1px solid #e8d5ac',
+      zIndex: 1000,
+      overflow: 'hidden',
+    }}>
+      {filteredPages.map((page, idx) => (
+        <button
+          key={page.path}
+          onClick={() => {
+            onNavigate(page.path);
+            onClose();
+          }}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '12px 16px',
+            border: 'none',
+            borderBottom: idx === filteredPages.length - 1 ? 'none' : '1px solid #f0e8d0',
+            cursor: 'pointer',
+            textAlign: 'left',
+            transition: 'background 0.15s',
+          }}
+          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f5f0e8'}
+          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+        >
+          <Icon d={page.icon} size={18} color="#B46A02" />
+          <div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e1200' }}>{page.name}</div>
+            <div style={{ fontSize: '11px', color: '#888' }}>Click to go to {page.name}</div>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
 };
 
 // NavItem
@@ -96,28 +173,15 @@ const GenderSelect = ({ value, onChange }) => (
   </div>
 );
 
-// Mobile Search Bar Component
-const MobileSearchBar = () => (
-  <div style={{
-    padding: '12px 16px',
-    backgroundColor: '#f8f6f0',
-  }}>
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 10,
-      backgroundColor: '#fff', border: '1.5px solid #e8d8b0',
-      borderRadius: 999, padding: '12px 16px',
-    }}>
-      <Icon d={Icons.search} size={16} color="#aaa" />
-      <span style={{ fontSize: 14, color: '#bbb', fontWeight: 600 }}>Search ...</span>
-    </div>
-  </div>
-);
-
 // MAIN PROFILE COMPONENT
 const Profile = () => {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // SEARCH STATE
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
   
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -136,6 +200,15 @@ const Profile = () => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Click outside to close search results
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowSearchResults(false);
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -267,16 +340,42 @@ const Profile = () => {
         {/* MAIN CONTENT */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
 
-          {/* DESKTOP TOPBAR */}
+          {/* DESKTOP TOPBAR - WITH SEARCH */}
           {!isMobile && (
             <div style={{
               height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #ede8d8',
               display: 'flex', alignItems: 'center', padding: '0 28px', gap: '14px',
               position: 'sticky', top: 0, zIndex: 40,
             }}>
-              <div style={{ flex: 1, maxWidth: '400px', display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: '999px', padding: '9px 18px' }}>
-                <Icon d={Icons.search} size={16} color="#aaa" />
-                <span style={{ fontSize: '14px', color: '#bbb' }}>search</span>
+              <div style={{ flex: 1, maxWidth: '400px', position: 'relative' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: '999px', padding: '9px 18px' }}>
+                  <Icon d={Icons.search} size={16} color="#aaa" />
+                  <input
+                    type="text"
+                    placeholder="Search for a page or function..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowSearchResults(true);
+                    }}
+                    onFocus={() => setShowSearchResults(true)}
+                    style={{
+                      flex: 1,
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#1e1200',
+                      background: 'transparent',
+                    }}
+                  />
+                  {searchQuery && (
+                    <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                      <Icon d={Icons.close} size={14} color="#aaa" />
+                    </button>
+                  )}
+                </div>
+                {showSearchResults && <SearchResultsDropdown searchQuery={searchQuery} onNavigate={navigate} onClose={() => setShowSearchResults(false)} />}
               </div>
               <div style={{ flex: 1 }} />
               <span style={{ fontSize: '14px', fontWeight: 800, color: '#1e1200' }}>EN</span>
@@ -293,7 +392,7 @@ const Profile = () => {
             </div>
           )}
 
-          {/* MOBILE TOPBAR */}
+          {/* MOBILE TOPBAR - WITH SEARCH */}
           {isMobile && (
             <>
               {/* Sticky Header */}
@@ -328,7 +427,45 @@ const Profile = () => {
                 </div>
               </div>
 
-              <MobileSearchBar />
+              {/* Mobile Search Bar - Non-sticky, below header */}
+              <div style={{
+                padding: '12px 16px',
+                backgroundColor: '#f8f6f0',
+                position: 'relative',
+              }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  backgroundColor: '#fff', border: '1.5px solid #e8d8b0',
+                  borderRadius: 999, padding: '12px 16px',
+                }}>
+                  <Icon d={Icons.search} size={16} color="#aaa" />
+                  <input
+                    type="text"
+                    placeholder="Search for a page..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowSearchResults(true);
+                    }}
+                    onFocus={() => setShowSearchResults(true)}
+                    style={{
+                      flex: 1,
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#1e1200',
+                      background: 'transparent',
+                    }}
+                  />
+                  {searchQuery && (
+                    <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                      <Icon d={Icons.close} size={14} color="#aaa" />
+                    </button>
+                  )}
+                </div>
+                {showSearchResults && <SearchResultsDropdown searchQuery={searchQuery} onNavigate={navigate} onClose={() => setShowSearchResults(false)} />}
+              </div>
             </>
           )}
 
@@ -342,7 +479,7 @@ const Profile = () => {
 
                 {saveSuccess && (
                   <div style={{ backgroundColor: '#e6f9ee', border: '1.5px solid #7ec07e', borderRadius: '12px', padding: '12px', marginBottom: '18px' }}>
-                    <Icon d={Icons.tick} size={10} color="#3d2a00" /> Profile updated successfully!
+                    <Icon d={Icons.tick} size={14} color="#1a7a3a" /> Profile updated successfully!
                   </div>
                 )}
 
