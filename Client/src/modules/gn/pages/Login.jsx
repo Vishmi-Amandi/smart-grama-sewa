@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { Link,useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../firebase";
-import { getDoc, doc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { auth, db } from "../../firebase";
+import { getDoc, doc, getDocs, collection, query, where, updateDoc, serverTimestamp } from "firebase/firestore";
 
 const Login = () => {
-  const [email, setEmail]               = useState("");
+  const [username, setUsername]         = useState("");
   const [password, setPassword]         = useState("");
   const [rememberMe, setRememberMe]     = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -16,51 +15,69 @@ const Login = () => {
 
   const navigate = useNavigate();
 
+  const inputClass =
+    "w-full bg-white text-[#1e1200] border-2 border-transparent rounded-xl px-4 py-3 text-sm font-semibold outline-none transition focus:border-[#E5A800] placeholder:text-gray-400";
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (!email.trim()) { setError("Please enter your username or email."); return; }
-    if (!password)     { setError("Please enter your password.");          return; }
+    if (!username.trim()) { setError("Please enter your username."); return; }
+    if (!password)        { setError("Please enter your password.");  return; }
 
     setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-const user = userCredential.user;
+      // Find user by username in Firestore
+      const q = query(
+        collection(db, "gn_officers"),
+        where("username", "==", username.trim())
+      );
+      const querySnapshot = await getDocs(q);
 
-// Check role in Firestore
-const { getDoc, doc } = await import("firebase/firestore");
-const { db } = await import("../../firebase");
+      if (querySnapshot.empty) {
+        setError("No account found with this username.");
+        setLoading(false);
+        return;
+      }
 
-const userDoc = await getDoc(doc(db, "users", user.uid));
+      // Get email from Firestore
+      const userDoc = querySnapshot.docs[0].data();
+      const userEmail = userDoc.email;
 
-if (userDoc.exists()) {
-  const role = userDoc.data().role;
-  if (role === "gn") {
-    navigate("/");
-  } else if (role === "citizen") {
-    navigate("/citizen-dashboard");
-  } else {
-    setError("Unknown role. Please contact support.");
-  }
-} else {
-  setError("User profile not found. Please contact support.");
-}
+      // Login with email + password
+      const userCredential = await signInWithEmailAndPassword(auth, userEmail, password);
+      const user = userCredential.user;
+
+      // Check role
+      const userRoleDoc = await getDoc(doc(db, "users", user.uid));
+
+      if (userRoleDoc.exists()) {
+        const role = userRoleDoc.data().role;
+        if (role === "gn_officer") {
+          await updateDoc(doc(db, "gn_officers", user.uid), {
+            lastLogin: serverTimestamp(),
+          });
+          navigate("/");
+        } else if (role === "citizen") {
+          navigate("/citizen-dashboard");
+        } else {
+          setError("Unknown role. Please contact support.");
+        }
+      } else {
+        navigate("/");
+      }
+
     } catch (err) {
+      console.log("Error:", err.code, err.message);
       switch (err.code) {
-        case "auth/invalid-email":       setError("Invalid email format.");                        break;
-        case "auth/user-not-found":      setError("No account found with this email.");            break;
-        case "auth/wrong-password":      setError("Incorrect password.");                          break;
-        case "auth/too-many-requests":   setError("Too many failed attempts. Try again later.");   break;
-        default:                         setError("Incorrect credentials. Please try again.");
+        case "auth/wrong-password":    setError("Incorrect password.");                        break;
+        case "auth/too-many-requests": setError("Too many failed attempts. Try again later."); break;
+        default:                       setError("Incorrect credentials. Please try again.");
       }
     } finally {
       setLoading(false);
     }
   };
-
-  const inputClass =
-    "w-full bg-white text-[#1e1200] border-2 border-transparent rounded-xl px-4 py-3 text-sm font-semibold outline-none transition focus:border-[#E5A800] placeholder:text-gray-400";
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -103,17 +120,17 @@ if (userDoc.exists()) {
               </div>
             )}
 
-            {/* Email */}
+            {/* Username */}
             <div className="mb-4">
               <label className="block text-[#fdf0dc] text-xs font-bold mb-1.5 uppercase tracking-wide">
-                Username or Email
+                Username
               </label>
               <input
                 type="text"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                value={username}
+                onChange={(e) => { setUsername(e.target.value); setError(""); }}
                 autoComplete="username"
-                placeholder="Enter your email"
+                placeholder="Enter your username"
                 className={inputClass}
               />
             </div>
@@ -153,8 +170,8 @@ if (userDoc.exists()) {
                 />
                 Keep me signed in
               </label>
-              <a
-                href="/forgot-password"
+              
+                <a href="/forgot-password"
                 className="text-sm font-bold text-[#fdf0dc] hover:text-white transition"
               >
                 Forgot password?
@@ -186,13 +203,12 @@ if (userDoc.exists()) {
             </p>
 
             {/* Create Account */}
-
-<Link
-  to="/signup"
-  className="block w-full text-center bg-[#E5A800] hover:bg-[#cc9600] text-[#3d2a00] font-black text-base py-3.5 rounded-xl transition shadow-lg"
->
-  Create your account
-</Link>
+            <Link
+              to="/signup"
+              className="block w-full text-center bg-[#E5A800] hover:bg-[#cc9600] text-[#3d2a00] font-black text-base py-3.5 rounded-xl transition shadow-lg"
+            >
+              Create your account
+            </Link>
 
           </div>
         </div>

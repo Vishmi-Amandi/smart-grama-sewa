@@ -5,6 +5,7 @@ import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
+
 // ─── Shared Styles ────────────────────────────────────────────────────────────
 const inputClass =
   "w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 bg-white outline-none transition focus:border-[#E5A800] placeholder:text-gray-400";
@@ -181,11 +182,10 @@ const Step2 = ({ form, update, onNext, onBack }) => {
   const validate = () => {
     const e = {};
     if (!form.gnDivisionName.trim())  e.gnDivisionName = "GN Division name is required.";
-    if (!form.serviceNumber.trim())   e.serviceNumber = "Service number is required.";
+    if (!form.gnCode.trim())   e.gnCode = "Gn Code is required.";
     if (!form.province)               e.province = "Province is required.";
     if (!form.district)               e.district = "Please select a district.";
     if (!form.divisionalSecretariat)  e.divisionalSecretariat = "Please select a DS Division.";
-    if (!form.gnDivision.trim())      e.gnDivision = "GN Division is required.";
     if (!form.officeAddress.trim())   e.officeAddress = "Office address is required.";
     if (!form.officeMobile.trim())    e.officeMobile = "Office mobile is required.";
     if (!form.officialEmail.trim())   e.officialEmail = "Official email is required.";
@@ -207,10 +207,10 @@ const Step2 = ({ form, update, onNext, onBack }) => {
             <FieldError msg={errors.gnDivisionName} />
           </div>
           <div>
-            <label className={labelClass}>GN Service Number</label>
-            <input type="text" value={form.serviceNumber} onChange={(e) => update("serviceNumber", e.target.value)}
+            <label className={labelClass}>GN Code</label>
+            <input type="text" value={form.gnCode} onChange={(e) => update("gnCode", e.target.value)}
               placeholder="e.g. A123" className={inputClass} />
-            <FieldError msg={errors.serviceNumber} />
+            <FieldError msg={errors.gnCode} />
           </div>
         </div>
       </Section>
@@ -246,12 +246,6 @@ const Step2 = ({ form, update, onNext, onBack }) => {
             </select>
             <FieldError msg={errors.divisionalSecretariat} />
           </div>
-          <div>
-            <label className={labelClass}>GN Division</label>
-            <input type="text" value={form.gnDivision} onChange={(e) => update("gnDivision", e.target.value)}
-              placeholder="Enter GN Division name" className={inputClass} />
-            <FieldError msg={errors.gnDivision} />
-          </div>
         </div>
       </Section>
 
@@ -283,6 +277,10 @@ const Step2 = ({ form, update, onNext, onBack }) => {
           </div>
         </div>
       </Section>
+      <div className="grid grid-cols-2 gap-4 mt-4">
+</div>
+
+
 
       <div className="flex justify-between mt-2">
         <button onClick={onBack}
@@ -299,44 +297,117 @@ const Step2 = ({ form, update, onNext, onBack }) => {
 };
 
 // ─── STEP 3 — Document Upload ─────────────────────────────────────────────────
-const UploadBox = ({ label }) => (
-  <div>
-    <label className={labelClass}>{label}</label>
-    <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-[#E5A800] transition bg-white">
-      <span className="text-3xl mb-2">📄</span>
-      <p className="text-xs font-semibold text-gray-600 text-center">Click to upload or drag and drop</p>
-      <p className="text-xs text-gray-400 mt-1 text-center">PNG, JPG or PDF (Max. 5MB)</p>
-    </div>
-  </div>
-);
+const Step3 = ({ form, update, onNext, onBack }) => {
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({});
 
-const Step3 = ({ onNext, onBack }) => (
-  <>
-    <h2 className="text-lg font-black text-gray-800 mb-6">Document Upload</h2>
-    <div className="grid grid-cols-2 gap-4 mb-4">
-      <UploadBox label="Appointment Letter" />
-      <UploadBox label="Recent Photograph" />
-    </div>
-    <div className="grid grid-cols-2 gap-4 mb-4">
-      <UploadBox label="NIC Front Side" />
-      <UploadBox label="NIC Back Side" />
-    </div>
-    <div className="mb-6 max-w-sm">
-      <UploadBox label="Digital Signature" />
-    </div>
-    <div className="flex justify-between mt-2">
-      <button onClick={onBack}
-        className="border-2 border-[#3B1F0A] text-[#3B1F0A] hover:bg-[#3B1F0A] hover:text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition text-sm">
-        <ArrowLeft size={15} /> Previous Step
-      </button>
-      <button onClick={onNext}
-        className="bg-[#E5A800] hover:bg-[#cc9600] text-[#3d2a00] font-black px-6 py-2.5 rounded-xl flex items-center gap-2 transition shadow text-sm">
-        Save & Continue <ArrowRight size={15} />
-      </button>
-    </div>
-  </>
-);
+  const handleUpload = async (file, fieldName) => {
+    if (!file) return;
+    setUploading(true);
 
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "gn_documents");
+      formData.append("cloud_name", "dsi9xh1fd");
+
+      const response = await fetch(
+        "https://api.cloudinary.com/v1_1/dsi9xh1fd/auto/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.secure_url) {
+        update(fieldName, data.secure_url);
+        setUploadProgress((prev) => ({ ...prev, [fieldName]: "done" }));
+      } else {
+        console.error("Upload failed:", data);
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const DocumentBox = ({ label, fieldName }) => (
+    <div className="flex flex-col gap-2">
+      <label className={labelClass}>{label}</label>
+      <label className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-[#E5A800] transition
+        ${uploadProgress[fieldName] === "done" ? "border-green-400 bg-green-50" : "border-gray-200 bg-white"}`}>
+        <input
+          type="file"
+          accept=".pdf,.png,.jpg,.jpeg"
+          className="hidden"
+          onChange={(e) => handleUpload(e.target.files[0], fieldName)}
+        />
+        {uploadProgress[fieldName] === "done" ? (
+          <>
+            <span className="text-3xl mb-2">✅</span>
+            <p className="text-xs font-semibold text-green-600">Uploaded successfully!</p>
+            <p className="text-xs text-gray-400 mt-1">Click to replace</p>
+          </>
+        ) : uploading ? (
+          <>
+            <span className="text-3xl mb-2">⏳</span>
+            <p className="text-xs font-semibold text-yellow-600">Uploading...</p>
+          </>
+        ) : (
+          <>
+            <span className="text-3xl mb-2">📄</span>
+            <p className="text-xs font-semibold text-gray-600 text-center">Click to upload or drag and drop</p>
+            <p className="text-xs text-gray-400 mt-1 text-center">PNG, JPG or PDF (Max. 5MB)</p>
+          </>
+        )}
+      </label>
+    </div>
+  );
+
+  return (
+    <>
+      <h2 className="text-lg font-black text-gray-800 mb-6">Document Upload</h2>
+
+      {uploading && (
+        <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-sm font-semibold text-yellow-700 flex items-center gap-2">
+          ⏳ Uploading document... please wait
+        </div>
+      )}
+
+      {/* Appointment Letter + Recent Photograph */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <DocumentBox label="Appointment Letter" fieldName="appointmentLetter" />
+        <DocumentBox label="Recent Photograph" fieldName="photograph" />
+      </div>
+
+      {/* NIC Front + Back */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <DocumentBox label="NIC Front Side" fieldName="nicFront" />
+        <DocumentBox label="NIC Back Side" fieldName="nicBack" />
+      </div>
+
+      {/* Signature */}
+      <div className="mb-6">
+        <DocumentBox label="Signature" fieldName="signature" />
+      </div>
+
+      {/* Buttons */}
+      <div className="flex justify-between mt-2">
+        <button onClick={onBack}
+          className="border-2 border-[#3B1F0A] text-[#3B1F0A] hover:bg-[#3B1F0A] hover:text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition text-sm">
+          <ArrowLeft size={15} /> Previous Step
+        </button>
+        <button onClick={onNext} disabled={uploading}
+          className="bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-[#3d2a00] font-black px-6 py-2.5 rounded-xl flex items-center gap-2 transition shadow text-sm">
+          Save & Continue <ArrowRight size={15} />
+        </button>
+      </div>
+    </>
+  );
+};
 // ─── STEP 4 — Account Setup ───────────────────────────────────────────────────
 const Step4 = ({ form, update, onBack, onSubmit }) => {
   const [showPw,   setShowPw]   = useState(false);
@@ -372,20 +443,41 @@ const Step4 = ({ form, update, onBack, onSubmit }) => {
       const credential = await createUserWithEmailAndPassword(auth, form.email, form.password);
       await updateProfile(credential.user, { displayName: form.username });
       await setDoc(doc(db, "gn_officers", credential.user.uid), {
-        uid: credential.user.uid, username: form.username, fullName: form.fullName,
-        nic: form.nic, address: form.address, dob: form.dob, tribeType: form.tribeType,
-        gender: form.gender, mobile: form.mobile, altMobile: form.altMobile, email: form.email,
-        gnDivisionName: form.gnDivisionName, serviceNumber: form.serviceNumber,
-        province: form.province, district: form.district,
-        divisionalSecretariat: form.divisionalSecretariat, gnDivision: form.gnDivision,
-        officeAddress: form.officeAddress, officeMobile: form.officeMobile,
-        officialEmail: form.officialEmail, role: "gn_officer", createdAt: serverTimestamp(),
-      });
-      await setDoc(doc(db, "users", credential.user.uid), {
+  uid: credential.user.uid,
+  username: form.username || "",
+  fullName: form.fullName || "",
+  nic: form.nic || "",
+  address: form.address || "",
+  dob: form.dob || "",
+  tribeType: form.tribeType || "",
+  gender: form.gender || "",
+  mobile: form.mobile || "",
+  altMobile: form.altMobile || "",
+  email: form.email || "",
+  gnDivisionName: form.gnDivisionName || "",
+  gnCode: form.gnCode || "",
+  province: form.province || "",
+  district: form.district || "",
+  divisionalSecretariat: form.divisionalSecretariat || "",
+  gnDivision: form.gnDivision || "",
+  officeAddress: form.officeAddress || "",
+  officeMobile: form.officeMobile || "",
+  officialEmail: form.officialEmail || "",
+  appointmentLetter: form.appointmentLetter || "",
+  photograph: form.photograph || "",
+  photoURL: form.photograph || "",
+  nicFront: form.nicFront || "",
+  nicBack: form.nicBack || "",
+  signature: form.signature || "",
   role: "gn_officer",
-  email: form.email,
   createdAt: serverTimestamp(),
 });
+await setDoc(doc(db, "users", credential.user.uid), {
+  role: "gn_officer",
+  email: form.email || "",
+  createdAt: serverTimestamp(),
+});
+    
       onSubmit();
     } catch (err) {
       const msg = {
@@ -415,16 +507,16 @@ const Step4 = ({ form, update, onBack, onSubmit }) => {
           {/* Left — input fields */}
           <div className="space-y-4">
             <div>
-              <label className={labelClass}>Username</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">👤</span>
-                <input type="text" value={form.username || ""}
-                  onChange={(e) => update("username", e.target.value)}
-                  placeholder="Choose a unique username"
-                  className={`${inputClass} pl-9`} />
-              </div>
-              <FieldError msg={errors.username} />
-            </div>
+  <label className={labelClass}>Username</label>
+  <div className="relative">
+    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">👤</span>
+    <input type="text" value={form.username || ""}
+      onChange={(e) => update("username", e.target.value)}
+      placeholder="Choose a unique username"
+      className={`${inputClass} pl-9`} />
+  </div>
+  <FieldError msg={errors.username} />
+</div>
 
             <div>
               <label className={labelClass}>Password</label>
@@ -505,10 +597,11 @@ const SignUp = () => {
 
   const [form, setForm] = useState({
     fullName: "", nic: "", address: "", dob: "", gender: "",
-    mobile: "", altMobile: "", email: "",
-    gnDivisionName: "", serviceNumber: "", province: "", district: "",
-    divisionalSecretariat: "", gnDivision: "",
+    mobile: "", email: "",
+    gnDivisionName: "", gnCode: "", province: "", district: "",
+    divisionalSecretariat: "",
     officeAddress: "", officeMobile: "", officialEmail: "",
+    appointmentLetter: "", photograph: "", nicFront: "", nicBack: "", signature: "",
     username: "", password: "", confirm: "",
   });
 
@@ -543,7 +636,7 @@ const SignUp = () => {
         <div className="bg-white rounded-2xl shadow p-6">
           {step === 1 && <Step1 form={form} update={update} onNext={() => setStep(2)} />}
           {step === 2 && <Step2 form={form} update={update} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
-          {step === 3 && <Step3 onNext={() => setStep(4)} onBack={() => setStep(2)} />}
+          {step === 3 && <Step3 form={form} update={update} onNext={() => setStep(4)} onBack={() => setStep(2)} />}
           {step === 4 && <Step4 form={form} update={update} onBack={() => setStep(3)} onSubmit={() => navigate("/login")} />}
         </div>
       </main>
