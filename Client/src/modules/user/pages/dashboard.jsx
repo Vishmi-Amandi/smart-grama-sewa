@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
-import { PageLoadingSkeleton } from '../components/Skeleton';
+import { PageLoadingSkeleton } from '../components/skeleton';
+import LanguageSwitcher from '../components/languageSwitcher';
 
 // Icons 
 const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
@@ -147,6 +148,9 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
 
+  // LANGUAGE STATE
+  const [currentLanguage, setCurrentLanguage] = useState('en');
+
   const [appointments,          setAppointments]          = useState([]);
   const [announcements,         setAnnouncements]         = useState(defaultAnnouncements);
   const [loadingAppointments,   setLoadingAppointments]   = useState(true);
@@ -158,6 +162,13 @@ const Dashboard = () => {
   const [userData,    setUserData]    = useState(null);
   const [gnOfficer,   setGnOfficer]   = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+
+  // Handle language change
+  const handleLanguageChange = (langCode) => {
+    setCurrentLanguage(langCode);
+    console.log('Language changed to:', langCode);
+    // Your teammate can add translation logic here later
+  };
 
   // Fetch appointments
   const fetchAppointments = async (showRefresh = false) => {
@@ -473,7 +484,7 @@ const Dashboard = () => {
         {/* MAIN COLUMN */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
-          {/* DESKTOP TOPBAR - WITH PAGE/FUNCTION SEARCH */}
+          {/* DESKTOP TOPBAR */}
           <div className="desktop-topbar" style={{ height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #ede8d8', display: 'flex', alignItems: 'center', padding: '0 28px', gap: '14px', position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 1px 0 #ede8d8' }}>
             <div style={{ flex: 1, maxWidth: '400px', position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: '999px', padding: '9px 18px' }}
@@ -509,7 +520,10 @@ const Dashboard = () => {
               <SearchResultsDropdown />
             </div>
             <div style={{ flex: 1 }} />
-            <span style={{ fontSize: '14px', fontWeight: 800, color: '#1e1200' }}>EN</span>
+            <LanguageSwitcher 
+              currentLanguage={currentLanguage} 
+              onLanguageChange={handleLanguageChange}
+            />
             <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative' }}
               onMouseOver={e => e.currentTarget.style.borderColor = '#F5C400'}
               onMouseOut={e  => e.currentTarget.style.borderColor = '#e8d8b0'}
@@ -550,9 +564,11 @@ const Dashboard = () => {
               <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '48px', width: 'auto' }} />
             </div>
 
-            {/* EN */}
-            <span style={{ fontSize: '14px', fontWeight: 900, color: '#1e1200', flexShrink: 0 }}>EN</span>
-
+            {/* LanguageSwitcher */}
+            <LanguageSwitcher 
+              currentLanguage={currentLanguage} 
+              onLanguageChange={handleLanguageChange}
+            />
             {/* Bell */}
             <div style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', flexShrink: 0 }}>
               <Icon d={Icons.bell} size={22} color="#1e1200" />

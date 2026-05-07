@@ -4,6 +4,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton, ProfileSkeleton } from '../components/skeleton';
+import LanguageSwitcher from '../components/languageSwitcher';
 
 // Icons
 const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
@@ -182,6 +183,9 @@ const Profile = () => {
   // SEARCH STATE
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // LANGUAGE STATE
+  const [currentLanguage, setCurrentLanguage] = useState('en');
   
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -210,6 +214,12 @@ const Profile = () => {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  // Handle language change
+  const handleLanguageChange = (langCode) => {
+    setCurrentLanguage(langCode);
+    console.log('Language changed to:', langCode);
+  };
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -340,7 +350,7 @@ const Profile = () => {
         {/* MAIN CONTENT */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
 
-          {/* DESKTOP TOPBAR - WITH SEARCH */}
+          {/* DESKTOP TOPBAR - WITH SEARCH AND LANGUAGE SWITCHER */}
           {!isMobile && (
             <div style={{
               height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #ede8d8',
@@ -378,7 +388,10 @@ const Profile = () => {
                 {showSearchResults && <SearchResultsDropdown searchQuery={searchQuery} onNavigate={navigate} onClose={() => setShowSearchResults(false)} />}
               </div>
               <div style={{ flex: 1 }} />
-              <span style={{ fontSize: '14px', fontWeight: 800, color: '#1e1200' }}>EN</span>
+              <LanguageSwitcher 
+                currentLanguage={currentLanguage} 
+                onLanguageChange={handleLanguageChange}
+              />
               <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                 <Icon d={Icons.bell} size={18} color="#5a3a00" />
                 <div style={{ position: 'absolute', top: '4px', right: '4px', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#e05050' }} />
@@ -392,7 +405,7 @@ const Profile = () => {
             </div>
           )}
 
-          {/* MOBILE TOPBAR - WITH SEARCH */}
+          {/* MOBILE TOPBAR - WITH SEARCH AND LANGUAGE SWITCHER */}
           {isMobile && (
             <>
               {/* Sticky Header */}
@@ -416,7 +429,10 @@ const Profile = () => {
                   <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'left' }}>
                     <img src="/logo2.png" alt="Logo" style={{ height: '48px', width: 'auto' }} />
                   </div>
-                  <span style={{ fontSize: '14px', fontWeight: 900, color: '#1e1200' }}>EN</span>
+                  <LanguageSwitcher 
+                    currentLanguage={currentLanguage} 
+                    onLanguageChange={handleLanguageChange}
+                  />
                   <div style={{ position: 'relative' }}>
                     <Icon d={Icons.bell} size={22} color="#1e1200" />
                     <div style={{ position: 'absolute', top: '2px', right: '2px', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#e05050' }} />

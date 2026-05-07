@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
+import LanguageSwitcher from '../components/languageSwitcher';
 
 // Icons
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
@@ -204,8 +205,8 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
   );
 };
 
-// Desktop Topbar with Search
-const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate }) => (
+// Desktop Topbar with Search and Language Switcher
+const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange }) => (
   <div className="desktop-topbar" style={{
     height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #ede8d8',
     display: 'flex', alignItems: 'center', padding: '0 28px', gap: '14px',
@@ -246,7 +247,10 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
       {showResults && <SearchResultsDropdown searchQuery={searchQuery} onNavigate={navigate} onClose={() => setShowResults(false)} />}
     </div>
     <div style={{ flex: 1 }} />
-    <span style={{ fontSize: 14, fontWeight: 800, color: '#1e1200' }}>EN</span>
+    <LanguageSwitcher 
+      currentLanguage={currentLanguage} 
+      onLanguageChange={onLanguageChange}
+    />
     <div style={{
       width: 38, height: 38, borderRadius: '50%',
       backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
@@ -268,8 +272,8 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
   </div>
 );
 
-// Mobile Topbar with Search
-const MobileTopbar = ({ chipName, onMenuClick, searchQuery, setSearchQuery, showResults, setShowResults, navigate }) => (
+// Mobile Topbar with Search and Language Switcher
+const MobileTopbar = ({ chipName, onMenuClick, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange }) => (
   <div className="mobile-header" style={{
     display: 'none',
     backgroundColor: '#F5C400',
@@ -288,11 +292,14 @@ const MobileTopbar = ({ chipName, onMenuClick, searchQuery, setSearchQuery, show
           <line x1="3" y1="18" x2="21" y2="18" />
         </svg>
       </button>
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'left' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'left' }}>
         <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '48px', width: 'auto' }} />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-        <span style={{ fontSize: '14px', fontWeight: 800, color: '#3d2a00' }}>EN</span>
+        <LanguageSwitcher 
+          currentLanguage={currentLanguage} 
+          onLanguageChange={onLanguageChange}
+        />
         <div style={{ position: 'relative' }}>
           <Icon d={IC.bell} size={20} color="#3d2a00" />
           <div style={{ position: 'absolute', top: -2, right: -4, width: 8, height: 8, borderRadius: '50%', backgroundColor: '#e05050', border: '1.5px solid #F5C400' }} />
@@ -752,6 +759,9 @@ const Settings = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
 
+  // LANGUAGE STATE
+  const [currentLanguage, setCurrentLanguage] = useState('en');
+
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -763,6 +773,12 @@ const Settings = () => {
     deliveryEmail: true, deliveryBrowser: true, deliverySMS: false,
   });
   const [showToast, setShowToast] = useState(false);
+
+  // Handle language change
+  const handleLanguageChange = (langCode) => {
+    setCurrentLanguage(langCode);
+    console.log('Language changed to:', langCode);
+  };
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -852,7 +868,7 @@ const Settings = () => {
         {/* Main Column */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
-          {/* Desktop Topbar with Search */}
+          {/* Desktop Topbar with Search and Language Switcher */}
           <DesktopTopbar 
             chipName={chipName}
             searchQuery={searchQuery}
@@ -860,9 +876,11 @@ const Settings = () => {
             showResults={showSearchResults}
             setShowResults={setShowSearchResults}
             navigate={navigate}
+            currentLanguage={currentLanguage}
+            onLanguageChange={handleLanguageChange}
           />
 
-          {/* Mobile Topbar with Search */}
+          {/* Mobile Topbar with Search and Language Switcher */}
           <MobileTopbar 
             chipName={chipName} 
             onMenuClick={() => setMobileMenuOpen(true)}
@@ -871,6 +889,8 @@ const Settings = () => {
             showResults={showSearchResults}
             setShowResults={setShowSearchResults}
             navigate={navigate}
+            currentLanguage={currentLanguage}
+            onLanguageChange={handleLanguageChange}
           />
 
           {/* Content Area */}
