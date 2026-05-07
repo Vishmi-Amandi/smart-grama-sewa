@@ -27,6 +27,8 @@ const IC = {
   bell:      'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
   menu:      'M3 6h18M3 12h18M3 18h18',
   close:     'M18 6L6 18M6 6l12 12',
+  calendar:  'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
+  check:     'M20 6L9 17l-5-5',
 };
 
 // Tag colour map
@@ -376,7 +378,9 @@ const DetailModal = ({ ann, onClose }) => {
             {ann.tag}
           </span>
           <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1e1200', marginBottom: 6, lineHeight: 1.4 }}>{ann.title}</h2>
-          <p style={{ fontSize: 12, color: '#aaa', fontWeight: 600, marginBottom: 14 }}>📅 {ann.dateLabel}</p>
+          <p style={{ fontSize: 12, color: '#aaa', fontWeight: 600, marginBottom: 14, display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <Icon d={IC.calendar} size={12} color="#aaa" /> {ann.dateLabel}
+          </p>
           <p style={{ fontSize: 14, color: '#444', lineHeight: 1.8, marginBottom: 22 }}>{ann.body}</p>
         </div>
         <div style={{ padding: '14px 24px', borderTop: '1px solid #f0e8d0', display: 'flex', justifyContent: 'flex-end' }}>
@@ -679,11 +683,12 @@ const Announcements = () => {
                     border: '1.5px solid #e8d5ac', backgroundColor: '#fff',
                     fontSize: 13, fontWeight: 800, color: '#3d2a00',
                     cursor: 'pointer', transition: 'all .15s',
+                    display: 'flex', alignItems: 'center', gap: '6px',
                   }}
                   onMouseOver={e => { e.currentTarget.style.backgroundColor = '#fff8e0'; e.currentTarget.style.borderColor = '#F5C400'; }}
                   onMouseOut={e  => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#e8d5ac'; }}
                 >
-                  ✓ Mark all as read
+                  <Icon d={IC.check} size={14} color="#3d2a00" sw={2.5} /> Mark all as read
                 </button>
               </div>
             )}
@@ -723,7 +728,14 @@ const Announcements = () => {
                     ))
                   : (
                     <div style={{ textAlign: 'center', padding: '60px 0', color: '#aaa', fontSize: 15, fontWeight: 600 }}>
-                      {activeTab === 'Unread' ? '✅ All caught up! No unread announcements.' : `No ${activeTab} announcements found.`}
+                      {activeTab === 'Unread' ? (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                          <Icon d={IC.check} size={16} color="#30a050" sw={2.5} />
+                          <span>All caught up! No unread announcements.</span>
+                        </div>
+                      ) : (
+                        `No ${activeTab} announcements found.`
+                      )}
                     </div>
                   )
                 }

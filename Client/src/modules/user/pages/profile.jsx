@@ -545,8 +545,13 @@ const Profile = () => {
                 </p>
 
                 {saveError && (
-                  <div style={{ backgroundColor: '#fde8e8', border: '1.5px solid #f0a0a0', borderRadius: '12px', padding: '12px 18px', marginBottom: '18px', fontSize: '14px', fontWeight: 700, color: '#8b1a1a' }}>
-                    ⚠ {saveError}
+                  <div style={{ backgroundColor: '#fde8e8', border: '1.5px solid #f0a0a0', borderRadius: '12px', padding: '12px 18px', marginBottom: '18px', fontSize: '14px', fontWeight: 700, color: '#8b1a1a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b1a1a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    {saveError}
                   </div>
                 )}
 

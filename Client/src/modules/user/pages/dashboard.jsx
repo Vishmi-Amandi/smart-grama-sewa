@@ -31,6 +31,17 @@ const Icons = {
   chevLeft:     'M15 18l-6-6 6-6',
   chevRight:    'M9 18l6-6-6-6',
   close:        'M18 6L6 18M6 6l12 12',
+  appointment: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
+  announcementIcon: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
+  formIcon: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
+  aiIcon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
+  success: 'M20 6L9 17l-5-5',
+  warning: 'M12 9v4 M12 17h.01 M12 2a10 10 0 100 20 10 10 0 000-20z',
+  info: 'M12 2a10 10 0 100 20A10 10 0 0012 2z M12 8v4 M12 16h.01',
+  error: 'M12 8v4 M12 16h.01 M12 2a10 10 0 100 20 10 10 0 000-20z',
+  checkbox: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z',
+  send: 'M22 2L11 13 M22 2l-7 20-4-9-9-4 20-7z',
+  emojiSmile: 'M12 2a10 10 0 100 20 10 10 0 000-20z M8 10h.01 M16 10h.01 M9 15h6',
 };
 
 // NavItem 
@@ -113,7 +124,9 @@ const AnnouncementsSkeleton = () => (
 // Empty state
 const EmptyState = ({ type }) => (
   <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-    <div style={{ fontSize: '48px', marginBottom: '12px', opacity: 0.5 }}>{type === 'appointments' ? '📅' : '📭'}</div>
+    <div style={{ marginBottom: '12px', opacity: 0.5 }}>
+      <Icon d={type === 'appointments' ? Icons.calendar : Icons.announcementIcon} size={48} color="#ccc" strokeWidth={1.2} />
+    </div>
     <div style={{ fontSize: '14px', fontWeight: 600, color: '#888' }}>No {type} available</div>
     <div style={{ fontSize: '12px', color: '#aaa', marginTop: '4px' }}>Check back later for updates</div>
   </div>
@@ -358,7 +371,14 @@ const Dashboard = () => {
     <div style={{ backgroundColor: '#c8a882', borderRadius: '18px', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
       <div style={{ padding: '16px 20px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: '15px', fontWeight: 900, color: '#fff' }}>Upcoming Appointments</div>
-        <button onClick={() => fetchAppointments(true)} disabled={refreshingAppointments} style={{ background: 'none', border: 'none', cursor: refreshingAppointments ? 'not-allowed' : 'pointer', fontSize: '16px', color: '#fff', transition: 'transform 0.3s', transform: refreshingAppointments ? 'rotate(180deg)' : 'none', opacity: refreshingAppointments ? 0.7 : 1 }}>🔄</button>
+        <button onClick={() => fetchAppointments(true)} disabled={refreshingAppointments} style={{ background: 'none', border: 'none', cursor: refreshingAppointments ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.3s', transform: refreshingAppointments ? 'rotate(180deg)' : 'none', opacity: refreshingAppointments ? 0.7 : 1 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 4v6h-6" />
+            <path d="M1 20v-6h6" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
+            <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+          </svg>
+        </button>
       </div>
       <div style={{ backgroundColor: '#fff', borderRadius: '0 0 16px 16px', padding: '6px 20px 12px', minHeight: '180px' }}>
         {loadingAppointments ? <AppointmentsSkeleton /> :
@@ -374,7 +394,14 @@ const Dashboard = () => {
     <div style={{ backgroundColor: '#c8a882', borderRadius: '18px', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
       <div style={{ padding: '16px 20px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: '15px', fontWeight: 900, color: '#fff' }}>Latest Announcements</div>
-        <button onClick={() => fetchAnnouncements(true)} disabled={refreshingAnnouncements} style={{ background: 'none', border: 'none', cursor: refreshingAnnouncements ? 'not-allowed' : 'pointer', fontSize: '16px', color: '#fff', transition: 'transform 0.3s', transform: refreshingAnnouncements ? 'rotate(180deg)' : 'none', opacity: refreshingAnnouncements ? 0.7 : 1 }}>🔄</button>
+        <button onClick={() => fetchAnnouncements(true)} disabled={refreshingAnnouncements} style={{ background: 'none', border: 'none', cursor: refreshingAnnouncements ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.3s', transform: refreshingAnnouncements ? 'rotate(180deg)' : 'none', opacity: refreshingAnnouncements ? 0.7 : 1 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 4v6h-6" />
+            <path d="M1 20v-6h6" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
+            <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+          </svg>
+        </button>
       </div>
       <div style={{ backgroundColor: '#fff', borderRadius: '0 0 16px 16px', padding: '16px 20px', minHeight: '180px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         {loadingAnnouncements ? <AnnouncementsSkeleton /> :

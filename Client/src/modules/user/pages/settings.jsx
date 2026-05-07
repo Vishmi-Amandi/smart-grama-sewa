@@ -26,11 +26,12 @@ const IC = {
   bell:      'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
   menu:      'M3 6h18M3 12h18M3 18h18',
   close:     'M6 18L18 6M6 6l12 12',
-  globe:     'M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z M2 12h20',
-  palette:   'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8z',
-  notif:     'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
+  globe:     'M12 2a10 10 0 100 20 10 10 0 000-20z M12 2c2 2 3 4.5 3 10s-1 8-3 10 M12 2c-2 2-3 4.5-3 10s1 8 3 10 M22 12h-4 M2 12H6',  
+  palette:   'M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 011.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z',
   shield:    'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
   user:      'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8z',
+  sun:       'M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41M12 6a6 6 0 100 12 6 6 0 000-12z',
+  moon:      'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z',
 };
 
 // List of all pages/functions for search
@@ -428,11 +429,11 @@ const HTab = ({ icon, label, active, onClick }) => (
     padding: '12px 18px', border: 'none', background: 'none',
     fontSize: 14, fontWeight: active ? 800 : 600,
     color: active ? '#1e1200' : '#888',
-    borderBottom: active ? '2.5px solid #1e1200' : '2.5px solid transparent',
+    borderBottom: active ? '2.5px solid #F5C400' : '2.5px solid transparent',
     marginBottom: -2, cursor: 'pointer', fontFamily: 'inherit',
     transition: 'all .15s', flexShrink: 0, whiteSpace: 'nowrap',
   }}>
-    <span style={{ fontSize: 16 }}>{icon}</span>
+    {icon}
     {label}
   </button>
 );
@@ -581,17 +582,27 @@ const SecurityTab = ({ currentUser, userData, db }) => {
           padding: isMobile ? '20px' : '22px 22px', 
           boxShadow: '0 1px 6px rgba(0,0,0,0.06)' 
         }}>
-          <div style={{ fontSize: isMobile ? 16 : 14, fontWeight: 800, color: '#1e1200', marginBottom: 18 }}>🔐 Change password</div>
+          <div style={{ fontSize: isMobile ? 16 : 14, fontWeight: 800, color: '#1e1200', marginBottom: 18, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            Change password
+          </div>
           
           {pwSuccess && (
             <div style={{ backgroundColor: '#e6f9ee', border: '1px solid #7ec07e', borderRadius: 10, padding: '12px', marginBottom: 14, fontSize: 13, fontWeight: 700, color: '#1a5c1a' }}>
-              ✅ Password changed successfully!
+              <Icon d={IC.check} size={14} color="#1a5c1a" /> Password changed successfully!
             </div>
           )}
           
           {pwError && (
             <div style={{ backgroundColor: '#fde8e8', border: '1px solid #f0a0a0', borderRadius: 10, padding: '12px', marginBottom: 14, fontSize: 13, fontWeight: 700, color: '#8b1a1a' }}>
-              ⚠ {pwError}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg> {pwError}
             </div>
           )}
           
@@ -605,24 +616,34 @@ const SecurityTab = ({ currentUser, userData, db }) => {
         </div>
 
         <div style={{ flex: 1, backgroundColor: '#fff', borderRadius: 14, padding: isMobile ? '20px' : '22px 22px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontSize: isMobile ? 16 : 14, fontWeight: 800, color: '#1e1200', marginBottom: 18 }}>📱 Update Mobile Number</div>
+          <div style={{ fontSize: isMobile ? 16 : 14, fontWeight: 800, color: '#1e1200', marginBottom: 18, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+              <line x1="12" y1="18" x2="12.01" y2="18" />
+            </svg>
+            Update Mobile Number
+          </div>
           
           {mobSuccess && (
             <div style={{ backgroundColor: '#e6f9ee', border: '1px solid #7ec07e', borderRadius: 10, padding: '12px', marginBottom: 14, fontSize: 13, fontWeight: 700, color: '#1a5c1a' }}>
-              ✅ Mobile number updated successfully!
+              <Icon d={IC.check} size={14} color="#1a5c1a" /> Mobile number updated successfully!
             </div>
           )}
           
           {mobError && (
             <div style={{ backgroundColor: '#fde8e8', border: '1px solid #f0a0a0', borderRadius: 10, padding: '12px', marginBottom: 14, fontSize: 13, fontWeight: 700, color: '#8b1a1a' }}>
-              ⚠ {mobError}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg> {mobError}            
             </div>
           )}
           
           <input type="tel" value={newMobile} onChange={e => { setNewMobile(e.target.value); setMobError(''); setOtpSent(false); setOtp(''); }} placeholder="New Mobile Number" style={fieldStyle(false)} />
           
           <button onClick={handleSendOtp} disabled={mobLoading || otpSent} style={{ width: '100%', padding: isMobile ? '14px' : '13px', borderRadius: 10, marginBottom: 12, backgroundColor: (mobLoading || otpSent) ? '#e8d888' : '#F5C400', border: 'none', color: '#3d2a00', fontSize: isMobile ? 15 : 14, fontWeight: 800, cursor: (mobLoading || otpSent) ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
-            {mobLoading && !otpSent ? 'Sending OTP…' : otpSent ? '✓ OTP Sent' : 'Send OTP'}
+            {mobLoading && !otpSent ? 'Sending OTP…' : otpSent ? <><Icon d={IC.check} size={12} color="#3d2a00" /> OTP Sent</> : 'Send OTP'}
           </button>
           
           <input type="text" value={otp} onChange={e => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setMobError(''); }} placeholder="Enter 6-digit OTP" disabled={!otpSent} style={{ ...fieldStyle(false), backgroundColor: otpSent ? '#f5f0e8' : '#f0ece8', cursor: otpSent ? 'text' : 'not-allowed', opacity: otpSent ? 1 : 0.6, letterSpacing: otp ? (isMobile ? '4px' : '6px') : '0', fontWeight: 800, textAlign: 'center', fontSize: isMobile ? 16 : 14 }} />
@@ -715,17 +736,27 @@ const AccountTab = ({ currentUser, userData, navigate }) => {
       </div>
 
       <div style={{ backgroundColor: '#fff', borderRadius: 14, padding: isMobile ? '20px' : '22px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)', border: '1.5px solid #f0c0c0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}><span style={{ fontSize: 18 }}>⚠️</span><span style={{ fontSize: isMobile ? 15 : 14, fontWeight: 900, color: '#c0392b' }}>Danger Zone</span></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c0392b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="12 2 2 20 22 20 12 2" />
+          <line x1="12" y1="9" x2="12" y2="13" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+        <span style={{ fontSize: isMobile ? 15 : 14, fontWeight: 900, color: '#c0392b' }}>Danger Zone</span>
+      </div>
         <p style={{ fontSize: isMobile ? 11 : 12, fontWeight: 600, color: '#e05050', marginBottom: 22 }}>These actions are permanent and cannot be undone</p>
 
         <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'flex-start', justifyContent: 'space-between', gap: isMobile ? 16 : 16, paddingBottom: 20, marginBottom: 20, borderBottom: '1px solid #f0ece4' }}>
           <div><div style={{ fontSize: isMobile ? 15 : 14, fontWeight: 800, color: '#1e1200', marginBottom: 4 }}>Sign Out of All Devices</div><div style={{ fontSize: isMobile ? 11 : 12, fontWeight: 600, color: '#888' }}>Immediately ends all active sessions across every device.</div></div>
-          <button onClick={handleSignOutEverywhere} disabled={signOutLoading} style={{ padding: isMobile ? '12px 20px' : '10px 20px', borderRadius: 999, flexShrink: 0, width: isMobile ? '100%' : 'auto', backgroundColor: '#fde8e8', border: '1.5px solid #f0a0a0', fontSize: isMobile ? 14 : 13, fontWeight: 800, color: '#c0392b', cursor: signOutLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>{signOutLoading ? 'Signing out…' : '🚪 Sign Out everywhere'}</button>
+          <button onClick={handleSignOutEverywhere} disabled={signOutLoading} style={{ padding: isMobile ? '12px 20px' : '10px 20px', borderRadius: 999, flexShrink: 0, width: isMobile ? '100%' : 'auto', backgroundColor: '#fde8e8', border: '1.5px solid #f0a0a0', fontSize: isMobile ? 14 : 13, fontWeight: 800, color: '#c0392b', cursor: signOutLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>{signOutLoading ? 'Signing out…' : <><Icon d={IC.logout} size={14} color="#c0392b" /> Sign Out everywhere</>}
+          </button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'flex-start', justifyContent: 'space-between', gap: isMobile ? 16 : 16 }}>
           <div><div style={{ fontSize: isMobile ? 15 : 14, fontWeight: 800, color: '#1e1200', marginBottom: 4 }}>Delete My Account</div><div style={{ fontSize: isMobile ? 11 : 12, fontWeight: 600, color: '#888' }}>Permanently deletes your account and all data. This requires GN Officer approval and cannot be reversed.</div></div>
-          <button onClick={() => setShowDeleteConfirm(true)} style={{ padding: isMobile ? '12px 20px' : '10px 20px', borderRadius: 999, flexShrink: 0, width: isMobile ? '100%' : 'auto', backgroundColor: '#fde8e8', border: '1.5px solid #e05050', fontSize: isMobile ? 14 : 13, fontWeight: 800, color: '#c0392b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>🗑️ Request Deletion</button>
+          <button onClick={() => setShowDeleteConfirm(true)} style={{ padding: isMobile ? '12px 20px' : '10px 20px', borderRadius: 999, flexShrink: 0, width: isMobile ? '100%' : 'auto', backgroundColor: '#fde8e8', border: '1.5px solid #e05050', fontSize: isMobile ? 14 : 13, fontWeight: 800, color: '#c0392b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+</svg> Request Deletion</button>
         </div>
       </div>
 
@@ -733,7 +764,13 @@ const AccountTab = ({ currentUser, userData, navigate }) => {
         <>
           <div onClick={() => { setShowDeleteConfirm(false); setDeleteInput(''); }} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 100 }} />
           <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 101, width: 'calc(100% - 32px)', maxWidth: 440, backgroundColor: '#fff', borderRadius: 20, padding: isMobile ? '24px' : '28px 28px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)', border: '2px solid #f0a0a0' }}>
-            <div style={{ fontSize: isMobile ? 40 : 36, textAlign: 'center', marginBottom: 10 }}>⚠️</div>
+          <div style={{ textAlign: 'center', marginBottom: 10 }}>
+            <svg width={isMobile ? 48 : 44} height={isMobile ? 48 : 44} viewBox="0 0 24 24" fill="none" stroke="#c0392b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 2 20 22 20 12 2" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </div>
             <h2 style={{ fontSize: isMobile ? 18 : 18, fontWeight: 900, color: '#1e1200', textAlign: 'center', marginBottom: 8 }}>Request Account Deletion?</h2>
             <p style={{ fontSize: isMobile ? 13 : 13, color: '#888', fontWeight: 600, textAlign: 'center', lineHeight: 1.6, marginBottom: 20 }}>This will submit a deletion request to your GN Officer.<br />Your account will remain active until approved.<br /><strong style={{ color: '#c0392b' }}>This cannot be undone.</strong></p>
             <p style={{ fontSize: isMobile ? 12 : 12, fontWeight: 700, color: '#555', marginBottom: 8 }}>Type <strong>DELETE</strong> to confirm:</p>
@@ -842,11 +879,11 @@ const Settings = () => {
   );
 
   const TABS = [
-    { id: 'language', icon: '🌐', label: 'Language' },
-    { id: 'appearance', icon: '🎨', label: 'Appearance' },
-    { id: 'notif', icon: '🔔', label: 'Notifications' },
-    { id: 'security', icon: '🛡️', label: 'Privacy & Security' },
-    { id: 'account', icon: '👤', label: 'Account' },
+    { id: 'language', icon: <Icon d={IC.globe} size={16} color="#B46A02" />, label: 'Language' },
+    { id: 'appearance', icon: <Icon d={IC.palette} size={16} color="#B46A02" />, label: 'Appearance' },
+    { id: 'notif', icon: <Icon d={IC.bell} size={16} color="#B46A02" />, label: 'Notifications' },
+    { id: 'security', icon: <Icon d={IC.shield} size={16} color="#B46A02" />, label: 'Privacy & Security' },
+    { id: 'account', icon: <Icon d={IC.profile} size={16} color="#B46A02" />, label: 'Account' },
   ];
 
   return (
@@ -930,10 +967,11 @@ const Settings = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                 <ContentCard>
                   <div style={{ fontSize: 15, fontWeight: 800, color: '#3d2a00', marginBottom: 16 }}>Theme</div>
-                  <RadioOption selected={settings.theme === 'light'} onClick={() => updateSetting('theme', 'light')} label="☀️ Light Mode" sub="Bright and clean interface — default" />
-                  <RadioOption selected={settings.theme === 'dark'} onClick={() => updateSetting('theme', 'dark')} label="🌙 Dark Mode" sub="Dark background, easy on the eyes at night" />
+                  <RadioOption selected={settings.theme === 'light'} onClick={() => updateSetting('theme', 'light')} label={<><Icon d={IC.sun} size={16} color="#f59e0b" /> Light Mode</>} sub="Bright and clean interface — default" />
+                  <RadioOption selected={settings.theme === 'dark'} onClick={() => updateSetting('theme', 'dark')} label={<><Icon d={IC.moon} size={16} color="#8b5cf6" /> Dark Mode</>} sub="Dark background, easy on the eyes at night" />
                   <div style={{ marginTop: 12, padding: '10px 16px', borderRadius: 10, backgroundColor: settings.theme === 'dark' ? '#2d2d44' : '#f5f0e8', border: '1.5px solid #e8d5ac', fontSize: 12, fontWeight: 600, color: settings.theme === 'dark' ? '#aaaacc' : '#888', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {settings.theme === 'dark' ? '🌙' : '☀️'} Currently: <strong style={{ color: settings.theme === 'dark' ? '#f0f0f0' : '#3d2a00' }}>{settings.theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</strong> — applied to entire app immediately
+                    {settings.theme === 'dark' ? <Icon d={IC.palette} size={14} color="#aaaacc" /> : <Icon d={IC.palette} size={14} color="#888" />}
+                    Currently: <strong style={{ color: settings.theme === 'dark' ? '#f0f0f0' : '#3d2a00' }}>{settings.theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</strong> — applied to entire app immediately
                   </div>
                 </ContentCard>
 
