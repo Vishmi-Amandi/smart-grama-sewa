@@ -89,6 +89,33 @@ const ChatbotWidget = () => {
     const question = inputValue.trim();
     if (!question) return;
 
+    // Check for language change commands
+    const lowerQuestion = question.toLowerCase();
+    let newLang = null;
+    let langName = '';
+    
+    if (lowerQuestion === 'english' || lowerQuestion === 'en') {
+      newLang = 'en';
+      langName = 'English';
+    } else if (lowerQuestion === 'sinhala' || lowerQuestion === 'සිංහල' || lowerQuestion === 'si') {
+      newLang = 'si';
+      langName = 'සිංහල';
+    } else if (lowerQuestion === 'tamil' || lowerQuestion === 'தமிழ்' || lowerQuestion === 'ta') {
+      newLang = 'ta';
+      langName = 'தமிழ்';
+    }
+
+    if (newLang) {
+      setLanguage(newLang);
+      setMessages(prev => [
+        ...prev, 
+        { sender: 'user', text: question },
+        { sender: 'bot', text: newLang === 'en' ? 'Language changed to English.' : newLang === 'si' ? 'භාෂාව සිංහල වෙත වෙනස් කරන ලදී.' : 'மொழி தமிழ் ஆக மாற்றப்பட்டது.' }
+      ]);
+      setInputValue('');
+      return;
+    }
+
     // Add user message
     setMessages(prev => [...prev, { sender: 'user', text: question }]);
     setInputValue('');
