@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Grama Sewa Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Floating Widget Button -->
+  <div class="chatbot-widget-btn" id="chatbot-widget-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"></path><rect x="4" y="8" width="16" height="12" rx="2" ry="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>
+  </div>
+
+  <div class="chat-container chat-hidden" id="chat-container">
+    <header class="chat-header">
+      <div class="avatar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"></path><rect x="4" y="8" width="16" height="12" rx="2" ry="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>
+      </div>
+      <div style="flex: 1;">
+        <h1>Smart Grama Sewa</h1>
+        <p class="status">Online</p>
+      </div>
+      <button class="close-btn" id="close-chat-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </header>
+    
+    <main class="chat-box" id="chat-box">
+      <!-- Chat messages will appear here -->
+      <div class="message bot-message">
+        <div class="message-content">
+          Hello! I am your Smart Grama Sewa Assistant. How can I help you today?
+        </div>
+      </div>
+    </main>
+
+    <footer class="chat-input-area">
+      <form id="chat-form">
+        <input type="text" id="user-input" placeholder="Type your question..." autocomplete="off" required>
+        <button type="submit" id="send-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </form>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

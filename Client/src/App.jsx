@@ -13,6 +13,7 @@ import Settings from './modules/user/pages/settings';
 
 // New module import
 import Home from './modules/home/Home';
+import ChatbotWidget from './modules/chatbot/ChatbotWidget';
 
 // Protected route wrapper
 import { useEffect, useState } from 'react';
@@ -79,12 +80,13 @@ const App = () => {
         } />
 
         {/* ── Default redirect ── */}
-        **<Route path="/"  element={<Home />} />**
+        <Route path="/"  element={<Home />} />
 
         {/* ── 404 fallback ── */}
-        **<Route path="*"  element={<Navigate to="/" replace />} />**
+        <Route path="*"  element={<Navigate to="/" replace />} />
 
       </Routes>
+      <ChatbotWidget />
     </Router>
   );
 };
