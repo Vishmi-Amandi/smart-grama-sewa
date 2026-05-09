@@ -124,16 +124,16 @@ const handleSaveDraft = async () => {
   setLoading(true);
   try {
     const user = auth.currentUser;
-    if (draft?.id) {
-      // Update existing draft
-      await updateDoc(doc(db, "announcements", draft.id), {
-        title,
-        description,
-        expiryDate,
-        status: "Draft",
-        updatedAt: serverTimestamp(),
-      });
-    } else {
+if (draft?.id) {
+  await updateDoc(doc(db, "announcements", draft.id), {
+    title,
+    description,
+    expiresAt: expiryDate ? Timestamp.fromDate(new Date(expiryDate)) : null,
+    expiryDate: expiryDate || "",
+    status: "Draft",
+    updatedAt: serverTimestamp(),
+  });
+}else {
       // Create new draft
       await addDoc(collection(db, "announcements"), {
         title,
@@ -161,24 +161,28 @@ const handlePublish = async () => {
   setLoading(true);
   try {
     const user = auth.currentUser;
+    console.log("Draft ID:", draft?.id);
+    console.log("Expiry Date:", expiryDate);
+    console.log("Title:", title);
     if (draft?.id) {
-      // Update existing draft and publish
-      await updateDoc(doc(db, "announcements", draft.id), {
-        title,
-        description,
-        expiryDate,
-        status: "Active",
-        publishedAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-    } else {
+  await updateDoc(doc(db, "announcements", draft.id), {
+    title,
+    description,
+    expiresAt: expiryDate ? Timestamp.fromDate(new Date(expiryDate)) : null,
+    expiryDate: expiryDate || "",
+    status: "Active",
+    publishedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+} else {
       // Create new and publish
       await addDoc(collection(db, "announcements"), {
         title,
         description,
-        expiryDate,
+        expiresAt: expiryDate ? Timestamp.fromDate(new Date(expiryDate)) : null,
+        expiryDate: expiryDate || "",
         status: "Active",
-        createdBy: user.displayName || "Officer",
+        createdBy: user.uid,
         createdByUid: user.uid,
         createdAt: serverTimestamp(),
         publishedAt: serverTimestamp(),

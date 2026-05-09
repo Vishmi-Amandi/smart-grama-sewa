@@ -1,9 +1,68 @@
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { CalendarCheck, ClipboardList, Megaphone, TrendingUp, AlertCircle, Clock, ArrowLeftRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { collection, query, orderBy, limit, getDocs, where } from "firebase/firestore";
+import { auth, db } from "../../firebase";
 
 const GNDashboard = ({ gnStatus, theme }) => {
   const t = getThemeClasses(theme);
+
+ const [announcements, setAnnouncements] = useState([]);
+const [announcementStats, setAnnouncementStats] = useState({
+  total: 0,
+  active: 0,
+});
+
+useEffect(() => {
+  const fetchAnnouncements = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      // Try fetching with createdByUid first
+      const q = query(
+        collection(db, "announcements"),
+        where("createdBy", "==", user.uid),
+        orderBy("createdAt", "desc"),
+        limit(3)
+      );
+      const snap = await getDocs(q);
+      let data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+      // If empty try createdBy field
+      if (data.length === 0) {
+        const q2 = query(
+          collection(db, "announcements"),
+          where("createdBy", "==", user.uid),
+          orderBy("createdAt", "desc"),
+          limit(3)
+        );
+        const snap2 = await getDocs(q2);
+        data = snap2.docs.map((d) => ({ id: d.id, ...d.data() }));
+      }
+
+      setAnnouncements(data);
+
+      // Get all for stats
+      const allQ = query(
+        collection(db, "announcements"),
+        where("createdBy", "==", user.uid)
+      );
+      const allSnap = await getDocs(allQ);
+      const allData = allSnap.docs.map((d) => d.data());
+      const activeCount = allData.filter((a) => a.status === "Active").length;
+      setAnnouncementStats({
+        total: allData.length,
+        active: activeCount,
+      });
+
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
+  };
+  fetchAnnouncements();
+}, []); 
 
   return (
     <GNLayout gnStatus={gnStatus} theme={theme}>
@@ -38,15 +97,15 @@ const GNDashboard = ({ gnStatus, theme }) => {
           </p>
         </div>
 
-        {/* Card 3 */}
-        <div className={`${t.card} rounded-2xl shadow p-5`}>
-          <div className="flex items-center justify-between">
-            <p className={`text-xs font-semibold uppercase tracking-wide ${t.subtext}`}>Total Announcements</p>
-            <Megaphone size={20} className="text-gray-400" />
-          </div>
-          <h2 className={`text-4xl font-bold mt-2 ${t.text}`}>24</h2>
-          <p className={`text-xs mt-2 ${t.subtext}`}>Active in this month</p>
-        </div>
+  {/* Card 3 */}
+<div className={`${t.card} rounded-2xl shadow p-5`}>
+  <div className="flex items-center justify-between">
+    <p className={`text-xs font-semibold uppercase tracking-wide ${t.subtext}`}>Total Announcements</p>
+    <Megaphone size={20} className="text-gray-400" />
+  </div>
+  <h2 className={`text-4xl font-bold mt-2 ${t.text}`}>{announcementStats.total}</h2>
+  <p className={`text-xs mt-2 ${t.subtext}`}>{announcementStats.active} Active this month</p>
+</div>
 
       </div>
 
@@ -118,48 +177,46 @@ const GNDashboard = ({ gnStatus, theme }) => {
             <Megaphone size={16} className="text-[#8B4513]" />
             Recent Announcements List
           </p>
-          <a href="#" className="text-xs text-[#E5A800] font-semibold hover:underline">
-            View All →
-          </a>
+          <Link to="/announcement-list" className="text-xs text-[#E5A800] font-semibold hover:underline">
+  View All →
+</Link>
         </div>
 
-        {/* Announcement Items */}
-        <div className="space-y-4">
+{/* Announcement Items */}
+<div className="space-y-4">
+  {announcements.length === 0 ? (
+    <p className={`text-sm text-center py-4 ${t.subtext}`}>
+      No announcements yet.
+    </p>
+  ) : (
+    announcements.map((item, index) => {
+      const bgs = ["bg-blue-50", "bg-yellow-50", "bg-green-50"];
+      const isLast = index === announcements.length - 1;
+      const createdAt = item.createdAt?.toDate?.() || new Date();
+      const timeAgo = Math.floor((new Date() - createdAt) / (1000 * 60 * 60));
+      const timeLabel = timeAgo < 1 ? "Just now" :
+        timeAgo < 24 ? `${timeAgo} hours ago` :
+        `${Math.floor(timeAgo / 24)} days ago`;
 
-          {/* Item 1 */}
-          <div className={`flex items-center gap-4 border-b pb-4 ${t.border}`}>
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-              💧
-            </div>
-            <div>
-              <p className={`text-sm font-semibold ${t.text}`}>Scheduled Water Maintenance - Zone B</p>
-              <p className={`text-xs ${t.subtext}`}>Published 2 hours ago • By Admin</p>
-            </div>
+      return (
+        <div key={item.id} className={`flex items-center gap-4 ${!isLast ? `border-b pb-4 ${t.border}` : ""}`}>
+          <div className="flex-1">
+            <p className={`text-sm font-semibold ${t.text}`}>{item.title}</p>
+            <p className={`text-xs ${t.subtext}`}>
+              {timeLabel} • {item.status || "Draft"}
+            </p>
           </div>
-
-          {/* Item 2 */}
-          <div className={`flex items-center gap-4 border-b pb-4 ${t.border}`}>
-            <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center flex-shrink-0">
-              🛡️
-            </div>
-            <div>
-              <p className={`text-sm font-semibold ${t.text}`}>Monthly Vaccination Clinic Announcement</p>
-              <p className={`text-xs ${t.subtext}`}>Published 1 day ago • By Officer Perera</p>
-            </div>
-          </div>
-
-          {/* Item 3 */}
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
-              💰
-            </div>
-            <div>
-              <p className={`text-sm font-semibold ${t.text}`}>Elderly Benefit Distribution - October 2023</p>
-              <p className={`text-xs ${t.subtext}`}>Published 3 days ago • By Admin</p>
-            </div>
-          </div>
-
+          <span className={`text-xs font-semibold px-2 py-1 rounded-full
+            ${item.status === "Active" ? "bg-green-100 text-green-700" :
+              item.status === "Draft" ? "bg-yellow-100 text-yellow-700" :
+              "bg-gray-100 text-gray-500"}`}>
+            {item.status}
+          </span>
         </div>
+      );
+    })
+  )}
+</div>
       </div>
 
     </GNLayout>

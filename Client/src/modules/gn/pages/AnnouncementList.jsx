@@ -97,29 +97,43 @@ const AnnouncementList = ({ gnStatus, theme }) => {
   };
 
   // ─── Edit Save ───────────────────────────────────────────────────────────────
-  const handleSaveEdit = async () => {
-    setSaving(true);
-    try {
-      const updates = {
+const handleSaveEdit = async () => {
+  setSaving(true);
+  try {
+    const updates = {
+      title:       editForm.title,
+      description: editForm.description,
+      category:    editForm.category,
+      priority:    editForm.priority,
+      expiresAt:   editForm.expiryDate
+        ? Timestamp.fromDate(new Date(editForm.expiryDate))
+        : null,
+    };
+
+    // ✅ Actually save to Firestore
+    await updateDoc(doc(db, "announcements", editingItem.id), updates);
+
+    // ✅ Update local state
+    setAnnouncements((prev) =>
+      prev.map((a) => a.id === editingItem.id ? {
+        ...a,
         title:       editForm.title,
         description: editForm.description,
         category:    editForm.category,
         priority:    editForm.priority,
         expiresAt:   editForm.expiryDate
-          ? Timestamp.fromDate(new Date(editForm.expiryDate))
+          ? { toDate: () => new Date(editForm.expiryDate), seconds: new Date(editForm.expiryDate).getTime() / 1000 }
           : null,
-      };
-      await updateDoc(doc(db, "announcements", editingItem.id), updates);
-      setAnnouncements((prev) =>
-        prev.map((a) => a.id === editingItem.id ? { ...a, ...updates } : a)
-      );
-      setEditingItem(null);
-    } catch (err) {
-      console.error("Edit error:", err);
-    } finally {
-      setSaving(false);
-    }
-  };
+      } : a)
+    );
+
+    setEditingItem(null);
+  } catch (err) {
+    console.error("Edit error:", err);
+  } finally {
+    setSaving(false);
+  }
+};
 
   const formatDate = (ts) => {
     if (!ts) return "N/A";
@@ -226,7 +240,16 @@ const AnnouncementList = ({ gnStatus, theme }) => {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <button
-  onClick={() => navigate("/create-announcement", { state: { draft: item } })}
+  onClick={() => navigate("/create-announcement", { 
+  state: { 
+    draft: {
+      ...item,
+      expiryDate: item.expiresAt 
+        ? new Date(item.expiresAt.seconds * 1000).toISOString().split("T")[0]
+        : "",
+    } 
+  } 
+})}
   className="text-gray-400 hover:text-blue-500 transition"
 >
   <Pencil size={16} />
