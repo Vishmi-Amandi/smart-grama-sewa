@@ -1,7 +1,83 @@
+import { useState, useEffect } from "react";
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
+import { auth, db } from "../../firebase";
+import { collection, query, where, getDocs, doc, updateDoc, orderBy, getDoc } from "firebase/firestore";
 
 const AppointmentList = ({ gnStatus, theme }) => {
   const t = getThemeClasses(theme);
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [gnDivision, setGnDivision] = useState("");
+
+useEffect(() => {
+  const fetchAppointments = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      // Get GN officer's division name directly by document ID
+      const { getDoc } = await import("firebase/firestore");
+      const officerSnap = await getDoc(doc(db, "gn_officers", user.uid));
+
+      let divisionName = "";
+      if (officerSnap.exists()) {
+        divisionName = officerSnap.data().gnDivisionName || "";
+        setGnDivision(divisionName);
+        console.log("GN Division:", divisionName);
+      }
+
+      if (!divisionName) {
+        console.log("No division name found!");
+        setLoading(false);
+        return;
+      }
+
+      // Fetch appointments for this GN division
+      const q = query(
+        collection(db, "appointments"),
+        where("gnDiv", "==", divisionName),
+        orderBy("createdAt", "desc")
+      );
+      const snap = await getDocs(q);
+      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      console.log("Appointments found:", data.length);
+      setAppointments(data);
+
+    } catch (err) {
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchAppointments();
+}, []);
+
+  const handleConfirm = async (appointment) => {
+  try {
+    await updateDoc(doc(db, "appointments", appointment.id), {
+      status: "Confirmed",
+    });
+    setAppointments((prev) =>
+      prev.map((a) => a.id === appointment.id ? { ...a, status: "Confirmed" } : a)
+    );
+  } catch (err) {
+    console.error("Confirm error:", err);
+  }
+};
+
+const handleCancel = async (id) => {
+  try {
+    await updateDoc(doc(db, "appointments", id), {
+      status: "Cancelled",
+    });
+    setAppointments((prev) =>
+      prev.map((a) => a.id === id ? { ...a, status: "Cancelled" } : a)
+    );
+  } catch (err) {
+    console.error("Cancel error:", err);
+  }
+};
 
   return (
     <GNLayout gnStatus={gnStatus} theme={theme}>
@@ -11,25 +87,20 @@ const AppointmentList = ({ gnStatus, theme }) => {
         <h1 className="text-2xl font-bold text-[#8B4513]">Appointment List</h1>
       </div>
 
-      {/* Filter Bar */}
-      <div className={`${t.card} rounded-2xl shadow px-5 py-3 flex items-center gap-4 mb-6`}>
-        <div className="flex items-center gap-2">
-          <span className={`text-xs uppercase font-semibold ${t.subtext}`}>Date</span>
-          <button className="bg-[#E5A800] text-black text-xs font-semibold px-3 py-1 rounded-full">Today</button>
-        </div>
-        <div className={`w-px h-5 ${t.border} bg-gray-200`}></div>
-        <div className="flex items-center gap-2">
-          <span className={`text-xs uppercase font-semibold ${t.subtext}`}>Status</span>
-          <button className="bg-[#E5A800] text-black text-xs font-semibold px-3 py-1 rounded-full">All Status</button>
-        </div>
-        <div className={`w-px h-5 bg-gray-200`}></div>
-        <div className="flex items-center gap-2 ml-auto">
-          <span className={`text-xs uppercase font-semibold ${t.subtext}`}>Sort By</span>
-          <button className={`border ${t.border} text-xs font-semibold px-3 py-1 rounded-full ${t.subtext}`}>
-            Time (Asc) ▾
-          </button>
-        </div>
-      </div>
+     {/* Filter Bar */}
+<div className={`${t.card} rounded-2xl shadow px-5 py-3 flex items-center gap-4 mb-6`}>
+  {["All", "Pending", "Confirmed", "Cancelled"].map((status) => (
+    <button
+      key={status}
+      onClick={() => setFilterStatus(status)}
+      className={`text-xs font-semibold px-3 py-1 rounded-full transition
+        ${filterStatus === status
+          ? "bg-[#E5A800] text-black"
+          : `border ${t.border} ${t.subtext}`}`}>
+      {status}
+    </button>
+  ))}
+</div>
 
       {/* Table */}
       <div className={`${t.card} rounded-2xl shadow overflow-hidden`}>
@@ -44,77 +115,67 @@ const AppointmentList = ({ gnStatus, theme }) => {
             </tr>
           </thead>
 
-          <tbody className={t.divider}>
-
-            {/* Row 1 */}
-            <tr className={t.tableRow}>
-              <td className={`px-6 py-4 ${t.subtext}`}>09:00 AM</td>
-              <td className="px-6 py-4">
-                <p className="font-semibold text-[#8B4513]">Amara Siriwardena</p>
-                <p className={`text-xs ${t.subtext}`}>NIC: 947320634V</p>
-              </td>
-              <td className={`px-6 py-4 ${t.subtext}`}>Land Registry</td>
-              <td className="px-6 py-4">
-                <span className="bg-yellow-100 text-yellow-700 text-xs font-semibold px-3 py-1 rounded-full">Pending</span>
-              </td>
-              <td className="px-6 py-4 flex items-center gap-3">
-                <button className="text-gray-400 hover:text-gray-600">👁</button>
-                <button className="text-gray-400 hover:text-gray-600">✏️</button>
-              </td>
-            </tr>
-
-            {/* Row 2 */}
-            <tr className={t.tableRow}>
-              <td className={`px-6 py-4 ${t.subtext}`}>10:30 AM</td>
-              <td className="px-6 py-4">
-                <p className="font-semibold text-[#8B4513]">Sunil Perera</p>
-                <p className={`text-xs ${t.subtext}`}>NIC: 910237465V</p>
-              </td>
-              <td className={`px-6 py-4 ${t.subtext}`}>Identity Card Renewal</td>
-              <td className="px-6 py-4">
-                <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">Confirmed</span>
-              </td>
-              <td className="px-6 py-4 flex items-center gap-3">
-                <button className="text-gray-400 hover:text-gray-600">👁</button>
-                <button className="text-gray-400 hover:text-gray-600">✏️</button>
-              </td>
-            </tr>
-
-            {/* Row 3 */}
-            <tr className={t.tableRow}>
-              <td className={`px-6 py-4 ${t.subtext}`}>01:15 PM</td>
-              <td className="px-6 py-4">
-                <p className="font-semibold text-[#8B4513]">Komal Gunaratne</p>
-                <p className={`text-xs ${t.subtext}`}>NIC: 885643210V</p>
-              </td>
-              <td className={`px-6 py-4 ${t.subtext}`}>Character Certificate</td>
-              <td className="px-6 py-4">
-                <span className="bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">Arrived</span>
-              </td>
-              <td className="px-6 py-4 flex items-center gap-3">
-                <button className="text-gray-400 hover:text-gray-600">👁</button>
-                <button className="text-gray-400 hover:text-gray-600">✏️</button>
-              </td>
-            </tr>
-
-            {/* Row 4 */}
-            <tr className={t.tableRow}>
-              <td className={`px-6 py-4 ${t.subtext}`}>02:45 PM</td>
-              <td className="px-6 py-4">
-                <p className="font-semibold text-[#8B4513]">Nimmi Fernando</p>
-                <p className={`text-xs ${t.subtext}`}>NIC: 956789043V</p>
-              </td>
-              <td className={`px-6 py-4 ${t.subtext}`}>Residency Verification</td>
-              <td className="px-6 py-4">
-                <span className="bg-yellow-100 text-yellow-700 text-xs font-semibold px-3 py-1 rounded-full">Pending</span>
-              </td>
-              <td className="px-6 py-4 flex items-center gap-3">
-                <button className="text-gray-400 hover:text-gray-600">👁</button>
-                <button className="text-gray-400 hover:text-gray-600">✏️</button>
-              </td>
-            </tr>
-
-          </tbody>
+         <tbody className={t.divider}>
+  {loading ? (
+    <tr>
+      <td colSpan={5} className="px-6 py-12 text-center">
+        <p className={`text-sm ${t.subtext}`}>Loading appointments...</p>
+      </td>
+    </tr>
+  ) : appointments.length === 0 ? (
+    <tr>
+      <td colSpan={5} className="px-6 py-12 text-center">
+        <p className={`text-sm ${t.subtext}`}>No appointments found.</p>
+      </td>
+    </tr>
+  ) : (
+    appointments
+      .filter((a) => filterStatus === "All" || a.status === filterStatus)
+      .map((a) => (
+        <tr key={a.id} className={t.tableRow}>
+          <td className={`px-6 py-4 ${t.subtext}`}>{a.slot}</td>
+          <td className="px-6 py-4">
+            <p className="font-semibold text-[#8B4513]">{a.fullName}</p>
+            <p className={`text-xs ${t.subtext}`}>NIC: {a.nic}</p>
+          </td>
+          <td className={`px-6 py-4 ${t.subtext}`}>{a.service}</td>
+          <td className="px-6 py-4">
+            <span className={`text-xs font-semibold px-3 py-1 rounded-full
+              ${a.status === "Confirmed" ? "bg-blue-100 text-blue-700" :
+                a.status === "Cancelled" ? "bg-red-100 text-red-700" :
+                a.status === "Pending" ? "bg-yellow-100 text-yellow-700" :
+                "bg-gray-100 text-gray-500"}`}>
+              {a.status}
+            </span>
+          </td>
+          <td className="px-6 py-4">
+            <div className="flex items-center gap-2">
+              {a.status === "Pending" && (
+                <>
+                  <button
+                    onClick={() => handleConfirm(a)}
+                    className="text-xs bg-green-100 text-green-700 font-semibold px-3 py-1 rounded-lg hover:bg-green-200 transition">
+                    ✓ Confirm
+                  </button>
+                  <button
+                    onClick={() => handleCancel(a.id)}
+                    className="text-xs bg-red-100 text-red-700 font-semibold px-3 py-1 rounded-lg hover:bg-red-200 transition">
+                    ✕ Cancel
+                  </button>
+                </>
+              )}
+              {a.status === "Confirmed" && (
+                <span className="text-xs text-green-600 font-semibold">✓ Confirmed</span>
+              )}
+              {a.status === "Cancelled" && (
+                <span className="text-xs text-red-500 font-semibold">✕ Cancelled</span>
+              )}
+            </div>
+          </td>
+        </tr>
+      ))
+  )}
+</tbody> 
         </table>
 
         {/* Pagination */}
