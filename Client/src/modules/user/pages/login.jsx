@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../../firebase';
 
 const Login = () => {
@@ -11,6 +11,12 @@ const Login = () => {
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState('');
   const [isMobile, setIsMobile]         = useState(window.innerWidth <= 768);
+  
+  // Forgot Password states
+  const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState('');
 
   const navigate = useNavigate();
 
@@ -37,7 +43,16 @@ const Login = () => {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log('Login successful:', userCredential.user.email);
+      const user = userCredential.user;
+      
+      // CHECK IF EMAIL IS VERIFIED
+      if (!user.emailVerified) {
+        setError('Please verify your email before logging in. Check your inbox for verification link.');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Login successful:', user.email);
       navigate('/dashboard');
     } catch (err) {
       console.error('Login error:', err);
@@ -62,6 +77,36 @@ const Login = () => {
     }
   };
 
+  // Forgot Password handler
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setResetError('Please enter your email address');
+      return;
+    }
+    
+    setResetLoading(true);
+    setResetError('');
+    
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setResetEmailSent(true);
+    } catch (err) {
+      console.error('Password reset error:', err);
+      switch(err.code) {
+        case 'auth/user-not-found':
+          setResetError('No account found with this email');
+          break;
+        case 'auth/invalid-email':
+          setResetError('Invalid email format');
+          break;
+        default:
+          setResetError('Failed to send reset email. Please try again.');
+      }
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   const inputStyle = {
     width: '100%',
     backgroundColor: '#ffffff',
@@ -76,6 +121,143 @@ const Login = () => {
     transition: 'border-color 0.15s',
   };
 
+  // FORGOT PASSWORD UI
+  if (forgotPasswordMode) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{
+          flex: 1,
+          backgroundImage: 'url(/background.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+        }}>
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255, 255, 255, 0.6)', pointerEvents: 'none' }} />
+          
+          <div style={{ position: 'relative', zIndex: 10, padding: isMobile ? '16px 20px' : '20px 24px' }}>
+            <img src="/logo.png" alt="Smart Grama Sewa" style={{ height: isMobile ? '100px' : '120px', width: 'auto' }} />
+          </div>
+          
+          <div style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '0 16px 40px' : '0 16px 48px' }}>
+            <h1 style={{ fontSize: isMobile ? '32px' : '40px', fontWeight: 900, color: '#332421', marginBottom: isMobile ? '20px' : '28px', textAlign: 'center' }}>
+              Reset Password
+            </h1>
+            
+            <div style={{ width: '90%', maxWidth: '440px', backgroundColor: 'rgba(106, 35, 1, 0.6)', borderRadius: isMobile ? '20px' : '24px', padding: isMobile ? '24px 20px' : '32px 32px 28px', boxShadow: '0 20px 60px rgba(0,0,0,0.35)' }}>
+              
+              {resetEmailSent ? (
+                <>
+                  <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📧</div>
+                    <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fdf0dc', marginBottom: '12px' }}>Check Your Email</h2>
+                    <p style={{ fontSize: '14px', color: '#fdf0dc', lineHeight: 1.6 }}>
+                      We've sent a password reset link to <strong>{email}</strong>.<br />
+                      Please check your inbox and follow the instructions.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setForgotPasswordMode(false);
+                      setResetEmailSent(false);
+                      setResetError('');
+                    }}
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#F5C400',
+                      color: '#3d2a00',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: isMobile ? '14px' : '13px',
+                      fontSize: isMobile ? '16px' : '15px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    Back to Sign In
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p style={{ color: '#fdf0dc', fontSize: '14px', marginBottom: '20px', textAlign: 'center' }}>
+                    Enter your email address and we'll send you a link to reset your password.
+                  </p>
+                  
+                  {resetError && (
+                    <div style={{ marginBottom: '18px', backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: '12px', padding: '11px 16px', color: '#fde8c8', fontSize: '13px', fontWeight: 600 }}>
+                      ⚠ {resetError}
+                    </div>
+                  )}
+                  
+                  <div style={{ marginBottom: '24px' }}>
+                    <label style={{ display: 'block', color: '#fdf0dc', fontSize: '14px', fontWeight: 700, marginBottom: '7px' }}>Email Address</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      style={inputStyle}
+                      onFocus={(e) => (e.target.style.borderColor = '#F5C400')}
+                      onBlur={(e) => (e.target.style.borderColor = 'transparent')}
+                    />
+                  </div>
+                  
+                  <button
+                    onClick={handleForgotPassword}
+                    disabled={resetLoading}
+                    style={{
+                      width: '100%',
+                      backgroundColor: resetLoading ? '#4a5e72' : '#5a6e82',
+                      color: '#F5C400',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: isMobile ? '16px' : '15px',
+                      fontSize: isMobile ? '16px' : '17px',
+                      fontWeight: 900,
+                      cursor: resetLoading ? 'not-allowed' : 'pointer',
+                      opacity: resetLoading ? 0.7 : 1,
+                      marginBottom: '12px',
+                    }}
+                  >
+                    {resetLoading ? 'Sending...' : 'Send Reset Link'}
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      setForgotPasswordMode(false);
+                      setResetError('');
+                    }}
+                    style={{
+                      width: '100%',
+                      backgroundColor: 'transparent',
+                      color: '#fdf0dc',
+                      border: '1.5px solid #fdf0dc',
+                      borderRadius: '12px',
+                      padding: isMobile ? '14px' : '13px',
+                      fontSize: isMobile ? '14px' : '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ← Back to Sign In
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <footer style={{ textAlign: 'center', backgroundColor: '#6A2301', color: '#ffffff', padding: isMobile ? '12px 16px' : '14px 16px', fontSize: isMobile ? '13px' : '15px', fontWeight: 600 }}>
+          ©2026 Smart Grama Sewa
+        </footer>
+      </div>
+    );
+  }
+
+  // MAIN LOGIN UI
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 
@@ -273,19 +455,22 @@ const Login = () => {
                 />
                 Keep me signed in
               </label>
-              <a
-                href="/forgot-password"
+              <button
+                onClick={() => setForgotPasswordMode(true)}
                 style={{
                   fontSize: isMobile ? '14px' : '13px',
                   fontWeight: 700,
                   color: '#fdf0dc',
                   textDecoration: 'none',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
                 }}
                 onMouseOver={(e) => (e.target.style.color = '#ffffff')}
                 onMouseOut={(e)  => (e.target.style.color = '#fdf0dc')}
               >
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             {/* Sign In button */}

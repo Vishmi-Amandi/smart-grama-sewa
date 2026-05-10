@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 
@@ -195,6 +195,52 @@ const EyeIcon = ({ open }) => open ? (
   </svg>
 );
 
+// COMPLETE DISTRICT_DS_MAP - All 25 Districts of Sri Lanka
+const DISTRICT_DS_MAP = {
+  // Western Province
+  'Colombo': ['Colombo', 'Dehiwala', 'Homagama', 'Kaduwela', 'Kesbewa', 'Kolonnawa', 'Kotte', 'Maharagama', 'Moratuwa', 'Padukka', 'Seethawaka', 'Thimbirigasyaya'],
+  'Gampaha': ['Attanagalla', 'Biyagama', 'Divulapitiya', 'Dompe', 'Gampaha', 'Ja-Ela', 'Katana', 'Kelaniya', 'Mahara', 'Minuwangoda', 'Mirigama', 'Negombo', 'Wattala'],
+  'Kalutara': ['Agalawatta', 'Bandaragama', 'Beruwala', 'Bulathsinhala', 'Dodangoda', 'Horana', 'Ingiriya', 'Kalutara', 'Madurawela', 'Mathugama', 'Millaniya', 'Palindanuwara', 'Panadura', 'Walallawita'],
+
+  // Central Province
+  'Kandy': ['Akurana', 'Delthota', 'Doluwa', 'Ganga Ihala Korale', 'Harispattuwa', 'Hatharaliyadda', 'Kandy', 'Kundasale', 'Medadumbara', 'Minipe', 'Panvila', 'Pasbage Korale', 'Pathadumbara', 'Pathahewaheta', 'Poojapitiya', 'Thumpane', 'Udadumbara', 'Udapalatha', 'Ududumbara'],
+  'Matale': ['Ambanganga Korale', 'Dambulla', 'Galewela', 'Laggala-Pallegama', 'Matale', 'Naula', 'Pallepola', 'Rattota', 'Ukuwela', 'Wilgamuwa', 'Yatawatta'],
+  'Nuwara Eliya': ['Ambagamuwa', 'Hanguranketha', 'Kotmale', 'Nuwara Eliya', 'Walapane'],
+
+  // Southern Province
+  'Galle': ['Akmeemana', 'Ambalangoda', 'Balapitiya', 'Baddegama', 'Benthota', 'Bope-Poddala', 'Elpitiya', 'Galle', 'Gonapinuwala', 'Hikkaduwa', 'Imaduwa', 'Karandeniya', 'Nagoda', 'Neluwa', 'Niyagama', 'Poddala', 'Welivitiya-Divithura', 'Yakkalamulla'],
+  'Matara': ['Akuressa', 'Athuraliya', 'Devinuwara', 'Dickwella', 'Hakmana', 'Kamburupitiya', 'Kirinda Puhulwella', 'Kotapola', 'Malimbada', 'Matara', 'Mulatiyana', 'Pasgoda', 'Pitabeddara', 'Thihagoda', 'Weligama', 'Welipitiya'],
+  'Hambantota': ['Ambalantota', 'Angunakolapelessa', 'Beliatta', 'Hambantota', 'Katuwana', 'Lunugamvehera', 'Okewela', 'Sooriyawewa', 'Tangalle', 'Thissamaharama', 'Weeraketiya', 'Walasmulla'],
+
+  // Northern Province
+  'Jaffna': ['Delft', 'Island North', 'Island South', 'Jaffna', 'Karainagar', 'Nallur', 'Thenmaradchi', 'Vadamaradchi East', 'Vadamaradchi North', 'Vadamaradchi South-West', 'Valikamam East', 'Valikamam North', 'Valikamam South', 'Valikamam South-West', 'Valikamam West'],
+  'Kilinochchi': ['Kandawalai', 'Karachchi', 'Pachchilaipalli', 'Poonakary'],
+  'Mannar': ['Madhu', 'Mannar', 'Musalai', 'Nanaddan'],
+  'Mullaitivu': ['Maritimepattu', 'Oddusuddan', 'Puthukudiyiruppu', 'Thunukkai', 'Welioya'],
+  'Vavuniya': ['Vavuniya', 'Vavuniya North', 'Vavuniya South', 'Vengalacheddikulam'],
+
+  // Eastern Province
+  'Trincomalee': ['Kantalai', 'Kinniya', 'Kuchchaveli', 'Morawewa', 'Muttur', 'Padavi Sripura', 'Seruwila', 'Thambalagamuwa', 'Trincomalee', 'Verugal'],
+  'Batticaloa': ['Eravur Pattu', 'Eravur Town', 'Kattankudy', 'Koralai Pattu', 'Koralai Pattu Central', 'Koralai Pattu North', 'Koralai Pattu South', 'Koralai Pattu West', 'Manmunai North', 'Manmunai Pattu', 'Manmunai South and Eruvil Pattu', 'Manmunai West', 'Porativu Pattu'],
+  'Ampara': ['Addalaichenai', 'Akkaraipattu', 'Ampara', 'Damana', 'Dehiattakandiya', 'Irakkamam', 'Kalmunai', 'Kalmunai Muslim', 'Karaitivu', 'Lahugala', 'Mahaoya', 'Navithanveli', 'Nintavur', 'Padiyathalawa', 'Pothuvil', 'Samanthurai', 'Thirukovil', 'Uhana'],
+
+  // North Western Province
+  'Kurunegala': ['Alawwa', 'Ambanpola', 'Bamunakotuwa', 'Bingiriya', 'Dodangaslanda', 'Ehetuwewa', 'Galgamuwa', 'Ganewatta', 'Giribawa', 'Ibbagamuwa', 'Katugampola', 'Kobeigane', 'Kotavehera', 'Kuliyapitiya East', 'Kuliyapitiya West', 'Kurunegala', 'Mahawa', 'Mallawapitiya', 'Maspotha', 'Mawathagama', 'Narammala', 'Nikaweratiya', 'Panduwasnuwara', 'Pannala', 'Polgahawela', 'Polpithigama', 'Rasnayakapura', 'Rideegama', 'Udubaddawa', 'Wariyapola', 'Weerambugedara'],
+  'Puttalam': ['Anamaduwa', 'Arachchikattuwa', 'Chilaw', 'Dankotuwa', 'Kalpitiya', 'Karuwalagaswewa', 'Mahakumbukkadawala', 'Mahawewa', 'Mundel', 'Nattandiya', 'Nawagattegama', 'Pallama', 'Puttalam', 'Vanathavilluwa', 'Wennappuwa'],
+
+  // North Central Province
+  'Anuradhapura': ['Dimbulagala', 'Eppawala', 'Galnewa', 'Galenbindunuwewa', 'Horowupotana', 'Ipalogama', 'Kahatagasdigiliya', 'Kebithigollewa', 'Kekirawa', 'Mahavilachchiya', 'Medawachchiya', 'Mihintale', 'Nachchaduwa', 'Nochchiyagama', 'Nuwaragam Palatha Central', 'Nuwaragam Palatha East', 'Padaviya', 'Palagala', 'Rajanganaya', 'Rambewa', 'Thalawa', 'Thirappane', 'Thambuththegama'],
+  'Polonnaruwa': ['Dimbulagala', 'Elahera', 'Hingurakgoda', 'Lankapura', 'Medirigiriya', 'Polonnaruwa', 'Thamankaduwa', 'Welikanda'],
+
+  // Uva Province
+  'Badulla': ['Badulla', 'Bandarawela', 'Ella', 'Hali-Ela', 'Haputale', 'Kandaketiya', 'Lunugala', 'Mahiyanganaya', 'Meegahakivula', 'Passara', 'Ridimaliyadda', 'Soranathota', 'Uva-Paranagama', 'Welimada'],
+  'Moneragala': ['Bibile', 'Buttala', 'Katharagama', 'Madulla', 'Medagama', 'Moneragala', 'Siyambalanduwa', 'Thanamalvila', 'Wellawaya'],
+
+  // Sabaragamuwa Province
+  'Ratnapura': ['Ayagama', 'Balangoda', 'Eheliyagoda', 'Elapatha', 'Embilipitiya', 'Godakawela', 'Imbulpe', 'Kahawatta', 'Kalawana', 'Kiriella', 'Kolonna', 'Kuruvita', 'Nivithigala', 'Opanayaka', 'Pelmadulla', 'Ratnapura', 'Weligepola'],
+  'Kegalle': ['Aranayaka', 'Bulathkohupitiya', 'Deraniyagala', 'Dehiovita', 'Galigamuwa', 'Kegalle', 'Mawanella', 'Rambukkana', 'Ruwanwella', 'Warakapola', 'Yatiyanthota'],
+};
+
 // STEP 1 — About You (Mobile Responsive)
 const Step1 = ({ data, onChange, onNext }) => {
   const [errors, setErrors] = useState({});
@@ -224,7 +270,6 @@ const Step1 = ({ data, onChange, onNext }) => {
         Personal Details
       </h2>
 
-      {/* Full Name */}
       <div style={{ marginBottom: '18px' }}>
         <label style={labelStyle(isMobile)}>Your Full Name</label>
         <input
@@ -239,7 +284,6 @@ const Step1 = ({ data, onChange, onNext }) => {
         {errors.fullName && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.fullName}</p>}
       </div>
 
-      {/* NIC & DOB */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
@@ -273,7 +317,6 @@ const Step1 = ({ data, onChange, onNext }) => {
         </div>
       </div>
 
-      {/* Address & Continue */}
       <div style={{ 
         display: 'flex', 
         flexDirection: isMobile ? 'column' : 'row',
@@ -304,14 +347,6 @@ const Step1 = ({ data, onChange, onNext }) => {
       <PrivacyNote isMobile={isMobile} />
     </div>
   );
-};
-
-// DISTRICT_DS_MAP remains the same (too long, keep as is)
-const DISTRICT_DS_MAP = {
-  'Colombo': ['Colombo', 'Dehiwala', 'Homagama', 'Kaduwela', 'Kesbewa', 'Kolonnawa', 'Kotte', 'Maharagama', 'Moratuwa', 'Padukka', 'Seethawaka', 'Thimbirigasyaya'],
-  'Gampaha': ['Attanagalla', 'Biyagama', 'Divulapitiya', 'Dompe', 'Gampaha', 'Ja-Ela', 'Katana', 'Kelaniya', 'Mahara', 'Minuwangoda', 'Mirigama', 'Negombo', 'Wattala'],
-  'Kalutara': ['Agalawatta', 'Bandaragama', 'Beruwala', 'Bulathsinhala', 'Dodangoda', 'Horana', 'Ingiriya', 'Kalutara', 'Madurawela', 'Mathugama', 'Millaniya', 'Palindanuwara', 'Panadura', 'Walallawita'],
-  // ... keep all other districts (Kandy, Matale, etc.) from your original code
 };
 
 // STEP 2 — Contact Details (Mobile Responsive)
@@ -366,7 +401,6 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         Contact Details
       </h2>
 
-      {/* Email & Mobile - Stack on mobile */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
@@ -400,7 +434,6 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         </div>
       </div>
 
-      {/* District, DS Division & GN Division */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', 
@@ -464,7 +497,6 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         </div>
       </div>
 
-      {/* Back & Continue */}
       <div style={{ 
         display: 'flex', 
         flexDirection: isMobile ? 'column-reverse' : 'row',
@@ -481,13 +513,14 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
   );
 };
 
-// STEP 3 — Password
+// STEP 3 — Password with Email Verification
 const Step3 = ({ data, onChange, onSubmit, onBack }) => {
   const [showPw, setShowPw] = useState(false);
   const [showConf, setShowConf] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [verificationSent, setVerificationSent] = useState(false);
   
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -526,6 +559,9 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
     try {
       const credential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       
+      // SEND EMAIL VERIFICATION
+      await sendEmailVerification(credential.user);
+      
       try {
         await updateProfile(credential.user, { displayName: data.username });
       } catch (e) { console.warn('updateProfile failed:', e.message); }
@@ -548,7 +584,8 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         });
       } catch (e) { console.warn('Firestore setDoc failed:', e.message); }
 
-      onSubmit();
+      setVerificationSent(true);
+      
     } catch (err) {
       const friendlyError = {
         'auth/email-already-in-use': 'This email is already registered. Please sign in instead.',
@@ -561,6 +598,72 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       setLoading(false);
     }
   };
+
+  // Verification Success Component
+  const VerificationSuccess = () => {
+    return (
+      <div style={{ textAlign: 'center', padding: isMobile ? '20px' : '30px' }}>
+        <div style={{
+          width: isMobile ? '70px' : '80px',
+          height: isMobile ? '70px' : '80px',
+          borderRadius: '50%',
+          backgroundColor: '#e6f9ee',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 20px',
+        }}>
+          <svg width={isMobile ? '32' : '38'} height={isMobile ? '32' : '38'} viewBox="0 0 24 24" fill="none"
+            stroke="#28a745" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+
+        <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 800, color: '#1a1a1a', marginBottom: '12px' }}>
+          Verification Email Sent!
+        </h2>
+        <p style={{ fontSize: isMobile ? '13px' : '14px', color: '#555', lineHeight: 1.6, marginBottom: '20px' }}>
+          We've sent a verification link to <strong>{data.email}</strong>.<br />
+          Please check your inbox and verify your email address before logging in.
+        </p>
+        <p style={{ fontSize: isMobile ? '12px' : '13px', color: '#888', marginBottom: '28px' }}>
+          Didn't receive the email? Check your spam folder or{' '}
+          <button
+            onClick={async () => {
+              try {
+                const user = auth.currentUser;
+                if (user) {
+                  await sendEmailVerification(user);
+                  alert('Verification email resent!');
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#B46A02',
+              fontWeight: 700,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+          >
+            click here to resend
+          </button>
+        </p>
+
+        <YellowBtn onClick={() => { window.location.href = '/login'; }} isMobile={isMobile}>
+          Go to Login
+        </YellowBtn>
+      </div>
+    );
+  };
+
+  // Show verification success message
+  if (verificationSent) {
+    return <VerificationSuccess />;
+  }
 
   return (
     <div>
@@ -587,7 +690,6 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         </div>
       )}
 
-      {/* Username */}
       <div style={{ marginBottom: '18px' }}>
         <label style={labelStyle(isMobile)}>User name</label>
         <input
@@ -602,7 +704,6 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         {errors.username && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.username}</p>}
       </div>
 
-      {/* Password & Confirm */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
@@ -671,7 +772,6 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         At least 8 characters, including numbers and symbols for better security.
       </p>
 
-      {/* Back & Create Account */}
       <div style={{ 
         display: 'flex', 
         flexDirection: isMobile ? 'column-reverse' : 'row',
@@ -734,6 +834,7 @@ const StepSuccess = ({ onDashboard }) => {
 
 // Main SignUp component
 const SignUp = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
@@ -763,12 +864,10 @@ const SignUp = () => {
       backgroundColor: '#fefde8',
       fontFamily: 'Nunito, system-ui, sans-serif',
     }}>
-      {/* Logo */}
       <div style={{ padding: isMobile ? '16px 20px 4px' : '20px 28px 4px' }}>
         <img src="/logo.png" alt="Smart Grama Sewa" style={{ height: isMobile ? '70px' : '100px', width: 'auto' }} />
       </div>
 
-      {/* Main content */}
       <div style={{
         flex: 1,
         display: 'flex',
