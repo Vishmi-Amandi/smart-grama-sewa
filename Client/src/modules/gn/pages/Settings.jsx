@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { Bell, Palette, Shield, Clock } from "lucide-react";
-
+import { auth, db } from "../../firebase";
+import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { useSearchParams } from "react-router-dom";
 
 const Toggle = ({ value, onChange }) => (
   <div
@@ -17,7 +20,8 @@ const Toggle = ({ value, onChange }) => (
 
 const Settings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
   const t = getThemeClasses(theme);
-  const [activeTab, setActiveTab] = useState("notification");
+  const [searchParams] = useSearchParams();
+const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "notification");
   const [channels, setChannels] = useState({ email: true, sms: false, push: true });
   const [types, setTypes] = useState({ appointments: true, system: false, citizen: true });
   const [delivery, setDelivery] = useState("hold");
@@ -29,6 +33,144 @@ const Settings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
     { key: "security", label: "Security", icon: <Shield size={14} /> },
     { key: "hours", label: "Weekly Hours", icon: <Clock size={14} /> },
   ];
+
+const [currentPassword, setCurrentPassword] = useState("");
+const [newPassword, setNewPassword] = useState("");
+const [confirmPassword, setConfirmPassword] = useState("");
+const [passwordError, setPasswordError] = useState("");
+const [passwordSuccess, setPasswordSuccess] = useState("");
+const [passwordLoading, setPasswordLoading] = useState(false);
+
+const [workingHours, setWorkingHours] = useState({
+  Monday:    { enabled: true,  start: "08:00", end: "17:00", lunch: "12:00" },
+  Tuesday:   { enabled: true,  start: "08:00", end: "17:00", lunch: "12:00" },
+  Wednesday: { enabled: true,  start: "08:00", end: "17:00", lunch: "12:00" },
+  Thursday:  { enabled: true,  start: "08:00", end: "17:00", lunch: "12:00" },
+  Friday:    { enabled: true,  start: "08:00", end: "17:00", lunch: "12:00" },
+  Saturday:  { enabled: false, start: "09:00", end: "13:00", lunch: "12:00" },
+  Sunday:    { enabled: false, start: "09:00", end: "13:00", lunch: "12:00" },
+});
+const [slotDuration, setSlotDuration] = useState("30");
+const [breakBetweenSlots, setBreakBetweenSlots] = useState("5");
+const [maxAppointments, setMaxAppointments] = useState("12");
+const [hoursLoading, setHoursLoading] = useState(false);
+const [hoursSuccess, setHoursSuccess] = useState("");
+const [hoursError, setHoursError] = useState("");
+
+const handleChangePassword = async () => {
+  setPasswordError("");
+  setPasswordSuccess("");
+
+  if (!currentPassword) { setPasswordError("Please enter your current password."); return; }
+  if (!newPassword)      { setPasswordError("Please enter a new password."); return; }
+  if (newPassword.length < 8) { setPasswordError("Password must be at least 8 characters."); return; }
+  if (newPassword !== confirmPassword) { setPasswordError("Passwords don't match."); return; }
+
+  setPasswordLoading(true);
+  try {
+    const user = auth.currentUser;
+
+    // Re-authenticate first
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+
+    // Update password
+    await updatePassword(user, newPassword);
+
+    // Log to Firestore
+    await updateDoc(doc(db, "gn_officers", user.uid), {
+      passwordChangedAt: serverTimestamp(),
+    });
+
+    setPasswordSuccess("Password changed successfully!");
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+
+  } catch (err) {
+    switch (err.code) {
+      case "auth/wrong-password":     setPasswordError("Current password is incorrect."); break;
+      case "auth/weak-password":      setPasswordError("New password is too weak."); break;
+      case "auth/too-many-requests":  setPasswordError("Too many attempts. Try again later."); break;
+      default:                        setPasswordError("Failed to change password. Try again.");
+    }
+  } finally {
+    setPasswordLoading(false);
+  }
+};
+
+useEffect(() => {
+  const fetchWorkingHours = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const snap = await getDoc(doc(db, "gn_officers", user.uid));
+      if (snap.exists()) {
+        const data = snap.data();
+
+        // ✅ Only use fetched hours if it has day keys (not numeric keys)
+        if (data.workingHours && typeof data.workingHours === "object") {
+          const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+          const isValid = days.some((d) => d in data.workingHours);
+          if (isValid) {
+            // ✅ Ensure every day has all required fields with fallback defaults
+            const normalized = {};
+            days.forEach((day) => {
+              normalized[day] = {
+                enabled: data.workingHours[day]?.enabled ?? (day !== "Saturday" && day !== "Sunday"),
+                start:   data.workingHours[day]?.start   ?? "08:00",
+                end:     data.workingHours[day]?.end     ?? "17:00",
+                lunch:   data.workingHours[day]?.lunch   ?? "12:00",
+              };
+            });
+            setWorkingHours(normalized);
+          }
+        }
+
+        if (data.slotDuration)      setSlotDuration(data.slotDuration);
+        if (data.breakBetweenSlots) setBreakBetweenSlots(data.breakBetweenSlots);
+        if (data.maxAppointments)   setMaxAppointments(data.maxAppointments);
+      }
+    } catch (err) {
+      console.error("Fetch hours error:", err);
+    }
+  };
+  fetchWorkingHours();
+}, []);
+
+const handleSaveHours = async () => {
+  setHoursLoading(true);
+  setHoursSuccess("");
+  setHoursError("");
+  try {
+    const user = auth.currentUser;
+
+    // ✅ Convert to plain object to avoid Firestore serialization issues
+    const hoursToSave = {};
+    Object.entries(workingHours).forEach(([day, val]) => {
+      hoursToSave[day] = {
+        enabled: val.enabled,
+        start:   val.start,
+        end:     val.end,
+        lunch:   val.lunch,
+      };
+    });
+
+    await updateDoc(doc(db, "gn_officers", user.uid), {
+      workingHours:      hoursToSave,
+      slotDuration,
+      breakBetweenSlots,
+      maxAppointments,
+      hoursUpdatedAt:    serverTimestamp(),
+    });
+    setHoursSuccess("Working hours saved successfully!");
+  } catch (err) {
+    setHoursError("Failed to save. Please try again.");
+    console.error(err);
+  } finally {
+    setHoursLoading(false);
+  }
+};
 
   return (
     <GNLayout gnStatus={gnStatus} theme={theme}>
@@ -268,11 +410,26 @@ const Settings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
       <p className={`text-sm font-semibold mb-4 flex items-center gap-2 ${t.text}`}>
         🔒 Password Management
       </p>
+
+      {/* Error/Success */}
+      {passwordError && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
+          ⚠️ {passwordError}
+        </div>
+      )}
+      {passwordSuccess && (
+        <div className="mb-4 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-600">
+          ✅ {passwordSuccess}
+        </div>
+      )}
+
       <div className="space-y-4">
         <div>
           <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>Current Password</label>
           <input
             type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
             placeholder="••••••••"
             className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
           />
@@ -281,89 +438,48 @@ const Settings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
           <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>New Password</label>
           <input
             type="password"
-            placeholder="••••••"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="••••••••"
             className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
           />
-          <p className="text-xs text-gray-400 mt-1">Must be at least 8 characters with a mix of letters and numbers.</p>
+          <p className={`text-xs mt-1 ${t.subtext}`}>Must be at least 8 characters.</p>
         </div>
         <div>
           <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>Confirm New Password</label>
           <input
             type="password"
-            placeholder="••••••"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="••••••••"
             className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
           />
         </div>
-        <button className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-6 py-2 rounded-xl transition">
-          Change Password
+        <button
+          onClick={handleChangePassword}
+          disabled={passwordLoading}
+          className="bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-black font-semibold px-6 py-2 rounded-xl transition">
+          {passwordLoading ? "Changing..." : "Change Password"}
         </button>
-      </div>
-    </div>
-
-    {/* Two-Factor Authentication */}
-    <div className={`${t.card} rounded-2xl shadow p-6`}>
-      <p className={`text-sm font-semibold mb-1 flex items-center gap-2 ${t.text}`}>
-        🔐 Two-Factor Authentication (2FA)
-      </p>
-      <p className={`text-xs mb-4 ${t.subtext}`}>Choose how you want to receive your security codes when logging in from a new device.</p>
-      <div className="space-y-3">
-        <div className={`flex items-center justify-between border ${t.border} rounded-xl px-4 py-3`}>
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full border-2 border-[#E5A800] bg-[#E5A800] flex-shrink-0" />
-            <div>
-              <p className={`text-sm font-semibold ${t.text}`}>SMS Verification</p>
-              <p className={`text-xs ${t.subtext}`}>Codes sent to +94 •• ••• 456</p>
-            </div>
-          </div>
-          <input type="checkbox" defaultChecked className="accent-[#E5A800]" />
-        </div>
-        <div className={`flex items-center justify-between border ${t.border} rounded-xl px-4 py-3`}>
-          <div className="flex items-center gap-3">
-            <div className={`w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0`} />
-            <div>
-              <p className={`text-sm font-semibold ${t.text}`}>Email Verification</p>
-              <p className={`text-xs ${t.subtext}`}>Codes sent to jas••@gmail.com</p>
-            </div>
-          </div>
-          <input type="checkbox" className="accent-[#E5A800]" />
-        </div>
       </div>
     </div>
 
     {/* Login Sessions */}
     <div className={`${t.card} rounded-2xl shadow p-6`}>
-      <div className="flex items-center justify-between mb-4">
-        <p className={`text-sm font-semibold flex items-center gap-2 ${t.text}`}>
-          💻 Login Sessions
-        </p>
-        <button className="border border-red-400 text-red-500 text-xs font-semibold px-4 py-1 rounded-lg hover:bg-red-50 transition">
-          Sign Out All Other Devices
-        </button>
-      </div>
-      <div className="space-y-3">
-        {[
-          { device: "Chrome on MacBook Pro", location: "Colombo, Sri Lanka • 5m now", current: true },
-          { device: "iPhone 14 Pro Max", location: "Kandy, Sri Lanka • 7 hours ago", current: false },
-          { device: "Windows PC - Firefox", location: "Galle, Sri Lanka • Oct 24 at 10:45 AM", current: false },
-        ].map((session) => (
-          <div key={session.device} className={`flex items-center justify-between border ${t.border} rounded-xl px-4 py-3`}>
-            <div className="flex items-center gap-3">
-              <span className="text-lg">💻</span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className={`text-sm font-semibold ${t.text}`}>{session.device}</p>
-                  {session.current && (
-                    <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">CURRENT SESSION</span>
-                  )}
-                </div>
-                <p className={`text-xs ${t.subtext}`}>{session.location}</p>
-              </div>
-            </div>
-            {!session.current && (
-              <button className="text-xs text-red-500 font-semibold hover:underline">Log Out</button>
-            )}
+      <p className={`text-sm font-semibold mb-4 flex items-center gap-2 ${t.text}`}>
+        💻 Current Session
+      </p>
+      <div className={`flex items-center justify-between border ${t.border} rounded-xl px-4 py-3`}>
+        <div className="flex items-center gap-3">
+          <span className="text-lg">💻</span>
+          <div>
+            <p className={`text-sm font-semibold ${t.text}`}>{navigator.userAgent.includes("Chrome") ? "Chrome" : "Browser"}</p>
+            <p className={`text-xs ${t.subtext}`}>Current session • Active now</p>
           </div>
-        ))}
+        </div>
+        <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">
+          CURRENT SESSION
+        </span>
       </div>
     </div>
 
@@ -375,176 +491,141 @@ const Settings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
   <div className="space-y-6">
     <h2 className={`text-xl font-bold ${t.text}`}>Weekly Hours Settings</h2>
 
-    <div className="grid grid-cols-2 gap-6">
+    {hoursSuccess && (
+      <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-600">
+        ✅ {hoursSuccess}
+      </div>
+    )}
+    {hoursError && (
+      <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
+        ⚠️ {hoursError}
+      </div>
+    )}
 
-      {/* Regular Working Hours */}
-      <div className={`${t.card} rounded-2xl shadow p-6`}>
-        <div className="flex items-center justify-between mb-4">
-          <p className={`text-sm font-semibold ${t.text}`}>Regular Working Hours</p>
-          <button className="text-xs text-[#E5A800] font-semibold hover:underline">Apply to all days</button>
-        </div>
-        <div className="space-y-3">
-          {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].map((day) => (
-            <div key={day} className="flex items-center gap-2">
-              <input type="checkbox" defaultChecked className="accent-[#E5A800]" />
-              <span className={`text-xs w-20 font-semibold ${t.text}`}>{day}</span>
-              <input type="time" defaultValue="08:00"
-                className={`border ${t.border} rounded-lg px-2 py-1 text-xs outline-none focus:border-[#E5A800] ${t.input}`} />
-              <span className={`text-xs ${t.subtext}`}>to</span>
-              <input type="time" defaultValue="17:00"
-                className={`border ${t.border} rounded-lg px-2 py-1 text-xs outline-none focus:border-[#E5A800] ${t.input}`} />
-              <span className={`text-xs ${t.subtext}`}>Lunch</span>
-              <select className={`border ${t.border} rounded-lg px-2 py-1 text-xs outline-none focus:border-[#E5A800] ${t.input}`}>
-                <option>12:00 PM</option>
-                <option>01:00 PM</option>
-              </select>
-            </div>
-          ))}
-          <div className="flex items-center gap-2 mt-2">
-            <input type="checkbox" className="accent-[#E5A800]" />
-            <span className={`text-xs font-semibold ${t.subtext}`}>Sat/Sun — Closed for weekends</span>
-          </div>
-        </div>
+    {/* Regular Working Hours */}
+    <div className={`${t.card} rounded-2xl shadow p-6`}>
+      <div className="flex items-center justify-between mb-4">
+        <p className={`text-sm font-semibold ${t.text}`}>Regular Working Hours</p>
+        <button
+          onClick={() => {
+            const updated = { ...workingHours };
+            Object.keys(updated).forEach((day) => {
+              if (updated[day].enabled) {
+                updated[day] = { ...updated[day], start: "08:00", end: "17:00", lunch: "12:00" };
+              }
+            });
+            setWorkingHours(updated);
+          }}
+          className="text-xs text-[#E5A800] font-semibold hover:underline">
+          Apply to all days
+        </button>
       </div>
 
-      {/* Public Holidays */}
-      <div className={`${t.card} rounded-2xl shadow p-6`}>
-        <div className="flex items-center justify-between mb-4">
-          <p className={`text-sm font-semibold ${t.text}`}>Public Holidays</p>
-          <button className="bg-[#E5A800] text-black text-xs font-semibold px-3 py-1 rounded-lg hover:bg-[#cc9600] transition">
-            Add New
-          </button>
-        </div>
-
-        {/* Mini Calendar Header */}
-        <div className="flex items-center justify-between mb-3">
-          <button className={`text-xs ${t.subtext}`}>‹</button>
-          <p className={`text-xs font-semibold ${t.text}`}>November 2024</p>
-          <button className={`text-xs ${t.subtext}`}>›</button>
-        </div>
-
-        {/* Day Headers */}
-        <div className="grid grid-cols-7 text-center text-xs text-gray-400 mb-1">
-          {["S","M","T","W","T","F","S"].map((d, i) => (
-            <span key={i}>{d}</span>
-          ))}
-        </div>
-
-        {/* Dates */}
-        <div className="grid grid-cols-7 text-center text-xs mb-4">
-          {["","","","","","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30"].map((d, i) => (
-            <span key={i} className={`py-1 rounded-full cursor-pointer
-              ${d === "11" || d === "27" ? "bg-[#E5A800] text-black font-bold" : `${t.tableRow} ${t.text}`}
-            `}>
-              {d}
-            </span>
-          ))}
-        </div>
-
-        {/* Holiday List */}
-        <div className="space-y-2">
-          <div className={`flex items-center justify-between border ${t.border} rounded-xl px-3 py-2`}>
-            <div>
-              <p className={`text-xs font-semibold ${t.text}`}>Thanksgiving Break</p>
-              <p className={`text-xs ${t.subtext}`}>Both Monday - Friday</p>
-            </div>
-            <button className={`${t.subtext} hover:text-gray-600`}>✏️</button>
+      <div className="space-y-3">
+        {Object.entries(workingHours).map(([day, hours]) => (
+          <div key={day} className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={hours.enabled}
+              onChange={(e) => setWorkingHours({
+                ...workingHours,
+                [day]: { ...hours, enabled: e.target.checked }
+              })}
+              className="accent-[#E5A800]"
+            />
+            <span className={`text-xs font-semibold w-24 ${t.text}`}>{day}</span>
+            {hours.enabled ? (
+              <>
+                <input
+                  type="time"
+                  value={hours.start}
+                  onChange={(e) => setWorkingHours({
+                    ...workingHours,
+                    [day]: { ...hours, start: e.target.value }
+                  })}
+                  className={`border ${t.border} rounded-lg px-2 py-1 text-xs outline-none focus:border-[#E5A800] ${t.input}`}
+                />
+                <span className={`text-xs ${t.subtext}`}>to</span>
+                <input
+                  type="time"
+                  value={hours.end}
+                  onChange={(e) => setWorkingHours({
+                    ...workingHours,
+                    [day]: { ...hours, end: e.target.value }
+                  })}
+                  className={`border ${t.border} rounded-lg px-2 py-1 text-xs outline-none focus:border-[#E5A800] ${t.input}`}
+                />
+                <span className={`text-xs ${t.subtext}`}>Lunch</span>
+                <select
+                  value={hours.lunch}
+                  onChange={(e) => setWorkingHours({
+                    ...workingHours,
+                    [day]: { ...hours, lunch: e.target.value }
+                  })}
+                  className={`border ${t.border} rounded-lg px-2 py-1 text-xs outline-none focus:border-[#E5A800] ${t.input}`}
+                >
+                  <option value="12:00">12:00 PM</option>
+                  <option value="12:30">12:30 PM</option>
+                  <option value="13:00">01:00 PM</option>
+                  <option value="13:30">01:30 PM</option>
+                </select>
+              </>
+            ) : (
+              <span className={`text-xs ${t.subtext}`}>Closed</span>
+            )}
           </div>
-          <div className={`flex items-center justify-between border ${t.border} rounded-xl px-3 py-2`}>
-            <div>
-              <p className={`text-xs font-semibold ${t.text}`}>Veterans Day</p>
-              <p className={`text-xs ${t.subtext}`}>Both Monday - Friday</p>
-            </div>
-            <button className={`${t.subtext} hover:text-gray-600`}>✏️</button>
-          </div>
-        </div>
+        ))}
       </div>
-
     </div>
 
-    {/* Bottom Row */}
-    <div className="grid grid-cols-2 gap-6">
-
-      {/* Appointment Slot Settings */}
-      <div className={`${t.card} rounded-2xl shadow p-6`}>
-        <p className={`text-sm font-semibold mb-4 ${t.text}`}>Appointment Slot Settings</p>
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <div>
-            <p className={`text-xs mb-1 ${t.subtext}`}>Slot Duration</p>
-            <select className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
-              <option>30 minutes</option>
-              <option>45 minutes</option>
-              <option>60 minutes</option>
-            </select>
-          </div>
-          <div>
-            <p className={`text-xs mb-1 ${t.subtext}`}>Break Between Slots</p>
-            <select className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
-              <option>5 minutes</option>
-              <option>10 minutes</option>
-              <option>15 minutes</option>
-            </select>
-          </div>
-          <div>
-            <p className={`text-xs mb-1 ${t.subtext}`}>Max Appointments/Day</p>
-            <input type="number" defaultValue="12"
-              className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
-          </div>
+    {/* Appointment Slot Settings */}
+    <div className={`${t.card} rounded-2xl shadow p-6`}>
+      <p className={`text-sm font-semibold mb-4 ${t.text}`}>Appointment Slot Settings</p>
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        <div>
+          <p className={`text-xs mb-1 ${t.subtext}`}>Slot Duration</p>
+          <select
+            value={slotDuration}
+            onChange={(e) => setSlotDuration(e.target.value)}
+            className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
+            <option value="30">30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">60 minutes</option>
+          </select>
         </div>
-        <p className={`text-xs ${t.subtext}`}>
-          ⓘ Based on your regular hours and duration, you can host up to 14 slots per staff member per day with 5-minute intervals.
-        </p>
-      </div>
-
-      {/* Availability Control */}
-      <div className={`${t.card} rounded-2xl shadow p-6`}>
-        <p className={`text-sm font-semibold mb-4 ${t.text}`}>Availability Control</p>
-        <div className="space-y-4">
-
-          {/* Auto Open Slots */}
-          <div className={`flex items-center justify-between border ${t.border} rounded-xl px-4 py-3`}>
-            <div>
-              <p className={`text-sm font-semibold ${t.text}`}>Auto-Open Slots</p>
-              <p className={`text-xs ${t.subtext}`}>Automatically open new slots weekly.</p>
-            </div>
-            <div className="w-11 h-6 rounded-full bg-[#E5A800] flex items-center px-1 cursor-pointer">
-              <div className="w-4 h-4 bg-white rounded-full shadow translate-x-5" />
-            </div>
-          </div>
-
-          {/* Booking Window */}
-          <div>
-            <p className={`text-xs mb-2 ${t.subtext}`}>Booking Window</p>
-            <div className="flex items-center gap-2">
-              <span className={`text-xs ${t.subtext}`}>Up to</span>
-              <input type="number" defaultValue="30"
-                className={`w-16 border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
-              <span className={`text-xs ${t.subtext}`}>days in advance</span>
-            </div>
-          </div>
-
-          {/* Min Notice Time */}
-          <div>
-            <p className={`text-xs mb-2 ${t.subtext}`}>Minimum Notice Time</p>
-            <select className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
-              <option>24 hours</option>
-              <option>48 hours</option>
-              <option>72 hours</option>
-            </select>
-          </div>
-
+        <div>
+          <p className={`text-xs mb-1 ${t.subtext}`}>Break Between Slots</p>
+          <select
+            value={breakBetweenSlots}
+            onChange={(e) => setBreakBetweenSlots(e.target.value)}
+            className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
+            <option value="5">5 minutes</option>
+            <option value="10">10 minutes</option>
+            <option value="15">15 minutes</option>
+          </select>
+        </div>
+        <div>
+          <p className={`text-xs mb-1 ${t.subtext}`}>Max Appointments/Day</p>
+          <input
+            type="number"
+            value={maxAppointments}
+            onChange={(e) => setMaxAppointments(e.target.value)}
+            className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
+          />
         </div>
       </div>
-
+      <p className={`text-xs ${t.subtext}`}>
+        ⓘ Based on your hours and duration you can host up to {Math.floor((8 * 60) / (parseInt(slotDuration) + parseInt(breakBetweenSlots)))} slots per day.
+      </p>
     </div>
 
     {/* Action Buttons */}
     <div className="flex items-center justify-end gap-4">
-      <button className={`font-semibold px-5 py-2 rounded-xl transition ${t.text} ${theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}>
-        Reset to Defaults
-      </button>
-      <button className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-6 py-2 rounded-xl transition">
-        Apply Changes
+      <button
+        onClick={handleSaveHours}
+        disabled={hoursLoading}
+        className="bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-black font-semibold px-6 py-2 rounded-xl transition">
+        {hoursLoading ? "Saving..." : "Apply Changes"}
       </button>
     </div>
 
