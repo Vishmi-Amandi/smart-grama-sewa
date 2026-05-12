@@ -10,6 +10,7 @@ import Profile     from './modules/user/pages/profile';
 import Appointments from './modules/user/pages/appointments';
 import Announcements from './modules/user/pages/announcements';
 import Settings      from './modules/user/pages/settings';
+import ContactGN from './modules/user/pages/contactGN';
 
 // Protected route wrapper
 // Redirects to /login if Firebase user is not logged in
@@ -79,6 +80,10 @@ const App = () => {
           } />
           <Route path="/settings" element={
             <ProtectedRoute><Settings /></ProtectedRoute>
+          } />
+
+          <Route path="/contact-gn" element={
+            <ProtectedRoute><ContactGN /></ProtectedRoute>
           } />
 
           {/* ── Default redirect ── */}

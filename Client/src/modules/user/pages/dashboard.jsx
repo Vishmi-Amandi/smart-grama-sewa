@@ -644,7 +644,7 @@ const Dashboard = () => {
                 <QuickCard iconPath={Icons.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} />
                 <QuickCard iconPath={Icons.download} label="Download forms"   onClick={() => navigate('/forms')} />
                 <QuickCard iconPath={Icons.ai}       label="AI assistant"     onClick={() => navigate('/ai')} />
-                <QuickCard iconPath={Icons.phone}    label="Contact GN"       onClick={() => window.location.href = 'tel:+94...'} />
+                <QuickCard iconPath={Icons.phone}    label="Contact GN"       onClick={() => navigate('/contactGN')} />
               </div>
             </div>
 
@@ -658,7 +658,7 @@ const Dashboard = () => {
           {/* MOBILE CONTENT */}
           <div className="mobile-content" style={{ flex: 1, display: 'none', backgroundColor: '#f5f0e8' }}>
 
-            {/* Mobile Search Bar - WITH PAGE/FUNCTION SEARCH */}
+            {/* Mobile Search Bar */}
             <div style={{ padding: '12px 14px 0', position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, backgroundColor: '#fff', border: '1.5px solid #e8d8b0', borderRadius: 999, padding: '10px 16px' }}>
                 <Icon d={Icons.search} size={16} color="#aaa" />
@@ -767,7 +767,7 @@ const Dashboard = () => {
                     { icon: Icons.calendar, label: 'Book Appointment', action: () => navigate('/appointments') },
                     { icon: Icons.download, label: 'Download forms',   action: () => navigate('/forms') },
                     { icon: Icons.ai,       label: 'AI assistant',     action: () => navigate('/ai') },
-                    { icon: Icons.phone,    label: 'Contact GN',       action: () => window.location.href = 'tel:+94...' },
+                    { icon: Icons.phone,    label: 'Contact GN',       action: () => navigate('/contact-gn') },
                   ].map((item, i) => (
                     <button key={i} onClick={item.action} style={{
                       display: 'flex', alignItems: 'center', gap: 8,
