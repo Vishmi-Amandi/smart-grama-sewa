@@ -151,27 +151,13 @@ const ChatbotWidget = () => {
     <>
       {/* Floating Widget Button */}
       <div className="chatbot-widget-btn" onClick={toggleChat}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 8V4H8"></path>
-          <rect x="4" y="8" width="16" height="12" rx="2" ry="2"></rect>
-          <path d="M2 14h2"></path>
-          <path d="M20 14h2"></path>
-          <path d="M15 13v2"></path>
-          <path d="M9 13v2"></path>
-        </svg>
+        <img src="/logo.png" alt="Smart Grama Sewa Logo" className="chatbot-logo-img" />
       </div>
 
       <div className={`chat-container ${isOpen ? '' : 'chat-hidden'}`}>
         <header className="chat-header">
           <div className="chat-avatar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 8V4H8"></path>
-              <rect x="4" y="8" width="16" height="12" rx="2" ry="2"></rect>
-              <path d="M2 14h2"></path>
-              <path d="M20 14h2"></path>
-              <path d="M15 13v2"></path>
-              <path d="M9 13v2"></path>
-            </svg>
+            <img src="/logo.png" alt="Smart Grama Sewa Logo" className="chatbot-logo-img" />
           </div>
           <div style={{ flex: 1 }}>
             <h1>{language ? UI_TEXT[language].header : "Smart Grama Sewa"}</h1>
