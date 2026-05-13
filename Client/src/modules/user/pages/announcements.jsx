@@ -79,7 +79,7 @@ const Sidebar = ({ active, navigate, onLogout }) => (
         { key: 'ai',            d: IC.ai,        label: 'AI assistant'  },
       ].map(i => (
         <NavItem key={i.key} d={i.d} label={i.label} active={active === i.key}
-          onClick={() => navigate(`/${i.key}`)} />
+          onClick={() => i.key === 'ai' ? window.dispatchEvent(new CustomEvent('open-chatbot')) : navigate(`/${i.key}`)} />
       ))}
     </div>
     <div style={{ padding: '10px 10px 20px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>

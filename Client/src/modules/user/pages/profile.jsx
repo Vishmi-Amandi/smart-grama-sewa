@@ -186,7 +186,7 @@ const Sidebar = ({ activePage, onNavigate, onLogout }) => {
       <div style={{ flex: 1, padding: '12px 10px' }}>
         {navItems.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
-            active={activePage === item.key} onClick={() => onNavigate(item.key)} />
+            active={activePage === item.key} onClick={() => item.key === 'ai' ? window.dispatchEvent(new CustomEvent('open-chatbot')) : onNavigate(item.key)} />
         ))}
       </div>
       <div style={{ padding: '10px 10px 20px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>

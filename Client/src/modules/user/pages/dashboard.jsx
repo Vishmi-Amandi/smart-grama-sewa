@@ -313,6 +313,7 @@ const Dashboard = () => {
                   if (item.key === 'announcements')  navigate('/announcements');
                   else if (item.key === 'appointments')  navigate('/appointments');
                   else if (item.key === 'settings')  navigate('/settings');
+                  else if (item.key === 'ai') window.dispatchEvent(new CustomEvent('open-chatbot'));
                   else setActivePage(item.key);
                 }}
               />
@@ -515,7 +516,7 @@ const Dashboard = () => {
               </div>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 <QuickCard iconPath={Icons.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} />                <QuickCard iconPath={Icons.download}  label="Download forms"   />
-                <QuickCard iconPath={Icons.ai}        label="AI assistant"     />
+                <QuickCard iconPath={Icons.ai}        label="AI assistant" onClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))} />
                 <QuickCard iconPath={Icons.phone}     label="Contact GN"       />
               </div>
             </div>

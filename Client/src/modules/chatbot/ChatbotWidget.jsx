@@ -69,6 +69,12 @@ const ChatbotWidget = () => {
     }
   }, [messages, isTyping, isOpen]);
 
+  useEffect(() => {
+    const handleOpenChatbot = () => setIsOpen(true);
+    window.addEventListener('open-chatbot', handleOpenChatbot);
+    return () => window.removeEventListener('open-chatbot', handleOpenChatbot);
+  }, []);
+
   // Update initial message when language changes, if it's the only message
   // (Removed since we now handle it in handleLanguageSelect)
 
