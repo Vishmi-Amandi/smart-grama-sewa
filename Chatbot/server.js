@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const translate = require('google-translate-api-x');
 const { getChatbotResponse } = require('./utils/chatbotLogic');
-const { registerUser, saveChatInteraction } = require('./utils/firebaseDB');
+const { registerUser, saveChatInteraction, getChatHistory } = require('./utils/firebaseDB');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -77,6 +77,18 @@ app.post('/api/chat', async (req, res) => {
   } catch (error) {
     console.error("Error processing chat request:", error);
     res.status(500).json({ error: 'Internal server error while processing the request.' });
+  }
+});
+
+// Get chat history for a specific user
+app.get('/api/chat/history/:userId', async (req, res) => {
+  const userId = req.params.userId;
+  try {
+    const history = await getChatHistory(userId);
+    res.status(200).json(history);
+  } catch (error) {
+    console.error("Error retrieving chat history:", error);
+    res.status(500).json({ error: 'Internal server error while retrieving history.' });
   }
 });
 

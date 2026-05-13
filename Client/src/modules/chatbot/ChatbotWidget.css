@@ -356,3 +356,31 @@
     width: 100%;
   }
 }
+
+.chat-history-btn-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.chat-history-btn {
+  background: rgba(255, 203, 5, 0.2);
+  color: #a68100;
+  border: 1px solid rgba(255, 203, 5, 0.5);
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chat-history-btn:hover:not(:disabled) {
+  background: rgba(255, 203, 5, 0.4);
+  color: #8c6d00;
+}
+
+.chat-history-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { auth } from '../../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import './ChatbotWidget.css';
 
 const UI_TEXT = {
@@ -38,15 +40,26 @@ const ChatbotWidget = () => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const chatBoxRef = useRef(null);
 
   useEffect(() => {
-    // Generate a random user ID for the session if not exists
-    let userId = localStorage.getItem('chatbotUserId');
-    if (!userId) {
-      userId = 'user_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('chatbotUserId', userId);
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);
+        localStorage.setItem('chatbotUserId', user.uid);
+      } else {
+        setCurrentUser(null);
+        let userId = localStorage.getItem('chatbotUserId');
+        if (!userId || !userId.startsWith('user_')) {
+          userId = 'user_' + Math.random().toString(36).substr(2, 9);
+          localStorage.setItem('chatbotUserId', userId);
+        }
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -59,8 +72,60 @@ const ChatbotWidget = () => {
   // Update initial message when language changes, if it's the only message
   // (Removed since we now handle it in handleLanguageSelect)
 
+  const loadHistory = async () => {
+    if (!currentUser) return;
+    setLoadingHistory(true);
+    try {
+      const response = await fetch(`/api/chat/history/${currentUser.uid}`);
+      if (response.ok) {
+        const historyData = await response.json();
+        
+        const historyMessages = [];
+        historyData.forEach(item => {
+          historyMessages.push({ sender: 'user', text: item.question });
+          if (item.botResponse) {
+            historyMessages.push({ 
+              sender: 'bot', 
+              text: item.botResponse.answer, 
+              formLink: item.botResponse.form 
+            });
+          }
+        });
+        
+        if (historyMessages.length > 0) {
+          setMessages(prev => [
+            ...historyMessages, 
+            { sender: 'bot', text: '--- End of Previous Chats ---' }, 
+            ...prev
+          ]);
+        }
+        setHistoryLoaded(true);
+      }
+    } catch (error) {
+      console.error("Failed to load history:", error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   const toggleChat = () => {
     setIsOpen(!isOpen);
+  };
+
+  const generateGreeting = (langValue) => {
+    let greetingText = UI_TEXT[langValue].initial;
+    const userName = currentUser ? (currentUser.displayName || currentUser.email.split('@')[0]) : null;
+    
+    if (userName) {
+      if (langValue === 'en') {
+        greetingText = greetingText.replace('Hello! ', `Hello ${userName}! `);
+      } else if (langValue === 'si') {
+        greetingText = greetingText.replace('ආයුබෝවන්! ', `ආයුබෝවන් ${userName}! `);
+      } else if (langValue === 'ta') {
+        greetingText = greetingText.replace('வணக்கம்! ', `வணக்கம் ${userName}! `);
+      }
+    }
+    return greetingText;
   };
 
   const handleLanguageSelect = (langValue) => {
@@ -79,7 +144,7 @@ const ChatbotWidget = () => {
       return [
         ...updatedMessages,
         { sender: 'user', text: langLabel },
-        { sender: 'bot', text: UI_TEXT[langValue].initial }
+        { sender: 'bot', text: generateGreeting(langValue) }
       ];
     });
   };
@@ -111,6 +176,20 @@ const ChatbotWidget = () => {
         ...prev, 
         { sender: 'user', text: question },
         { sender: 'bot', text: newLang === 'en' ? 'Language changed to English.' : newLang === 'si' ? 'භාෂාව සිංහල වෙත වෙනස් කරන ලදී.' : 'மொழி தமிழ் ஆக மாற்றப்பட்டது.' }
+      ]);
+      setInputValue('');
+      return;
+    }
+
+    // Check for conversational greetings
+    const greetings = ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening', 'ayubowan', 'vanakkam', 'හායි', 'ආයුබෝවන්', 'வணக்கம்', 'ஹலோ'];
+    const isGreeting = greetings.some(g => lowerQuestion === g || lowerQuestion.startsWith(g + ' '));
+
+    if (isGreeting && language) {
+      setMessages(prev => [
+        ...prev,
+        { sender: 'user', text: question },
+        { sender: 'bot', text: generateGreeting(language) }
       ]);
       setInputValue('');
       return;
@@ -172,6 +251,13 @@ const ChatbotWidget = () => {
         </header>
         
         <main className="chat-box" ref={chatBoxRef}>
+          {currentUser && !historyLoaded && (
+            <div className="chat-history-btn-container">
+              <button onClick={loadHistory} className="chat-history-btn" disabled={loadingHistory}>
+                {loadingHistory ? "Loading..." : "Load Previous Chats"}
+              </button>
+            </div>
+          )}
           {messages.map((msg, idx) => (
             <div key={idx} className={`chat-message chat-${msg.sender}-message`}>
               <div className="chat-message-content">

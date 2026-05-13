@@ -54,8 +54,31 @@ async function saveChatInteraction(userId, question, botResponse) {
   }
 }
 
+/**
+ * Retrieves the chat history for a given user from their 'chats' subcollection.
+ * @param {string} userId - The unique identifier for the user.
+ * @returns {Promise<Array>} - Array of chat interaction objects.
+ */
+async function getChatHistory(userId) {
+  try {
+    const chatsSnapshot = await db.collection('users').doc(userId).collection('chats')
+      .orderBy('timestamp', 'asc')
+      .get();
+    
+    const chats = [];
+    chatsSnapshot.forEach(doc => {
+      chats.push({ id: doc.id, ...doc.data() });
+    });
+    return chats;
+  } catch (error) {
+    console.error("Error fetching chat history:", error);
+    throw error;
+  }
+}
+
 module.exports = {
   db,
   registerUser,
-  saveChatInteraction
+  saveChatInteraction,
+  getChatHistory
 };
