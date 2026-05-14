@@ -33,11 +33,10 @@ const Icons = {
   close:        'M18 6L6 18M6 6l12 12',
   location:     'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z M12 10a1 1 0 100-2 1 1 0 000 2z',
   clock:        'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0',
-  whatsapp:     'M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z',
   mail:         'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6',
 };
 
-// NavItem 
+// NavItem
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} style={{
     width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
@@ -55,8 +54,18 @@ const NavItem = ({ iconPath, label, active, onClick }) => (
   </button>
 );
 
-// Search Results Dropdown Component
-const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate, PAGE_ACTIONS }) => {
+// Search Results Dropdown
+const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate }) => {
+  const PAGE_ACTIONS = [
+    { name: 'Dashboard', path: '/dashboard', icon: Icons.dashboard },
+    { name: 'Announcements', path: '/announcements', icon: Icons.announcement },
+    { name: 'Appointments', path: '/appointments', icon: Icons.appointments },
+    { name: 'Forms', path: '/forms', icon: Icons.forms },
+    { name: 'AI Assistant', path: '/ai', icon: Icons.ai },
+    { name: 'Profile', path: '/profile', icon: Icons.profile },
+    { name: 'Settings', path: '/settings', icon: Icons.settings },
+  ];
+  
   const [filteredPages, setFilteredPages] = useState([]);
 
   useEffect(() => {
@@ -66,8 +75,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
     }
     const query = searchQuery.toLowerCase();
     const filtered = PAGE_ACTIONS.filter(page =>
-      page.name.toLowerCase().includes(query) ||
-      (page.keywords && page.keywords.some(keyword => keyword.toLowerCase().includes(query)))
+      page.name.toLowerCase().includes(query)
     );
     setFilteredPages(filtered);
   }, [searchQuery]);
@@ -121,16 +129,6 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
   );
 };
 
-const PAGE_ACTIONS = [
-  { name: 'Dashboard', path: '/dashboard', icon: Icons.dashboard, keywords: ['home', 'main', 'overview'] },
-  { name: 'Announcements', path: '/announcements', icon: Icons.announcement, keywords: ['news', 'updates', 'notices'] },
-  { name: 'Appointments', path: '/appointments', icon: Icons.appointments, keywords: ['booking', 'schedule', 'meeting'] },
-  { name: 'Forms', path: '/forms', icon: Icons.forms, keywords: ['documents', 'applications', 'certificates'] },
-  { name: 'AI Assistant', path: '/ai', icon: Icons.ai, keywords: ['chatbot', 'help', 'support'] },
-  { name: 'Profile', path: '/profile', icon: Icons.profile, keywords: ['account', 'settings', 'my profile'] },
-  { name: 'Settings', path: '/settings', icon: Icons.settings, keywords: ['preferences', 'options', 'configuration'] },
-];
-
 const ContactGN = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -142,7 +140,6 @@ const ContactGN = () => {
   const [userData, setUserData] = useState(null);
   const [gnOfficer, setGnOfficer] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [activePage, setActivePage] = useState('contact');
 
   useEffect(() => {
     const handle = () => setIsMobile(window.innerWidth <= 768);
@@ -232,18 +229,8 @@ const ContactGN = () => {
     if (number) window.location.href = `tel:${number}`;
   };
 
-  const handleWhatsApp = () => {
-    const number = gnOfficer?.mobile?.replace(/[^0-9]/g, '');
-    if (number) window.open(`https://wa.me/${number}`, '_blank');
-  };
-
   const handleEmail = () => {
     if (gnOfficer?.email) window.location.href = `mailto:${gnOfficer.email}`;
-  };
-
-  const handleDirections = () => {
-    const address = encodeURIComponent(gnOfficer?.officeAddress || 'Grama Niladhari Office');
-    window.open(`https://maps.google.com/?q=${address}`, '_blank');
   };
 
   const handleCopyMobile = () => {
@@ -285,14 +272,14 @@ const ContactGN = () => {
           </div>
           <div style={{ flex: 1, padding: '12px 10px' }}>
             {navItems.map(item => (
-              <NavItem key={item.key} iconPath={item.icon} label={item.label} active={activePage === item.key}
+              <NavItem key={item.key} iconPath={item.icon} label={item.label} active={false}
                 onClick={() => navigate(item.path)}
               />
             ))}
           </div>
           <div style={{ padding: '10px 10px 20px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
             {bottomNav.map(item => (
-              <NavItem key={item.key} iconPath={item.icon} label={item.label} active={activePage === item.key}
+              <NavItem key={item.key} iconPath={item.icon} label={item.label} active={false}
                 onClick={() => item.action === 'logout' ? handleLogout() : navigate(item.path)}
               />
             ))}
@@ -308,13 +295,13 @@ const ContactGN = () => {
                 <button onClick={() => setMobileMenuOpen(false)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>✕</button>
               </div>
               {navItems.map(item => (
-                <NavItem key={item.key} iconPath={item.icon} label={item.label} active={activePage === item.key}
+                <NavItem key={item.key} iconPath={item.icon} label={item.label} active={false}
                   onClick={() => { navigate(item.path); setMobileMenuOpen(false); }}
                 />
               ))}
               <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', margin: '10px 0', paddingTop: '10px' }}>
                 {bottomNav.map(item => (
-                  <NavItem key={item.key} iconPath={item.icon} label={item.label} active={activePage === item.key}
+                  <NavItem key={item.key} iconPath={item.icon} label={item.label} active={false}
                     onClick={() => { 
                       if (item.action === 'logout') handleLogout();
                       else navigate(item.path);
@@ -368,7 +355,6 @@ const ContactGN = () => {
                 showResults={showSearchResults}
                 setShowResults={setShowSearchResults}
                 navigate={navigate}
-                PAGE_ACTIONS={PAGE_ACTIONS}
               />
             </div>
             <div style={{ flex: 1 }} />
@@ -428,278 +414,283 @@ const ContactGN = () => {
             </div>
           </div>
 
-          {/* DESKTOP & MOBILE CONTENT */}
-          <div style={{ padding: '24px 28px', flex: 1 }}>
+          {/* PAGE CONTENT */}
+          <div style={{ padding: isMobile ? '16px' : '24px 28px', flex: 1 }}>
             
             {/* Page Header */}
             <div style={{ marginBottom: '24px' }}>
-              <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#1e1200', letterSpacing: '-0.4px', marginBottom: '4px' }}>
+              <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1e1200', letterSpacing: '-0.4px', marginBottom: 4 }}>
                 Contact GN Officer
               </h1>
-              <p style={{ fontSize: '13px', color: '#888', fontWeight: 600 }}>
+              <p style={{ fontSize: 13, color: '#888', fontWeight: 600 }}>
                 Get in touch with your Grama Niladhari officer
               </p>
             </div>
 
-            {/* Main Content */}
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              
-              {/* Officer Profile Card */}
+            {/* GN Officer Card with Call & Email Buttons Next to Name - Desktop */}
+            {!isMobile ? (
+              // DESKTOP VIEW - Buttons next to name
               <div style={{
                 backgroundColor: '#fff',
                 borderRadius: '20px',
-                padding: isMobile ? '24px' : '32px',
-                marginBottom: '20px',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+                padding: '24px 28px',
+                marginBottom: '24px',
+                border: '1px solid #e8d5ac',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                  <div style={{
+                    width: '70px',
+                    height: '70px',
+                    borderRadius: '50%',
+                    backgroundColor: '#F5C400',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Icon d={Icons.profile} size={36} color="#3d2a00" strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#1e1200', marginBottom: '4px' }}>
+                      {gnOfficer?.name || 'Grama Niladhari'}
+                    </h2>
+                    <p style={{ fontSize: '13px', color: '#d97706', fontWeight: 600, marginBottom: '4px' }}>
+                      {gnOfficer?.designation || 'Grama Niladhari Officer'}
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#64748b' }}>
+                      {userData?.gnDiv || userData?.dsDiv || 'Your GN Division'}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Action Buttons - Next to Name */}
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button onClick={handleCall} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '12px 24px',
+                    backgroundColor: '#eff6ff',
+                    border: 'none',
+                    borderRadius: '40px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseOver={e => e.currentTarget.style.backgroundColor = '#dbeafe'}
+                  onMouseOut={e => e.currentTarget.style.backgroundColor = '#eff6ff'}>
+                    <Icon d={Icons.phone} size={18} color="#3b82f6" strokeWidth={2} />
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>Call</span>
+                  </button>
+
+                  <button onClick={handleEmail} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '12px 24px',
+                    backgroundColor: '#fef3c7',
+                    border: 'none',
+                    borderRadius: '40px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseOver={e => e.currentTarget.style.backgroundColor = '#fde68a'}
+                  onMouseOut={e => e.currentTarget.style.backgroundColor = '#fef3c7'}>
+                    <Icon d={Icons.mail} size={18} color="#d97706" strokeWidth={2} />
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>Email</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // MOBILE VIEW - Stacked layout
+              <div style={{
+                backgroundColor: '#fff',
+                borderRadius: '20px',
+                padding: '24px',
+                marginBottom: '24px',
                 border: '1px solid #e8d5ac',
                 textAlign: 'center',
               }}>
                 <div style={{
-                  width: '100px',
-                  height: '100px',
+                  width: '80px',
+                  height: '80px',
                   borderRadius: '50%',
                   backgroundColor: '#F5C400',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  margin: '0 auto ',
-                  marginBottom: '16px',
+                  margin: '0 auto 16px',
                 }}>
-                  <Icon d={Icons.profile} size={48} color="#3d2a00" strokeWidth={1.5} />
+                  <Icon d={Icons.profile} size={40} color="#3d2a00" strokeWidth={1.5} />
                 </div>
                 
-                <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#1e1200', marginBottom: '4px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#1e1200', marginBottom: '4px' }}>
                   {gnOfficer?.name || 'Grama Niladhari'}
                 </h2>
-                <p style={{ fontSize: '14px', color: '#d97706', fontWeight: 600, marginBottom: '8px' }}>
+                <p style={{ fontSize: '13px', color: '#d97706', fontWeight: 600, marginBottom: '8px' }}>
                   {gnOfficer?.designation || 'Grama Niladhari Officer'}
                 </p>
-                <div style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  backgroundColor: gnOfficer?.available ? '#e6f9ee' : '#fee2e2',
-                  padding: '4px 12px',
-                  borderRadius: '20px',
-                }}>
-                  <span style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    backgroundColor: gnOfficer?.available ? '#22c55e' : '#ef4444',
-                  }} />
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: gnOfficer?.available ? '#166534' : '#991b1b' }}>
-                    {gnOfficer?.available ? 'Available Now' : 'Office Hours Only'}
-                  </span>
-                </div>
-                <p style={{ fontSize: '12px', color: '#64748b', marginTop: '8px' }}>
+                <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '20px' }}>
                   {userData?.gnDiv || userData?.dsDiv || 'Your GN Division'}
                 </p>
-              </div>
-
-              {/* Quick Contact Grid */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-                gap: '12px',
-                marginBottom: '20px',
-              }}>
-                <button onClick={handleCall} style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '16px',
-                  backgroundColor: '#eff6ff',
-                  border: 'none',
-                  borderRadius: '16px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseOver={e => e.currentTarget.style.backgroundColor = '#dbeafe'}
-                onMouseOut={e => e.currentTarget.style.backgroundColor = '#eff6ff'}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon d={Icons.phone} size="24" color="#fff" />
-                  </div>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Call</span>
-                </button>
-
-                <button onClick={handleWhatsApp} style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '16px',
-                  backgroundColor: '#f0fdf4',
-                  border: 'none',
-                  borderRadius: '16px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseOver={e => e.currentTarget.style.backgroundColor = '#dcfce7'}
-                onMouseOut={e => e.currentTarget.style.backgroundColor = '#f0fdf4'}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon d={Icons.whatsapp} size="24" color="#fff" />
-                  </div>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>WhatsApp</span>
-                </button>
-
-                <button onClick={handleEmail} style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '16px',
-                  backgroundColor: '#fef3c7',
-                  border: 'none',
-                  borderRadius: '16px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseOver={e => e.currentTarget.style.backgroundColor = '#fde68a'}
-                onMouseOut={e => e.currentTarget.style.backgroundColor = '#fef3c7'}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon d={Icons.mail} size="24" color="#fff" />
-                  </div>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Email</span>
-                </button>
-
-                <button onClick={handleDirections} style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '16px',
-                  backgroundColor: '#f0fdf4',
-                  border: 'none',
-                  borderRadius: '16px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseOver={e => e.currentTarget.style.backgroundColor = '#dcfce7'}
-                onMouseOut={e => e.currentTarget.style.backgroundColor = '#f0fdf4'}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon d={Icons.location} size="24" color="#fff" />
-                  </div>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>Directions</span>
-                </button>
-              </div>
-
-              {/* Contact Details Card */}
-              <div style={{
-                backgroundColor: '#fff',
-                borderRadius: '20px',
-                padding: '24px',
-                marginBottom: '20px',
-                border: '1px solid #e8d5ac',
-              }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1e1200', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Icon d={Icons.phone} size={18} color="#B46A02" />
-                  Contact Information
-                </h3>
                 
-                <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #f0e8d0' }}>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>Mobile Number</div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{gnOfficer?.mobile || 'Not available'}</span>
-                    {gnOfficer?.mobile && (
-                      <button onClick={handleCopyMobile} style={{
-                        padding: '6px 16px',
-                        backgroundColor: '#f5f0e8',
-                        border: '1px solid #e8d5ac',
-                        borderRadius: '20px',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}>Copy</button>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #f0e8d0' }}>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>Office Phone</div>
-                  <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{gnOfficer?.officePhone || 'Not available'}</span>
-                </div>
-
-                <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #f0e8d0' }}>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>Email Address</div>
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{gnOfficer?.email || 'Not available'}</span>
-                </div>
-
-                <div>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>Emergency Contact (24/7)</div>
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#dc2626' }}>{gnOfficer?.emergencyContact || '+94 71 234 5678'}</span>
-                </div>
-              </div>
-
-              {/* Office Information Card */}
-              <div style={{
-                backgroundColor: '#fff',
-                borderRadius: '20px',
-                padding: '24px',
-                marginBottom: '20px',
-                border: '1px solid #e8d5ac',
-              }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1e1200', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Icon d={Icons.location} size={18} color="#B46A02" />
-                  Office Information
-                </h3>
-                
-                <div style={{ marginBottom: '16px', display: 'flex', gap: '12px' }}>
-                  <Icon d={Icons.clock} size={18} color="#d97706" />
-                  <div>
-                    <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Office Hours</div>
-                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>{gnOfficer?.officeHours || '9:00 AM - 4:00 PM (Mon-Fri)'}</span>
-                  </div>
-                </div>
-
+                {/* Mobile Action Buttons */}
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <Icon d={Icons.location} size={18} color="#d97706" />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Office Address</div>
-                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a', lineHeight: 1.5 }}>
-                      {gnOfficer?.officeAddress || 'Grama Niladhari Office, Divisional Secretariat'}
-                    </span>
-                  </div>
+                  <button onClick={handleCall} style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '12px',
+                    backgroundColor: '#eff6ff',
+                    border: 'none',
+                    borderRadius: '40px',
+                    cursor: 'pointer',
+                  }}>
+                    <Icon d={Icons.phone} size={18} color="#3b82f6" strokeWidth={2} />
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>Call</span>
+                  </button>
+
+                  <button onClick={handleEmail} style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '12px',
+                    backgroundColor: '#fef3c7',
+                    border: 'none',
+                    borderRadius: '40px',
+                    cursor: 'pointer',
+                  }}>
+                    <Icon d={Icons.mail} size={18} color="#d97706" strokeWidth={2} />
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>Email</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Contact Details Card */}
+            <div style={{
+              backgroundColor: '#fff',
+              borderRadius: '20px',
+              padding: isMobile ? '20px' : '24px',
+              marginBottom: '20px',
+              border: '1px solid #e8d5ac',
+            }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1e1200', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Icon d={Icons.phone} size={18} color="#B46A02" />
+                Contact Information
+              </h3>
+              
+              <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #f0e8d0' }}>
+                <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px', fontWeight: 600 }}>Mobile Number</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '15px', fontWeight: 700, color: '#1e1200' }}>{gnOfficer?.mobile || 'Not available'}</span>
+                  {gnOfficer?.mobile && (
+                    <button onClick={handleCopyMobile} style={{
+                      padding: '6px 16px',
+                      backgroundColor: '#f5f0e8',
+                      border: '1px solid #e8d5ac',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                    onMouseOver={e => e.currentTarget.style.backgroundColor = '#e8e0d0'}
+                    onMouseOut={e => e.currentTarget.style.backgroundColor = '#f5f0e8'}>
+                      Copy
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {/* Book Appointment Button */}
-              <button
-                onClick={() => navigate('/appointments')}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  padding: '16px',
-                  backgroundColor: '#F5C400',
-                  border: 'none',
-                  borderRadius: '40px',
-                  fontSize: '16px',
-                  fontWeight: 800,
-                  color: '#3d2a00',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseOver={e => {
-                  e.currentTarget.style.backgroundColor = '#d4a800';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.backgroundColor = '#F5C400';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                <Icon d={Icons.calendar} size={18} color="#3d2a00" />
-                Book an Appointment
-              </button>
+              <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #f0e8d0' }}>
+                <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px', fontWeight: 600 }}>Office Phone</div>
+                <span style={{ fontSize: '15px', fontWeight: 700, color: '#1e1200' }}>{gnOfficer?.officePhone || 'Not available'}</span>
+              </div>
+
+              <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #f0e8d0' }}>
+                <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px', fontWeight: 600 }}>Email Address</div>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: '#1e1200' }}>{gnOfficer?.email || 'Not available'}</span>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px', fontWeight: 600 }}>Emergency Contact (24/7)</div>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: '#dc2626' }}>{gnOfficer?.emergencyContact || '+94 71 234 5678'}</span>
+              </div>
             </div>
+
+            {/* Office Information Card */}
+            <div style={{
+              backgroundColor: '#fff',
+              borderRadius: '20px',
+              padding: isMobile ? '20px' : '24px',
+              marginBottom: '24px',
+              border: '1px solid #e8d5ac',
+            }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1e1200', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Icon d={Icons.location} size={18} color="#B46A02" />
+                Office Information
+              </h3>
+              
+              <div style={{ marginBottom: '16px', display: 'flex', gap: '12px' }}>
+                <Icon d={Icons.clock} size={20} color="#d97706" />
+                <div>
+                  <div style={{ fontSize: '12px', color: '#888', marginBottom: '2px', fontWeight: 600 }}>Office Hours</div>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#1e1200' }}>{gnOfficer?.officeHours || '9:00 AM - 4:00 PM (Mon-Fri)'}</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <Icon d={Icons.location} size={20} color="#d97706" />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '12px', color: '#888', marginBottom: '2px', fontWeight: 600 }}>Office Address</div>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#1e1200', lineHeight: 1.5 }}>
+                    {gnOfficer?.officeAddress || 'Grama Niladhari Office, Divisional Secretariat'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Book Appointment Button */}
+            <button
+              onClick={() => navigate('/appointments')}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                padding: isMobile ? '14px' : '16px',
+                backgroundColor: '#F5C400',
+                border: 'none',
+                borderRadius: '40px',
+                fontSize: isMobile ? '15px' : '16px',
+                fontWeight: 800,
+                color: '#3d2a00',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.backgroundColor = '#d4a800';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.backgroundColor = '#F5C400';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <Icon d={Icons.calendar} size={20} color="#3d2a00" />
+              Book an Appointment
+            </button>
           </div>
         </div>
       </div>
 
+      {/* FOOTER */}
       <footer className="desktop-footer" style={{ backgroundColor: '#6A2301', color: '#fff', textAlign: 'center', padding: '13px 16px', fontSize: '13px', fontWeight: 600 }}>
         ©2026 Smart Grama Sewa
       </footer>
@@ -707,7 +698,6 @@ const ContactGN = () => {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Desktop */
         @media (min-width: 769px) {
           .desktop-sidebar { display: flex !important; }
           .desktop-topbar { display: flex !important; }
@@ -715,7 +705,6 @@ const ContactGN = () => {
           .mobile-topbar { display: none !important; }
         }
 
-        /* Mobile */
         @media (max-width: 768px) {
           .desktop-sidebar { display: none !important; }
           .desktop-topbar { display: none !important; }
