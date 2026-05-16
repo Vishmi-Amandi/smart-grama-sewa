@@ -2,19 +2,96 @@ import { useState } from "react";
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "../../firebase";
 
 const TransferRequest = ({ gnStatus, theme }) => {
   const t = getThemeClasses(theme);
   const navigate = useNavigate();
-  const [confirmed, setConfirmed] = useState(false);
 
-  return (
-    <GNLayout gnStatus={gnStatus} theme={theme}>
+ 
+const [form, setForm] = useState({
+  fromDivision: "",
+  fromDistrict: "",
+  toDivision: "",
+  toDistrict: "",
+  effectiveDate: "",
+  reason: "",
+  additionalNotes: "",
+});
 
-      {/* Page Title */}
-      <h1 className="text-2xl font-bold text-[#8B4513] mb-6">Transfer Request</h1>
+const [confirmed, setConfirmed] = useState(false);
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState("");
+const [success, setSuccess] = useState(false);
 
+const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+const handleSubmit = async () => {
+  if (!confirmed) { setError("Please confirm the information is correct."); return; }
+  if (!form.fromDistrict) { setError("Please select your current district."); return; }
+  if (!form.toDivision.trim()) { setError("Please enter target division."); return; }
+  if (!form.toDistrict) { setError("Please select target district."); return; }
+  if (!form.reason.trim()) { setError("Please provide a reason for transfer."); return; }
+  if (!form.effectiveDate) { setError("Please select an effective date."); return; }
+
+  setLoading(true);
+  setError("");
+  try {
+    const user = auth.currentUser;
+    await addDoc(collection(db, "transfer_requests"), {
+  uid:             user.uid,
+  email:           user.email,
+  fromDivision:    form.fromDivision,
+  fromDistrict:    form.fromDistrict,   // ← correct field name
+  toDivision:      form.toDivision,
+  toDistrict:      form.toDistrict,     // ← correct field name
+  effectiveDate:   form.effectiveDate,
+  reason:          form.reason,
+  additionalNotes: form.additionalNotes || "",
+  status:          "Pending",
+  createdAt:       serverTimestamp(),
+});
+    setSuccess(true);
+  } catch (err) {
+    setError("Failed to submit request. Please try again.");
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+return (
+  <GNLayout gnStatus={gnStatus} theme={theme}>
+
+    {/* Page Title */}
+    <h1 className="text-2xl font-bold text-[#8B4513] mb-6">Transfer Request</h1>
+
+    {success ? (
+      /* Success State */
+      <div className={`${t.card} rounded-2xl shadow p-12 text-center`}>
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span className="text-3xl">✅</span>
+        </div>
+        <h2 className={`text-xl font-bold mb-2 ${t.text}`}>Request Submitted!</h2>
+        <p className={`text-sm mb-6 ${t.subtext}`}>
+          Your transfer request has been submitted successfully. You will be notified once it is reviewed.
+        </p>
+        <button
+          onClick={() => navigate("/")}
+          className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-6 py-2 rounded-xl transition">
+          Back to Dashboard
+        </button>
+      </div>
+    ) : (
       <div className={`${t.card} rounded-2xl shadow p-8`}>
+
+        {/* Error */}
+        {error && (
+          <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
+            ⚠️ {error}
+          </div>
+        )}
 
         {/* Transfer Details */}
         <div className="mb-6">
@@ -23,50 +100,77 @@ const TransferRequest = ({ gnStatus, theme }) => {
           </p>
           <div className="grid grid-cols-2 gap-4">
 
-            <div>
-              <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>From Division (Current)</label>
-              <input
-                type="text"
-                defaultValue="Colombo Central"
-                className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input} text-[#8B4513] font-semibold`}
-              />
-            </div>
+  {/* From Division */}
+  <div>
+    <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>
+      From GN Division (Current)
+    </label>
+    <input
+      type="text"
+      value={form.fromDivision}
+      onChange={(e) => updateForm("fromDivision", e.target.value)}
+      placeholder="Your current division"
+      className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
+    />
+  </div>
 
-            <div>
-              <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>District</label>
-              <select className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
-                <option>Select District</option>
-                <option>Colombo</option>
-                <option>Gampaha</option>
-                <option>Kandy</option>
-                <option>Galle</option>
-              </select>
-            </div>
+  {/* From District */}
+  <div>
+    <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>
+      From District (Current)
+    </label>
+    <select
+      value={form.fromDistrict}
+      onChange={(e) => updateForm("fromDistrict", e.target.value)}
+      className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
+      <option value="">Select District</option>
+      {["Colombo","Gampaha","Kalutara","Kandy","Matale","Nuwara Eliya",
+        "Galle","Matara","Hambantota","Jaffna","Kilinochchi","Mannar",
+        "Vavuniya","Mullaitivu","Trincomalee","Batticaloa","Ampara",
+        "Kurunegala","Puttalam","Anuradhapura","Polonnaruwa","Badulla",
+        "Moneragala","Ratnapura","Kegalle"].map((d) => (
+        <option key={d} value={d}>{d}</option>
+      ))}
+    </select>
+  </div>
 
-            <div>
-              <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>To Division (Requested)</label>
-              <select className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
-                <option>Select Target Division</option>
-                <option>Homagama</option>
-                <option>Nugegoda</option>
-                <option>Maharagama</option>
-              </select>
-            </div>
+  {/* To Division */}
+  <div>
+    <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>
+      To GN Division (Requested)
+    </label>
+    <input
+      type="text"
+      value={form.toDivision}
+      onChange={(e) => updateForm("toDivision", e.target.value)}
+      placeholder="Target division name"
+      className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
+    />
+  </div>
 
-            <div>
-              <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>GN Division</label>
-              <select className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
-                <option>Select GN Division</option>
-                <option>Division A</option>
-                <option>Division B</option>
-                <option>Division C</option>
-              </select>
-            </div>
+  {/* To District */}
+  <div>
+    <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>
+      To District (Requested)
+    </label>
+    <select
+      value={form.toDistrict}
+      onChange={(e) => updateForm("toDistrict", e.target.value)}
+      className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
+      <option value="">Select District</option>
+      {["Colombo","Gampaha","Kalutara","Kandy","Matale","Nuwara Eliya",
+        "Galle","Matara","Hambantota","Jaffna","Kilinochchi","Mannar",
+        "Vavuniya","Mullaitivu","Trincomalee","Batticaloa","Ampara",
+        "Kurunegala","Puttalam","Anuradhapura","Polonnaruwa","Badulla",
+        "Moneragala","Ratnapura","Kegalle"].map((d) => (
+        <option key={d} value={d}>{d}</option>
+      ))}
+    </select>
+  </div>
 
-          </div>
+</div> 
         </div>
 
-        {/* Divider */}
         <hr className={`${t.border} mb-6`} />
 
         {/* Reasoning & Schedule */}
@@ -74,18 +178,20 @@ const TransferRequest = ({ gnStatus, theme }) => {
           <p className={`text-sm font-semibold mb-4 flex items-center gap-2 ${t.text}`}>
             ℹ️ Reasoning & Schedule
           </p>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>Effective Date</label>
-              <input
-                type="date"
-                className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
-              />
-            </div>
+          <div className="mb-4">
+            <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>Effective Date</label>
+            <input
+              type="date"
+              value={form.effectiveDate}
+              onChange={(e) => updateForm("effectiveDate", e.target.value)}
+              className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
+            />
           </div>
           <div>
             <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>Reason for Transfer</label>
             <textarea
+              value={form.reason}
+              onChange={(e) => updateForm("reason", e.target.value)}
               placeholder="State your primary reason for requesting this transfer..."
               rows={4}
               className={`w-full border ${t.border} rounded-xl px-4 py-3 text-sm outline-none focus:border-[#E5A800] transition resize-none ${t.input}`}
@@ -93,29 +199,20 @@ const TransferRequest = ({ gnStatus, theme }) => {
           </div>
         </div>
 
-        {/* Divider */}
         <hr className={`${t.border} mb-6`} />
 
-        {/* Supporting Documents */}
+        {/* Additional Notes */}
         <div className="mb-6">
           <p className={`text-sm font-semibold mb-4 flex items-center gap-2 ${t.text}`}>
-            📄 Supporting Documents
+            📄 Additional Notes
           </p>
-          <label className={`text-xs font-semibold mb-2 block ${t.subtext}`}>Upload Transfer Letter</label>
-          <div className={`border-2 border-dashed ${t.border} rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer hover:border-[#E5A800] transition mb-4`}>
-            <Upload size={28} className="text-gray-400 mb-2" />
-            <p className={`text-sm font-semibold ${t.text}`}>Click to upload or drag and drop</p>
-            <p className={`text-xs mt-1 ${t.subtext}`}>PDF, JPG or PNG (Max. 5MB)</p>
-          </div>
-
-          <div>
-            <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>Additional Notes</label>
-            <textarea
-              placeholder="Any other information you wish to provide..."
-              rows={3}
-              className={`w-full border ${t.border} rounded-xl px-4 py-3 text-sm outline-none focus:border-[#E5A800] transition resize-none ${t.input}`}
-            />
-          </div>
+          <textarea
+            value={form.additionalNotes}
+            onChange={(e) => updateForm("additionalNotes", e.target.value)}
+            placeholder="Any other information you wish to provide..."
+            rows={3}
+            className={`w-full border ${t.border} rounded-xl px-4 py-3 text-sm outline-none focus:border-[#E5A800] transition resize-none ${t.input}`}
+          />
         </div>
 
         {/* Confirmation Checkbox */}
@@ -140,20 +237,21 @@ const TransferRequest = ({ gnStatus, theme }) => {
             Cancel
           </button>
           <button
-            disabled={!confirmed}
+            onClick={handleSubmit}
+            disabled={!confirmed || loading}
             className={`font-semibold px-6 py-2 rounded-xl flex items-center gap-2 transition
               ${confirmed
                 ? "bg-[#E5A800] hover:bg-[#cc9600] text-black cursor-pointer"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}>
-            Submit Request →
+            {loading ? "Submitting..." : "Submit Request →"}
           </button>
         </div>
 
       </div>
+    )}
 
-    </GNLayout>
-  );
+  </GNLayout>
+);
 };
-
 export default TransferRequest;

@@ -13,6 +13,7 @@ import TransferRequest from './modules/gn/pages/TransferRequest.jsx';
 import Login  from './modules/gn/pages/Login.jsx';
 import SignUp from './modules/gn/pages/SignUp.jsx';
 import ProtectedRoute from './modules/gn/components/ProtectedRoute.jsx';
+import ForgotPassword from './modules/gn/pages/ForgotPassword.jsx';
 
 
 function App() {
@@ -45,6 +46,7 @@ return (
   <Route path="/profile" element={<ProtectedRoute><Profile gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
   <Route path="/settings" element={<ProtectedRoute><Settings gnStatus={gnStatus} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} /></ProtectedRoute>} />
   <Route path="/transfer-request" element={<ProtectedRoute><TransferRequest gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
+  <Route path="/forgot-password" element={<ForgotPassword />} />
 </Routes>
   </div>
 );
