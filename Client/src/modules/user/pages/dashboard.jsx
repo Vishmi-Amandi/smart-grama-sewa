@@ -31,7 +31,7 @@ const Icons = {
   chevLeft:     'M15 18l-6-6 6-6',
   chevRight:    'M9 18l6-6-6-6',
   close:        'M18 6L6 18M6 6l12 12',
-  appointment: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
+  appointment:  'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
   announcementIcon: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
   formIcon: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
   aiIcon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
@@ -42,20 +42,22 @@ const Icons = {
   checkbox: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z',
   send: 'M22 2L11 13 M22 2l-7 20-4-9-9-4 20-7z',
   emojiSmile: 'M12 2a10 10 0 100 20 10 10 0 000-20z M8 10h.01 M16 10h.01 M9 15h6',
+  star: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+  bolt: 'M13 10V3L4 14h7v7l9-11h-7z',
+  wave: 'M2 12c3.5-4 8.5-4 12 0s8.5 4 12 0 M4 16c3-3 9-3 12 0s9 3 12 0',
+  sun: 'M12 2v2 M12 20v2 M4.93 4.93l1.41 1.41 M17.66 17.66l1.41 1.41 M2 12h2 M20 12h2 M5.64 17.66l1.41-1.41 M16.95 6.05l1.41-1.41 M12 6a6 6 0 100 12 6 6 0 000-12z',
 };
 
 // NavItem 
 const NavItem = ({ iconPath, label, active, onClick }) => (
-  <button onClick={onClick} style={{
-    width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
-    padding: '11px 16px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-    backgroundColor: active ? 'rgba(255,255,255,0.9)' : 'transparent',
-    color: '#3d2a00', fontWeight: active ? 800 : 600, fontSize: '14px',
-    fontFamily: 'inherit', transition: 'all 0.15s', textAlign: 'left',
-    boxShadow: active ? '0 2px 8px rgba(0,0,0,0.12)' : 'none', marginBottom: '2px',
-  }}
-    onMouseOver={e => { if (!active) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.4)'; }}
-    onMouseOut={e  => { if (!active) e.currentTarget.style.backgroundColor = 'transparent'; }}
+  <button 
+    onClick={onClick} 
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
+      active 
+        ? 'bg-white/90 text-user-text font-extrabold shadow-md' 
+        : 'bg-transparent text-user-text font-semibold hover:bg-white/40'
+    }`}
+    style={{ color: active ? '#B46A02' : '#5a3a00' }}
   >
     <Icon d={iconPath} size={18} color={active ? '#B46A02' : '#5a3a00'} />
     {label}
@@ -63,81 +65,109 @@ const NavItem = ({ iconPath, label, active, onClick }) => (
 );
 
 // QuickCard
-const QuickCard = ({ iconPath, label, onClick }) => (
-  <button onClick={onClick} style={{
-    display: 'flex', alignItems: 'center', gap: '10px',
-    padding: '12px 20px', backgroundColor: '#fff',
-    border: '1.5px solid #e8d5ac', borderRadius: '999px',
-    cursor: 'pointer', fontFamily: 'inherit',
-    fontSize: '14px', fontWeight: 700, color: '#1e1200',
-    transition: 'all 0.18s', textAlign: 'left',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-  }}
-    onMouseOver={e => { e.currentTarget.style.borderColor = '#F5C400'; e.currentTarget.style.backgroundColor = '#fff8e0'; }}
-    onMouseOut={e  => { e.currentTarget.style.borderColor = '#e8d5ac'; e.currentTarget.style.backgroundColor = '#fff'; }}
-  >
-    <Icon d={iconPath} size={17} color="#B46A02" />
-    {label}
-  </button>
+const QuickCard = ({ iconPath, label, onClick, tooltip }) => (
+  <div className="relative group w-full">
+    <button 
+      onClick={onClick} 
+      className="flex flex-col items-center justify-center gap-2 w-full py-4 px-3 bg-user-surface border border-user-border rounded-lg cursor-pointer font-sans text-xs sm:text-sm font-bold text-user-text transition-all duration-200 shadow-sm hover:border-user-primary hover:bg-user-primary-light hover:-translate-y-0.5"
+    >
+      <Icon d={iconPath} size={20} color="#B46A02" />
+      <span className="text-center whitespace-nowrap">{label}</span>
+    </button>
+    {tooltip && (
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+        {tooltip}
+      </span>
+    )}
+  </div>
 );
 
 // AppointmentRow
 const AppointmentRow = ({ month, day, title, time, status, last }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 0', borderBottom: last ? 'none' : '1px solid #f0e8d0' }}>
-    <div style={{ width: '48px', flexShrink: 0, textAlign: 'center', backgroundColor: '#f5f0e8', borderRadius: '10px', padding: '6px 4px' }}>
-      <div style={{ fontSize: '10px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{month}</div>
-      <div style={{ fontSize: '22px', fontWeight: 900, color: '#1e1200', lineHeight: 1.1 }}>{day}</div>
+  <div className={`flex items-center gap-3.5 py-3 ${!last ? 'border-b border-user-border-light' : ''}`}>
+    <div className="w-12 flex-shrink-0 text-center bg-user-secondary-light rounded-lg py-1.5 px-1">
+      <div className="text-[10px] font-extrabold text-user-warning uppercase tracking-wide">{month}</div>
+      <div className="text-[22px] font-black text-user-text leading-tight">{day}</div>
     </div>
-    <div style={{ flex: 1 }}>
-      <div style={{ fontSize: '14px', fontWeight: 800, color: '#1e1200', marginBottom: '3px' }}>{title}</div>
-      <div style={{ fontSize: '12px', fontWeight: 600, color: '#888' }}>{time}</div>
+    <div className="flex-1">
+      <div className="text-sm font-extrabold text-user-text mb-0.5">{title}</div>
+      <div className="text-xs font-semibold text-user-text-lighter">{time}</div>
     </div>
     {status && (
-      <div style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '10px', fontWeight: 700, backgroundColor: status === 'Confirmed' ? '#2ecc7120' : '#f39c1220', color: status === 'Confirmed' ? '#27ae60' : '#e67e22' }}>
-        {status === 'Confirmed' ? '✓ Confirmed' : 'Pending'}
+      <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 ${status === 'Confirmed' ? 'bg-user-success-light text-user-success' : 'bg-user-warning-light text-user-warning'}`}>
+        <Icon d={status === 'Confirmed' ? Icons.success : Icons.warning} size={8} color="currentColor" strokeWidth={2.5} />
+        {status === 'Confirmed' ? 'Confirmed' : 'Pending'}
       </div>
     )}
   </div>
 );
 
-// Skeletons
+// Enhanced Skeleton Components
 const AppointmentsSkeleton = () => (
-  <div>{[1,2,3].map(i => (
-    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 0' }}>
-      <div style={{ width: '48px', height: '58px', backgroundColor: '#f0f0f0', borderRadius: '10px', animation: 'pulse 1.5s ease-in-out infinite' }} />
-      <div style={{ flex: 1 }}>
-        <div style={{ height: '16px', backgroundColor: '#f0f0f0', borderRadius: '4px', width: '70%', marginBottom: '8px', animation: 'pulse 1.5s ease-in-out infinite' }} />
-        <div style={{ height: '12px', backgroundColor: '#f0f0f0', borderRadius: '4px', width: '40%', animation: 'pulse 1.5s ease-in-out infinite' }} />
+  <div>
+    {[1,2,3].map(i => (
+      <div key={i} className="flex items-center gap-3.5 py-3">
+        <div className="w-12 h-[58px] bg-gray-200 rounded-lg skeleton-shimmer" />
+        <div className="flex-1">
+          <div className="h-4 bg-gray-200 rounded-md w-3/4 mb-2 skeleton-shimmer" />
+          <div className="h-3 bg-gray-200 rounded-md w-2/5 skeleton-shimmer" />
+        </div>
       </div>
-    </div>
-  ))}</div>
+    ))}
+  </div>
 );
 
 const AnnouncementsSkeleton = () => (
   <div>
-    <div style={{ height: '18px', backgroundColor: '#f0f0f0', borderRadius: '4px', width: '80%', marginBottom: '12px', animation: 'pulse 1.5s ease-in-out infinite' }} />
-    <div style={{ height: '12px', backgroundColor: '#f0f0f0', borderRadius: '4px', width: '95%', marginBottom: '8px', animation: 'pulse 1.5s ease-in-out infinite' }} />
-    <div style={{ height: '12px', backgroundColor: '#f0f0f0', borderRadius: '4px', width: '60%', marginBottom: '16px', animation: 'pulse 1.5s ease-in-out infinite' }} />
+    <div className="h-[18px] bg-gray-200 rounded-md w-4/5 mb-3 skeleton-shimmer" />
+    <div className="h-3 bg-gray-200 rounded-md w-[95%] mb-2 skeleton-shimmer" />
+    <div className="h-3 bg-gray-200 rounded-md w-3/5 skeleton-shimmer" />
   </div>
 );
 
-// Empty state
-const EmptyState = ({ type }) => (
-  <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-    <div style={{ marginBottom: '12px', opacity: 0.5 }}>
-      <Icon d={type === 'appointments' ? Icons.calendar : Icons.announcementIcon} size={48} color="#ccc" strokeWidth={1.2} />
+// Empty State Component
+const EmptyState = ({ type, onAction }) => {
+  const config = {
+    appointments: {
+      icon: Icons.calendar,
+      title: 'No Upcoming Appointments',
+      description: 'Book your first appointment with your GN Officer',
+      buttonText: 'Book Appointment'
+    },
+    announcements: {
+      icon: Icons.announcementIcon,
+      title: 'No Announcements Yet',
+      description: 'Check back later for updates from your GN Officer',
+      buttonText: 'Refresh'
+    }
+  };
+  
+  const data = config[type];
+  
+  return (
+    <div className="text-center py-12 px-6">
+      <div className="w-20 h-20 rounded-full bg-user-secondary-light flex items-center justify-center mx-auto mb-4">
+        <Icon d={data.icon} size={40} color="#ccc" strokeWidth={1.2} />
+      </div>
+      <h3 className="text-base font-extrabold text-user-text mb-2">{data.title}</h3>
+      <p className="text-sm text-user-text-lighter mb-5">{data.description}</p>
+      <button
+        onClick={onAction}
+        className="px-5 py-2 bg-user-primary border-none rounded-lg text-sm font-bold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark"
+      >
+        {data.buttonText}
+      </button>
     </div>
-    <div style={{ fontSize: '14px', fontWeight: 600, color: '#888' }}>No {type} available</div>
-    <div style={{ fontSize: '12px', color: '#aaa', marginTop: '4px' }}>Check back later for updates</div>
-  </div>
-);
+  );
+};
 
-// Default announcements
-const defaultAnnouncements = [
-  { id: 1, title: 'Income Certificate Service Resumed', body: "Applications are now open again. Citizens who couldn't apply during maintenance may now submit their requests.", date: '2026-04-01' },
-  { id: 2, title: 'Gram Sabha Meeting — 5 April 2026',  body: 'Monthly Gram Sabha meeting at 10 AM in the Panchayat Hall. All ward citizens are requested to attend.', date: '2026-03-28' },
-  { id: 3, title: 'Digital Certificates Now Available', body: 'Download your digitally signed certificates directly from the portal — no need to visit the office.', date: '2026-03-25' },
-];
+// Time-based greeting with icon
+const getTimeBasedGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return { text: 'Good Morning', icon: Icons.sun };
+  if (hour < 18) return { text: 'Good Afternoon', icon: Icons.sun };
+  return { text: 'Good Evening', icon: Icons.wave };
+};
 
 // List of all pages/functions for search
 const PAGE_ACTIONS = [
@@ -150,37 +180,88 @@ const PAGE_ACTIONS = [
   { name: 'Settings', path: '/settings', icon: Icons.settings, keywords: ['preferences', 'options', 'configuration'] },
 ];
 
-//  MAIN DASHBOARD
+// Default announcements
+const defaultAnnouncements = [
+  { id: 1, title: 'Income Certificate Service Resumed', body: "Applications are now open again. Citizens who couldn't apply during maintenance may now submit their requests.", date: '2026-04-01' },
+  { id: 2, title: 'Gram Sabha Meeting — 5 April 2026',  body: 'Monthly Gram Sabha meeting at 10 AM in the Panchayat Hall. All ward citizens are requested to attend.', date: '2026-03-28' },
+  { id: 3, title: 'Digital Certificates Now Available', body: 'Download your digitally signed certificates directly from the portal — no need to visit the office.', date: '2026-03-25' },
+];
+
+// Search Results Dropdown Component
+const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate }) => {
+  const [filteredPages, setFilteredPages] = useState([]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredPages([]);
+      return;
+    }
+    const query = searchQuery.toLowerCase();
+    const filtered = PAGE_ACTIONS.filter(page =>
+      page.name.toLowerCase().includes(query) ||
+      page.keywords.some(keyword => keyword.toLowerCase().includes(query))
+    );
+    setFilteredPages(filtered);
+  }, [searchQuery]);
+
+  if (!showResults || filteredPages.length === 0) return null;
+
+  return (
+    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-user-border z-[1000] overflow-hidden">
+      {filteredPages.map((page, idx) => (
+        <button
+          key={page.path}
+          onClick={() => {
+            navigate(page.path);
+            setShowResults(false);
+          }}
+          className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background ${idx !== filteredPages.length - 1 ? 'border-b border-user-border-light' : ''}`}
+        >
+          <Icon d={page.icon} size={18} color="#B46A02" />
+          <div>
+            <div className="text-sm font-bold text-user-text">{page.name}</div>
+            <div className="text-[11px] text-user-text-lighter">Click to go to {page.name}</div>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// MAIN DASHBOARD
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [activePage,   setActivePage]   = useState('dashboard');
-  const [announcIdx,   setAnnouncIdx]   = useState(0);
+  const [activePage, setActivePage] = useState('dashboard');
+  const [announcIdx, setAnnouncIdx] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // SEARCH STATE - for page/function search
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-
-  // LANGUAGE STATE
   const [currentLanguage, setCurrentLanguage] = useState('en');
-
-  const [appointments,          setAppointments]          = useState([]);
-  const [announcements,         setAnnouncements]         = useState(defaultAnnouncements);
-  const [loadingAppointments,   setLoadingAppointments]   = useState(true);
-  const [loadingAnnouncements,  setLoadingAnnouncements]  = useState(false);
-  const [refreshingAppointments,  setRefreshingAppointments]  = useState(false);
+  const [toast, setToast] = useState(null);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  
+  const [appointments, setAppointments] = useState([]);
+  const [announcements, setAnnouncements] = useState(defaultAnnouncements);
+  const [loadingAppointments, setLoadingAppointments] = useState(true);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
+  const [refreshingAppointments, setRefreshingAppointments] = useState(false);
   const [refreshingAnnouncements, setRefreshingAnnouncements] = useState(false);
 
   const [currentUser, setCurrentUser] = useState(null);
-  const [userData,    setUserData]    = useState(null);
-  const [gnOfficer,   setGnOfficer]   = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [gnOfficer, setGnOfficer] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+
+  // Show toast notification
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Handle language change
   const handleLanguageChange = (langCode) => {
     setCurrentLanguage(langCode);
     console.log('Language changed to:', langCode);
-    // Your teammate can add translation logic here later
   };
 
   // Fetch appointments
@@ -188,7 +269,7 @@ const Dashboard = () => {
     showRefresh ? setRefreshingAppointments(true) : setLoadingAppointments(true);
     try {
       if (!currentUser) return;
-      const today   = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split('T')[0];
       const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
       const q = query(
         collection(db, 'appointments'),
@@ -211,8 +292,13 @@ const Dashboard = () => {
         .sort((a, b) => a.date.localeCompare(b.date))
         .slice(0, 3);
       setAppointments(list);
-    } catch (e) { console.error('Error fetching appointments:', e); }
-    finally { setLoadingAppointments(false); setRefreshingAppointments(false); }
+    } catch (e) { 
+      console.error('Error fetching appointments:', e);
+      showToast('Failed to load appointments', 'error');
+    } finally { 
+      setLoadingAppointments(false); 
+      setRefreshingAppointments(false); 
+    }
   };
 
   // Fetch announcements
@@ -228,9 +314,16 @@ const Dashboard = () => {
           body: d.data().body || d.data().message || '',
           date: d.data().createdAt?.toDate?.().toISOString().split('T')[0] || '',
         })));
+      } else {
+        setAnnouncements(defaultAnnouncements);
       }
-    } catch (e) { console.error('Error fetching announcements:', e); }
-    finally { setLoadingAnnouncements(false); setRefreshingAnnouncements(false); }
+    } catch (e) { 
+      console.error('Error fetching announcements:', e);
+      showToast('Failed to load announcements', 'error');
+    } finally { 
+      setLoadingAnnouncements(false); 
+      setRefreshingAnnouncements(false); 
+    }
   };
 
   // Auth listener
@@ -265,9 +358,18 @@ const Dashboard = () => {
   useEffect(() => { if (currentUser) fetchAppointments(false); }, [currentUser]);
   useEffect(() => { fetchAnnouncements(false); }, []);
 
-  const handleLogout = async () => { try { await signOut(auth); navigate('/login'); } catch (e) { console.error(e); } };
+  const handleLogout = async () => { 
+    try { 
+      await signOut(auth); 
+      showToast('Logged out successfully', 'success');
+      navigate('/login'); 
+    } catch (e) { 
+      console.error(e);
+      showToast('Failed to logout', 'error');
+    } 
+  };
 
-  // SEARCH FUNCTION - filters pages based on search query
+  // Search function
   const getFilteredPages = () => {
     if (!searchQuery.trim()) return [];
     const query = searchQuery.toLowerCase();
@@ -288,12 +390,13 @@ const Dashboard = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const fullName  = userData?.fullName || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User';
+  const fullName = userData?.fullName || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User';
   const firstName = fullName.split(' ')[0];
-  const chipName  = userData?.username || fullName;
-  const gnName    = gnOfficer?.name      || `GN Officer (${userData?.gnDiv || 'N/A'})`;
+  const chipName = userData?.username || fullName;
+  const gnName = gnOfficer?.name || `GN Officer (${userData?.gnDiv || 'N/A'})`;
   const gnAvailable = gnOfficer?.available ?? true;
-  const gnDivLabel  = userData?.gnDiv    || userData?.dsDiv || '';
+  const gnDivLabel = userData?.gnDiv || userData?.dsDiv || '';
+  const greeting = getTimeBasedGreeting();
 
   if (authLoading) return <PageLoadingSkeleton />;
 
@@ -301,77 +404,29 @@ const Dashboard = () => {
   const next = () => setAnnouncIdx(i => i === announcements.length - 1 ? 0 : i + 1);
 
   const navItems = [
-    { key: 'dashboard',     icon: Icons.dashboard,    label: 'Dashboard'     },
-    { key: 'announcements', icon: Icons.announcement, label: 'Announcements' },
-    { key: 'appointments',  icon: Icons.appointments, label: 'Appointments'  },
-    { key: 'forms',         icon: Icons.forms,        label: 'Forms'         },
-    { key: 'ai',            icon: Icons.ai,           label: 'AI assistant'  },
+    { key: 'dashboard', icon: Icons.dashboard, label: 'Dashboard', path: '/dashboard' },
+    { key: 'announcements', icon: Icons.announcement, label: 'Announcements', path: '/announcements' },
+    { key: 'appointments', icon: Icons.appointments, label: 'Appointments', path: '/appointments' },
+    { key: 'forms', icon: Icons.forms, label: 'Forms', path: '/forms' },
+    { key: 'ai', icon: Icons.ai, label: 'AI Assistant', path: '/ai' },
   ];
   const bottomNav = [
-    { key: 'profile',  icon: Icons.profile,  label: 'Profile'  },
-    { key: 'settings', icon: Icons.settings, label: 'Settings' },
-    { key: 'logout',   icon: Icons.logout,   label: 'Sign out'   },
+    { key: 'profile', icon: Icons.profile, label: 'Profile', path: '/profile' },
+    { key: 'settings', icon: Icons.settings, label: 'Settings', path: '/settings' },
+    { key: 'logout', icon: Icons.logout, label: 'Sign out', action: 'logout' },
   ];
-
-  // Search Results Dropdown Component
-  const SearchResultsDropdown = () => {
-    if (!showSearchResults || filteredPages.length === 0) return null;
-    
-    return (
-      <div style={{
-        position: 'absolute',
-        top: '100%',
-        left: 0,
-        right: 0,
-        marginTop: '8px',
-        backgroundColor: '#fff',
-        borderRadius: '12px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-        border: '1px solid #e8d5ac',
-        zIndex: 1000,
-        overflow: 'hidden',
-      }}>
-        {filteredPages.map((page, idx) => (
-          <button
-            key={page.path}
-            onClick={() => {
-              navigate(page.path);
-              setSearchQuery('');
-              setShowSearchResults(false);
-            }}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px 16px',
-              border: 'none',
-              backgroundColor: idx === filteredPages.length - 1 ? '#fff' : '#fff',
-              borderBottom: idx === filteredPages.length - 1 ? 'none' : '1px solid #f0e8d0',
-              cursor: 'pointer',
-              textAlign: 'left',
-              transition: 'background 0.15s',
-            }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f5f0e8'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fff'}
-          >
-            <Icon d={page.icon} size={18} color="#B46A02" />
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e1200' }}>{page.name}</div>
-              <div style={{ fontSize: '11px', color: '#888' }}>Click to go to {page.name}</div>
-            </div>
-          </button>
-        ))}
-      </div>
-    );
-  };
 
   // Shared widget components
   const AppointmentsWidget = () => (
-    <div style={{ backgroundColor: '#c8a882', borderRadius: '18px', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
-      <div style={{ padding: '16px 20px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: '15px', fontWeight: 900, color: '#fff' }}>Upcoming Appointments</div>
-        <button onClick={() => fetchAppointments(true)} disabled={refreshingAppointments} style={{ background: 'none', border: 'none', cursor: refreshingAppointments ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.3s', transform: refreshingAppointments ? 'rotate(180deg)' : 'none', opacity: refreshingAppointments ? 0.7 : 1 }}>
+    <div className="bg-[#c8a882] rounded-xl overflow-hidden shadow-md">
+      <div className="flex justify-between items-center px-5 py-4">
+        <div className="text-[15px] font-black text-white">Upcoming Appointments</div>
+        <button 
+          onClick={() => fetchAppointments(true)} 
+          disabled={refreshingAppointments} 
+          className="bg-none border-none cursor-pointer flex items-center justify-center transition-transform duration-300 disabled:opacity-70"
+          style={{ transform: refreshingAppointments ? 'rotate(180deg)' : 'none' }}
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M23 4v6h-6" />
             <path d="M1 20v-6h6" />
@@ -380,21 +435,38 @@ const Dashboard = () => {
           </svg>
         </button>
       </div>
-      <div style={{ backgroundColor: '#fff', borderRadius: '0 0 16px 16px', padding: '6px 20px 12px', minHeight: '180px' }}>
+      <div className="bg-user-surface px-5 py-2 pb-3 min-h-[180px]">
         {loadingAppointments ? <AppointmentsSkeleton /> :
-         appointments.length === 0 ? <EmptyState type="appointments" /> :
-         appointments.map((app, idx) => (
-           <AppointmentRow key={app.id} month={app.month} day={app.day} title={app.title} time={app.time} status={app.status} last={idx === appointments.length - 1} />
-         ))}
+         appointments.length === 0 ? 
+           <EmptyState type="appointments" onAction={() => navigate('/appointments')} /> :
+           appointments.map((app, idx) => (
+             <AppointmentRow key={app.id} {...app} last={idx === appointments.length - 1} />
+           ))
+        }
       </div>
+      {appointments.length > 0 && (
+        <div className="text-center py-2 border-t border-user-border-light">
+          <button 
+            onClick={() => navigate('/appointments')}
+            className="text-sm text-white font-semibold hover:underline"
+          >
+            View All Appointments →
+          </button>
+        </div>
+      )}
     </div>
   );
 
   const AnnouncementsWidget = () => (
-    <div style={{ backgroundColor: '#c8a882', borderRadius: '18px', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
-      <div style={{ padding: '16px 20px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: '15px', fontWeight: 900, color: '#fff' }}>Latest Announcements</div>
-        <button onClick={() => fetchAnnouncements(true)} disabled={refreshingAnnouncements} style={{ background: 'none', border: 'none', cursor: refreshingAnnouncements ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.3s', transform: refreshingAnnouncements ? 'rotate(180deg)' : 'none', opacity: refreshingAnnouncements ? 0.7 : 1 }}>
+    <div className="bg-[#c8a882] rounded-xl overflow-hidden shadow-md">
+      <div className="flex justify-between items-center px-5 py-4">
+        <div className="text-[15px] font-black text-white">Latest Announcements</div>
+        <button 
+          onClick={() => fetchAnnouncements(true)} 
+          disabled={refreshingAnnouncements} 
+          className="bg-none border-none cursor-pointer flex items-center justify-center transition-transform duration-300 disabled:opacity-70"
+          style={{ transform: refreshingAnnouncements ? 'rotate(180deg)' : 'none' }}
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M23 4v6h-6" />
             <path d="M1 20v-6h6" />
@@ -403,71 +475,59 @@ const Dashboard = () => {
           </svg>
         </button>
       </div>
-      <div style={{ backgroundColor: '#fff', borderRadius: '0 0 16px 16px', padding: '16px 20px', minHeight: '180px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <div className="bg-user-surface px-5 py-4 min-h-[180px] flex flex-col justify-between">
         {loadingAnnouncements ? <AnnouncementsSkeleton /> :
-         announcements.length === 0 ? <EmptyState type="announcements" /> : (
-          <>
+         announcements.length === 0 ? 
+           <EmptyState type="announcements" onAction={() => fetchAnnouncements(false)} /> :
+           <>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 800, color: '#1e1200', marginBottom: '8px' }}>{announcements[announcIdx]?.title}</div>
-              <p style={{ fontSize: '13px', color: '#666', fontWeight: 500, lineHeight: 1.6, margin: 0 }}>{announcements[announcIdx]?.body}</p>
+              <div className="text-sm font-extrabold text-user-text mb-2">{announcements[announcIdx]?.title}</div>
+              <p className="text-sm text-user-text-light font-medium leading-relaxed m-0">{announcements[announcIdx]?.body}</p>
             </div>
             {announcements.length > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px' }}>
-                <button onClick={prev} style={{ width: '30px', height: '30px', borderRadius: '50%', border: '1.5px solid #e8d5ac', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                  onMouseOver={e => { e.currentTarget.style.borderColor = '#F5C400'; e.currentTarget.style.background = '#fff8dc'; }}
-                  onMouseOut={e  => { e.currentTarget.style.borderColor = '#e8d5ac'; e.currentTarget.style.background = '#fff'; }}
-                ><Icon d={Icons.chevLeft} size={14} color="#888" /></button>
-                <div style={{ display: 'flex', gap: '6px' }}>
+              <div className="flex justify-between items-center mt-3.5">
+                <button onClick={prev} className="w-[30px] h-[30px] rounded-full border border-user-border bg-white flex items-center justify-center cursor-pointer transition-all hover:border-user-primary hover:bg-user-primary-light">
+                  <Icon d={Icons.chevLeft} size={14} color="#888" />
+                </button>
+                <div className="flex gap-1.5">
                   {announcements.map((_, i) => (
-                    <div key={i} onClick={() => setAnnouncIdx(i)} style={{ width: i === announcIdx ? '18px' : '7px', height: '7px', borderRadius: '999px', backgroundColor: i === announcIdx ? '#F5C400' : '#ddd', cursor: 'pointer', transition: 'all 0.2s' }} />
+                    <div key={i} onClick={() => setAnnouncIdx(i)} 
+                      className={`cursor-pointer transition-all ${i === announcIdx ? 'w-[18px] h-1.5 bg-user-primary' : 'w-1.5 h-1.5 bg-gray-300'} rounded-full`} />
                   ))}
                 </div>
-                <button onClick={next} style={{ width: '30px', height: '30px', borderRadius: '50%', border: '1.5px solid #e8d5ac', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                  onMouseOver={e => { e.currentTarget.style.borderColor = '#F5C400'; e.currentTarget.style.background = '#fff8dc'; }}
-                  onMouseOut={e  => { e.currentTarget.style.borderColor = '#e8d5ac'; e.currentTarget.style.background = '#fff'; }}
-                ><Icon d={Icons.chevRight} size={14} color="#888" /></button>
+                <button onClick={next} className="w-[30px] h-[30px] rounded-full border border-user-border bg-white flex items-center justify-center cursor-pointer transition-all hover:border-user-primary hover:bg-user-primary-light">
+                  <Icon d={Icons.chevRight} size={14} color="#888" />
+                </button>
               </div>
             )}
-          </>
-        )}
+           </>
+        }
       </div>
     </div>
   );
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'Nunito, system-ui, sans-serif', backgroundColor: '#f8f6f0' }}>
-      <div style={{ flex: 1, display: 'flex' }}>
-
+    <div className="user-module min-h-screen flex flex-col font-sans bg-user-background">
+      <div className="flex-1 flex">
         {/* DESKTOP SIDEBAR */}
-        <div className="desktop-sidebar" style={{
-          width: '220px', flexShrink: 0, backgroundColor: '#F5C400',
-          display: 'flex', flexDirection: 'column',
-          position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
-        }}>
-          <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-            <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '80px', width: 'auto' }} />
+        <div className="desktop-sidebar w-[220px] flex-shrink-0 bg-user-primary flex flex-col sticky top-0 h-screen overflow-y-auto">
+          <div className="p-5 pb-4 border-b border-black/10 flex justify-center">
+            <img src="/logo2.png" alt="Smart Grama Sewa" className="h-16 w-auto" />
           </div>
-          <div style={{ flex: 1, padding: '12px 10px' }}>
+          <div className="flex-1 p-3">
             {navItems.map(item => (
               <NavItem key={item.key} iconPath={item.icon} label={item.label} active={activePage === item.key}
                 onClick={() => {
-                  if (item.key === 'announcements') navigate('/announcements');
-                  else if (item.key === 'appointments') navigate('/appointments');
-                  else if (item.key === 'settings') navigate('/settings');
-                  else setActivePage(item.key);
+                  navigate(item.path);
+                  setActivePage(item.key);
                 }}
               />
             ))}
           </div>
-          <div style={{ padding: '10px 10px 20px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+          <div className="p-3 pt-2 border-t border-black/10">
             {bottomNav.map(item => (
               <NavItem key={item.key} iconPath={item.icon} label={item.label} active={activePage === item.key}
-                onClick={() => {
-                  if (item.key === 'logout') handleLogout();
-                  else if (item.key === 'profile') navigate('/profile');
-                  else if (item.key === 'settings') navigate('/settings');
-                  else setActivePage(item.key);
-                }}
+                onClick={() => item.action === 'logout' ? handleLogout() : navigate(item.path)}
               />
             ))}
           </div>
@@ -476,29 +536,26 @@ const Dashboard = () => {
         {/* MOBILE SIDEBAR OVERLAY */}
         {mobileMenuOpen && (
           <>
-            <div onClick={() => setMobileMenuOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000 }} />
-            <div style={{ position: 'fixed', top: 0, left: 0, width: '250px', height: '100vh', backgroundColor: '#F5C400', zIndex: 1001, overflowY: 'auto', padding: '20px 0' }}>
-              <div style={{ padding: '0 20px 20px', textAlign: 'right' }}>
-                <button onClick={() => setMobileMenuOpen(false)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>✕</button>
+            <div onClick={() => setMobileMenuOpen(false)} className="fixed inset-0 bg-black/50 z-[1000]" />
+            <div className="fixed top-0 left-0 w-[250px] h-screen bg-user-primary z-[1001] overflow-y-auto py-5">
+              <div className="px-5 pb-5 text-right">
+                <button onClick={() => setMobileMenuOpen(false)} className="bg-none border-none text-2xl cursor-pointer text-white">✕</button>
+              </div>
+              <div className="px-5 pb-5 border-b border-white/20 mb-2 flex justify-center">
+                <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
               </div>
               {navItems.map(item => (
                 <NavItem key={item.key} iconPath={item.icon} label={item.label} active={activePage === item.key}
-                  onClick={() => {
-                    if (item.key === 'announcements') navigate('/announcements');
-                    else if (item.key === 'appointments') navigate('/appointments');
-                    else setActivePage(item.key);
-                    setMobileMenuOpen(false);
-                  }}
+                  onClick={() => { navigate(item.path); setActivePage(item.key); setMobileMenuOpen(false); }}
                 />
               ))}
-              <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', margin: '10px 0', paddingTop: '10px' }}>
+              <div className="border-t border-white/20 my-3 pt-3">
                 {bottomNav.map(item => (
                   <NavItem key={item.key} iconPath={item.icon} label={item.label} active={activePage === item.key}
-                    onClick={() => {
-                      if (item.key === 'logout') handleLogout();
-                      else if (item.key === 'profile') navigate('/profile');
-                      else if (item.key === 'settings') navigate('/settings');
-                      else setActivePage(item.key);
+                    onClick={() => { 
+                      if (item.action === 'logout') handleLogout();
+                      else navigate(item.path);
+                      setActivePage(item.key);
                       setMobileMenuOpen(false);
                     }}
                   />
@@ -509,15 +566,11 @@ const Dashboard = () => {
         )}
 
         {/* MAIN COLUMN */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-
+        <div className="flex-1 flex flex-col min-w-0">
           {/* DESKTOP TOPBAR */}
-          <div className="desktop-topbar" style={{ height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #ede8d8', display: 'flex', alignItems: 'center', padding: '0 28px', gap: '14px', position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 1px 0 #ede8d8' }}>
-            <div style={{ flex: 1, maxWidth: '400px', position: 'relative' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: '999px', padding: '9px 18px' }}
-                onMouseOver={e => e.currentTarget.style.borderColor = '#F5C400'}
-                onMouseOut={e  => e.currentTarget.style.borderColor = '#e8d8b0'}
-              >
+          <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
+            <div className="flex-1 max-w-[400px] relative">
+              <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-3xl px-4 py-2 transition-colors hover:border-user-primary">
                 <Icon d={Icons.search} size={16} color="#aaa" />
                 <input
                   type="text"
@@ -528,139 +581,132 @@ const Dashboard = () => {
                     setShowSearchResults(true);
                   }}
                   onFocus={() => setShowSearchResults(true)}
-                  style={{
-                    flex: 1,
-                    border: 'none',
-                    outline: 'none',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    color: '#1e1200',
-                    background: 'transparent',
-                  }}
+                  className="flex-1 border-none outline-none text-sm font-medium text-user-text bg-transparent"
                 />
                 {searchQuery && (
-                  <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                  <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="bg-none border-none cursor-pointer p-1">
                     <Icon d={Icons.close} size={14} color="#aaa" />
                   </button>
                 )}
               </div>
-              <SearchResultsDropdown />
+              <SearchResultsDropdown 
+                searchQuery={searchQuery}
+                showResults={showSearchResults}
+                setShowResults={setShowSearchResults}
+                navigate={navigate}
+              />
             </div>
-            <div style={{ flex: 1 }} />
+            <div className="flex-1" />
             <LanguageSwitcher 
               currentLanguage={currentLanguage} 
               onLanguageChange={handleLanguageChange}
             />
-            <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative' }}
-              onMouseOver={e => e.currentTarget.style.borderColor = '#F5C400'}
-              onMouseOut={e  => e.currentTarget.style.borderColor = '#e8d8b0'}
-            >
+            <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
               <Icon d={Icons.bell} size={18} color="#5a3a00" />
-              <div style={{ position: 'absolute', top: '4px', right: '4px', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#e05050', border: '1.5px solid #fff' }} />
+              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 14px 5px 6px', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: '999px', cursor: 'pointer' }}
-              onMouseOver={e => e.currentTarget.style.borderColor = '#F5C400'}
-              onMouseOut={e  => e.currentTarget.style.borderColor = '#e8d8b0'}
-            >
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e1200', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chipName}</span>
-              <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: '#F5C400', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Icon d={Icons.profile} size={16} color="#3d2a00" />
-              </div>
+            <div className="relative">
+              <button 
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-3xl cursor-pointer transition-colors hover:border-user-primary"
+              >
+                <span className="text-sm font-bold text-user-text max-w-[100px] truncate">{chipName}</span>
+                <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0">
+                  <Icon d={Icons.profile} size={16} color="#3d2a00" />
+                </div>
+              </button>
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden">
+                  <button onClick={() => navigate('/profile')} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+                    <Icon d={Icons.profile} size={14} /> My Profile
+                  </button>
+                  <button onClick={() => navigate('/settings')} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+                    <Icon d={Icons.settings} size={14} /> Settings
+                  </button>
+                  <hr className="my-1" />
+                  <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 flex items-center gap-2">
+                    <Icon d={Icons.logout} size={14} /> Logout
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
           {/* MOBILE TOPBAR */}
-          <div className="mobile-topbar" style={{
-            display: 'none', /* shown via media query */
-            height: '64px', backgroundColor: '#F5C400',
-            alignItems: 'center', padding: '0 16px', gap: '12px',
-            position: 'sticky', top: 0, zIndex: 40,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
-          }}>
-            {/* Hamburger */}
-            <button onClick={() => setMobileMenuOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-              <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2} strokeLinecap="round">
-                <line x1="3" y1="6"  x2="21" y2="6"  />
+          <div className="mobile-topbar hidden h-16 bg-user-primary items-center px-4 gap-3 sticky top-0 z-40 shadow-md">
+            <button onClick={() => setMobileMenuOpen(true)} className="bg-none border-none cursor-pointer p-1.5 flex-shrink-0">
+              <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
+                <line x1="3" y1="6" x2="21" y2="6" />
                 <line x1="3" y1="12" x2="21" y2="12" />
                 <line x1="3" y1="18" x2="21" y2="18" />
               </svg>
             </button>
-
-            {/* Logo — centred */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'left' }}>
-              <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '48px', width: 'auto' }} />
+            <div className="flex-1 flex items-center justify-start">
+              <img src="/logo2.png" alt="Smart Grama Sewa" className="h-10 w-auto" />
             </div>
-
-            {/* LanguageSwitcher */}
-            <LanguageSwitcher 
-              currentLanguage={currentLanguage} 
-              onLanguageChange={handleLanguageChange}
-            />
-            {/* Bell */}
-            <div style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', flexShrink: 0 }}>
+            <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={handleLanguageChange} />
+            <div className="w-9 h-9 flex items-center justify-center relative">
               <Icon d={Icons.bell} size={22} color="#1e1200" />
-              <div style={{ position: 'absolute', top: '2px', right: '2px', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#e05050', border: '1.5px solid #F5C400' }} />
+              <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
             </div>
-
-            {/* Avatar */}
-            <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-              onClick={() => navigate('/profile')}
-            >
+            <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
               <Icon d={Icons.profile} size={20} color="#3d2a00" />
             </div>
           </div>
 
           {/* DESKTOP CONTENT */}
-          <div className="desktop-content" style={{ padding: '24px 28px', flex: 1 }}>
-
+          <div className="desktop-content p-6 md:p-7 flex-1">
             {/* Welcome + GN side by side */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '16px', marginBottom: '22px' }}>
-              <div style={{ backgroundColor: '#fff8dc', border: '1.5px solid #f0d870', borderRadius: '16px', padding: '22px 28px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <div style={{ width: '68px', height: '68px', borderRadius: '50%', backgroundColor: '#e0d8c8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #d4c090' }}>
-                  <Icon d={Icons.profile} size={32} color="#8a7060" strokeWidth={1.5} />
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 mb-5">
+              <div className="bg-user-primary-light border border-user-warning rounded-xl p-5 md:p-6 flex items-center gap-5">
+                <div className="w-[60px] h-[60px] md:w-[68px] md:h-[68px] rounded-full bg-[#e0d8c8] flex items-center justify-center flex-shrink-0 border-2 border-[#d4c090]">
+                  <Icon d={Icons.profile} size={28} color="#8a7060" strokeWidth={1.5} />
                 </div>
-                <div style={{ fontSize: '24px', fontWeight: 900, color: '#1e1200', letterSpacing: '-0.3px' }}>
-                  Welcome Back, {firstName}!
+                <div className="flex items-center gap-2 text-xl md:text-2xl font-black text-user-text tracking-tight">
+                  <Icon d={greeting.icon} size={24} color="#B46A02" />
+                  {greeting.text}, {firstName}!
                 </div>
               </div>
 
-              <div style={{ backgroundColor: '#fff', border: '1.5px solid #e8d5ac', borderRadius: '16px', padding: '18px 24px', minWidth: '190px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '4px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: '#888' }}>GN officer</div>
-                <div style={{ fontSize: '16px', fontWeight: 900, color: '#1e1200' }}>{gnName}</div>
-                {gnDivLabel && <div style={{ fontSize: '11px', fontWeight: 600, color: '#aaa' }}>{gnDivLabel}</div>}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: gnAvailable ? '#22c55e' : '#f87171' }}>
+              <div className="bg-user-surface border border-user-border rounded-xl p-4 md:p-5 min-w-[190px] flex flex-col justify-center gap-1">
+                <div className="text-xs font-bold text-user-text-lighter">GN officer</div>
+                <div className="text-base md:text-base font-black text-user-text">{gnName}</div>
+                {gnDivLabel && <div className="text-[11px] font-semibold text-user-text-lighter">{gnDivLabel}</div>}
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className={`text-sm font-bold ${gnAvailable ? 'text-user-success' : 'text-user-error'}`}>
                     {gnAvailable ? 'Available' : 'Unavailable'}
                   </span>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: gnAvailable ? '#22c55e' : '#f87171', boxShadow: gnAvailable ? '0 0 0 3px rgba(34,197,94,0.2)' : '0 0 0 3px rgba(248,113,113,0.2)', animation: 'pulseGn 2s infinite' }} />
+                  <div className={`w-2 h-2 rounded-full ${gnAvailable ? 'bg-user-success' : 'bg-user-error'} animate-pulse-gn`} />
                 </div>
               </div>
             </div>
 
             {/* Quick Actions */}
-            <div style={{ marginBottom: '22px' }}>
-              <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e1200', marginBottom: '14px' }}>Quick Actions</div>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <QuickCard iconPath={Icons.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} />
-                <QuickCard iconPath={Icons.download} label="Download forms"   onClick={() => navigate('/forms')} />
-                <QuickCard iconPath={Icons.ai}       label="AI assistant"     onClick={() => navigate('/ai')} />
-                <QuickCard iconPath={Icons.phone}    label="Contact GN"       onClick={() => navigate('/contactGN')} />
+            <div className="mb-5">
+              <div className="flex items-center gap-2 text-[15px] font-extrabold text-user-text mb-3.5">
+                <Icon d={Icons.bolt} size={16} color="#B46A02" />
+                Quick Actions
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <QuickCard iconPath={Icons.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} tooltip="Schedule a meeting with GN officer" />
+                <QuickCard iconPath={Icons.download} label="Download Forms" onClick={() => navigate('/forms')} tooltip="Download application forms" />
+                <QuickCard iconPath={Icons.ai} label="AI Assistant" onClick={() => navigate('/ai')} tooltip="Get help from our AI assistant" />
+                <QuickCard iconPath={Icons.phone} label="Contact GN" onClick={() => navigate('/contact-gn')} tooltip="Contact your GN officer" />
               </div>
             </div>
 
             {/* Widgets */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <AppointmentsWidget />
               <AnnouncementsWidget />
             </div>
           </div>
 
           {/* MOBILE CONTENT */}
-          <div className="mobile-content" style={{ flex: 1, display: 'none', backgroundColor: '#f5f0e8' }}>
-
+          <div className="mobile-content hidden flex-1 bg-user-secondary-light">
             {/* Mobile Search Bar */}
-            <div style={{ padding: '12px 14px 0', position: 'relative' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, backgroundColor: '#fff', border: '1.5px solid #e8d8b0', borderRadius: 999, padding: '10px 16px' }}>
+            <div className="pt-3 px-3.5 relative">
+              <div className="flex items-center gap-2.5 bg-white border border-user-border rounded-3xl px-4 py-2.5">
                 <Icon d={Icons.search} size={16} color="#aaa" />
                 <input
                   type="text"
@@ -671,37 +717,16 @@ const Dashboard = () => {
                     setShowSearchResults(true);
                   }}
                   onFocus={() => setShowSearchResults(true)}
-                  style={{
-                    flex: 1,
-                    border: 'none',
-                    outline: 'none',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    color: '#1e1200',
-                    background: 'transparent',
-                  }}
+                  className="flex-1 border-none outline-none text-sm font-medium text-user-text bg-transparent"
                 />
                 {searchQuery && (
-                  <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                  <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="bg-none border-none cursor-pointer p-1">
                     <Icon d={Icons.close} size={14} color="#aaa" />
                   </button>
                 )}
               </div>
-              {/* Search results for mobile */}
               {showSearchResults && filteredPages.length > 0 && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  marginTop: '8px',
-                  backgroundColor: '#fff',
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                  border: '1px solid #e8d5ac',
-                  zIndex: 1000,
-                  overflow: 'hidden',
-                }}>
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-user-border z-[1000] overflow-hidden">
                   {filteredPages.map((page, idx) => (
                     <button
                       key={page.path}
@@ -710,22 +735,12 @@ const Dashboard = () => {
                         setSearchQuery('');
                         setShowSearchResults(false);
                       }}
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '12px 16px',
-                        border: 'none',
-                        borderBottom: idx === filteredPages.length - 1 ? 'none' : '1px solid #f0e8d0',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background ${idx !== filteredPages.length - 1 ? 'border-b border-user-border-light' : ''}`}
                     >
                       <Icon d={page.icon} size={18} color="#B46A02" />
                       <div>
-                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e1200' }}>{page.name}</div>
-                        <div style={{ fontSize: '11px', color: '#888' }}>Click to go</div>
+                        <div className="text-sm font-bold text-user-text">{page.name}</div>
+                        <div className="text-[11px] text-user-text-lighter">Click to go</div>
                       </div>
                     </button>
                   ))}
@@ -733,51 +748,44 @@ const Dashboard = () => {
               )}
             </div>
 
-            <div style={{ padding: '12px 14px', paddingBottom: '90px' }}>
-
+            <div className="p-3.5 pb-[90px]">
               {/* Welcome card */}
-              <div style={{ backgroundColor: '#fff8dc', border: '1.5px solid #f0d870', borderRadius: 16, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
-                <div style={{ width: 48, height: 48, borderRadius: '50%', backgroundColor: '#e8e0d0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #d4c090' }}>
+              <div className="bg-user-primary-light border border-user-warning rounded-xl p-4 flex items-center gap-3.5 mb-3">
+                <div className="w-12 h-12 rounded-full bg-[#e0d8c8] flex items-center justify-center flex-shrink-0 border-2 border-[#d4c090]">
                   <Icon d={Icons.profile} size={24} color="#8a7060" strokeWidth={1.5} />
                 </div>
-                <div style={{ fontSize: 20, fontWeight: 900, color: '#1e1200', lineHeight: 1.3 }}>
+                <div className="flex items-center gap-2 text-xl font-black text-user-text leading-tight">
+                  <Icon d={greeting.icon} size={20} color="#B46A02" />
                   Welcome Back, {firstName}!
                 </div>
               </div>
 
               {/* GN Officer card */}
-              <div style={{ backgroundColor: '#fff', border: '1.5px solid #e8d5ac', borderRadius: 16, padding: '14px 18px', marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div className="bg-user-surface border border-user-border rounded-xl p-3.5 mb-5 flex items-center justify-between">
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#888', marginBottom: 2 }}>GN officer</div>
-                  <div style={{ fontSize: 15, fontWeight: 900, color: '#1e1200' }}>{gnName}</div>
+                  <div className="text-xs font-bold text-user-text-lighter mb-0.5">GN officer</div>
+                  <div className="text-base font-black text-user-text">{gnName}</div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: gnAvailable ? '#22c55e' : '#f87171' }}>
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-sm font-bold ${gnAvailable ? 'text-user-success' : 'text-user-error'}`}>
                     {gnAvailable ? 'Available' : 'Unavailable'}
                   </span>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: gnAvailable ? '#22c55e' : '#f87171', flexShrink: 0 }} />
+                  <div className={`w-2 h-2 rounded-full ${gnAvailable ? 'bg-user-success' : 'bg-user-error'} flex-shrink-0`} />
                 </div>
               </div>
 
               {/* Quick Actions */}
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#1e1200', marginBottom: 12 }}>Quick Actions</div>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <div className="mb-5">
+                <div className="text-base font-extrabold text-user-text mb-3">Quick Actions</div>
+                <div className="grid grid-cols-2 gap-3">
                   {[
                     { icon: Icons.calendar, label: 'Book Appointment', action: () => navigate('/appointments') },
-                    { icon: Icons.download, label: 'Download forms',   action: () => navigate('/forms') },
-                    { icon: Icons.ai,       label: 'AI assistant',     action: () => navigate('/ai') },
-                    { icon: Icons.phone,    label: 'Contact GN',       action: () => navigate('/contact-gn') },
+                    { icon: Icons.download, label: 'Download Forms', action: () => navigate('/forms') },
+                    { icon: Icons.ai, label: 'AI Assistant', action: () => navigate('/ai') },
+                    { icon: Icons.phone, label: 'Contact GN', action: () => navigate('/contact-gn') },
                   ].map((item, i) => (
-                    <button key={i} onClick={item.action} style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      padding: '10px 18px', borderRadius: 999,
-                      backgroundColor: '#fff', border: '1.5px solid #e8d5ac',
-                      fontSize: 13, fontWeight: 700, color: '#1e1200',
-                      cursor: 'pointer', fontFamily: 'inherit',
-                      boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-                    }}>
-                      <Icon d={item.icon} size={16} color="#B46A02" />
+                    <button key={i} onClick={item.action} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white border border-user-border text-xs font-bold text-user-text cursor-pointer shadow-sm transition-all hover:border-user-primary hover:bg-user-primary-light min-h-[85px]">
+                      <Icon d={item.icon} size={22} color="#B46A02" />
                       {item.label}
                     </button>
                   ))}
@@ -785,46 +793,79 @@ const Dashboard = () => {
               </div>
 
               {/* Widgets */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="flex flex-col gap-4">
                 <AppointmentsWidget />
                 <AnnouncementsWidget />
               </div>
             </div>
           </div>
-
         </div>
       </div>
 
-      <footer className="desktop-footer" style={{ backgroundColor: '#6A2301', color: '#fff', textAlign: 'center', padding: '13px 16px', fontSize: '13px', fontWeight: 600 }}>
-        ©2026 Smart Grama Sewa
+      {/* FOOTER */}
+      <footer className="desktop-footer bg-[#6A2301] text-white text-center py-3 px-4 text-sm font-semibold">
+        © 2026 Smart Grama Sewa. All rights reserved.
       </footer>
 
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[1100] animate-slide-up">
+          <div className={`flex items-center gap-4 py-3 px-6 rounded-xl shadow-lg border ${toast.type === 'success' ? 'bg-user-success text-white border-user-success/30' : 'bg-user-error text-white border-user-error/30'}`}>
+            <Icon d={toast.type === 'success' ? Icons.success : Icons.error} size={18} color="#fff" strokeWidth={2.5} />
+            <span className="text-sm font-semibold">{toast.message}</span>
+            <button onClick={() => setToast(null)} className="bg-none border-none cursor-pointer text-white text-xl leading-5 p-0">×</button>
+          </div>
+        </div>
+      )}
+
       <style>{`
-        @keyframes spin    { to { transform: rotate(360deg); } }
-        @keyframes pulse   { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        @keyframes pulseGn {
-          0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
-          50%       { box-shadow: 0 0 0 6px rgba(34,197,94,0.08); }
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        
+        @keyframes slide-up {
+          from { transform: translate(-50%, 20px); opacity: 0; }
+          to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        
+        .skeleton-shimmer {
+          background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+        }
+        
+        .animate-slide-up {
+          animation: slide-up 0.3s ease;
+        }
+        
+        @keyframes pulse-gn {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.2); }
+          50% { box-shadow: 0 0 0 6px rgba(34,197,94,0.08); }
+        }
+        
+        .animate-pulse-gn {
+          animation: pulse-gn 2s infinite;
         }
 
         /* Desktop */
         @media (min-width: 769px) {
-          .desktop-sidebar     { display: flex !important; }
-          .desktop-topbar      { display: flex !important; }
-          .desktop-content     { display: block !important; }
-          .desktop-footer      { display: block !important; }
-          .mobile-topbar       { display: none !important; }
-          .mobile-content      { display: none !important; }
+          .desktop-sidebar { display: flex !important; }
+          .desktop-topbar { display: flex !important; }
+          .desktop-content { display: block !important; }
+          .desktop-footer { display: block !important; }
+          .mobile-topbar { display: none !important; }
+          .mobile-content { display: none !important; }
         }
 
         /* Mobile */
         @media (max-width: 768px) {
-          .desktop-sidebar     { display: none !important; }
-          .desktop-topbar      { display: none !important; }
-          .desktop-content     { display: none !important; }
-          .desktop-footer      { display: none !important; }
-          .mobile-topbar       { display: flex !important; }
-          .mobile-content      { display: block !important; }
+          .desktop-sidebar { display: none !important; }
+          .desktop-topbar { display: none !important; }
+          .desktop-content { display: none !important; }
+          .desktop-footer { display: none !important; }
+          .mobile-topbar { display: flex !important; }
+          .mobile-content { display: block !important; }
         }
       `}</style>
     </div>

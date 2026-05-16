@@ -13,6 +13,7 @@ const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
     <path d={d} />
   </svg>
 );
+
 const IC = {
   dashboard:    'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10',
   announce:     'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
@@ -42,6 +43,15 @@ const IC = {
   message:      'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z',
   edit:         'M17 3l4 4-7 7H10v-4l7-7z M4 20h16',
   details:      'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
+  success:      'M20 6L9 17l-5-5',
+  warning:      'M12 9v4 M12 17h.01 M12 2a10 10 0 100 20 10 10 0 000-20z',
+  error:        'M12 8v4 M12 16h.01 M12 2a10 10 0 100 20 10 10 0 000-20z',
+  sun:          'M12 2v2 M12 20v2 M4.93 4.93l1.41 1.41 M17.66 17.66l1.41 1.41 M2 12h2 M20 12h2 M5.64 17.66l1.41-1.41 M16.95 6.05l1.41-1.41 M12 6a6 6 0 100 12 6 6 0 000-12z',
+  bolt:         'M13 10V3L4 14h7v7l9-11h-7z',
+  wave:         'M2 12c3.5-4 8.5-4 12 0s8.5 4 12 0 M4 16c3-3 9-3 12 0s9 3 12 0',
+  star:         'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+  inbox:        'M22 12h-6l-2 3h-4l-2-3H2 M2 5v14a2 2 0 002 2h16a2 2 0 002-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2z',
+  unread:       'M21 12a9 9 0 11-9-9 M21 3v6h-6 M3 3l18 18',
 };
 
 // List of all pages/functions for search
@@ -55,78 +65,66 @@ const PAGE_ACTIONS = [
   { name: 'Settings', path: '/settings', icon: IC.settings },
 ];
 
-// Service categories (from spec)
+// Service categories
 const SERVICE_CATS = [
   {
     key: 'personal', label: 'Personal Documents', services: [
       { id: 'residence', name: 'Residence/Character Certificate', desc: 'Proof of residency for official and legal purposes.' },
-      { id: 'nic',       name: 'National Identity Card (NIC)',    desc: 'Apply for new or duplicate NIC documents.' },
-      { id: 'death',     name: 'Death Report',                    desc: 'Formal report for legal registration of passing.' },
-      { id: 'birth',     name: 'Late Birth Registration',         desc: 'Registering births after the standard grace period.' },
+      { id: 'nic', name: 'National Identity Card (NIC)', desc: 'Apply for new or duplicate NIC documents.' },
+      { id: 'death', name: 'Death Report', desc: 'Formal report for legal registration of passing.' },
+      { id: 'birth', name: 'Late Birth Registration', desc: 'Registering births after the standard grace period.' },
     ]
   },
   {
     key: 'property', label: 'Home & Property', services: [
-      { id: 'land',      name: 'Land Ownership Assessment',       desc: 'For proving land ownership.' },
-      { id: 'valuation', name: 'Valuation Certificate',           desc: 'For property valuation purposes.' },
-      { id: 'water',     name: 'Electricity / Water Connection',  desc: 'GN recommendation for utility connections.' },
-      { id: 'crown',     name: 'Crown Land Matters',              desc: 'Report unauthorized residents or other matters.' },
+      { id: 'land', name: 'Land Ownership Assessment', desc: 'For proving land ownership.' },
+      { id: 'valuation', name: 'Valuation Certificate', desc: 'For property valuation purposes.' },
+      { id: 'water', name: 'Electricity / Water Connection', desc: 'GN recommendation for utility connections.' },
+      { id: 'crown', name: 'Crown Land Matters', desc: 'Report unauthorized residents or other matters.' },
     ]
   },
   {
     key: 'permits', label: 'Permits & Approvals', services: [
-      { id: 'tree',      name: 'Jack Tree Cutting Permit',        desc: '1 tree: 1 day. Multiple trees: 3 days.' },
-      { id: 'timber',    name: 'Timber Transport Permit',         desc: 'GN recommends to Divisional Secretary.' },
-      { id: 'animal',    name: 'Animal Transport Permit',         desc: 'GN recommends to Divisional Secretary.' },
-      { id: 'mining',    name: 'Stone / Sand Mining Permit',      desc: 'GN recommends to Divisional Secretary.' },
+      { id: 'tree', name: 'Jack Tree Cutting Permit', desc: '1 tree: 1 day. Multiple trees: 3 days.' },
+      { id: 'timber', name: 'Timber Transport Permit', desc: 'GN recommends to Divisional Secretary.' },
+      { id: 'animal', name: 'Animal Transport Permit', desc: 'GN recommends to Divisional Secretary.' },
+      { id: 'mining', name: 'Stone / Sand Mining Permit', desc: 'GN recommends to Divisional Secretary.' },
     ]
   },
   {
     key: 'business', label: 'Livelihood & Business', services: [
-      { id: 'income',    name: 'Income Certificate Recommendation', desc: 'GN recommends to Divisional Secretary.' },
-      { id: 'biz',       name: 'Business Registration',             desc: 'GN recommends to Divisional Secretary.' },
-      { id: 'gun',       name: 'Gun License Recommendation',        desc: 'GN recommends to Divisional Secretary.' },
+      { id: 'income', name: 'Income Certificate Recommendation', desc: 'GN recommends to Divisional Secretary.' },
+      { id: 'biz', name: 'Business Registration', desc: 'GN recommends to Divisional Secretary.' },
+      { id: 'gun', name: 'Gun License Recommendation', desc: 'GN recommends to Divisional Secretary.' },
     ]
   },
   {
     key: 'community', label: 'Community Support', services: [
-      { id: 'welfare',   name: 'Public Aid / Welfare Assistance',  desc: 'GN recommends your application.' },
-      { id: 'president', name: 'Presidential Fund Assistance',     desc: 'GN recommends to Divisional Secretary.' },
-      { id: 'scholar',   name: 'Scholarship Application',          desc: 'GN recommends to Divisional Secretary.' },
+      { id: 'welfare', name: 'Public Aid / Welfare Assistance', desc: 'GN recommends your application.' },
+      { id: 'president', name: 'Presidential Fund Assistance', desc: 'GN recommends to Divisional Secretary.' },
+      { id: 'scholar', name: 'Scholarship Application', desc: 'GN recommends to Divisional Secretary.' },
     ]
   },
   {
     key: 'disputes', label: 'Complaints & Disputes', services: [
-      { id: 'complaint', name: 'Complaint Report',   desc: 'This year: 1 day. Older: 3 days.' },
-      { id: 'urgent',    name: 'Urgent Report',      desc: 'Emergency to DS: 6 hours. Detailed: 3 days.' },
-      { id: 'dispute',   name: 'Dispute Resolution', desc: 'GN helps settle community disputes.' },
+      { id: 'complaint', name: 'Complaint Report', desc: 'This year: 1 day. Older: 3 days.' },
+      { id: 'urgent', name: 'Urgent Report', desc: 'Emergency to DS: 6 hours. Detailed: 3 days.' },
+      { id: 'dispute', name: 'Dispute Resolution', desc: 'GN helps settle community disputes.' },
     ]
   },
 ];
 
-// Shared styles
-const S = {
-  page: { minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'Nunito, system-ui, sans-serif', backgroundColor: '#f5f0e8' },
-  shell: { flex: 1, display: 'flex' },
-  sidebar: { width: '240px', flexShrink: 0, backgroundColor: '#F5C400', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', overflowY: 'auto' },
-  main: { flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 },
-  topbar: { height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #e8d8b0', display: 'flex', alignItems: 'center', padding: '0 28px', gap: '14px', position: 'sticky', top: 0, zIndex: 40 },
-  content: { padding: '28px 32px', flex: 1 },
-  footer: { backgroundColor: '#6A2301', color: '#fff', textAlign: 'center', padding: '13px 16px', fontSize: '13px', fontWeight: 600 },
-  card: { backgroundColor: '#fff', border: '1.5px solid #e8d5ac', borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' },
-};
-
 // NavItem for sidebar
 const NavItem = ({ iconPath, label, active, onClick }) => (
-  <button onClick={onClick} style={{
-    width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
-    padding: '11px 16px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-    backgroundColor: active ? 'rgba(255,255,255,0.9)' : 'transparent',
-    color: '#3d2a00', fontWeight: active ? 800 : 600, fontSize: '14px',
-    fontFamily: 'inherit', textAlign: 'left', marginBottom: '2px',
-    transition: 'background 0.15s',
-    boxShadow: active ? '0 2px 8px rgba(0,0,0,0.10)' : 'none',
-  }}>
+  <button 
+    onClick={onClick} 
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
+      active 
+        ? 'bg-white/90 text-user-text font-extrabold shadow-md' 
+        : 'bg-transparent text-user-text font-semibold hover:bg-white/40'
+    }`}
+    style={{ color: active ? '#B46A02' : '#5a3a00' }}
+  >
     <Icon d={iconPath} size={18} color={active ? '#B46A02' : '#5a3a00'} />
     {label}
   </button>
@@ -148,22 +146,18 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
   ];
 
   return (
-    <div className="desktop-sidebar" style={{
-      width: '220px', flexShrink: 0, backgroundColor: '#F5C400',
-      display: 'flex', flexDirection: 'column',
-      position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
-    }}>
-      <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-        <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '80px', width: 'auto' }} />
+    <div className="desktop-sidebar w-[220px] flex-shrink-0 bg-user-primary flex flex-col sticky top-0 h-screen overflow-y-auto">
+      <div className="p-5 pb-4 border-b border-black/10">
+        <img src="/logo2.png" alt="Smart Grama Sewa" className="h-20 w-auto" />
       </div>
-      <div style={{ flex: 1, padding: '12px 10px' }}>
+      <div className="flex-1 p-3">
         {navItems.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
             onClick={() => navigate(`/${item.key}`)} />
         ))}
       </div>
-      <div style={{ padding: '10px 10px 20px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+      <div className="p-3 pt-2 border-t border-black/10">
         {bottomNav.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
@@ -175,7 +169,7 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
 };
 
 // Search Results Dropdown Component
-const SearchResultsDropdown = ({ searchQuery, onNavigate, onClose }) => {
+const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate }) => {
   const [filteredPages, setFilteredPages] = useState([]);
 
   useEffect(() => {
@@ -190,48 +184,23 @@ const SearchResultsDropdown = ({ searchQuery, onNavigate, onClose }) => {
     setFilteredPages(filtered);
   }, [searchQuery]);
 
-  if (filteredPages.length === 0) return null;
+  if (!showResults || filteredPages.length === 0) return null;
 
   return (
-    <div style={{
-      position: 'absolute',
-      top: '100%',
-      left: 0,
-      right: 0,
-      marginTop: '8px',
-      backgroundColor: '#fff',
-      borderRadius: '12px',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-      border: '1px solid #e8d5ac',
-      zIndex: 1000,
-      overflow: 'hidden',
-    }}>
+    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-user-border z-[1000] overflow-hidden">
       {filteredPages.map((page, idx) => (
         <button
           key={page.path}
           onClick={() => {
-            onNavigate(page.path);
-            onClose();
+            navigate(page.path);
+            setShowResults(false);
           }}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '12px 16px',
-            border: 'none',
-            borderBottom: idx === filteredPages.length - 1 ? 'none' : '1px solid #f0e8d0',
-            cursor: 'pointer',
-            textAlign: 'left',
-            transition: 'background 0.15s',
-          }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f5f0e8'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+          className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background ${idx !== filteredPages.length - 1 ? 'border-b border-user-border-light' : ''}`}
         >
           <Icon d={page.icon} size={18} color="#B46A02" />
           <div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e1200' }}>{page.name}</div>
-            <div style={{ fontSize: '11px', color: '#888' }}>Click to go to {page.name}</div>
+            <div className="text-sm font-bold text-user-text">{page.name}</div>
+            <div className="text-[11px] text-user-text-lighter">Click to go to {page.name}</div>
           </div>
         </button>
       ))}
@@ -240,18 +209,10 @@ const SearchResultsDropdown = ({ searchQuery, onNavigate, onClose }) => {
 };
 
 // Desktop Topbar
-const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange }) => (
-  <div className="desktop-topbar" style={{
-    height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #ede8d8',
-    display: 'flex', alignItems: 'center', padding: '0 28px', gap: '14px',
-    position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 1px 0 #ede8d8'
-  }}>
-    <div style={{ flex: 1, maxWidth: 400, position: 'relative' }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
-        borderRadius: 999, padding: '9px 18px'
-      }}>
+const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser }) => (
+  <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
+    <div className="flex-1 max-w-[400px] relative">
+      <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-3xl px-4 py-2 transition-colors hover:border-user-primary">
         <Icon d={IC.search} size={16} color="#aaa" />
         <input
           type="text"
@@ -262,129 +223,85 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
             setShowResults(true);
           }}
           onFocus={() => setShowResults(true)}
-          style={{
-            flex: 1,
-            border: 'none',
-            outline: 'none',
-            fontSize: '14px',
-            fontWeight: 500,
-            color: '#1e1200',
-            background: 'transparent',
-          }}
+          className="flex-1 border-none outline-none text-sm font-medium text-user-text bg-transparent"
         />
         {searchQuery && (
-          <button onClick={() => { setSearchQuery(''); setShowResults(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+          <button onClick={() => { setSearchQuery(''); setShowResults(false); }} className="bg-none border-none cursor-pointer p-1">
             <Icon d={IC.close} size={14} color="#aaa" />
           </button>
         )}
       </div>
-      {showResults && <SearchResultsDropdown searchQuery={searchQuery} onNavigate={navigate} onClose={() => setShowResults(false)} />}
+      <SearchResultsDropdown 
+        searchQuery={searchQuery}
+        showResults={showResults}
+        setShowResults={setShowResults}
+        navigate={navigate}
+      />
     </div>
-    <div style={{ flex: 1 }} />
+    <div className="flex-1" />
     
-    {/* Language Switcher */}
     <LanguageSwitcher 
       currentLanguage={currentLanguage} 
       onLanguageChange={onLanguageChange}
     />
     
-    <div style={{
-      width: 38, height: 38, borderRadius: '50%',
-      backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative'
-    }}>
+    <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
       <Icon d={IC.bell} size={18} color="#5a3a00" />
-      <div style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: '50%', backgroundColor: '#e05050', border: '1.5px solid #fff' }} />
+      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
     </div>
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 8, padding: '5px 14px 5px 6px',
-      backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
-      borderRadius: 999, cursor: 'pointer'
-    }}>
-      <span style={{ fontSize: 13, fontWeight: 700, color: '#1e1200' }}>{chipName}</span>
-      <div style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: '#F5C400', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon d={IC.profile} size={16} color="#3d2a00" />
-      </div>
+    
+    {/* Profile Dropdown */}
+    <div className="relative">
+      <button 
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowProfileMenu(!showProfileMenu);
+        }}
+        className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-3xl cursor-pointer transition-colors hover:border-user-primary"
+      >
+        <span className="text-sm font-bold text-user-text max-w-[100px] truncate">{chipName}</span>
+        <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0">
+          <Icon d={IC.profile} size={16} color="#3d2a00" />
+        </div>
+      </button>
+      {showProfileMenu && (
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden">
+          <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+            <Icon d={IC.profile} size={14} /> My Profile
+          </button>
+          <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+            <Icon d={IC.settings} size={14} /> Settings
+          </button>
+          <hr className="my-1" />
+          <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 flex items-center gap-2">
+            <Icon d={IC.logout} size={14} /> Logout
+          </button>
+        </div>
+      )}
     </div>
   </div>
 );
 
-/// Mobile Topbar
-const MobileTopbar = ({ chipName, onMenuClick, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange }) => (
-  <div className="mobile-header" style={{
-    display: 'none',
-    backgroundColor: '#F5C400',
-    position: 'sticky',
-    top: 0,
-    zIndex: 100,
-  }}>
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '12px 16px', gap: '12px',
-    }}>
-      <button onClick={onMenuClick} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, flexShrink: 0 }}>
-        <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
-      </button>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'left' }}>
-        <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '48px', width: 'auto' }} />
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-        {/* Language Switcher */}
-        <LanguageSwitcher 
-          currentLanguage={currentLanguage} 
-          onLanguageChange={onLanguageChange}
-        />
-        <div style={{ position: 'relative' }}>
-          <Icon d={IC.bell} size={20} color="#3d2a00" />
-          <div style={{ position: 'absolute', top: -2, right: -4, width: 8, height: 8, borderRadius: '50%', backgroundColor: '#e05050', border: '1.5px solid #F5C400' }} />
-        </div>
-        <div onClick={() => window.location.href = '/profile'} style={{
-          width: 32, height: 32, borderRadius: '50%',
-          backgroundColor: 'rgba(255,255,255,0.85)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-        }}>
-          <Icon d={IC.profile} size={18} color="#3d2a00" />
-        </div>
-      </div>
+// Mobile Topbar
+const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLanguageChange }) => (
+  <div className="mobile-topbar hidden h-16 bg-user-primary items-center px-4 gap-3 sticky top-0 z-40 shadow-md">
+    <button onClick={onMenuClick} className="bg-none border-none cursor-pointer p-1.5 flex-shrink-0">
+      <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+    </button>
+    <div className="flex-1 flex items-center justify-start">
+      <img src="/logo2.png" alt="Smart Grama Sewa" className="h-10 w-auto" />
     </div>
-    {/* Mobile Search Bar */}
-    <div style={{ padding: '8px 16px 12px 16px', backgroundColor: '#f5f0e8', position: 'relative' }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        backgroundColor: '#fff', border: '1.5px solid #e8d8b0',
-        borderRadius: 999, padding: '10px 16px',
-      }}>
-        <Icon d={IC.search} size={16} color="#aaa" />
-        <input
-          type="text"
-          placeholder="Search for a page..."
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setShowResults(true);
-          }}
-          onFocus={() => setShowResults(true)}
-          style={{
-            flex: 1,
-            border: 'none',
-            outline: 'none',
-            fontSize: '14px',
-            fontWeight: 500,
-            color: '#1e1200',
-            background: 'transparent',
-          }}
-        />
-        {searchQuery && (
-          <button onClick={() => { setSearchQuery(''); setShowResults(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
-            <Icon d={IC.close} size={14} color="#aaa" />
-          </button>
-        )}
-      </div>
-      {showResults && <SearchResultsDropdown searchQuery={searchQuery} onNavigate={navigate} onClose={() => setShowResults(false)} />}
+    <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={onLanguageChange} />
+    <div className="w-9 h-9 flex items-center justify-center relative">
+      <Icon d={IC.bell} size={22} color="#1e1200" />
+      <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
+    </div>
+    <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
+      <Icon d={IC.profile} size={20} color="#3d2a00" />
     </div>
   </div>
 );
@@ -408,17 +325,20 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000 }} />
-      <div style={{ position: 'fixed', top: 0, left: 0, width: 250, height: '100vh', backgroundColor: '#F5C400', zIndex: 1001, overflowY: 'auto', padding: '20px 0' }}>
-        <div style={{ padding: '0 20px 20px', textAlign: 'right' }}>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer' }}>✕</button>
+      <div onClick={onClose} className="fixed inset-0 bg-black/50 z-[1000]" />
+      <div className="fixed top-0 left-0 w-[250px] h-screen bg-user-primary z-[1001] overflow-y-auto py-5">
+        <div className="px-5 pb-5 text-right">
+          <button onClick={onClose} className="bg-none border-none text-2xl cursor-pointer text-white">✕</button>
+        </div>
+        <div className="px-5 pb-5 border-b border-white/20 mb-2 flex justify-center">
+          <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
         </div>
         {navItems.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
             onClick={() => { navigate(`/${item.key}`); onClose(); }} />
         ))}
-        <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', margin: '10px 0', paddingTop: '10px' }}>
+        <div className="border-t border-white/20 my-3 pt-3">
           {bottomNav.map((item) => (
             <NavItem key={item.key} iconPath={item.icon} label={item.label}
               active={activePage === item.key}
@@ -434,29 +354,25 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
 const StepBar = ({ step }) => {
   const steps = ['Select Service', 'Date & Time', 'Review & Submit'];
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 0, marginBottom: 28 }}>
+    <div className="flex items-start justify-center gap-0 mb-7">
       {steps.map((label, i) => {
         const n = i + 1;
-        const done   = step > n;
+        const done = step > n;
         const active = step === n;
         return (
           <React.Fragment key={n}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 110 }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: '50%',
-                backgroundColor: active ? '#3d2a00' : done ? '#8a6a40' : '#ddd',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: active ? '3px solid #3d2a00' : 'none',
-              }}>
-                {done
-                  ? <Icon d={IC.check} size={18} color="#fff" sw={2.5} />
-                  : <span style={{ fontSize: 16, fontWeight: 900, color: active ? '#fff' : '#999' }}>{n}</span>
-                }
+            <div className="flex flex-col items-center w-[110px]">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${active ? 'bg-user-text border-3 border-user-text' : done ? 'bg-user-secondary' : 'bg-gray-300'}`}>
+                {done ? (
+                  <Icon d={IC.check} size={18} color="#fff" sw={2.5} />
+                ) : (
+                  <span className={`text-base font-black ${active ? 'text-white' : 'text-gray-500'}`}>{n}</span>
+                )}
               </div>
-              <span style={{ fontSize: 12, fontWeight: active ? 800 : 600, color: active ? '#3d2a00' : '#999', marginTop: 6, textAlign: 'center' }}>{label}</span>
+              <span className={`text-xs font-semibold mt-1.5 text-center ${active ? 'text-user-text font-extrabold' : 'text-gray-500'}`}>{label}</span>
             </div>
             {i < steps.length - 1 && (
-              <div style={{ height: 2, flex: 1, backgroundColor: done ? '#8a6a40' : '#ddd', marginTop: 19 }} />
+              <div className={`h-0.5 flex-1 mt-5 ${done ? 'bg-user-secondary' : 'bg-gray-300'}`} />
             )}
           </React.Fragment>
         );
@@ -467,176 +383,96 @@ const StepBar = ({ step }) => {
 
 // Brown pill button 
 const BrownBtn = ({ onClick, children, disabled }) => (
-  <button onClick={onClick} disabled={disabled} style={{
-    display: 'flex', alignItems: 'center', gap: 8, padding: '14px 28px',
-    backgroundColor: disabled ? '#c0a888' : '#8a6040',
-    border: 'none', borderRadius: 999, fontSize: 15, fontWeight: 800,
-    color: '#fff', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all .15s',
-  }}
-    onMouseOver={e => { if (!disabled) e.currentTarget.style.backgroundColor = '#6a4020'; }}
-    onMouseOut={e  => { if (!disabled) e.currentTarget.style.backgroundColor = '#8a6040'; }}
-  >{children}</button>
+  <button onClick={onClick} disabled={disabled} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round font-extrabold text-white transition-all duration-150 ${disabled ? 'bg-user-secondary/50 cursor-not-allowed' : 'bg-user-secondary hover:bg-user-secondary-dark cursor-pointer'}`}>
+    {children}
+  </button>
 );
 
 // Yellow pill button 
 const YellowBtn = ({ onClick, children, disabled }) => (
-  <button onClick={onClick} disabled={disabled} style={{
-    display: 'flex', alignItems: 'center', gap: 8, padding: '14px 28px',
-    backgroundColor: disabled ? '#e8d888' : '#F5C400',
-    border: 'none', borderRadius: 999, fontSize: 15, fontWeight: 800,
-    color: '#3d2a00', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all .15s',
-  }}
-    onMouseOver={e => { if (!disabled) e.currentTarget.style.backgroundColor = '#d4a800'; }}
-    onMouseOut={e  => { if (!disabled) e.currentTarget.style.backgroundColor = '#F5C400'; }}
-  >{children}</button>
+  <button onClick={onClick} disabled={disabled} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round font-extrabold text-user-text transition-all duration-150 ${disabled ? 'bg-user-primary/50 cursor-not-allowed' : 'bg-user-primary hover:bg-user-primary-dark cursor-pointer'}`}>
+    {children}
+  </button>
 );
 
-//  SCREEN — MY APPOINTMENTS LIST
-const MONTHS_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-const MONTHS_FULL  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAY_NAMES_SHORT = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+// SCREEN — MY APPOINTMENTS LIST
+const MONTHS_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const DAY_NAMES_SHORT = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 // Details Modal
 const DetailsModal = ({ appt, onClose, onCancel, cancelling }) => {
   if (!appt) return null;
- 
+
   const statusColor = {
     Confirmed: { bg: '#e6f9ee', text: '#1a7a3a', border: '#7ec07e' },
-    Pending:   { bg: '#fff3dc', text: '#b45309', border: '#f0c060' },
+    Pending: { bg: '#fff3dc', text: '#b45309', border: '#f0c060' },
     Completed: { bg: '#e8f0fb', text: '#1a4a8a', border: '#90b4e8' },
-    Cancelled: { bg: '#f0f0f0', text: '#666',    border: '#ccc'    },
+    Cancelled: { bg: '#f0f0f0', text: '#666', border: '#ccc' },
   };
   const sc = statusColor[appt.status] || statusColor.Pending;
   const canCancel = appt.status === 'Pending' || appt.status === 'Confirmed';
- 
+
   return (
     <>
-      {/* Backdrop */}
-      <div onClick={onClose} style={{
-        position: 'fixed', inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.45)',
-        zIndex: 100,
-        animation: 'fadeIn .2s ease',
-      }} />
- 
-      {/* Modal box */}
-      <div style={{
-        position: 'fixed', top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 101,
-        width: '100%', maxWidth: 520,
-        backgroundColor: '#fff',
-        borderRadius: 20,
-        boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
-        overflow: 'hidden',
-        animation: 'slideUp .25s ease',
-      }}>
- 
-        {/* Header */}
-        <div style={{
-          backgroundColor: '#8a6040',
-          padding: '18px 24px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
+      <div onClick={onClose} className="fixed inset-0 bg-black/45 z-[100] animate-fade-in" />
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-full max-w-[520px] bg-white rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
+        <div className="bg-user-secondary-dark p-5 flex items-center justify-between">
           <div>
-            <div style={{ fontSize: 10, fontWeight: 800, color: '#f0d890', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 }}>
-              Appointment Details
-            </div>
-            <div style={{ fontSize: 16, fontWeight: 900, color: '#fff' }}>{appt.title}</div>
+            <div className="text-[10px] font-extrabold text-yellow-200 uppercase tracking-wider mb-0.5">Appointment Details</div>
+            <div className="text-base font-black text-white">{appt.title}</div>
           </div>
-          <button onClick={onClose} style={{
-            width: 32, height: 32, borderRadius: '50%',
-            backgroundColor: 'rgba(255,255,255,0.15)',
-            border: 'none', cursor: 'pointer', color: '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 18, fontWeight: 700,
-          }}>×</button>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/15 border-none cursor-pointer text-white flex items-center justify-center text-lg font-bold">×</button>
         </div>
- 
-        {/* Body */}
-        <div style={{ padding: '22px 24px', backgroundColor: '#fffbe8' }}>
- 
-          {/* Status */}
-          <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#888' }}>Status:</span>
-            <span style={{
-              padding: '4px 14px', borderRadius: 999, fontSize: 12, fontWeight: 800,
-              backgroundColor: sc.bg, color: sc.text, border: `1px solid ${sc.border}`,
-            }}>{appt.status}</span>
+        
+        <div className="p-6 bg-yellow-50">
+          <div className="flex items-center gap-2.5 mb-4">
+            <span className="text-sm font-bold text-gray-500">Status:</span>
+            <span className={`px-3.5 py-1 rounded-full text-xs font-extrabold border`} style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
+              {appt.status}
+            </span>
           </div>
- 
-          {/* Info rows */}
+
           {[
-            { icon: <Icon d={IC.calendar} size={16} color="#B46A02" />, label: 'Date',     value: `${DAY_NAMES_SHORT[new Date(appt.date).getDay()]}, ${appt.day} ${MONTHS_FULL[parseInt(appt.mon_num) - 1] || appt.mon} ${appt.year}` },
-            { icon: <Icon d={IC.clock} size={16} color="#B46A02" />, label: 'Time',     value: appt.time },
-            { icon: <Icon d={IC.doc} size={16} color="#B46A02" />, label: 'Service',  value: appt.title },
+            { icon: <Icon d={IC.calendar} size={16} color="#B46A02" />, label: 'Date', value: `${DAY_NAMES_SHORT[new Date(appt.date).getDay()]}, ${appt.day} ${MONTHS_FULL[parseInt(appt.mon_num) - 1] || appt.mon} ${appt.year}` },
+            { icon: <Icon d={IC.clock} size={16} color="#B46A02" />, label: 'Time', value: appt.time },
+            { icon: <Icon d={IC.doc} size={16} color="#B46A02" />, label: 'Service', value: appt.title },
             { icon: <Icon d={IC.location} size={16} color="#B46A02" />, label: 'Location', value: appt.location || 'Grama Niladhari Office' },
           ].map(row => (
-            <div key={row.label} style={{
-              display: 'flex', alignItems: 'flex-start', gap: 12,
-              padding: '10px 0', borderBottom: '1px solid #f0e8d0',
-            }}>
-              <span style={{ fontSize: 16, flexShrink: 0 }}>{row.icon}</span>
+            <div key={row.label} className="flex items-start gap-3 py-2.5 border-b border-yellow-100">
+              <span className="flex-shrink-0">{row.icon}</span>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>{row.label}</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#1e1200' }}>{row.value || '—'}</div>
+                <div className="text-[11px] font-extrabold text-warning uppercase tracking-wider mb-0.5">{row.label}</div>
+                <div className="text-sm font-bold text-user-text">{row.value || '—'}</div>
               </div>
             </div>
           ))}
- 
-          {/* Notes */}
+
           {appt.notes && (
-            <div style={{ padding: '10px 0', borderBottom: '1px solid #f0e8d0' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                <span style={{ fontSize: 16 }}><Icon d={IC.message} size={16} color="#B46A02" /></span>
+            <div className="py-2.5 border-b border-yellow-100">
+              <div className="flex items-start gap-3">
+                <Icon d={IC.message} size={16} color="#B46A02" />
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>Notes</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#666', fontStyle: 'italic', lineHeight: 1.5 }}>"{appt.notes}"</div>
+                  <div className="text-[11px] font-extrabold text-warning uppercase tracking-wider mb-0.5">Notes</div>
+                  <div className="text-sm font-semibold text-gray-600 italic">"{appt.notes}"</div>
                 </div>
               </div>
             </div>
           )}
         </div>
- 
-        {/* Footer buttons */}
-        <div style={{
-          padding: '16px 24px',
-          backgroundColor: '#fff',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          borderTop: '1px solid #f0e8d0',
-        }}>
-          <button onClick={onClose} style={{
-            padding: '10px 24px', borderRadius: 999,
-            border: '1.5px solid #e8d5ac', background: '#fff',
-            fontSize: 14, fontWeight: 700, color: '#888',
-            cursor: 'pointer', transition: 'all .15s',
-          }}
-            onMouseOver={e => e.currentTarget.style.borderColor = '#B46A02'}
-            onMouseOut={e  => e.currentTarget.style.borderColor = '#e8d5ac'}
-          >Close</button>
- 
-          {/* Cancel button — only for Pending or Confirmed */}
+
+        <div className="p-4 bg-white flex justify-between items-center border-t border-yellow-100">
+          <button onClick={onClose} className="px-6 py-2.5 rounded-round border border-user-border bg-white text-sm font-bold text-gray-500 cursor-pointer transition-all hover:border-warning">Close</button>
           {canCancel && (
-            <button onClick={onCancel} disabled={cancelling} style={{
-              padding: '10px 24px', borderRadius: 999,
-              border: '1.5px solid #f0a0a0',
-              backgroundColor: cancelling ? '#fde8e8' : '#fff',
-              fontSize: 14, fontWeight: 800, color: '#8b1a1a',
-              cursor: cancelling ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', gap: 7,
-              transition: 'all .15s',
-            }}
-              onMouseOver={e => { if (!cancelling) e.currentTarget.style.backgroundColor = '#fde8e8'; }}
-              onMouseOut={e  => { if (!cancelling) e.currentTarget.style.backgroundColor = '#fff'; }}
-            >
+            <button onClick={onCancel} disabled={cancelling} className={`px-6 py-2.5 rounded-round border border-red-300 bg-white text-sm font-extrabold text-red-700 cursor-pointer flex items-center gap-1.5 transition-all hover:bg-red-50 ${cancelling ? 'opacity-50 cursor-not-allowed' : ''}`}>
               {cancelling ? (
                 <>
-                  <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #8b1a1a', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
-                  Cancelling…
+                  <div className="w-3.5 h-3.5 rounded-full border-2 border-red-700 border-t-transparent animate-spin" />
+                  Cancelling...
                 </>
               ) : (
                 <>
-                  <Icon d={IC.close} size={16} color="#8b1a1a" sw={2} />
+                  <Icon d={IC.x} size={14} color="#8b1a1a" sw={2} />
                   Cancel Appointment
                 </>
               )}
@@ -644,12 +480,6 @@ const DetailsModal = ({ appt, onClose, onCancel, cancelling }) => {
           )}
         </div>
       </div>
- 
-      <style>{`
-        @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
-        @keyframes slideUp { from{transform:translate(-50%,-45%);opacity:0} to{transform:translate(-50%,-50%);opacity:1} }
-        @keyframes spin    { to{transform:rotate(360deg)} }
-      `}</style>
     </>
   );
 };
@@ -657,13 +487,13 @@ const DetailsModal = ({ appt, onClose, onCancel, cancelling }) => {
 // Appointments List
 const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
   const [tab, setTab] = useState('All');
-  const [appts,  setAppts]  = useState([]);
+  const [appts, setAppts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selAppt,    setSelAppt]    = useState(null);  // selected appt for modal
+  const [selAppt, setSelAppt] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isMobile,       setIsMobile]      = useState(window.innerWidth <= 768);
-  
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
   useEffect(() => {
     const handle = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handle);
@@ -672,7 +502,6 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
 
   const tabs = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled'];
 
-  // Fetch this user's appointments from Firestore
   useEffect(() => {
     if (!currentUser) {
       setLoading(false);
@@ -681,13 +510,8 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
     const fetchAppts = async () => {
       setLoading(true);
       try {
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), 10000)
-        );
-        const q = query(
-          collection(db, 'appointments'),
-          where('uid', '==', currentUser.uid),
-        );
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000));
+        const q = query(collection(db, 'appointments'), where('uid', '==', currentUser.uid));
         const snap = await Promise.race([getDocs(q), timeoutPromise]);
 
         const list = snap.docs.map(d => {
@@ -695,20 +519,19 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
           const [y, m, day] = (data.date || '').split('-').map(Number);
           const dateObj = new Date(y, m - 1, day);
           return {
-            id:     d.id,
-            day:    day   || '--',
-            mon:    MONTHS_SHORT[(m - 1)] || '---',
-            mon_num:  m,
-            year:     y,
-            dow:    isNaN(dateObj) ? '' : DAY_NAMES_SHORT[dateObj.getDay()],
-            time:   data.slot    || '',
-            title:  data.service || 'Appointment',
-            status: data.status  || 'Pending',
-            date:   data.date    || '',
-            notes:    data.notes    || '',
+            id: d.id,
+            day: day || '--',
+            mon: MONTHS_SHORT[(m - 1)] || '---',
+            mon_num: m,
+            year: y,
+            dow: isNaN(dateObj) ? '' : DAY_NAMES_SHORT[dateObj.getDay()],
+            time: data.slot || '',
+            title: data.service || 'Appointment',
+            status: data.status || 'Pending',
+            date: data.date || '',
+            notes: data.notes || '',
           };
         });
-        // Sort newest first
         list.sort((a, b) => b.date.localeCompare(a.date));
         setAppts(list);
       } catch (e) {
@@ -719,20 +542,14 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
       }
     };
     fetchAppts();
-  }, [currentUser, refreshKey]); // re-fetch when refreshKey changes
+  }, [currentUser, refreshKey]);
 
-  // Cancel appointment 
   const handleCancel = async () => {
     if (!selAppt) return;
     setCancelling(true);
     try {
-      await updateDoc(doc(db, 'appointments', selAppt.id), {
-        status: 'Cancelled',
-      });
-      // Update local state immediately — no need to re-fetch
-      setAppts(prev => prev.map(a =>
-        a.id === selAppt.id ? { ...a, status: 'Cancelled' } : a
-      ));
+      await updateDoc(doc(db, 'appointments', selAppt.id), { status: 'Cancelled' });
+      setAppts(prev => prev.map(a => a.id === selAppt.id ? { ...a, status: 'Cancelled' } : a));
       setSelAppt(prev => ({ ...prev, status: 'Cancelled' }));
     } catch (e) {
       console.error('Cancel error:', e.message);
@@ -741,112 +558,58 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
       setCancelling(false);
     }
   };
- 
+
   const filtered = tab === 'All' ? appts : appts.filter(a => a.status === tab);
-  const pendingCount   = appts.filter(a => a.status === 'Pending').length;
+  const pendingCount = appts.filter(a => a.status === 'Pending').length;
   const confirmedCount = appts.filter(a => a.status === 'Confirmed').length;
- 
+
   const statusColor = {
     Confirmed: { bg: '#e6f9ee', text: '#1a7a3a', border: '#7ec07e' },
-    Pending:   { bg: '#fff3dc', text: '#b45309', border: '#f0c060' },
+    Pending: { bg: '#fff3dc', text: '#b45309', border: '#f0c060' },
     Completed: { bg: '#e8f0fb', text: '#1a4a8a', border: '#90b4e8' },
-    Cancelled: { bg: '#f0f0f0', text: '#666',    border: '#ccc'    },
+    Cancelled: { bg: '#f0f0f0', text: '#666', border: '#ccc' },
   };
   const accentColor = {
     Confirmed: '#22c55e', Pending: '#f59e0b',
     Completed: '#3b82f6', Cancelled: '#ccc',
   };
- 
+
   return (
     <>
-      {/* Details modal */}
-      {selAppt && (
-        <DetailsModal
-          appt={selAppt}
-          onClose={() => setSelAppt(null)}
-          onCancel={handleCancel}
-          cancelling={cancelling}
-        />
-      )}
- 
-      <div style={S.content}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>          
+      {selAppt && <DetailsModal appt={selAppt} onClose={() => setSelAppt(null)} onCancel={handleCancel} cancelling={cancelling} />}
+
+      <div className="p-7 flex-1">
+        <div className="flex items-start justify-between flex-wrap gap-3 mb-6">
           <div>
-            <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1e1200', letterSpacing: '-0.4px', marginBottom: 4 }}>My Appointments</h1>
-            <p style={{ fontSize: 13, color: '#888', fontWeight: 600 }}>Manage your scheduled meetings with Grama Niladhari officers.</p>
+            <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-1">My Appointments</h1>
+            <p className="text-sm font-semibold text-user-text-lighter">Manage your scheduled meetings with Grama Niladhari officers.</p>
           </div>
-          <button onClick={onBook} style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            backgroundColor: '#F5C400', border: 'none', borderRadius: 999,
-            padding: '12px 22px', fontSize: 14, fontWeight: 800, color: '#3d2a00',
-            cursor: 'pointer', transition: 'all .15s',
-            boxShadow: '0 3px 12px rgba(245,196,0,0.35)',
-          }}
-            onMouseOver={e => e.currentTarget.style.backgroundColor = '#d4a800'}
-            onMouseOut={e  => e.currentTarget.style.backgroundColor = '#F5C400'}
-          >
-            <Icon d={IC.plus} size={16} color="#3d2a00" sw={2.5} />
-            Book New Appointment
+          <button onClick={onBook} className="flex items-center gap-2 py-3 px-5 bg-user-primary border-none rounded-round text-sm font-extrabold text-user-text cursor-pointer transition-all shadow-md hover:bg-user-primary-dark">
+            <Icon d={IC.plus} size={16} color="#3d2a00" sw={2.5} /> Book New Appointment
           </button>
         </div>
- 
-        {/* Summary cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 28 }}>
-          <div style={{ backgroundColor: '#f0a060', borderRadius: 16, padding: '22px 24px' }}>
-            <div style={{ fontSize: 36, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{pendingCount}</div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginTop: 6 }}>Pending Appointments</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: 600, marginTop: 3 }}>Awaiting GN Officer approval</div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mb-7">
+          <div className="bg-[#f0a060] rounded-xl p-5">
+            <div className="text-4xl font-black text-white leading-tight">{pendingCount}</div>
+            <div className="text-base font-extrabold text-white mt-1.5">Pending Appointments</div>
+            <div className="text-xs font-semibold text-white/80 mt-0.5">Awaiting GN Officer approval</div>
           </div>
-          <div style={{ backgroundColor: '#60b880', borderRadius: 16, padding: '22px 24px' }}>
-            <div style={{ fontSize: 36, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{confirmedCount}</div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginTop: 6 }}>Confirmed Appointments</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: 600, marginTop: 3 }}>Upcoming this week</div>
+          <div className="bg-[#60b880] rounded-xl p-5">
+            <div className="text-4xl font-black text-white leading-tight">{confirmedCount}</div>
+            <div className="text-base font-extrabold text-white mt-1.5">Confirmed Appointments</div>
+            <div className="text-xs font-semibold text-white/80 mt-0.5">Ready for your visit</div>
           </div>
         </div>
- 
-        {/* Filter Tabs */}
-        <div style={{
-          display: 'flex',
-          gap: isMobile ? 20 : 28,
-          marginBottom: 20,
-          borderBottom: '2px solid #e8d5ac',
-          overflowX: isMobile ? 'auto' : 'visible',
-          overflowY: 'hidden',
-          flexWrap: isMobile ? 'nowrap' : 'wrap',
-          WebkitOverflowScrolling: 'touch',
-        }}>
+
+        <div className={`flex gap-5 md:gap-7 mb-5 border-b-2 border-user-border-light overflow-x-auto ${isMobile ? 'flex-nowrap' : 'flex-wrap'}`}>
           {tabs.map(t => {
             const isActive = tab === t;
             return (
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                style={{
-                  padding: isMobile ? '10px 0' : '10px 0',
-                  border: 'none',
-                  background: 'none',
-                  fontSize: isMobile ? 15 : 16,
-                  fontWeight: isActive ? 800 : 600,
-                  color: isActive ? '#3d2a00' : '#888',
-                  cursor: 'pointer',
-                  borderBottom: isActive ? '3px solid #F5C400' : '3px solid transparent',
-                  marginBottom: -2,
-                  fontFamily: 'inherit',
-                  transition: 'all .15s',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                }}
-                onMouseOver={e => {
-                  if (!isActive) {
-                    e.currentTarget.style.color = '#3d2a00';
-                  }
-                }}
-                onMouseOut={e => {
-                  if (!isActive) {
-                    e.currentTarget.style.color = '#888';
-                  }
-                }}
+                className={`py-2.5 border-none bg-transparent text-base md:text-base font-semibold cursor-pointer transition-all whitespace-nowrap flex-shrink-0 ${isActive ? 'text-user-text font-extrabold border-b-3 border-user-primary' : 'text-gray-400 hover:text-user-text'}`}
               >
                 {t}
               </button>
@@ -854,175 +617,55 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
           })}
         </div>
 
-        {/* Scroll hint (if tabs overflow) */}
         {isMobile && (
-          <div style={{
-            textAlign: 'center',
-            marginTop: -8,
-            marginBottom: 16,
-            fontSize: 10,
-            color: '#ccc',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-          }}>
-            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth={2}>
-              <path d="M9 18l6-6-6-6" />
-            </svg>
+          <div className="text-center -mt-2 mb-4 text-[10px] text-gray-300 flex items-center justify-center gap-1.5">
+            <Icon d={IC.chevL} size={10} color="#ccc" />
             <span>scroll</span>
-            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth={2}>
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
+            <Icon d={IC.chevR} size={10} color="#ccc" />
           </div>
         )}
 
-        {/* Loading */}
         {loading && <AppointmentsListSkeleton />}
- 
-        {/* Appointment cards */}
+
         {!loading && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="flex flex-col gap-3.5">
             {filtered.map(a => (
-              <div key={a.id} style={{
-                ...S.card,
-                borderLeft: `8px solid ${accentColor[a.status] || '#ccc'}`,
-                padding: '18px 22px',
-                opacity: a.status === 'Cancelled' ? 0.65 : 1,
-                transition: 'all .15s',
-              }}>
-                {/* Header Row */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
-                  marginBottom: 12,
-                }}>
-                  {/* Date Block */}
+              <div key={a.id} className={`bg-white border border-user-border rounded-xl p-5 transition-all ${a.status === 'Cancelled' ? 'opacity-65' : ''}`} style={{ borderLeftWidth: '8px', borderLeftColor: accentColor[a.status] || '#ccc' }}>
+                <div className="flex items-start justify-between mb-3">
                   <div>
-                    <div style={{
-                      fontSize: 40,
-                      fontWeight: 900,
-                      color: '#1e1200',
-                      lineHeight: 1,
-                    }}>{a.day}</div>
-                    <div style={{
-                      fontSize: 13,
-                      fontWeight: 800,
-                      color: '#B46A02',
-                      textTransform: 'uppercase',
-                      letterSpacing: 8,
-                    }}>{a.mon}</div>
+                    <div className="text-4xl font-black text-user-text leading-tight">{a.day}</div>
+                    <div className="text-sm font-extrabold text-warning uppercase tracking-wider">{a.mon}</div>
                   </div>
-
-                  {/* Status Badge */}
-                  <div style={{
-                    padding: '6px 16px',
-                    borderRadius: 999,
-                    fontSize: 13,
-                    fontWeight: 800,
-                    backgroundColor: (statusColor[a.status] || statusColor.Pending).bg,
-                    color: (statusColor[a.status] || statusColor.Pending).text,
-                    border: `1px solid ${(statusColor[a.status] || statusColor.Pending).border}`,
-                    whiteSpace: 'nowrap',
-                    alignSelf: 'flex-start',
-                  }}>{a.status}</div>
+                  <div className={`px-4 py-1.5 rounded-full text-sm font-extrabold border`} style={{ backgroundColor: (statusColor[a.status] || statusColor.Pending).bg, color: (statusColor[a.status] || statusColor.Pending).text, borderColor: (statusColor[a.status] || statusColor.Pending).border }}>
+                    {a.status}
+                  </div>
                 </div>
-
-                {/* Time Row */}
-                <div style={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: '#666',
-                  marginBottom: 10,
-                }}>
-                  {a.dow} - {a.time}
-                </div>
-
-                {/* Description Row */}
-                <div style={{
-                  fontSize: 16,
-                  fontWeight: 800,
-                  color: '#1e1200',
-                  marginBottom: 20,
-                }}>
-                  {a.title}
-                </div>
-
-                {/* Buttons Row */}
-                <div style={{
-                  display: 'flex',
-                  gap: 10,
-                  flexWrap: 'wrap',
-                }}>
-
-                  {/* Details Button */}
-                  <button onClick={() => setSelAppt(a)} style={{
-                    flex: '1 1 auto',
-                    minWidth: '100px',
-                    padding: '10px 16px',
-                    borderRadius: 40,
-                    backgroundColor: '#eff3f9',
-                    border: '1px solid #d4dfed',
-                    color: '#2c4c7c',
-                    fontSize: 13,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseOver={e => { e.currentTarget.style.backgroundColor = '#e2e9f2'; }}
-                  onMouseOut={e => { e.currentTarget.style.backgroundColor = '#eff3f9'; }}>
+                <div className="text-sm font-semibold text-gray-500 mb-2.5">{a.dow} - {a.time}</div>
+                <div className="text-base font-extrabold text-user-text mb-5">{a.title}</div>
+                <div className="flex gap-2.5 flex-wrap">
+                  <button onClick={() => setSelAppt(a)} className="flex-1 min-w-[100px] py-2.5 px-4 rounded-round bg-blue-50 border border-blue-200 text-blue-800 text-sm font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-all hover:bg-blue-100">
                     <Icon d={IC.details} size={14} color="#2c4c7c" /> Details
                   </button>
-
-                  {/* Cancel Button */}
                   {(a.status === 'Pending' || a.status === 'Confirmed') && (
-                    <button onClick={() => { setSelAppt(a); }} style={{
-                      flex: '1 1 auto',
-                      minWidth: '100px',
-                      padding: '10px 16px',
-                      borderRadius: 40,
-                      backgroundColor: '#fef3f2',
-                      border: '1px solid #f3c1bc',
-                      color: '#bc3f2e',
-                      fontSize: 13,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 6,
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseOver={e => { e.currentTarget.style.backgroundColor = '#fce4e1'; }}
-                    onMouseOut={e => { e.currentTarget.style.backgroundColor = '#fef3f2'; }}>
-                      <span>✖</span> Cancel
+                    <button onClick={() => setSelAppt(a)} className="flex-1 min-w-[100px] py-2.5 px-4 rounded-round bg-red-50 border border-red-200 text-red-700 text-sm font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-all hover:bg-red-100">
+                      <Icon d={IC.x} size={14} color="#bc3f2e" sw={2} /> Cancel
                     </button>
                   )}
                 </div>
               </div>
             ))}
- 
-            {/* Empty state */}
+
             {filtered.length === 0 && (
-              <div style={{ ...S.card, textAlign: 'center', padding: '52px 24px' }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>📅</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', marginBottom: 8 }}>
-                  {tab === 'All' ? 'No appointments yet' : `No ${tab.toLowerCase()} appointments`}
+              <div className="bg-white border border-user-border rounded-xl text-center py-12 px-6">
+                <div className="flex justify-center mb-4">
+                  <Icon d={IC.calendar} size={48} color="#ccc" strokeWidth={1.2} />
                 </div>
-                <div style={{ fontSize: 13, color: '#aaa', fontWeight: 600, marginBottom: 20 }}>
-                  {tab === 'All' ? 'Book your first appointment with your GN Officer.' : `You have no ${tab.toLowerCase()} appointments at the moment.`}
-                </div>
+                <div className="text-base font-extrabold text-user-text mb-2">{tab === 'All' ? 'No appointments yet' : `No ${tab.toLowerCase()} appointments`}</div>
+                <div className="text-sm font-semibold text-gray-400 mb-5">{tab === 'All' ? 'Book your first appointment with your GN Officer.' : `You have no ${tab.toLowerCase()} appointments at the moment.`}</div>
                 {tab === 'All' && (
-                  <button onClick={onBook} style={{
-                    backgroundColor: '#F5C400', border: 'none', borderRadius: 999,
-                    padding: '11px 22px', fontSize: 14, fontWeight: 800,
-                    color: '#3d2a00', cursor: 'pointer',
-                  }}>+ Book New Appointment</button>
+                  <button onClick={onBook} className="py-2.5 px-5 bg-user-primary border-none rounded-round text-sm font-extrabold text-user-text cursor-pointer flex items-center justify-center gap-2 mx-auto">
+                    <Icon d={IC.plus} size={14} color="#3d2a00" sw={2.5} /> Book New Appointment
+                  </button>
                 )}
               </div>
             )}
@@ -1032,7 +675,7 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
     </>
   );
 };
- 
+
 // BOOK STEP 1: SELECT SERVICE
 const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
   const [openCats, setOpenCats] = useState({ personal: true });
@@ -1053,46 +696,28 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
   };
 
   return (
-    <div style={S.content}>
-      <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1e1200', marginBottom: 20 }}>Book an appointment</h1>
+    <div className="p-7 flex-1">
+      <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">Book an appointment</h1>
       <StepBar step={1} />
 
-      {/* White card */}
-      <div style={{ ...S.card, padding: '24px 28px', marginBottom: 16 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1e1200', marginBottom: 20 }}>What is this appointment for?</h2>
+      <div className="bg-white border border-user-border rounded-xl p-6 md:p-7 mb-4">
+        <h2 className="text-lg font-extrabold text-user-text mb-5">What is this appointment for?</h2>
 
-        {/* Categories */}
         {SERVICE_CATS.map(cat => (
-          <div key={cat.key} style={{ marginBottom: 10 }}>
-            {/* Category header */}
-            <button onClick={() => toggleCat(cat.key)} style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-              padding: '14px 18px', backgroundColor: openCats[cat.key] ? '#fff8e0' : '#f8f6f0',
-              border: '1.5px solid #e8d5ac', borderRadius: openCats[cat.key] ? '12px 12px 0 0' : 12,
-              cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s',
-            }}>
+          <div key={cat.key} className="mb-2.5">
+            <button onClick={() => toggleCat(cat.key)} className={`w-full flex items-center gap-2.5 p-3.5 border border-user-border rounded-t-xl ${openCats[cat.key] ? 'bg-yellow-50' : 'bg-gray-50 rounded-xl'} cursor-pointer transition-all`}>
               <Icon d={openCats[cat.key] ? IC.chevDown : IC.chevR} size={16} color="#B46A02" />
-              <span style={{ fontSize: 15, fontWeight: 800, color: '#1e1200' }}>{cat.label}</span>
+              <span className="text-sm font-extrabold text-user-text">{cat.label}</span>
             </button>
 
-            {/* Services list */}
             {openCats[cat.key] && (
-              <div style={{ border: '1.5px solid #e8d5ac', borderTop: 'none', borderRadius: '0 0 12px 12px', overflow: 'hidden' }}>
+              <div className="border border-user-border border-t-0 rounded-b-xl overflow-hidden">
                 {cat.services.map((svc, i) => {
                   const selected = booking.service?.id === svc.id;
                   return (
-                    <div key={svc.id} onClick={() => selectService(svc)} style={{
-                      padding: '16px 20px', cursor: 'pointer',
-                      backgroundColor: selected ? '#f0e8cc' : '#fff',
-                      borderBottom: i < cat.services.length - 1 ? '1px solid #f0e8d0' : 'none',
-                      borderLeft: selected ? '4px solid #F5C400' : '4px solid transparent',
-                      transition: 'all .15s',
-                    }}
-                      onMouseOver={e => { if (!selected) e.currentTarget.style.backgroundColor = '#fffbe0'; }}
-                      onMouseOut={e  => { if (!selected) e.currentTarget.style.backgroundColor = '#fff'; }}
-                    >
-                      <div style={{ fontSize: 14, fontWeight: 800, color: '#1e1200', marginBottom: 3 }}>{svc.name}</div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: '#888' }}>{svc.desc}</div>
+                    <div key={svc.id} onClick={() => selectService(svc)} className={`p-4 cursor-pointer border-b border-yellow-50 transition-all ${selected ? 'bg-yellow-100' : 'bg-white hover:bg-yellow-50'}`} style={{ borderLeft: selected ? '4px solid #F5C400' : '4px solid transparent' }}>
+                      <div className="text-sm font-extrabold text-user-text mb-0.5">{svc.name}</div>
+                      <div className="text-xs font-semibold text-gray-500">{svc.desc}</div>
                     </div>
                   );
                 })}
@@ -1101,236 +726,78 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
           </div>
         ))}
 
-        {/* Selected service banner */}
         {booking.service && (
-          <div style={{
-            marginTop: 16, backgroundColor: '#fff8e0', border: '1.5px solid #f0c060',
-            borderRadius: 12, padding: '14px 18px',
-            display: 'flex', alignItems: 'center', gap: 12,
-          }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: '#F5C400', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Icon d={IC.check} size={14} color="#3d2a00" sw={2.5} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 10, fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Selected Service</div>
-              <div style={{ fontSize: 14, fontWeight: 900, color: '#3d2a00' }}>{booking.service.name}</div>
-            </div>
-            <button onClick={() => setBooking(p => ({ ...p, service: null }))} style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              backgroundColor: '#fff', border: '1.5px solid #e8d5ac',
-              borderRadius: 999, padding: '5px 12px', fontSize: 12, fontWeight: 700,
-              color: '#888', cursor: 'pointer', fontFamily: 'inherit',
-            }}>
-              <Icon d={IC.x} size={12} color="#888" />
-              CHANGE
-            </button>
+          <div className="mt-4 p-3.5 bg-yellow-50 border border-yellow-400 rounded-xl flex items-center gap-3">
+            <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0"><Icon d={IC.check} size={14} color="#3d2a00" sw={2.5} /></div>
+            <div className="flex-1"><div className="text-[10px] font-extrabold text-warning uppercase tracking-wider mb-0.5">Selected Service</div><div className="text-sm font-black text-user-text">{booking.service.name}</div></div>
+            <button onClick={() => setBooking(p => ({ ...p, service: null }))} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-user-border rounded-round text-xs font-bold text-gray-500 cursor-pointer"><Icon d={IC.x} size={12} color="#888" /> CHANGE</button>
           </div>
         )}
       </div>
 
-      {/* Additional notes */}
-      <div style={{ ...S.card, padding: '22px 28px', marginBottom: 24 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 800, color: '#1e1200', marginBottom: 12 }}>Additional notes (optional)</h2>
-        <textarea
-          value={notes}
-          onChange={e => { setNotes(e.target.value); setBooking(p => ({ ...p, notes: e.target.value })); }}
-          placeholder="Please provide any specific details or requirements for your request..."
-          rows={4}
-          style={{
-            width: '100%', padding: '12px 14px', fontSize: 14, fontWeight: 600,
-            color: '#1e1200', backgroundColor: '#fff', border: '1.5px solid #e8d5ac',
-            borderRadius: 10, outline: 'none', resize: 'vertical',
-            boxSizing: 'border-box', fontFamily: 'inherit', transition: 'border-color .15s',
-          }}
-          onFocus={e => e.target.style.borderColor = '#F5C400'}
-          onBlur={e  => e.target.style.borderColor = '#e8d5ac'}
-        />
+      <div className="bg-white border border-user-border rounded-xl p-5 md:p-7 mb-6">
+        <h2 className="text-base font-extrabold text-user-text mb-3">Additional notes (optional)</h2>
+        <textarea value={notes} onChange={e => { setNotes(e.target.value); setBooking(p => ({ ...p, notes: e.target.value })); }} placeholder="Please provide any specific details or requirements for your request..." rows={4} className="w-full p-3 text-sm font-semibold text-user-text bg-white border border-user-border rounded-lg outline-none resize-vertical transition-colors focus:border-user-primary" />
       </div>
 
-      {/* Bottom buttons */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexDirection: isMobile ? 'column' : 'row' }}>
-        <button onClick={onCancel} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          padding: isMobile ? '14px 20px' : '14px 28px', backgroundColor: '#fff',
-          border: '2px solid #c0a888', borderRadius: 999, fontSize: isMobile ? 15 : 15,
-          fontWeight: 800, color: '#8a6040', cursor: 'pointer', width: isMobile ? '100%' : 'auto',
-        }}>
-          Cancel
-        </button>
-        <button onClick={onNext} disabled={!booking.service} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          padding: isMobile ? '16px 20px' : '14px 28px', backgroundColor: !booking.service ? '#c0a888' : '#8a6040',
-          border: 'none', borderRadius: 999, fontSize: isMobile ? 16 : 15, fontWeight: 800,
-          color: '#fff', cursor: !booking.service ? 'not-allowed' : 'pointer', width: isMobile ? '100%' : 'auto',
-        }}>
-          Next → Pick a time & date
-        </button>
+      <div className={`flex justify-between gap-3 ${isMobile ? 'flex-col' : 'flex-row'}`}>
+        <button onClick={onCancel} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round border-2 border-user-border bg-white text-sm font-extrabold text-user-secondary cursor-pointer ${isMobile ? 'w-full' : ''}`}>Cancel</button>
+        <button onClick={onNext} disabled={!booking.service} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round text-sm font-extrabold text-white transition-all ${!booking.service ? 'bg-user-secondary/50 cursor-not-allowed' : 'bg-user-secondary hover:bg-user-secondary-dark cursor-pointer'} ${isMobile ? 'w-full' : ''}`}>Next → Pick a time & date</button>
       </div>
     </div>
   );
 };
 
 // BOOK STEP 2: DATE & TIME
-const DAYS   = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
   const today = new Date();
-  const [viewYear,  setViewYear]  = useState(today.getFullYear());
+  const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
-  const [selDay,    setSelDay]    = useState(booking.day  || null);
-  const [selSlot,   setSelSlot]   = useState(booking.slot || null);
+  const [selDay, setSelDay] = useState(booking.day || null);
+  const [selSlot, setSelSlot] = useState(booking.slot || null);
 
-  // Taken slots (simulate)
   const takenSlots = ['10:30 AM', '03:00 PM'];
-
-  const morningSlots   = ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM'];
+  const morningSlots = ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM'];
   const afternoonSlots = ['01:00 PM', '01:30 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM'];
 
-  const firstDay   = new Date(viewYear, viewMonth, 1).getDay();
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-  const prevMonth = () => {
-    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
-    else setViewMonth(m => m - 1);
-  };
-  const nextMonth = () => {
-    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
-    else setViewMonth(m => m + 1);
-  };
+  const prevMonth = () => { if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); } else setViewMonth(m => m - 1); };
+  const nextMonth = () => { if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); } else setViewMonth(m => m + 1); };
 
-  const isWeekend = (day) => {
-    const d = new Date(viewYear, viewMonth, day).getDay();
-    return d === 0 || d === 6;
-  };
+  const isWeekend = (day) => { const d = new Date(viewYear, viewMonth, day).getDay(); return d === 0 || d === 6; };
   const isPast = (day) => new Date(viewYear, viewMonth, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
-  const pickDay = (day) => {
-    if (isWeekend(day) || isPast(day)) return;
-    setSelDay(day);
-    setSelSlot(null);
-    setBooking(p => ({ ...p, day, month: viewMonth, year: viewYear, slot: null }));
-  };
+  const pickDay = (day) => { if (isWeekend(day) || isPast(day)) return; setSelDay(day); setSelSlot(null); setBooking(p => ({ ...p, day, month: viewMonth, year: viewYear, slot: null })); };
+  const pickSlot = (slot) => { if (takenSlots.includes(slot)) return; setSelSlot(slot); setBooking(p => ({ ...p, slot })); };
 
-  const pickSlot = (slot) => {
-    if (takenSlots.includes(slot)) return;
-    setSelSlot(slot);
-    setBooking(p => ({ ...p, slot }));
-  };
-
-  const selDateLabel = selDay
-    ? `${DAY_NAMES[new Date(viewYear, viewMonth, selDay).getDay()]}, ${MONTHS[viewMonth]} ${selDay}${['th','st','nd','rd'][Math.min(selDay % 10, 3)] || 'th'}`
-    : 'No date selected';
-
+  const selDateLabel = selDay ? `${DAY_NAMES[new Date(viewYear, viewMonth, selDay).getDay()]}, ${MONTHS[viewMonth]} ${selDay}` : 'No date selected';
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+
+  useEffect(() => { const handleResize = () => setIsMobile(window.innerWidth <= 768); window.addEventListener('resize', handleResize); return () => window.removeEventListener('resize', handleResize); }, []);
 
   return (
-    <div style={S.content}>
-      <h1 style={{ 
-        fontSize: 26, 
-        fontWeight: 900, 
-        color: '#1e1200', 
-        marginBottom: 20 
-      }}>Book an appointment</h1>
+    <div className="p-7 flex-1">
+      <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">Book an appointment</h1>
       <StepBar step={2} />
 
-      <div style={{ 
-        ...S.card, 
-        padding: '26px 28px', 
-        marginBottom: 16 
-      }}>
-        <h2 style={{ 
-          fontSize: 18, 
-          fontWeight: 800, 
-          color: '#1e1200', 
-          marginBottom: 22 
-        }}>When would you like to visit?</h2>
+      <div className="bg-white border border-user-border rounded-xl p-6 md:p-7 mb-4">
+        <h2 className="text-lg font-extrabold text-user-text mb-5">When would you like to visit?</h2>
 
-        {/* Responsive Grid */}
-        <div style={{ 
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: 20,
-        }}>
-
-          {/* Calendar Section */}
-          <div style={{ 
-            flex: 1,
-            border: '1.5px solid #e8d5ac', 
-            borderRadius: 14, 
-            padding: '20px 18px' 
-          }}>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 8, 
-              marginBottom: 16 
-            }}>
-              <Icon d={IC.calendar} size={18} color="#B46A02" />
-              <span style={{ fontSize: 15, fontWeight: 800, color: '#1e1200' }}>Select Date</span>
+        <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-5`}>
+          <div className="flex-1 border border-user-border rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-4"><Icon d={IC.calendar} size={18} color="#B46A02" /><span className="text-sm font-extrabold text-user-text">Select Date</span></div>
+            <div className="flex items-center justify-between mb-3.5">
+              <button onClick={prevMonth} className="w-8 h-8 rounded-full border border-user-border bg-white cursor-pointer flex items-center justify-center"><Icon d={IC.chevL} size={14} color="#888" /></button>
+              <span className="text-sm font-extrabold">{MONTHS[viewMonth]} {viewYear}</span>
+              <button onClick={nextMonth} className="w-8 h-8 rounded-full border border-user-border bg-white cursor-pointer flex items-center justify-center"><Icon d={IC.chevR} size={14} color="#888" /></button>
             </div>
-            
-            {/* Month Navigation */}
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              marginBottom: 14 
-            }}>
-              <button onClick={prevMonth} style={{ 
-                width: 32, height: 32, borderRadius: '50%', 
-                border: '1.5px solid #e8d5ac', background: '#fff', 
-                cursor: 'pointer', display: 'flex', alignItems: 'center', 
-                justifyContent: 'center'
-              }}>
-                <Icon d={IC.chevL} size={14} color="#888" />
-              </button>
-              <span style={{ fontSize: 15, fontWeight: 800 }}>
-                {MONTHS[viewMonth]} {viewYear}
-              </span>
-              <button onClick={nextMonth} style={{ 
-                width: 32, height: 32, borderRadius: '50%', 
-                border: '1.5px solid #e8d5ac', background: '#fff', 
-                cursor: 'pointer', display: 'flex', alignItems: 'center', 
-                justifyContent: 'center'
-              }}>
-                <Icon d={IC.chevR} size={14} color="#888" />
-              </button>
-            </div>
-            
-            {/* Day Headers */}
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(7, 1fr)', 
-              gap: 2, 
-              marginBottom: 8 
-            }}>
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-                <div key={i} style={{ 
-                  textAlign: 'center', 
-                  fontSize: 11, 
-                  fontWeight: 800, 
-                  color: '#aaa', 
-                  padding: '4px 0' 
-                }}>{d}</div>
-              ))}
-            </div>
-            
-            {/* Days Grid */}
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(7, 1fr)', 
-              gap: 2 
-            }}>
+            <div className="grid grid-cols-7 gap-0.5 mb-2 text-center"><div className="text-[11px] font-extrabold text-gray-400 py-1">S</div><div className="text-[11px] font-extrabold text-gray-400 py-1">M</div><div className="text-[11px] font-extrabold text-gray-400 py-1">T</div><div className="text-[11px] font-extrabold text-gray-400 py-1">W</div><div className="text-[11px] font-extrabold text-gray-400 py-1">T</div><div className="text-[11px] font-extrabold text-gray-400 py-1">F</div><div className="text-[11px] font-extrabold text-gray-400 py-1">S</div></div>
+            <div className="grid grid-cols-7 gap-0.5">
               {Array(firstDay).fill(null).map((_, i) => <div key={`e${i}`} />)}
               {Array(daysInMonth).fill(null).map((_, i) => {
                 const day = i + 1;
@@ -1339,28 +806,7 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
                 const picked = selDay === day && viewMonth === booking.month && viewYear === booking.year;
                 const disabled = weekend || past;
                 return (
-                  <div 
-                    key={day} 
-                    onClick={() => pickDay(day)} 
-                    style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: '50%',
-                      margin: '1px auto',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 13,
-                      fontWeight: picked ? 900 : 600,
-                      backgroundColor: picked ? '#F5C400' : 'transparent',
-                      color: picked ? '#3d2a00' : disabled ? '#ccc' : '#1e1200',
-                      cursor: disabled ? 'not-allowed' : 'pointer',
-                      boxShadow: picked ? '0 2px 8px rgba(245,196,0,0.4)' : 'none',
-                      transition: 'all 0.12s',
-                    }}
-                    onMouseOver={e => { if (!disabled && !picked) e.currentTarget.style.backgroundColor = '#fff8e0'; }}
-                    onMouseOut={e => { if (!disabled && !picked) e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
+                  <div key={day} onClick={() => pickDay(day)} className={`w-8 h-8 rounded-full mx-auto my-0.5 flex items-center justify-center text-sm font-semibold transition-all ${picked ? 'bg-user-primary text-user-text font-black shadow-sm' : disabled ? 'text-gray-300 cursor-not-allowed' : 'text-user-text hover:bg-yellow-100 cursor-pointer'}`}>
                     {day}
                   </div>
                 );
@@ -1368,204 +814,56 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
             </div>
           </div>
 
-          {/* Time Slots Section */}
-          <div style={{ 
-            flex: 1,
-            border: '1.5px solid #e8d5ac', 
-            borderRadius: 14, 
-            padding: '20px 18px' 
-          }}>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 8, 
-              marginBottom: 16 
-            }}>
-              <Icon d={IC.clock} size={18} color="#B46A02" />
-              <span style={{ fontSize: 15, fontWeight: 800, color: '#1e1200' }}>Select Time</span>
-            </div>
-
-            {/* Morning Slots */}
-            <div style={{ 
-              fontSize: 12, 
-              fontWeight: 800, 
-              color: '#B46A02', 
-              marginBottom: 10, 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 6 
-            }}>
-              ☀️ Morning
-            </div>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
-              gap: 8, 
-              marginBottom: 16 
-            }}>
+          <div className="flex-1 border border-user-border rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-4"><Icon d={IC.clock} size={18} color="#B46A02" /><span className="text-sm font-extrabold text-user-text">Select Time</span></div>
+            <div className="text-xs font-extrabold text-warning mb-2.5 flex items-center gap-1.5"><Icon d={IC.sun} size={12} /> Morning</div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
               {morningSlots.map(slot => {
                 const taken = takenSlots.includes(slot);
                 const picked = selSlot === slot;
                 return (
-                  <button 
-                    key={slot} 
-                    onClick={() => pickSlot(slot)} 
-                    disabled={taken} 
-                    style={{
-                      padding: '10px 4px',
-                      fontSize: 12,
-                      fontWeight: 800,
-                      textAlign: 'center',
-                      border: picked ? '2px solid #F5C400' : taken ? '1.5px dashed #ddd' : '1.5px solid #e8d5ac',
-                      borderRadius: 10,
-                      cursor: taken ? 'not-allowed' : 'pointer',
-                      backgroundColor: picked ? '#F5C400' : taken ? '#f5f0e8' : '#fff',
-                      color: picked ? '#3d2a00' : taken ? '#ccc' : '#1e1200',
-                      fontFamily: 'inherit',
-                      transition: 'all 0.12s',
-                    }}
-                    onMouseOver={e => { if (!taken && !picked) e.currentTarget.style.backgroundColor = '#fff8e0'; }}
-                    onMouseOut={e => { if (!taken && !picked) e.currentTarget.style.backgroundColor = '#fff'; }}
-                  >
+                  <button key={slot} onClick={() => pickSlot(slot)} disabled={taken} className={`py-2.5 text-xs font-extrabold text-center rounded-lg transition-all ${picked ? 'bg-user-primary text-user-text' : taken ? 'bg-gray-100 text-gray-300 border border-dashed border-gray-300 cursor-not-allowed' : 'border border-user-border bg-white text-user-text hover:bg-yellow-100 cursor-pointer'}`}>
                     {slot}
                   </button>
                 );
               })}
             </div>
-
-            {/* Afternoon Slots */}
-            <div style={{ 
-              fontSize: 12, 
-              fontWeight: 800, 
-              color: '#B46A02', 
-              marginBottom: 10, 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 6 
-            }}>
-              🌤️ Afternoon
-            </div>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
-              gap: 8, 
-              marginBottom: 20 
-            }}>
+            <div className="text-xs font-extrabold text-warning mb-2.5 flex items-center gap-1.5"><Icon d={IC.wave} size={12} /> Afternoon</div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {afternoonSlots.map(slot => {
                 const taken = takenSlots.includes(slot);
                 const picked = selSlot === slot;
                 return (
-                  <button 
-                    key={slot} 
-                    onClick={() => pickSlot(slot)} 
-                    disabled={taken} 
-                    style={{
-                      padding: '10px 4px',
-                      fontSize: 12,
-                      fontWeight: 800,
-                      textAlign: 'center',
-                      border: picked ? '2px solid #F5C400' : taken ? '1.5px dashed #ddd' : '1.5px solid #e8d5ac',
-                      borderRadius: 10,
-                      cursor: taken ? 'not-allowed' : 'pointer',
-                      backgroundColor: picked ? '#F5C400' : taken ? '#f5f0e8' : '#fff',
-                      color: picked ? '#3d2a00' : taken ? '#ccc' : '#1e1200',
-                      fontFamily: 'inherit',
-                      transition: 'all 0.12s',
-                    }}
-                    onMouseOver={e => { if (!taken && !picked) e.currentTarget.style.backgroundColor = '#fff8e0'; }}
-                    onMouseOut={e => { if (!taken && !picked) e.currentTarget.style.backgroundColor = '#fff'; }}
-                  >
+                  <button key={slot} onClick={() => pickSlot(slot)} disabled={taken} className={`py-2.5 text-xs font-extrabold text-center rounded-lg transition-all ${picked ? 'bg-user-primary text-user-text' : taken ? 'bg-gray-100 text-gray-300 border border-dashed border-gray-300 cursor-not-allowed' : 'border border-user-border bg-white text-user-text hover:bg-yellow-100 cursor-pointer'}`}>
                     {slot}
                   </button>
                 );
               })}
             </div>
-
-            {/* Legend */}
-            <div style={{ 
-              display: 'flex', 
-              gap: 16,
-              justifyContent: 'center',
-              paddingTop: 8,
-              borderTop: '1px solid #e8d5ac',
-              flexWrap: 'wrap',
-            }}>
+            <div className="flex flex-wrap gap-4 justify-center pt-2 mt-2 border-t border-user-border">
               {[
-                { color: '#F5C400', border: 'none', label: 'Selected' },
+                { color: '#F5C400', label: 'Selected' },
                 { color: '#fff', border: '1.5px solid #e8d5ac', label: 'Available' },
-                { color: '#f5f0e8', border: '1.5px dashed #ddd', label: 'Not available' },
+                { color: '#f5f0e8', border: '1.5px dashed #ddd', label: 'Not available' }
               ].map(l => (
-                <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 14, height: 14, borderRadius: 4, backgroundColor: l.color, border: l.border }} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#888' }}>{l.label}</span>
+                <div key={l.label} className="flex items-center gap-1.5">
+                  <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: l.color, border: l.border }} />
+                  <span className="text-[11px] font-bold text-gray-500">{l.label}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Notice Bar */}
-        <div style={{
-          marginTop: 24,
-          backgroundColor: '#fff8e0',
-          border: '1.5px solid #f0d870',
-          borderRadius: 10,
-          padding: '12px 18px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 12,
-        }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 8, 
-            fontSize: 13, 
-            fontWeight: 600, 
-            color: '#7a5a00'
-          }}>
-            <Icon d={IC.info} size={16} color="#B46A02" />
-            Appointments must be booked at least 24 hours in advance.
-          </div>
-          <div style={{ 
-            fontSize: 13, 
-            fontWeight: 700, 
-            color: '#3d2a00',
-            backgroundColor: '#fff',
-            padding: '6px 12px',
-            borderRadius: 8,
-            border: '1px solid #f0d870'
-          }}>
-            Selected date: <strong>{selDateLabel}</strong>
-          </div>
+        <div className="mt-6 p-3 bg-yellow-50 border border-yellow-400 rounded-lg flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm font-semibold text-yellow-800"><Icon d={IC.info} size={16} color="#B46A02" /> Appointments must be booked at least 24 hours in advance.</div>
+          <div className="text-sm font-bold text-user-text bg-white px-3 py-1.5 rounded-lg border border-yellow-400">Selected date: <strong>{selDateLabel}</strong></div>
         </div>
       </div>
 
-      {/* Bottom Buttons */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between',
-        gap: 12,
-        flexDirection: isMobile ? 'column' : 'row',
-        marginTop: 16,
-      }}>
-        <button onClick={onBack} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          padding: isMobile ? '14px 20px' : '14px 28px', backgroundColor: '#fff',
-          border: '2px solid #c0a888', borderRadius: 999, fontSize: isMobile ? 15 : 15,
-          fontWeight: 800, color: '#8a6040', cursor: 'pointer', width: isMobile ? '100%' : 'auto',
-        }}>
-          ← Back
-        </button>
-        <button onClick={onNext} disabled={!selDay || !selSlot} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          padding: isMobile ? '16px 20px' : '14px 28px', backgroundColor: (!selDay || !selSlot) ? '#c0a888' : '#8a6040',
-          border: 'none', borderRadius: 999, fontSize: isMobile ? 16 : 15, fontWeight: 800,
-          color: '#fff', cursor: (!selDay || !selSlot) ? 'not-allowed' : 'pointer', width: isMobile ? '100%' : 'auto',
-        }}>
-          Next → Review & submit
-        </button>
+      <div className={`flex justify-between gap-3 mt-4 ${isMobile ? 'flex-col' : 'flex-row'}`}>
+        <button onClick={onBack} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round border-2 border-user-border bg-white text-sm font-extrabold text-user-secondary cursor-pointer ${isMobile ? 'w-full' : ''}`}>← Back</button>
+        <button onClick={onNext} disabled={!selDay || !selSlot} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round text-sm font-extrabold text-white transition-all ${(!selDay || !selSlot) ? 'bg-user-secondary/50 cursor-not-allowed' : 'bg-user-secondary hover:bg-user-secondary-dark cursor-pointer'} ${isMobile ? 'w-full' : ''}`}>Next → Review & submit</button>
       </div>
     </div>
   );
@@ -1573,471 +871,132 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
 
 // BOOK STEP 3: REVIEW & SUBMIT
 const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submitting }) => {
-  const dateStr = booking.day
-    ? `${MONTHS[booking.month]} ${booking.day}, ${booking.year}`
-    : '—';
-  const timeEnd = booking.slot
-    ? (() => {
-        const [h, m, ap] = booking.slot.replace(' AM','').replace(' PM','').split(/[: ]/).concat([booking.slot.includes('AM') ? 'AM' : 'PM']);
-        let hh = parseInt(h), mm = parseInt(m);
-        mm += 30; if (mm >= 60) { hh += 1; mm -= 60; }
-        if (hh > 12) hh -= 12;
-        return `${hh}:${mm.toString().padStart(2,'0')} ${ap}`;
-      })()
-    : '';
+  const dateStr = booking.day ? `${MONTHS[booking.month]} ${booking.day}, ${booking.year}` : '—';
+  const timeEnd = booking.slot ? (() => { const [h, m, ap] = booking.slot.replace(' AM', '').replace(' PM', '').split(/[: ]/).concat([booking.slot.includes('AM') ? 'AM' : 'PM']); let hh = parseInt(h), mm = parseInt(m); mm += 30; if (mm >= 60) { hh += 1; mm -= 60; } if (hh > 12) hh -= 12; return `${hh}:${mm.toString().padStart(2, '0')} ${ap}`; })() : '';
   const timeStr = booking.slot ? `${booking.slot} — ${timeEnd}` : '—';
-
-  const nicMasked = userData?.nic
-    ? 'X'.repeat(userData.nic.length)
-    : 'XXXXXXXXXXXX';
-
+  const nicMasked = userData?.nic ? 'X'.repeat(userData.nic.length) : 'XXXXXXXXXXXX';
   const [isMobile, setIsMobile] = useState(false);
-  
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+
+  useEffect(() => { const handleResize = () => setIsMobile(window.innerWidth <= 768); handleResize(); window.addEventListener('resize', handleResize); return () => window.removeEventListener('resize', handleResize); }, []);
 
   return (
-    <div style={S.content}>
-      <h1 style={{ 
-        fontSize: isMobile ? 'clamp(22px, 6vw, 26px)' : 26, 
-        fontWeight: 900, 
-        color: '#1e1200', 
-        marginBottom: 20 
-      }}>Book an appointment</h1>
+    <div className="p-7 flex-1">
+      <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">Book an appointment</h1>
       <StepBar step={3} />
 
-      <div style={{ 
-        ...S.card, 
-        padding: isMobile ? '20px' : '26px 28px', 
-        marginBottom: 24 
-      }}>
-        <h2 style={{ 
-          fontSize: isMobile ? 'clamp(18px, 5vw, 22px)' : 20, 
-          fontWeight: 900, 
-          color: '#1e1200', 
-          marginBottom: 20 
-        }}>Review your request</h2>
+      <div className="bg-white border border-user-border rounded-xl p-5 md:p-7 mb-6">
+        <h2 className="text-xl md:text-2xl font-black text-user-text mb-5">Review your request</h2>
 
-        {/* Selected Service Banner */}
-        <div style={{
-          backgroundColor: '#8a6040',
-          borderRadius: '12px',
-          padding: isMobile ? '16px' : '14px 20px',
-          marginBottom: isMobile ? 16 : 0,
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 12,
-            flexDirection: isMobile ? 'column' : 'row',
-          }}>
+        <div className="bg-user-secondary rounded-xl p-4 md:p-3.5 mb-4">
+          <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} items-start gap-3`}>
             <Icon d={IC.doc} size={isMobile ? 20 : 18} color="#f0d890" />
-            <div>
-              <div style={{ 
-                fontSize: isMobile ? 11 : 10, 
-                fontWeight: 800, 
-                color: '#f0d890', 
-                textTransform: 'uppercase', 
-                letterSpacing: 1, 
-                marginBottom: 4 
-              }}>
-                Selected Service
-              </div>
-              <div style={{ 
-                fontSize: isMobile ? 'clamp(15px, 4.5vw, 18px)' : 16, 
-                fontWeight: 900, 
-                color: '#fff' 
-              }}>
-                {booking.service?.name || '—'}
-              </div>
-            </div>
+            <div><div className="text-[10px] md:text-[10px] font-extrabold text-yellow-200 uppercase tracking-wider mb-1">Selected Service</div><div className="text-base md:text-base font-black text-white">{booking.service?.name || '—'}</div></div>
           </div>
         </div>
 
-        {/* Details Container */}
-        <div style={{
-          backgroundColor: '#fffbe8',
-          border: '1.5px solid #f0e4b0',
-          borderRadius: '12px',
-          padding: isMobile ? '20px' : '22px 24px',
-          marginTop: isMobile ? 0 : -1,
-        }}>
-          {/* Responsive Grid */}
-          <div style={{ 
-            display: 'flex',
-            flexDirection: isMobile ? 'column' : 'row',
-            gap: isMobile ? 24 : 32,
-          }}>
-            {/* Left - Appointment Details */}
-            <div style={{ flex: 1 }}>
-              <div style={{ 
-                fontSize: isMobile ? 12 : 11, 
-                fontWeight: 800, 
-                color: '#B46A02', 
-                textTransform: 'uppercase', 
-                letterSpacing: 1, 
-                marginBottom: 14,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-              }}>
-                <Icon d={IC.calendar} size={14} color="#B46A02" />
-                Appointment Details
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {/* Date */}
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 12,
-                  flexWrap: 'wrap',
-                }}>
-                  <div style={{ 
-                    width: 32, 
-                    height: 32, 
-                    borderRadius: '50%', 
-                    backgroundColor: '#fff0d0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <Icon d={IC.calendar} size={16} color="#B46A02" />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#999', marginBottom: 2 }}>Date</div>
-                    <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: '#1e1200' }}>
-                      {dateStr}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Time */}
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 12,
-                  flexWrap: 'wrap',
-                }}>
-                  <div style={{ 
-                    width: 32, 
-                    height: 32, 
-                    borderRadius: '50%', 
-                    backgroundColor: '#fff0d0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <Icon d={IC.clock} size={16} color="#B46A02" />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#999', marginBottom: 2 }}>Time</div>
-                    <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: '#1e1200' }}>
-                      {timeStr}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Location */}
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 12,
-                  flexWrap: 'wrap',
-                }}>
-                  <div style={{ 
-                    width: 32, 
-                    height: 32, 
-                    borderRadius: '50%', 
-                    backgroundColor: '#fff0d0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <Icon d={IC.location} size={16} color="#B46A02" />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#999', marginBottom: 2 }}>Location</div>
-                    <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: '#1e1200' }}>
-                      {userData?.dsDiv ? `Divisional Secretariat, ${userData.dsDiv}` : 'Divisional Secretariat Office'}
-                    </div>
-                  </div>
-                </div>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-5 md:p-6">
+          <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-6 md:gap-8`}>
+            <div className="flex-1">
+              <div className="text-[11px] md:text-[11px] font-extrabold text-warning uppercase tracking-wider mb-3.5 flex items-center gap-2"><Icon d={IC.calendar} size={14} color="#B46A02" /> Appointment Details</div>
+              <div className="flex flex-col gap-3.5">
+                <div className="flex items-center gap-3 flex-wrap"><div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0"><Icon d={IC.calendar} size={16} color="#B46A02" /></div><div><div className="text-[11px] font-semibold text-gray-500 mb-0.5">Date</div><div className="text-sm md:text-base font-bold text-user-text">{dateStr}</div></div></div>
+                <div className="flex items-center gap-3 flex-wrap"><div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0"><Icon d={IC.clock} size={16} color="#B46A02" /></div><div><div className="text-[11px] font-semibold text-gray-500 mb-0.5">Time</div><div className="text-sm md:text-base font-bold text-user-text">{timeStr}</div></div></div>
+                <div className="flex items-center gap-3 flex-wrap"><div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0"><Icon d={IC.location} size={16} color="#B46A02" /></div><div><div className="text-[11px] font-semibold text-gray-500 mb-0.5">Location</div><div className="text-sm md:text-base font-bold text-user-text">{userData?.dsDiv ? `Divisional Secretariat, ${userData.dsDiv}` : 'Divisional Secretariat Office'}</div></div></div>
               </div>
             </div>
-
-            {/* Vertical Divider - only on desktop */}
-            {!isMobile && (
-              <div style={{ width: 1, backgroundColor: '#f0e4b0', margin: '0 8px' }} />
-            )}
-
-            {/* Right - Applicant Information */}
-            <div style={{ flex: 1 }}>
-              <div style={{ 
-                fontSize: isMobile ? 12 : 11, 
-                fontWeight: 800, 
-                color: '#B46A02', 
-                textTransform: 'uppercase', 
-                letterSpacing: 1, 
-                marginBottom: 14,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-              }}>
-                <Icon d={IC.profile} size={14} color="#B46A02" />
-                Applicant Information
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {/* Name */}
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#999', marginBottom: 4 }}>Full Name</div>
-                  <div style={{ 
-                    fontSize: isMobile ? 15 : 16, 
-                    fontWeight: 800, 
-                    color: '#1e1200',
-                    backgroundColor: '#fff',
-                    padding: isMobile ? '8px 12px' : 0,
-                    borderRadius: isMobile ? 8 : 0,
-                  }}>
-                    {userData?.fullName || currentUser?.displayName || 'User'}
-                  </div>
-                </div>
-
-                {/* NIC */}
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#999', marginBottom: 4 }}>NIC Number</div>
-                  <div style={{ 
-                    fontSize: isMobile ? 14 : 15, 
-                    fontWeight: 600, 
-                    color: '#555',
-                    fontFamily: 'monospace',
-                    backgroundColor: '#fff',
-                    padding: isMobile ? '8px 12px' : 0,
-                    borderRadius: isMobile ? 8 : 0,
-                  }}>
-                    {nicMasked}
-                  </div>
-                </div>
-
-                {/* Mobile */}
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#999', marginBottom: 4 }}>Mobile Number</div>
-                  <div style={{ 
-                    fontSize: isMobile ? 14 : 15, 
-                    fontWeight: 600, 
-                    color: '#555',
-                    backgroundColor: '#fff',
-                    padding: isMobile ? '8px 12px' : 0,
-                    borderRadius: isMobile ? 8 : 0,
-                  }}>
-                    {userData?.mobile || currentUser?.phoneNumber || 'Not provided'}
-                  </div>
-                </div>
+            {!isMobile && <div className="w-px bg-yellow-200 mx-2" />}
+            <div className="flex-1">
+              <div className="text-[11px] md:text-[11px] font-extrabold text-warning uppercase tracking-wider mb-3.5 flex items-center gap-2"><Icon d={IC.profile} size={14} color="#B46A02" /> Applicant Information</div>
+              <div className="flex flex-col gap-3.5">
+                <div><div className="text-[11px] font-semibold text-gray-500 mb-1">Full Name</div><div className="text-base md:text-base font-extrabold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</div></div>
+                <div><div className="text-[11px] font-semibold text-gray-500 mb-1">NIC Number</div><div className="text-sm md:text-base font-semibold text-gray-600 font-mono">{nicMasked}</div></div>
+                <div><div className="text-[11px] font-semibold text-gray-500 mb-1">Mobile Number</div><div className="text-sm md:text-base font-semibold text-gray-600">{userData?.mobile || currentUser?.phoneNumber || 'Not provided'}</div></div>
               </div>
             </div>
           </div>
 
-          {/* Horizontal Divider for mobile */}
-          {isMobile && (
-            <div style={{ 
-              height: 1, 
-              backgroundColor: '#f0e4b0', 
-              margin: '20px 0' 
-            }} />
-          )}
+          {isMobile && <div className="h-px bg-yellow-200 my-5" />}
 
-          {/* Additional Notes Section */}
           {booking.notes && (
             <>
-              <div style={{ marginTop: isMobile ? 0 : 20 }}>
-                <div style={{ 
-                  fontSize: 11, 
-                  fontWeight: 800, 
-                  color: '#B46A02', 
-                  textTransform: 'uppercase', 
-                  letterSpacing: 1, 
-                  marginBottom: 10,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}>
-                  <Icon d={IC.info} size={14} color="#B46A02" />
-                  Additional Notes
-                </div>
-                <div style={{
-                  backgroundColor: '#fff8e8',
-                  padding: isMobile ? '14px' : '12px 16px',
-                  borderRadius: 10,
-                  borderLeft: '3px solid #F5C400',
-                  fontSize: isMobile ? 13 : 14,
-                  fontWeight: 600,
-                  color: '#555',
-                  fontStyle: 'italic',
-                  lineHeight: 1.6,
-                }}>
-                  "{booking.notes}"
-                </div>
-              </div>
-              {isMobile && <div style={{ height: 1, backgroundColor: '#f0e4b0', margin: '20px 0' }} />}
+              <div className="mt-5"><div className="text-[11px] font-extrabold text-warning uppercase tracking-wider mb-2.5 flex items-center gap-2"><Icon d={IC.info} size={14} color="#B46A02" /> Additional Notes</div><div className="bg-yellow-100 p-3 md:p-4 rounded-lg border-l-3 border-user-primary text-sm font-semibold text-gray-600 italic">"{booking.notes}"</div></div>
+              {isMobile && <div className="h-px bg-yellow-200 my-5" />}
             </>
           )}
 
-          {/* Agreement Checkbox */}
-          <div style={{ 
-            marginTop: isMobile ? 8 : 20,
-            display: 'flex', 
-            alignItems: 'flex-start', 
-            gap: 12,
-            backgroundColor: isMobile ? '#fff8e8' : 'transparent',
-            padding: isMobile ? '16px' : 0,
-            borderRadius: isMobile ? 12 : 0,
-            border: isMobile ? '1.5px solid #f0e4b0' : 'none',
-          }}>
-            <input 
-              type="checkbox" 
-              defaultChecked 
-              id="agreementCheckbox"
-              style={{ 
-                width: isMobile ? 20 : 18, 
-                height: isMobile ? 20 : 18, 
-                accentColor: '#F5C400', 
-                marginTop: 2, 
-                cursor: 'pointer', 
-                flexShrink: 0 
-              }} 
-            />
-            <label 
-              htmlFor="agreementCheckbox"
-              style={{ 
-                fontSize: isMobile ? 'clamp(12px, 3.5vw, 13px)' : 12, 
-                fontWeight: 600, 
-                color: '#666', 
-                lineHeight: 1.5,
-                cursor: 'pointer',
-              }}
-            >
-              I confirm that the information provided is accurate and I agree to the appointment terms.
-            </label>
+          <div className={`mt-5 flex items-start gap-3 ${isMobile ? 'bg-yellow-100 p-4 rounded-xl border border-yellow-200' : ''}`}>
+            <input type="checkbox" defaultChecked id="agreementCheckbox" className="w-5 h-5 accent-user-primary mt-0.5 cursor-pointer flex-shrink-0" />
+            <label htmlFor="agreementCheckbox" className="text-xs md:text-xs font-semibold text-gray-500 leading-relaxed cursor-pointer">I confirm that the information provided is accurate and I agree to the appointment terms.</label>
           </div>
         </div>
       </div>
 
-      {/* Bottom Buttons */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between',
-        gap: 12,
-        flexDirection: isMobile ? 'column' : 'row',
-      }}>
-        <button onClick={onBack} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          padding: isMobile ? '14px 20px' : '14px 28px', backgroundColor: '#fff',
-          border: '2px solid #c0a888', borderRadius: 999, fontSize: isMobile ? 15 : 15,
-          fontWeight: 800, color: '#8a6040', cursor: 'pointer', width: isMobile ? '100%' : 'auto',
-        }}>
-          ← Back
-        </button>
-        <button onClick={onSubmit} disabled={submitting} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          padding: isMobile ? '16px 20px' : '14px 28px', backgroundColor: submitting ? '#c0a888' : '#F5C400',
-          border: 'none', borderRadius: 999, fontSize: isMobile ? 16 : 15, fontWeight: 800,
-          color: '#3d2a00', cursor: submitting ? 'not-allowed' : 'pointer', width: isMobile ? '100%' : 'auto',
-        }}>
-          {submitting ? 'Submitting…' : 'Submit appointment request'}
-        </button>
+      <div className={`flex justify-between gap-3 ${isMobile ? 'flex-col' : 'flex-row'}`}>
+        <button onClick={onBack} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round border-2 border-user-border bg-white text-sm font-extrabold text-user-secondary cursor-pointer ${isMobile ? 'w-full' : ''}`}>← Back</button>
+        <button onClick={onSubmit} disabled={submitting} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round text-sm font-extrabold transition-all ${submitting ? 'bg-user-secondary/50 text-white cursor-not-allowed' : 'bg-user-primary text-user-text hover:bg-user-primary-dark cursor-pointer'} ${isMobile ? 'w-full' : ''}`}>{submitting ? 'Submitting…' : 'Submit appointment request'}</button>
       </div>
     </div>
   );
 };
 
-//  SCREEN — SUCCESS
+// SCREEN — SUCCESS
 const BookSuccess = ({ onBack }) => (
-  <div style={{ ...S.content, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-    <div style={{ ...S.card, padding: '48px 40px', textAlign: 'center', maxWidth: 480 }}>
-      <div style={{ width: 80, height: 80, borderRadius: '50%', backgroundColor: '#e6f9ee', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-        <Icon d={IC.check} size={36} color="#1a7a3a" sw={2.5} />
-      </div>
-      <h2 style={{ fontSize: 22, fontWeight: 900, color: '#1e1200', marginBottom: 10 }}>Appointment Requested!</h2>
-      <p style={{ fontSize: 14, color: '#666', fontWeight: 600, lineHeight: 1.7, marginBottom: 28 }}>
-        Your appointment request has been submitted.<br />
-        You will receive a confirmation once the GN Officer approves it.
-      </p>
+  <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] p-7">
+    <div className="bg-white border border-user-border rounded-2xl p-12 text-center max-w-md">
+      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-5"><Icon d={IC.success} size={36} color="#1a7a3a" sw={2.5} /></div>
+      <h2 className="text-2xl font-black text-user-text mb-2.5">Appointment Requested!</h2>
+      <p className="text-sm text-gray-500 font-semibold leading-relaxed mb-7">Your appointment request has been submitted.<br />You will receive a confirmation once the GN Officer approves it.</p>
       <YellowBtn onClick={onBack}>← Back to My Appointments</YellowBtn>
     </div>
   </div>
 );
 
-//  MAIN COMPONENT
+// MAIN COMPONENT
 const Appointments = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  
-  // SEARCH STATE
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-
-  // LANGUAGE STATE
   const [currentLanguage, setCurrentLanguage] = useState('en');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [screen, setScreen] = useState('list');
+  const [submitting, setSubmitting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [filteredPages, setFilteredPages] = useState([]);
+  const [booking, setBooking] = useState({ service: null, notes: '', day: null, month: null, year: null, slot: null });
 
-  // language change handler
   const handleLanguageChange = (langCode) => {
     setCurrentLanguage(langCode);
     console.log('Language changed to:', langCode);
   };
 
+  useEffect(() => { const handle = () => setIsMobile(window.innerWidth <= 768); window.addEventListener('resize', handle); return () => window.removeEventListener('resize', handle); }, []);
+  
+  useEffect(() => { const handleClickOutside = () => { setShowSearchResults(false); setShowProfileMenu(false); }; document.addEventListener('click', handleClickOutside); return () => document.removeEventListener('click', handleClickOutside); }, []);
+
+  // Filter pages for search
   useEffect(() => {
-    const handle = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handle);
-    return () => window.removeEventListener('resize', handle);
-  }, []);
-
-  // Click outside to close search results
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowSearchResults(false);
-    };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
-
-  // Auth + user data
-  const [currentUser, setCurrentUser] = useState(null);
-  const [userData,    setUserData]    = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-
-  // Screen: 'list' | 'step1' | 'step2' | 'step3' | 'success'
-  const [screen, setScreen] = useState('list');
-  const [submitting, setSubmitting] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  // Booking state passed through all steps
-  const [booking, setBooking] = useState({
-    service: null, notes: '',
-    day: null, month: null, year: null, slot: null,
-  });
+    if (!searchQuery.trim()) {
+      setFilteredPages([]);
+      return;
+    }
+    const query = searchQuery.toLowerCase();
+    const filtered = PAGE_ACTIONS.filter(page =>
+      page.name.toLowerCase().includes(query)
+    );
+    setFilteredPages(filtered);
+  }, [searchQuery]);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
-        try {
-          const snap = await getDoc(doc(db, 'users', user.uid));
-          if (snap.exists()) setUserData(snap.data());
-        } catch (e) { console.warn(e.message); }
-      } else {
-        navigate('/login');
-      }
+        try { const snap = await getDoc(doc(db, 'users', user.uid)); if (snap.exists()) setUserData(snap.data()); } catch (e) { console.warn(e.message); }
+      } else { navigate('/login'); }
       setAuthLoading(false);
     });
     return () => unsub();
@@ -2045,36 +1004,19 @@ const Appointments = () => {
 
   const handleLogout = async () => { await signOut(auth); navigate('/login'); };
 
-  // Submit to Firestore
   const handleSubmit = async () => {
     if (!currentUser) return;
     setSubmitting(true);
     try {
       await addDoc(collection(db, 'appointments'), {
-        uid:         currentUser.uid,
-        fullName:    userData?.fullName || currentUser.displayName || '',
-        nic:         userData?.nic      || '',
-        mobile:      userData?.mobile   || '',
-        email:       currentUser.email  || '',
-        service:     booking.service?.name || '',
-        serviceId:   booking.service?.id   || '',
-        date:        `${booking.year}-${String(booking.month + 1).padStart(2,'0')}-${String(booking.day).padStart(2,'0')}`,
-        slot:        booking.slot,
-        notes:       booking.notes,
-        dsDiv:       userData?.dsDiv    || '',
-        gnDiv:       userData?.gnDiv    || '',
-        district:    userData?.district || '',
-        status:      'Pending',
-        createdAt:   serverTimestamp(),
+        uid: currentUser.uid, fullName: userData?.fullName || currentUser.displayName || '', nic: userData?.nic || '', mobile: userData?.mobile || '',
+        email: currentUser.email || '', service: booking.service?.name || '', serviceId: booking.service?.id || '',
+        date: `${booking.year}-${String(booking.month + 1).padStart(2, '0')}-${String(booking.day).padStart(2, '0')}`, slot: booking.slot, notes: booking.notes,
+        dsDiv: userData?.dsDiv || '', gnDiv: userData?.gnDiv || '', district: userData?.district || '', status: 'Pending', createdAt: serverTimestamp(),
       });
       setScreen('success');
       setRefreshKey(k => k + 1);
-    } catch (e) {
-      console.error('Submit error:', e.message);
-      alert('Failed to submit. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (e) { console.error('Submit error:', e.message); alert('Failed to submit. Please try again.'); } finally { setSubmitting(false); }
   };
 
   const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
@@ -2082,70 +1024,161 @@ const Appointments = () => {
   if (authLoading) return <PageLoadingSkeleton />;
 
   return (
-    <div style={S.page}>
-      <div style={{ flex: 1, display: 'flex' }}>
-
-        {/* Desktop Sidebar */}
+    <div className="user-module min-h-screen flex flex-col font-sans bg-user-background">
+      <div className="flex-1 flex">
         {!isMobile && <DesktopSidebar activePage="appointments" navigate={navigate} onLogout={handleLogout} />}
+        <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} activePage="appointments" navigate={navigate} onLogout={handleLogout} />
 
-        {/* Mobile Sidebar Overlay */}
-        <MobileSidebar
-          isOpen={mobileMenuOpen}
-          onClose={() => setMobileMenuOpen(false)}
-          activePage="appointments"
-          navigate={navigate}
-          onLogout={handleLogout}
-        />
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Desktop Topbar */}
+          {!isMobile && (
+            <DesktopTopbar 
+              chipName={chipName}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              showResults={showSearchResults}
+              setShowResults={setShowSearchResults}
+              navigate={navigate}
+              currentLanguage={currentLanguage}
+              onLanguageChange={handleLanguageChange}
+              showProfileMenu={showProfileMenu}
+              setShowProfileMenu={setShowProfileMenu}
+              handleLogout={handleLogout}
+              userData={userData}
+              currentUser={currentUser}
+            />
+          )}
 
-        <div style={S.main}>
-          {isMobile
-            ? <MobileTopbar 
-                chipName={chipName} 
-                onMenuClick={() => setMobileMenuOpen(true)}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                showResults={showSearchResults}
-                setShowResults={setShowSearchResults}
-                navigate={navigate}
-                currentLanguage={currentLanguage}
-                onLanguageChange={handleLanguageChange}
-              />
-            : <DesktopTopbar 
-                chipName={chipName}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                showResults={showSearchResults}
-                setShowResults={setShowSearchResults}
-                navigate={navigate}
-                currentLanguage={currentLanguage}
-                onLanguageChange={handleLanguageChange}
-              />
-          }
+          {/* Mobile Topbar */}
+          <MobileTopbar 
+            chipName={chipName}
+            onMenuClick={() => setMobileMenuOpen(true)}
+            navigate={navigate}
+            currentLanguage={currentLanguage}
+            onLanguageChange={handleLanguageChange}
+          />
 
-          {screen === 'list'    && <AppointmentsList currentUser={currentUser} refreshKey={refreshKey} onBook={() => { setBooking({ service: null, notes: '', day: null, month: null, year: null, slot: null }); setScreen('step1'); }} />}
-          {screen === 'step1'   && <BookStep1  booking={booking} setBooking={setBooking} onNext={() => setScreen('step2')} onCancel={() => setScreen('list')} />}
-          {screen === 'step2'   && <BookStep2  booking={booking} setBooking={setBooking} onNext={() => setScreen('step3')} onBack={() => setScreen('step1')} />}
-          {screen === 'step3'   && <BookStep3  booking={booking} userData={userData} currentUser={currentUser} onBack={() => setScreen('step2')} onSubmit={handleSubmit} submitting={submitting} />}
-          {screen === 'success' && <BookSuccess onBack={() => setScreen('list')} />}
+          {/* Mobile Content */}
+          <div className="mobile-content md:hidden flex-1 bg-user-secondary-light overflow-y-auto">
+            {/* Search Bar */}
+            <div className="pt-3 px-3.5 relative">
+              <div className="flex items-center gap-2.5 bg-white border border-user-border rounded-3xl px-4 py-2.5">
+                <Icon d={IC.search} size={16} color="#aaa" />
+                <input
+                  type="text"
+                  placeholder="Search for a page..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSearchResults(true);
+                  }}
+                  onFocus={() => setShowSearchResults(true)}
+                  className="flex-1 border-none outline-none text-sm font-medium text-user-text bg-transparent"
+                />
+                {searchQuery && (
+                  <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="bg-none border-none cursor-pointer p-1">
+                    <Icon d={IC.close} size={14} color="#aaa" />
+                  </button>
+                )}
+              </div>
+              {showSearchResults && filteredPages.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-user-border z-[1000] overflow-hidden">
+                  {filteredPages.map((page, idx) => (
+                    <button
+                      key={page.path}
+                      onClick={() => {
+                        navigate(page.path);
+                        setSearchQuery('');
+                        setShowSearchResults(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background ${idx !== filteredPages.length - 1 ? 'border-b border-user-border-light' : ''}`}
+                    >
+                      <Icon d={page.icon} size={18} color="#B46A02" />
+                      <div>
+                        <div className="text-sm font-bold text-user-text">{page.name}</div>
+                        <div className="text-[11px] text-user-text-lighter">Click to go</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Appointments Content */}
+            <div className="p-3.5 pb-[90px]">
+              {screen === 'list' && (
+                <AppointmentsList 
+                  currentUser={currentUser} 
+                  refreshKey={refreshKey} 
+                  onBook={() => { 
+                    setBooking({ service: null, notes: '', day: null, month: null, year: null, slot: null }); 
+                    setScreen('step1'); 
+                  }} 
+                />
+              )}
+              {screen === 'step1' && (
+                <BookStep1 
+                  booking={booking} 
+                  setBooking={setBooking} 
+                  onNext={() => setScreen('step2')} 
+                  onCancel={() => setScreen('list')} 
+                />
+              )}
+              {screen === 'step2' && (
+                <BookStep2 
+                  booking={booking} 
+                  setBooking={setBooking} 
+                  onNext={() => setScreen('step3')} 
+                  onBack={() => setScreen('step1')} 
+                />
+              )}
+              {screen === 'step3' && (
+                <BookStep3 
+                  booking={booking} 
+                  userData={userData} 
+                  currentUser={currentUser} 
+                  onBack={() => setScreen('step2')} 
+                  onSubmit={handleSubmit} 
+                  submitting={submitting} 
+                />
+              )}
+              {screen === 'success' && <BookSuccess onBack={() => setScreen('list')} />}
+            </div>
+          </div>
+
+          {/* Desktop Content */}
+          <div className="hidden md:block flex-1">
+            {screen === 'list' && <AppointmentsList currentUser={currentUser} refreshKey={refreshKey} onBook={() => { setBooking({ service: null, notes: '', day: null, month: null, year: null, slot: null }); setScreen('step1'); }} />}
+            {screen === 'step1' && <BookStep1 booking={booking} setBooking={setBooking} onNext={() => setScreen('step2')} onCancel={() => setScreen('list')} />}
+            {screen === 'step2' && <BookStep2 booking={booking} setBooking={setBooking} onNext={() => setScreen('step3')} onBack={() => setScreen('step1')} />}
+            {screen === 'step3' && <BookStep3 booking={booking} userData={userData} currentUser={currentUser} onBack={() => setScreen('step2')} onSubmit={handleSubmit} submitting={submitting} />}
+            {screen === 'success' && <BookSuccess onBack={() => setScreen('list')} />}
+          </div>
         </div>
       </div>
-      <footer style={S.footer}>©2026 Smart Grama Sewa</footer>
+      <footer className="bg-[#6A2301] text-white text-center py-3 px-4 text-sm font-semibold">© 2026 Smart Grama Sewa. All rights reserved.</footer>
 
       <style>{`
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translate(-50%, -45%); opacity: 0; } to { transform: translate(-50%, -50%); opacity: 1; } }
         @keyframes spin { to { transform: rotate(360deg); } }
-        
-        /* Desktop */
+        .animate-fade-in { animation: fadeIn 0.2s ease; }
+        .animate-slide-up { animation: slideUp 0.25s ease; }
+        .animate-spin { animation: spin 0.7s linear infinite; }
+        .rounded-round { border-radius: 999px; }
+
         @media (min-width: 769px) {
           .desktop-sidebar { display: flex !important; }
           .desktop-topbar { display: flex !important; }
-          .mobile-header { display: none !important; }
+          .mobile-topbar { display: none !important; }
+          .mobile-content { display: none !important; }
         }
 
-        /* Mobile */
         @media (max-width: 768px) {
           .desktop-sidebar { display: none !important; }
           .desktop-topbar { display: none !important; }
-          .mobile-header { display: block !important; }
+          .mobile-topbar { display: flex !important; }
+          .mobile-content { display: block !important; }
         }
       `}</style>
     </div>

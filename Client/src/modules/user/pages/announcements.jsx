@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, query, orderBy, getDocs, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
@@ -6,7 +6,7 @@ import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton, AnnouncementsListSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
 
-// Icons
+// Icons (same as before)
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -16,26 +16,34 @@ const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
 
 const IC = {
   dashboard: 'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10',
-  announce:  'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
-  appts:     'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2 M9 5a2 2 0 002 2h2a2 2 0 002-2 M9 5a2 2 0 012-2h2a2 2 0 012 2',
-  forms:     'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
-  ai:        'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
-  profile:   'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8z',
-  settings:  'M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z',
-  logout:    'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4 M16 17l5-5-5-5 M21 12H9',
-  search:    'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0',
-  bell:      'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
-  menu:      'M3 6h18M3 12h18M3 18h18',
-  close:     'M18 6L6 18M6 6l12 12',
-  calendar:  'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
-  check:     'M20 6L9 17l-5-5',
+  announce: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
+  appts: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2 M9 5a2 2 0 002 2h2a2 2 0 002-2 M9 5a2 2 0 012-2h2a2 2 0 012 2',
+  forms: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
+  ai: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
+  profile: 'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8z',
+  settings: 'M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z',
+  logout: 'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4 M16 17l5-5-5-5 M21 12H9',
+  search: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0',
+  bell: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
+  menu: 'M3 6h18M3 12h18M3 18h18',
+  close: 'M18 6L6 18M6 6l12 12',
+  calendar: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
+  check: 'M20 6L9 17l-5-5',
+  help: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M12 16h.01 M12 8v4',
+  alertTriangle: 'M12 9v4 M12 17h.01 M12 2a10 10 0 100 20 10 10 0 000-20z',
+  star: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+  info: 'M12 2a10 10 0 100 20 10 10 0 000-20z M12 8v4 M12 16h.01',
+  inbox: 'M22 12h-6l-2 3h-4l-2-3H2 M2 5v14a2 2 0 002 2h16a2 2 0 002-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2z',
+  unread: 'M21 12a9 9 0 11-9-9 M21 3v6h-6 M3 3l18 18',
+  chevLeft: 'M15 18l-6-6 6-6',
+  chevRight: 'M9 18l6-6-6-6',
 };
 
 // Tag colour map
 const TAG = {
-  Urgent:      { border: '#e05050', chipBg: '#fde8e8', chipText: '#c0392b' },
-  Important:   { border: '#f59e0b', chipBg: '#fff3dc', chipText: '#b45309' },
-  Information: { border: '#3b82f6', chipBg: '#e8f0fb', chipText: '#1a4a8a' },
+  Urgent: { border: '#e05050', chipBg: '#fde8e8', chipText: '#c0392b', icon: IC.alertTriangle },
+  Important: { border: '#f59e0b', chipBg: '#fff3dc', chipText: '#b45309', icon: IC.star },
+  Information: { border: '#3b82f6', chipBg: '#e8f0fb', chipText: '#1a4a8a', icon: IC.info },
 };
 const tagCfg = (tag) => TAG[tag] || TAG.Information;
 
@@ -52,14 +60,14 @@ const PAGE_ACTIONS = [
 
 // NavItem for sidebar
 const NavItem = ({ iconPath, label, active, onClick }) => (
-  <button onClick={onClick} style={{
-    width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
-    padding: '11px 16px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-    backgroundColor: active ? 'rgba(255,255,255,0.9)' : 'transparent',
-    color: '#3d2a00', fontWeight: active ? 800 : 600, fontSize: '14px',
-    fontFamily: 'inherit', textAlign: 'left', marginBottom: '2px', transition: 'background 0.15s',
-    boxShadow: active ? '0 2px 8px rgba(0,0,0,0.10)' : 'none',
-  }}>
+  <button 
+    onClick={onClick} 
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
+      active 
+        ? 'bg-white/90 text-user-text font-extrabold shadow-md' 
+        : 'bg-transparent text-user-text font-semibold hover:bg-white/40'
+    }`}
+  >
     <Icon d={iconPath} size={18} color={active ? '#B46A02' : '#5a3a00'} />
     {label}
   </button>
@@ -81,22 +89,18 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
   ];
 
   return (
-    <div className="desktop-sidebar" style={{
-      width: '220px', flexShrink: 0, backgroundColor: '#F5C400',
-      display: 'flex', flexDirection: 'column',
-      position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
-    }}>
-      <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-        <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '80px', width: 'auto' }} />
+    <div className="desktop-sidebar w-[220px] flex-shrink-0 bg-user-primary flex flex-col sticky top-0 h-screen overflow-y-auto">
+      <div className="p-5 pb-4 border-b border-black/10">
+        <img src="/logo2.png" alt="Smart Grama Sewa" className="h-20 w-auto" />
       </div>
-      <div style={{ flex: 1, padding: '12px 10px' }}>
+      <div className="flex-1 p-3">
         {navItems.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
             onClick={() => navigate(`/${item.key}`)} />
         ))}
       </div>
-      <div style={{ padding: '10px 10px 20px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+      <div className="p-3 pt-2 border-t border-black/10">
         {bottomNav.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
@@ -108,7 +112,7 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
 };
 
 // Search Results Dropdown Component
-const SearchResultsDropdown = ({ searchQuery, onNavigate, onClose }) => {
+const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate }) => {
   const [filteredPages, setFilteredPages] = useState([]);
 
   useEffect(() => {
@@ -123,48 +127,23 @@ const SearchResultsDropdown = ({ searchQuery, onNavigate, onClose }) => {
     setFilteredPages(filtered);
   }, [searchQuery]);
 
-  if (filteredPages.length === 0) return null;
+  if (!showResults || filteredPages.length === 0) return null;
 
   return (
-    <div style={{
-      position: 'absolute',
-      top: '100%',
-      left: 0,
-      right: 0,
-      marginTop: '8px',
-      backgroundColor: '#fff',
-      borderRadius: '12px',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-      border: '1px solid #e8d5ac',
-      zIndex: 1000,
-      overflow: 'hidden',
-    }}>
+    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-user-border z-[1000] overflow-hidden">
       {filteredPages.map((page, idx) => (
         <button
           key={page.path}
           onClick={() => {
-            onNavigate(page.path);
-            onClose();
+            navigate(page.path);
+            setShowResults(false);
           }}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '12px 16px',
-            border: 'none',
-            borderBottom: idx === filteredPages.length - 1 ? 'none' : '1px solid #f0e8d0',
-            cursor: 'pointer',
-            textAlign: 'left',
-            transition: 'background 0.15s',
-          }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f5f0e8'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+          className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background ${idx !== filteredPages.length - 1 ? 'border-b border-user-border-light' : ''}`}
         >
           <Icon d={page.icon} size={18} color="#B46A02" />
           <div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e1200' }}>{page.name}</div>
-            <div style={{ fontSize: '11px', color: '#888' }}>Click to go to {page.name}</div>
+            <div className="text-sm font-bold text-user-text">{page.name}</div>
+            <div className="text-xs text-user-text-lighter">Click to go to {page.name}</div>
           </div>
         </button>
       ))}
@@ -172,19 +151,11 @@ const SearchResultsDropdown = ({ searchQuery, onNavigate, onClose }) => {
   );
 };
 
-// Desktop Topbar with Search and Language Switcher
-const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange }) => (
-  <div className="desktop-topbar" style={{
-    height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #ede8d8',
-    display: 'flex', alignItems: 'center', padding: '0 28px', gap: '14px',
-    position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 1px 0 #ede8d8'
-  }}>
-    <div style={{ flex: 1, maxWidth: 400, position: 'relative' }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
-        borderRadius: 999, padding: '9px 18px'
-      }}>
+// Desktop Topbar
+const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser }) => (
+  <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
+    <div className="flex-1 max-w-[400px] relative">
+      <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-round px-4 py-2 transition-colors hover:border-user-primary">
         <Icon d={IC.search} size={16} color="#aaa" />
         <input
           type="text"
@@ -195,125 +166,69 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
             setShowResults(true);
           }}
           onFocus={() => setShowResults(true)}
-          style={{
-            flex: 1,
-            border: 'none',
-            outline: 'none',
-            fontSize: '14px',
-            fontWeight: 500,
-            color: '#1e1200',
-            background: 'transparent',
-          }}
+          className="flex-1 border-none outline-none text-sm font-medium text-user-text bg-transparent"
         />
         {searchQuery && (
-          <button onClick={() => { setSearchQuery(''); setShowResults(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+          <button onClick={() => { setSearchQuery(''); setShowResults(false); }} className="bg-none border-none cursor-pointer p-1">
             <Icon d={IC.close} size={14} color="#aaa" />
           </button>
         )}
       </div>
-      {showResults && <SearchResultsDropdown searchQuery={searchQuery} onNavigate={navigate} onClose={() => setShowResults(false)} />}
+      <SearchResultsDropdown 
+        searchQuery={searchQuery}
+        showResults={showResults}
+        setShowResults={setShowResults}
+        navigate={navigate}
+      />
     </div>
-    <div style={{ flex: 1 }} />
+    <div className="flex-1" />
+    
     <LanguageSwitcher 
       currentLanguage={currentLanguage} 
       onLanguageChange={onLanguageChange}
     />
-    <div style={{
-      width: 38, height: 38, borderRadius: '50%',
-      backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative'
-    }}>
+    
+    <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
       <Icon d={IC.bell} size={18} color="#5a3a00" />
-      <div style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: '50%', backgroundColor: '#e05050', border: '1.5px solid #fff' }} />
+      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
     </div>
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 8, padding: '5px 14px 5px 6px',
-      backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
-      borderRadius: 999, cursor: 'pointer'
-    }}>
-      <span style={{ fontSize: 13, fontWeight: 700, color: '#1e1200' }}>{chipName}</span>
-      <div style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: '#F5C400', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon d={IC.profile} size={16} color="#3d2a00" />
-      </div>
-    </div>
-  </div>
-);
-
-// Mobile Topbar with Search and Language Switcher
-const MobileTopbar = ({ chipName, onMenuClick, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange }) => (
-  <div className="mobile-header" style={{
-    display: 'none',
-    backgroundColor: '#F5C400',
-    position: 'sticky',
-    top: 0,
-    zIndex: 100,
-  }}>
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '12px 16px', gap: '12px',
-    }}>
-      <button onClick={onMenuClick} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, flexShrink: 0 }}>
-        <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
+    
+    {/* Profile Dropdown */}
+    <div className="relative">
+      <button 
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowProfileMenu(!showProfileMenu);
+        }}
+        className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-round cursor-pointer transition-all hover:border-user-primary"
+      >
+        <span className="text-sm font-bold text-user-text max-w-[100px] truncate">{chipName}</span>
+        <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0">
+          <Icon d={IC.profile} size={16} color="#3d2a00" />
+        </div>
       </button>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'left' }}>
-        <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '48px', width: 'auto' }} />
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-        <LanguageSwitcher 
-          currentLanguage={currentLanguage} 
-          onLanguageChange={onLanguageChange}
-        />
-        <div style={{ position: 'relative' }}>
-          <Icon d={IC.bell} size={20} color="#3d2a00" />
-          <div style={{ position: 'absolute', top: -2, right: -4, width: 8, height: 8, borderRadius: '50%', backgroundColor: '#e05050', border: '1.5px solid #F5C400' }} />
-        </div>
-        <div onClick={() => window.location.href = '/profile'} style={{
-          width: 32, height: 32, borderRadius: '50%',
-          backgroundColor: 'rgba(255,255,255,0.85)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-        }}>
-          <Icon d={IC.profile} size={18} color="#3d2a00" />
-        </div>
-      </div>
-    </div>
-    {/* Mobile Search Bar */}
-    <div style={{ padding: '8px 16px 12px 16px', backgroundColor: '#f5f0e8', position: 'relative' }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        backgroundColor: '#fff', border: '1.5px solid #e8d8b0',
-        borderRadius: 999, padding: '10px 16px',
-      }}>
-        <Icon d={IC.search} size={16} color="#aaa" />
-        <input
-          type="text"
-          placeholder="Search for a page..."
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setShowResults(true);
-          }}
-          onFocus={() => setShowResults(true)}
-          style={{
-            flex: 1,
-            border: 'none',
-            outline: 'none',
-            fontSize: '14px',
-            fontWeight: 500,
-            color: '#1e1200',
-            background: 'transparent',
-          }}
-        />
-        {searchQuery && (
-          <button onClick={() => { setSearchQuery(''); setShowResults(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
-            <Icon d={IC.close} size={14} color="#aaa" />
+      
+      {showProfileMenu && (
+        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden animate-fade-in">
+          <div className="p-3 border-b border-user-border-light">
+            <p className="text-sm font-bold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</p>
+            <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
+          </div>
+          <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+            <Icon d={IC.profile} size={16} color="#B46A02" /> My Profile
           </button>
-        )}
-      </div>
-      {showResults && <SearchResultsDropdown searchQuery={searchQuery} onNavigate={navigate} onClose={() => setShowResults(false)} />}
+          <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+            <Icon d={IC.settings} size={16} color="#B46A02" /> Settings
+          </button>
+          <button onClick={() => { navigate('/help'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+            <Icon d={IC.help} size={16} color="#B46A02" /> Help & Support
+          </button>
+          <div className="border-t border-user-border-light my-1"></div>
+          <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
+            <Icon d={IC.logout} size={16} color="#ef4444" /> Sign Out
+          </button>
+        </div>
+      )}
     </div>
   </div>
 );
@@ -337,17 +252,20 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000 }} />
-      <div style={{ position: 'fixed', top: 0, left: 0, width: 250, height: '100vh', backgroundColor: '#F5C400', zIndex: 1001, overflowY: 'auto', padding: '20px 0' }}>
-        <div style={{ padding: '0 20px 20px', textAlign: 'right' }}>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer' }}>✕</button>
+      <div onClick={onClose} className="fixed inset-0 bg-black/50 z-[1000]" />
+      <div className="fixed top-0 left-0 w-[250px] h-screen bg-user-primary z-[1001] overflow-y-auto py-5">
+        <div className="px-5 pb-5 text-right">
+          <button onClick={onClose} className="bg-none border-none text-2xl cursor-pointer text-white">✕</button>
+        </div>
+        <div className="px-5 pb-5 border-b border-white/20 mb-2 flex justify-center">
+          <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
         </div>
         {navItems.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
             onClick={() => { navigate(`/${item.key}`); onClose(); }} />
         ))}
-        <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', margin: '10px 0', paddingTop: '10px' }}>
+        <div className="border-t border-white/20 my-3 pt-3">
           {bottomNav.map((item) => (
             <NavItem key={item.key} iconPath={item.icon} label={item.label}
               active={activePage === item.key}
@@ -365,26 +283,20 @@ const DetailModal = ({ ann, onClose }) => {
   const cfg = tagCfg(ann.tag);
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 100 }} />
-      <div style={{
-        position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-        zIndex: 101, width: '100%', maxWidth: 560,
-        backgroundColor: '#fff', borderRadius: 20,
-        boxShadow: '0 20px 60px rgba(0,0,0,0.25)', overflow: 'hidden',
-        border: `2px solid ${cfg.border}`,
-      }}>
-        <div style={{ padding: '22px 24px 0' }}>
-          <span style={{ display: 'inline-block', padding: '3px 12px', borderRadius: 999, fontSize: 12, fontWeight: 800, backgroundColor: cfg.chipBg, color: cfg.chipText, border: `1.5px solid ${cfg.border}`, marginBottom: 10 }}>
-            {ann.tag}
+      <div onClick={onClose} className="fixed inset-0 bg-black/45 z-[100]" />
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-full max-w-[560px] bg-white rounded-xl shadow-2xl overflow-hidden animate-fade-in" style={{ border: `2px solid ${cfg.border}` }}>
+        <div className="pt-6 px-6 pb-0">
+          <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-extrabold mb-2.5" style={{ backgroundColor: cfg.chipBg, color: cfg.chipText, border: `1.5px solid ${cfg.border}` }}>
+            <Icon d={cfg.icon} size={12} color={cfg.chipText} /> {ann.tag}
           </span>
-          <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1e1200', marginBottom: 6, lineHeight: 1.4 }}>{ann.title}</h2>
-          <p style={{ fontSize: 12, color: '#aaa', fontWeight: 600, marginBottom: 14, display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <h2 className="text-lg font-black text-user-text mb-1.5 leading-tight">{ann.title}</h2>
+          <p className="text-xs text-user-text-lighter font-semibold mb-3.5 flex items-center gap-1">
             <Icon d={IC.calendar} size={12} color="#aaa" /> {ann.dateLabel}
           </p>
-          <p style={{ fontSize: 14, color: '#444', lineHeight: 1.8, marginBottom: 22 }}>{ann.body}</p>
+          <p className="text-sm text-user-text-light leading-relaxed mb-5">{ann.body}</p>
         </div>
-        <div style={{ padding: '14px 24px', borderTop: '1px solid #f0e8d0', display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{ padding: '9px 26px', borderRadius: 999, border: 'none', backgroundColor: '#F5C400', fontSize: 13, fontWeight: 800, color: '#3d2a00', cursor: 'pointer' }}>
+        <div className="py-3.5 px-6 border-t border-user-border-light flex justify-end">
+          <button onClick={onClose} className="px-6 py-2 bg-user-primary border-none rounded-round text-sm font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark">
             Close
           </button>
         </div>
@@ -401,35 +313,153 @@ const AnnouncementCard = ({ ann, onClick }) => {
   return (
     <div
       onClick={() => onClick(ann)}
-      style={{
-        backgroundColor: '#fff',
-        border: `1.5px solid ${cfg.border}`,
-        borderRadius: 12,
-        padding: '18px 22px',
-        marginBottom: 16,
-        cursor: 'pointer',
-        transition: 'box-shadow .15s, transform .15s',
-      }}
-      onMouseOver={e => { e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.10)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-      onMouseOut={e  => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
+      className="bg-white border rounded-xl p-5 mb-4 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5"
+      style={{ borderColor: cfg.border }}
     >
-      <div style={{ marginBottom: 8 }}>
-        <span style={{
-          display: 'inline-block', padding: '2px 12px', borderRadius: 999,
-          fontSize: 12, fontWeight: 800,
-          backgroundColor: cfg.chipBg, color: cfg.chipText,
-          border: `1.5px solid ${cfg.border}`,
-        }}>{ann.tag}</span>
+      <div className="mb-2">
+        <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-extrabold" style={{ backgroundColor: cfg.chipBg, color: cfg.chipText, border: `1.5px solid ${cfg.border}` }}>
+          <Icon d={cfg.icon} size={12} color={cfg.chipText} /> {ann.tag}
+        </span>
       </div>
-      <div style={{ fontSize: 17, fontWeight: 900, color: '#1a1200', marginBottom: 8 }}>
-        {ann.title}
+      <div className="text-base font-black text-user-text mb-2">{ann.title}</div>
+      <div className="text-sm text-user-text-light leading-relaxed mb-3">{preview}</div>
+      <span className="text-sm font-extrabold text-user-warning">Read more →</span>
+    </div>
+  );
+};
+
+// Enhanced Filter Tabs Component
+const FilterTabs = ({ tabs, activeTab, onTabChange, counts }) => {
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollContainerRef = useRef(null);
+
+  const getTabIcon = (tab) => {
+    switch(tab) {
+      case 'All': return <Icon d={IC.inbox} size={14} color="currentColor" />;
+      case 'Urgent': return <Icon d={IC.alertTriangle} size={14} color="currentColor" />;
+      case 'Important': return <Icon d={IC.star} size={14} color="currentColor" />;
+      case 'Information': return <Icon d={IC.info} size={14} color="currentColor" />;
+      case 'Unread': return <Icon d={IC.unread} size={14} color="currentColor" />;
+      default: return null;
+    }
+  };
+
+  const getTabColor = (tab) => {
+    switch(tab) {
+      case 'Urgent': return { bg: '#e05050', light: '#fde8e8' };
+      case 'Important': return { bg: '#f59e0b', light: '#fff3dc' };
+      case 'Information': return { bg: '#3b82f6', light: '#e8f0fb' };
+      case 'Unread': return { bg: '#8b5cf6', light: '#ede9fe' };
+      default: return { bg: '#F5C400', light: '#fff8e0' };
+    }
+  };
+
+  const scrollTabIntoView = (tabIndex) => {
+    if (scrollContainerRef.current && window.innerWidth <= 768) {
+      const tabs = scrollContainerRef.current.children;
+      if (tabs[tabIndex]) {
+        tabs[tabIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  };
+
+  const handleTabClick = (tab, index) => {
+    onTabChange(tab);
+    scrollTabIntoView(index);
+  };
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (scrollContainerRef.current && window.innerWidth <= 768) {
+        const hasOverflow = scrollContainerRef.current.scrollWidth > scrollContainerRef.current.clientWidth;
+        setIsScrolling(hasOverflow);
+      }
+    };
+    checkOverflow();
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [tabs]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        const currentIndex = tabs.indexOf(activeTab);
+        let newIndex;
+        if (e.key === 'ArrowLeft') {
+          newIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1;
+        } else {
+          newIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0;
+        }
+        onTabChange(tabs[newIndex]);
+        scrollTabIntoView(newIndex);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab, tabs]);
+
+  return (
+    <div className="mb-6">
+      {isScrolling && (
+        <div className="md:hidden flex items-center justify-center gap-1 mb-2 text-[10px] text-user-text-lighter animate-pulse">
+          <Icon d={IC.chevLeft} size={10} />
+          <span>scroll for more</span>
+          <Icon d={IC.chevRight} size={10} />
+        </div>
+      )}
+
+      <div 
+        ref={scrollContainerRef}
+        className="flex gap-2 overflow-x-auto pb-2 md:pb-0 md:flex-wrap md:overflow-visible scrollbar-hide"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {tabs.map((tab, index) => {
+          const isActive = activeTab === tab;
+          const tabColor = getTabColor(tab);
+          const count = counts[tab] || 0;
+          
+          return (
+            <button
+              key={tab}
+              onClick={() => handleTabClick(tab, index)}
+              className={`relative flex items-center gap-2 px-4 py-2.5 rounded-round text-sm font-bold transition-all duration-200 whitespace-nowrap ${isActive ? 'shadow-md transform scale-105' : 'hover:shadow-sm hover:-translate-y-0.5'}`}
+              style={{
+                backgroundColor: isActive ? tabColor.bg : '#fff',
+                color: isActive ? '#fff' : '#555',
+                border: `1.5px solid ${isActive ? 'transparent' : '#e8d5ac'}`,
+              }}
+            >
+              {getTabIcon(tab)}
+              {tab}
+              {count > 0 && (
+                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs font-bold min-w-[20px] text-center ${isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                  {count > 99 ? '99+' : count}
+                </span>
+              )}
+              {isActive && (
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full bg-current" />
+              )}
+            </button>
+          );
+        })}
       </div>
-      <div style={{ fontSize: 13, color: '#555', lineHeight: 1.7, marginBottom: 12 }}>
-        {preview}
+      
+      <div className="hidden md:block relative mt-2 h-0.5 bg-gray-200 rounded-full overflow-hidden">
+        <div 
+          className="absolute h-0.5 rounded-full transition-all duration-300 ease-out"
+          style={{ 
+            width: `${100 / tabs.length}%`,
+            left: `${tabs.indexOf(activeTab) * (100 / tabs.length)}%`,
+            backgroundColor: getTabColor(activeTab).bg,
+          }}
+        />
       </div>
-      <span style={{ fontSize: 13, fontWeight: 800, color: '#B46A02' }}>
-        Read more →
-      </span>
+
+      {activeTab !== 'All' && counts[activeTab] === 0 && (
+        <div className="mt-3 text-center text-sm text-user-text-lighter bg-user-secondary-light py-2 px-4 rounded-lg">
+          No {activeTab.toLowerCase()} announcements at the moment
+        </div>
+      )}
     </div>
   );
 };
@@ -443,41 +473,35 @@ const Pagination = ({ total, perPage, current, onChange }) => {
   const to = Math.min(current * perPage, total);
 
   const pgBtn = (p) => (
-    <button key={p} onClick={() => onChange(p)} style={{
-      width: 36, height: 36, borderRadius: '50%',
-      border: current === p ? 'none' : '1.5px solid #e8d5ac',
-      backgroundColor: current === p ? '#F5C400' : '#fff',
-      color: current === p ? '#3d2a00' : '#888',
-      fontWeight: current === p ? 900 : 600, fontSize: 14,
-      cursor: 'pointer',
-      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      transition: 'all .15s',
-    }}>{p}</button>
+    <button
+      key={p}
+      onClick={() => onChange(p)}
+      className={`w-9 h-9 rounded-full text-sm font-semibold transition-all ${
+        current === p ? 'bg-user-primary text-user-text font-black shadow-sm' : 'border border-user-border bg-white text-user-text-lighter hover:border-user-primary'
+      }`}
+    >
+      {p}
+    </button>
   );
 
   const buildPages = () => {
     const items = [];
     for (let p = 1; p <= Math.min(3, totalPages); p++) items.push(pgBtn(p));
-    if (totalPages > 4) items.push(<span key="dots" style={{ fontSize: 14, color: '#888', padding: '0 4px', lineHeight: '36px' }}>….</span>);
+    if (totalPages > 4) items.push(<span key="dots" className="text-sm text-user-text-lighter px-1 leading-9">…</span>);
     if (totalPages > 3) items.push(pgBtn(totalPages));
     return items;
   };
 
   const navBtn = (label, disabled, action) => (
-    <button onClick={action} disabled={disabled} style={{
-      padding: '8px 16px', borderRadius: 999,
-      border: '1.5px solid #e8d5ac', backgroundColor: '#fff',
-      fontSize: 13, fontWeight: 700, color: disabled ? '#ccc' : '#888',
-      cursor: disabled ? 'not-allowed' : 'pointer',
-    }}>{label}</button>
+    <button onClick={action} disabled={disabled} className={`px-4 py-2 rounded-round border border-user-border bg-white text-sm font-bold transition-all ${disabled ? 'text-gray-300 cursor-not-allowed' : 'text-user-text-lighter hover:border-user-primary'}`}>
+      {label}
+    </button>
   );
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, flexWrap: 'wrap', gap: 10 }}>
-      <span style={{ fontSize: 13, color: '#888', fontWeight: 600 }}>
-        Showing {from} - {to} of {total} announcements
-      </span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div className="flex flex-wrap items-center justify-between gap-2.5 mt-2">
+      <span className="text-sm font-semibold text-user-text-lighter">Showing {from} - {to} of {total} announcements</span>
+      <div className="flex items-center gap-1.5">
         {navBtn('< Previous', current === 1, () => onChange(current - 1))}
         {buildPages()}
         {navBtn('Next >', current === totalPages, () => onChange(current + 1))}
@@ -491,18 +515,13 @@ const PER_PAGE = 3;
 const Announcements = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // SEARCH STATE
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-
-  // LANGUAGE STATE
   const [currentLanguage, setCurrentLanguage] = useState('en');
-
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-
   const [announcements, setAnnouncements] = useState([]);
   const [readIds, setReadIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
@@ -512,14 +531,19 @@ const Announcements = () => {
 
   const TABS = ['All', 'Urgent', 'Important', 'Information', 'Unread'];
 
-  // Handle language change
+  const getTabCounts = () => ({
+    All: announcements.length,
+    Urgent: announcements.filter(a => a.tag === 'Urgent').length,
+    Important: announcements.filter(a => a.tag === 'Important').length,
+    Information: announcements.filter(a => a.tag === 'Information').length,
+    Unread: announcements.filter(a => !readIds.has(a.id)).length,
+  });
+
   const handleLanguageChange = (langCode) => {
     setCurrentLanguage(langCode);
     console.log('Language changed to:', langCode);
-    // Your teammate can add translation logic here later
   };
 
-  // Auth
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -540,16 +564,15 @@ const Announcements = () => {
     return () => unsub();
   }, [navigate]);
 
-  // Click outside to close search results
   useEffect(() => {
     const handleClickOutside = () => {
       setShowSearchResults(false);
+      setShowProfileMenu(false);
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Sample data (same as yours)
   const SAMPLE_DATA = [
     { id: 's1', tag: 'Urgent', title: 'Water Supply Interruption — Ward 7', body: 'There will be a temporary water supply interruption in Ward 7 on 3 April 2026 from 9 AM to 5 PM.', dateLabel: '28 Mar 2026' },
     { id: 's2', tag: 'Important', title: 'Gram Sabha Meeting — April 2026', body: 'Monthly Gram Sabha meeting is scheduled for 5 April 2026 at 10 AM in the Panchayat Hall.', dateLabel: '26 Mar 2026' },
@@ -588,7 +611,6 @@ const Announcements = () => {
     fetchData();
   }, []);
 
-  // Mark as read
   const markAsRead = async (annId) => {
     setReadIds(prev => new Set([...prev, annId]));
     if (!currentUser) return;
@@ -601,7 +623,6 @@ const Announcements = () => {
 
   const handleLogout = async () => { await signOut(auth); navigate('/login'); };
 
-  // Filter
   const filtered = announcements.filter(a => {
     if (activeTab === 'All') return true;
     if (activeTab === 'Unread') return !readIds.has(a.id);
@@ -612,12 +633,23 @@ const Announcements = () => {
   const paginated = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
   const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
 
+  const markAllAsRead = async () => {
+    const allIds = announcements.map(a => a.id);
+    setReadIds(new Set(allIds));
+    if (currentUser) {
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        readAnnouncements: allIds,
+      });
+    }
+  };
+
+  const tabCounts = getTabCounts();
+
   if (authLoading) return <PageLoadingSkeleton />;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'Nunito, system-ui, sans-serif', backgroundColor: '#f5f0e8' }}>
-      <div style={{ flex: 1, display: 'flex' }}>
-
+    <div className="user-module min-h-screen flex flex-col font-sans bg-user-background">
+      <div className="flex-1 flex">
         {/* Desktop Sidebar */}
         <DesktopSidebar activePage="announcements" navigate={navigate} onLogout={handleLogout} />
 
@@ -630,10 +662,8 @@ const Announcements = () => {
           onLogout={handleLogout}
         />
 
-        {/* Main Column */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-
-          {/* Desktop Topbar with Search and Language Switcher */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Desktop Topbar */}
           <DesktopTopbar 
             chipName={chipName}
             searchQuery={searchQuery}
@@ -643,137 +673,216 @@ const Announcements = () => {
             navigate={navigate}
             currentLanguage={currentLanguage}
             onLanguageChange={handleLanguageChange}
+            showProfileMenu={showProfileMenu}
+            setShowProfileMenu={setShowProfileMenu}
+            handleLogout={handleLogout}
+            userData={userData}
+            currentUser={currentUser}
           />
 
-          {/* Mobile Topbar with Search and Language Switcher */}
-          <MobileTopbar 
-            chipName={chipName}
-            onMenuClick={() => setMobileMenuOpen(true)}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            showResults={showSearchResults}
-            setShowResults={setShowSearchResults}
-            navigate={navigate}
-            currentLanguage={currentLanguage}
-            onLanguageChange={handleLanguageChange}
-          />
-
-          {/* Content Area */}
-          <div style={{ padding: '28px 32px', flex: 1 }}>
-
-            <h1 style={{ fontSize: 28, fontWeight: 900, color: '#1e1200', marginBottom: 22, letterSpacing: '-0.4px' }}>
-              Announcements
-            </h1>
-
-            {/* Mark all as read button */}
-            {announcements.filter(a => !readIds.has(a.id)).length > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                <button
-                  onClick={async () => {
-                    const allIds = announcements.map(a => a.id);
-                    setReadIds(new Set(allIds));
-                    if (currentUser) {
-                      await updateDoc(doc(db, 'users', currentUser.uid), {
-                        readAnnouncements: allIds,
-                      });
-                    }
-                  }}
-                  style={{
-                    padding: '8px 20px', borderRadius: 999,
-                    border: '1.5px solid #e8d5ac', backgroundColor: '#fff',
-                    fontSize: 13, fontWeight: 800, color: '#3d2a00',
-                    cursor: 'pointer', transition: 'all .15s',
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                  }}
-                  onMouseOver={e => { e.currentTarget.style.backgroundColor = '#fff8e0'; e.currentTarget.style.borderColor = '#F5C400'; }}
-                  onMouseOut={e  => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#e8d5ac'; }}
-                >
-                  <Icon d={IC.check} size={14} color="#3d2a00" sw={2.5} /> Mark all as read
-                </button>
-              </div>
-            )}
-
-            {/* Pill filter tabs */}
-            <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
-              {TABS.map(t => {
-                const isActive = activeTab === t;
-                return (
-                  <button key={t} onClick={() => handleTabChange(t)} style={{
-                    padding: '9px 22px', borderRadius: 999,
-                    border: isActive ? 'none' : '1.5px solid #d4c9a8',
-                    backgroundColor: isActive ? '#F5C400' : '#fff',
-                    color: isActive ? '#3d2a00' : '#555',
-                    fontSize: 14, fontWeight: isActive ? 900 : 700,
-                    cursor: 'pointer', transition: 'all .15s',
-                    boxShadow: isActive ? '0 2px 8px rgba(245,196,0,0.35)' : 'none',
-                  }}
-                    onMouseOver={e => { if (!isActive) { e.currentTarget.style.backgroundColor = '#f5f0e8'; e.currentTarget.style.borderColor = '#B46A02'; } }}
-                    onMouseOut={e  => { if (!isActive) { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#d4c9a8'; } }}
-                  >{t}</button>
-                );
-              })}
+          {/* Mobile Topbar - Only sticky bar (logo, bell, profile) */}
+          <div className="mobile-topbar hidden h-16 bg-user-primary items-center px-4 gap-3 sticky top-0 z-40 shadow-md">
+            <button onClick={() => setMobileMenuOpen(true)} className="bg-none border-none cursor-pointer p-1.5 flex-shrink-0">
+              <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+            <div className="flex-1 flex items-center justify-start">
+              <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
             </div>
+            <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={handleLanguageChange} />
+            <div className="w-9 h-9 flex items-center justify-center relative">
+              <Icon d={IC.bell} size={22} color="#1e1200" />
+              <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
+            </div>
+            <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
+              <Icon d={IC.profile} size={20} color="#3d2a00" />
+            </div>
+          </div>
+
+          {/* Mobile Content ) */}
+          <div className="mobile-content hidden flex-1 bg-user-secondary-light overflow-y-auto">
+            {/* Search Bar */}
+            <div className="pt-3 px-3.5 relative">
+              <div className="flex items-center gap-2.5 bg-white border border-user-border rounded-round px-4 py-2.5">
+                <Icon d={IC.search} size={16} color="#aaa" />
+                <input
+                  type="text"
+                  placeholder="Search for a page..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSearchResults(true);
+                  }}
+                  onFocus={() => setShowSearchResults(true)}
+                  className="flex-1 border-none outline-none text-sm font-medium text-user-text bg-transparent"
+                />
+                {searchQuery && (
+                  <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="bg-none border-none cursor-pointer p-1">
+                    <Icon d={IC.close} size={14} color="#aaa" />
+                  </button>
+                )}
+              </div>
+              {showSearchResults && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-user-border z-[1000] overflow-hidden">
+                  {PAGE_ACTIONS.filter(page => page.name.toLowerCase().includes(searchQuery.toLowerCase())).map((page, idx) => (
+                    <button
+                      key={page.path}
+                      onClick={() => {
+                        navigate(page.path);
+                        setSearchQuery('');
+                        setShowSearchResults(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background ${idx !== PAGE_ACTIONS.length - 1 ? 'border-b border-user-border-light' : ''}`}
+                    >
+                      <Icon d={page.icon} size={18} color="#B46A02" />
+                      <div>
+                        <div className="text-sm font-bold text-user-text">{page.name}</div>
+                        <div className="text-[11px] text-user-text-lighter">Click to go</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Main Mobile Content */}
+            <div className="p-3.5 pb-[90px]">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight">Announcements</h1>
+                  <p className="text-sm text-user-text-lighter mt-1">Stay updated with latest news from your GN Officer</p>
+                </div>
+                {announcements.filter(a => !readIds.has(a.id)).length > 0 && (
+                  <button onClick={markAllAsRead} className="flex items-center justify-center gap-1.5 px-5 py-2 rounded-round border border-user-border bg-white text-sm font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-light hover:border-user-primary">
+                    <Icon d={IC.check} size={14} color="#3d2a00" sw={2.5} /> Mark all as read ({announcements.filter(a => !readIds.has(a.id)).length})
+                  </button>
+                )}
+              </div>
+
+              <FilterTabs 
+                tabs={TABS} 
+                activeTab={activeTab} 
+                onTabChange={handleTabChange} 
+                counts={tabCounts} 
+              />
+
+              {loading && <AnnouncementsListSkeleton />}
+
+              {!loading && (
+                <>
+                  {paginated.length > 0 ? (
+                    <div className="animate-fade-in-up">
+                      {paginated.map(ann => <AnnouncementCard key={ann.id} ann={ann} onClick={(a) => { setSelAnn(a); markAsRead(a.id); }} />)}
+                    </div>
+                  ) : (
+                    <div className="text-center py-16 bg-white rounded-xl border border-user-border">
+                      <div className="flex justify-center mb-4"><Icon d={IC.inbox} size={48} color="#ccc" strokeWidth={1.2} /></div>
+                      <div className="text-base font-semibold text-user-text-lighter">
+                        {activeTab === 'Unread' ? (
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <Icon d={IC.check} size={32} color="#30a050" sw={2.5} />
+                            <span>All caught up! No unread announcements.</span>
+                          </div>
+                        ) : `No ${activeTab} announcements found.`}
+                      </div>
+                      {activeTab !== 'Unread' && activeTab !== 'All' && (
+                        <button onClick={() => handleTabChange('All')} className="mt-4 px-4 py-2 bg-user-primary rounded-round text-sm font-bold text-user-text hover:bg-user-primary-dark transition-colors">
+                          View all announcements
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  <Pagination total={filtered.length} perPage={PER_PAGE} current={currentPage} onChange={setCurrentPage} />
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop Content */}
+          <div className="hidden md:block p-6 md:p-7 flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight">Announcements</h1>
+                <p className="text-sm text-user-text-lighter mt-1">Stay updated with latest news from your GN Officer</p>
+              </div>
+              {announcements.filter(a => !readIds.has(a.id)).length > 0 && (
+                <button onClick={markAllAsRead} className="flex items-center justify-center gap-1.5 px-5 py-2 rounded-round border border-user-border bg-white text-sm font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-light hover:border-user-primary">
+                  <Icon d={IC.check} size={14} color="#3d2a00" sw={2.5} /> Mark all as read ({announcements.filter(a => !readIds.has(a.id)).length})
+                </button>
+              )}
+            </div>
+
+            <FilterTabs 
+              tabs={TABS} 
+              activeTab={activeTab} 
+              onTabChange={handleTabChange} 
+              counts={tabCounts} 
+            />
 
             {loading && <AnnouncementsListSkeleton />}
 
             {!loading && (
               <>
-                {paginated.length > 0
-                  ? paginated.map(ann => (
-                      <AnnouncementCard
-                        key={ann.id}
-                        ann={ann}
-                        onClick={(a) => { setSelAnn(a); markAsRead(a.id); }}
-                      />
-                    ))
-                  : (
-                    <div style={{ textAlign: 'center', padding: '60px 0', color: '#aaa', fontSize: 15, fontWeight: 600 }}>
+                {paginated.length > 0 ? (
+                  <div className="animate-fade-in-up">
+                    {paginated.map(ann => <AnnouncementCard key={ann.id} ann={ann} onClick={(a) => { setSelAnn(a); markAsRead(a.id); }} />)}
+                  </div>
+                ) : (
+                  <div className="text-center py-16 bg-white rounded-xl border border-user-border">
+                    <div className="flex justify-center mb-4"><Icon d={IC.inbox} size={48} color="#ccc" strokeWidth={1.2} /></div>
+                    <div className="text-base font-semibold text-user-text-lighter">
                       {activeTab === 'Unread' ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                          <Icon d={IC.check} size={16} color="#30a050" sw={2.5} />
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <Icon d={IC.check} size={32} color="#30a050" sw={2.5} />
                           <span>All caught up! No unread announcements.</span>
                         </div>
-                      ) : (
-                        `No ${activeTab} announcements found.`
-                      )}
+                      ) : `No ${activeTab} announcements found.`}
                     </div>
-                  )
-                }
-
-                <Pagination
-                  total={filtered.length}
-                  perPage={PER_PAGE}
-                  current={currentPage}
-                  onChange={setCurrentPage}
-                />
+                    {activeTab !== 'Unread' && activeTab !== 'All' && (
+                      <button onClick={() => handleTabChange('All')} className="mt-4 px-4 py-2 bg-user-primary rounded-round text-sm font-bold text-user-text hover:bg-user-primary-dark transition-colors">
+                        View all announcements
+                      </button>
+                    )}
+                  </div>
+                )}
+                <Pagination total={filtered.length} perPage={PER_PAGE} current={currentPage} onChange={setCurrentPage} />
               </>
             )}
-
           </div>
         </div>
       </div>
 
       {selAnn && <DetailModal ann={selAnn} onClose={() => setSelAnn(null)} />}
 
-      <footer style={{ backgroundColor: '#6A2301', color: '#fff', textAlign: 'center', padding: '13px 16px', fontSize: '13px', fontWeight: 600 }}>
-        ©2026 Smart Grama Sewa
+      <footer className="bg-[#6A2301] text-white text-center py-3 px-4 text-sm font-semibold">
+        © 2026 Smart Grama Sewa. All rights reserved.
       </footer>
 
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -45%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.2s ease; }
+        .animate-fade-in-up { animation: fadeInUp 0.3s ease; }
+        .rounded-round { border-radius: 999px; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
         
         /* Desktop */
         @media (min-width: 769px) {
           .desktop-sidebar { display: flex !important; }
           .desktop-topbar { display: flex !important; }
-          .mobile-header { display: none !important; }
+          .mobile-topbar { display: none !important; }
+          .mobile-content { display: none !important; }
         }
 
         /* Mobile */
         @media (max-width: 768px) {
           .desktop-sidebar { display: none !important; }
           .desktop-topbar { display: none !important; }
-          .mobile-header { display: block !important; }
+          .mobile-topbar { display: flex !important; }
+          .mobile-content { display: block !important; }
         }
       `}</style>
     </div>

@@ -1,154 +1,64 @@
-/* Default light theme CSS variables */
-:root {
-  --bg-page:    #f5f0e8;
-  --bg-sidebar: #F5C400;
-  --bg-card:    #ffffff;
-  --bg-topbar:  #ffffff;
-  --text-main:  #1e1200;
-  --text-sub:   #888888;
-  --border:     #e8d5ac;
+@import "tailwindcss";
+
+
+@theme {
+  /* User Module Colors - Light Mode */
+  --color-user-primary: #F5C400;
+  --color-user-primary-dark: #d4a800;
+  --color-user-primary-light: #fff8e0;
+  --color-user-secondary: #8a6040;
+  --color-user-secondary-dark: #6a4020;
+  --color-user-secondary-light: #f5f0e8;
+  --color-user-text: #1e1200;
+  --color-user-text-light: #666666;
+  --color-user-text-lighter: #888888;
+  --color-user-border: #e8d5ac;
+  --color-user-border-light: #f0e8d0;
+  --color-user-background: #f8f6f0;
+  --color-user-surface: #ffffff;
+  --color-user-success: #22c55e;
+  --color-user-success-light: #e6f9ee;
+  --color-user-warning: #f59e0b;
+  --color-user-warning-light: #fff3dc;
+  --color-user-error: #ef4444;
+  --color-user-error-light: #fee2e2;
+  --color-user-info: #3b82f6;
+  --color-user-info-light: #eff6ff;
+  
+  /* Dark Mode Colors */
+  --color-dark-primary: #F5C400;
+  --color-dark-primary-dark: #d4a800;
+  --color-dark-primary-light: #2a2400;
+  --color-dark-secondary: #6a4020;
+  --color-dark-secondary-dark: #5a3520;
+  --color-dark-secondary-light: #2a2015;
+  --color-dark-text: #e8e0c8;
+  --color-dark-text-light: #c0b898;
+  --color-dark-text-lighter: #a09878;
+  --color-dark-border: #4a3a28;
+  --color-dark-border-light: #3a2a1a;
+  --color-dark-background: #1a1510;
+  --color-dark-surface: #2a2018;
 }
 
-/* Dark theme — applied when Settings selects Dark Mode */
-[data-theme="dark"] {
-  --bg-page:    #1a1a2e;
-  --bg-sidebar: #16213e;
-  --bg-card:    #2d2d44;
-  --bg-topbar:  #16213e;
-  --text-main:  #f0f0f0;
-  --text-sub:   #aaaacc;
-  --border:     #3a3a5c;
+/* Dark mode class styles */
+.dark {
+  --color-user-primary: var(--color-dark-primary);
+  --color-user-primary-dark: var(--color-dark-primary-dark);
+  --color-user-primary-light: var(--color-dark-primary-light);
+  --color-user-secondary: var(--color-dark-secondary);
+  --color-user-secondary-dark: var(--color-dark-secondary-dark);
+  --color-user-secondary-light: var(--color-dark-secondary-light);
+  --color-user-text: var(--color-dark-text);
+  --color-user-text-light: var(--color-dark-text-light);
+  --color-user-text-lighter: var(--color-dark-text-lighter);
+  --color-user-border: var(--color-dark-border);
+  --color-user-border-light: var(--color-dark-border-light);
+  --color-user-background: var(--color-dark-background);
+  --color-user-surface: var(--color-dark-surface);
 }
 
-/* Dark mode — override page background */
-/* ── Dark Mode ── */
-[data-theme="dark"] body,
-[data-theme="dark"] #root {
-  background-color: #2a2a2a !important;
-}
-
-/* Page backgrounds */
-[data-theme="dark"] div {
-  transition: background-color 0.3s, color 0.3s;
-}
-
-/* White cards → dark */
-[data-theme="dark"] div[style*="background-color: rgb(255, 255, 255)"],
-[data-theme="dark"] div[style*="backgroundColor: #fff"],
-[data-theme="dark"] div[style*="backgroundColor: white"] {
-  background-color: #3d3d3d !important;
-  border-color: #555555 !important;
-}
-
-/* Cream/beige backgrounds → dark page */
-[data-theme="dark"] div[style*="background-color: rgb(245, 240, 232)"],
-[data-theme="dark"] div[style*="background-color: rgb(248, 246, 240)"],
-[data-theme="dark"] div[style*="background-color: rgb(255, 251, 232)"],
-[data-theme="dark"] div[style*="background-color: rgb(255, 248, 220)"] {
-  background-color: #2a2a2a !important;
-}
-
-/* Widget headers brown → dark brown */
-[data-theme="dark"] div[style*="background-color: rgb(200, 168, 130)"] {
-  background-color: #5a3218 !important;
-}
-
-/* Input / search backgrounds */
-[data-theme="dark"] input,
-[data-theme="dark"] textarea,
-[data-theme="dark"] select {
-  background-color: #3d3d3d !important;
-  color: #f0f0f0 !important;
-  border-color: #555555 !important;
-}
-
-[data-theme="dark"] input::placeholder,
-[data-theme="dark"] textarea::placeholder {
-  color: #888888 !important;
-}
-
-/* Main dark text → white */
-[data-theme="dark"] *[style*="color: rgb(30, 18, 0)"] {
-  color: #f0f0f0 !important;
-}
-
-/* Grey text → lighter */
-[data-theme="dark"] *[style*="color: rgb(136, 136, 136)"],
-[data-theme="dark"] *[style*="color: rgb(102, 102, 102)"] {
-  color: #cccccc !important;
-}
-
-/* Borders → dark */
-[data-theme="dark"] *[style*="border-color: rgb(232, 213, 172)"],
-[data-theme="dark"] *[style*="border-bottom: 1px solid rgb(237, 232, 216)"] {
-  border-color: #555555 !important;
-}
-
-/* Footer → very dark */
-[data-theme="dark"] footer {
-  background-color: #1a0a00 !important;
-}
-
-/* Topbar white → dark */
-[data-theme="dark"] div[style*="background-color: rgb(255, 255, 255)"][style*="border-bottom"] {
-  background-color: #2a2a2a !important;
-}
-
-/* Keep yellow sidebar unchanged */
-[data-theme="dark"] div[style*="background-color: rgb(245, 196, 0)"] {
-  background-color: #F5C400 !important;
-}
-
-/* Keep yellow buttons unchanged */
-[data-theme="dark"] button[style*="background-color: rgb(245, 196, 0)"] {
-  background-color: #F5C400 !important;
-}
-
-/* Keep dark brown buttons unchanged */
-[data-theme="dark"] button[style*="background-color: rgb(30, 18, 0)"],
-[data-theme="dark"] button[style*="background-color: rgb(61, 42, 0)"],
-[data-theme="dark"] button[style*="background-color: rgb(138, 96, 64)"] {
-  /* keep as-is */
-}
-
-/* Text size - ONLY affects body text, NOT headings */
-[data-textsize="small"] body,
-[data-textsize="small"] p,
-[data-textsize="small"] span,
-[data-textsize="small"] label,
-[data-textsize="small"] input,
-[data-textsize="small"] button:not(.no-scale),
-[data-textsize="small"] div:not(h1):not(h2):not(h3):not(h4) {
-  font-size: 98% !important;
-}
-
-[data-textsize="large"] body,
-[data-textsize="large"] p,
-[data-textsize="large"] span,
-[data-textsize="large"] label,
-[data-textsize="large"] input,
-[data-textsize="large"] button:not(.no-scale),
-[data-textsize="large"] div:not(h1):not(h2):not(h3):not(h4) {
-  font-size: 102% !important;
-}
-
-/* Headings stay at original size */
-[data-textsize="small"] h1,
-[data-textsize="small"] h2,
-[data-textsize="small"] h3,
-[data-textsize="small"] h4,
-[data-textsize="small"] .heading,
-[data-textsize="small"] [style*="font-weight: 900"],
-[data-textsize="small"] [style*="fontWeight: 900"] {
-  font-size: inherit !important;
-}
-
-[data-textsize="large"] h1,
-[data-textsize="large"] h2,
-[data-textsize="large"] h3,
-[data-textsize="large"] h4,
-[data-textsize="large"] .heading,
-[data-textsize="large"] [style*="font-weight: 900"],
-[data-textsize="large"] [style*="fontWeight: 900"] {
-  font-size: inherit !important;
+/* Smooth transition for theme switching */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }

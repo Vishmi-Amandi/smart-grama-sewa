@@ -31,6 +31,10 @@ const Icons = {
   chevDown:     'M6 9l6 6 6-6',
   tick:         'M4 12l5 5L20 6',
   close:        'M18 6L6 18M6 6l12 12',
+  phone:        'M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z',
+  mail:         'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6',
+  location:     'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z M12 10a1 1 0 100-2 1 1 0 000 2z',
+  calendar:     'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
 };
 
 // List of all pages/functions for search
@@ -45,7 +49,7 @@ const PAGE_ACTIONS = [
 ];
 
 // Search Results Dropdown Component
-const SearchResultsDropdown = ({ searchQuery, onNavigate, onClose }) => {
+const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate }) => {
   const [filteredPages, setFilteredPages] = useState([]);
 
   useEffect(() => {
@@ -60,48 +64,23 @@ const SearchResultsDropdown = ({ searchQuery, onNavigate, onClose }) => {
     setFilteredPages(filtered);
   }, [searchQuery]);
 
-  if (filteredPages.length === 0) return null;
+  if (!showResults || filteredPages.length === 0) return null;
 
   return (
-    <div style={{
-      position: 'absolute',
-      top: '100%',
-      left: 0,
-      right: 0,
-      marginTop: '8px',
-      backgroundColor: '#fff',
-      borderRadius: '12px',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-      border: '1px solid #e8d5ac',
-      zIndex: 1000,
-      overflow: 'hidden',
-    }}>
+    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-user-border z-[1000] overflow-hidden">
       {filteredPages.map((page, idx) => (
         <button
           key={page.path}
           onClick={() => {
-            onNavigate(page.path);
-            onClose();
+            navigate(page.path);
+            setShowResults(false);
           }}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '12px 16px',
-            border: 'none',
-            borderBottom: idx === filteredPages.length - 1 ? 'none' : '1px solid #f0e8d0',
-            cursor: 'pointer',
-            textAlign: 'left',
-            transition: 'background 0.15s',
-          }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f5f0e8'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+          className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background ${idx !== filteredPages.length - 1 ? 'border-b border-user-border-light' : ''}`}
         >
           <Icon d={page.icon} size={18} color="#B46A02" />
           <div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e1200' }}>{page.name}</div>
-            <div style={{ fontSize: '11px', color: '#888' }}>Click to go to {page.name}</div>
+            <div className="text-sm font-bold text-user-text">{page.name}</div>
+            <div className="text-[11px] text-user-text-lighter">Click to go to {page.name}</div>
           </div>
         </button>
       ))}
@@ -111,24 +90,192 @@ const SearchResultsDropdown = ({ searchQuery, onNavigate, onClose }) => {
 
 // NavItem
 const NavItem = ({ iconPath, label, onClick }) => (
-  <button onClick={onClick} style={{
-    width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
-    padding: '11px 16px', borderRadius: '10px', border: 'none',
-    cursor: 'pointer', fontFamily: 'inherit',
-    backgroundColor: 'transparent',
-    color: '#3d2a00', fontWeight: 600, fontSize: '14px',
-    transition: 'all 0.15s', textAlign: 'left', marginBottom: '2px',
-  }}>
+  <button 
+    onClick={onClick} 
+    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 bg-transparent text-user-text font-semibold hover:bg-white/40"
+  >
     <Icon d={iconPath} size={18} color="#5a3a00" />
     {label}
   </button>
 );
 
+// Desktop Topbar
+const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser }) => (
+  <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
+    <div className="flex-1 max-w-[400px] relative">
+      <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-3xl px-4 py-2 transition-colors hover:border-user-primary">
+        <Icon d={Icons.search} size={16} color="#aaa" />
+        <input
+          type="text"
+          placeholder="Search for a page or function..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setShowResults(true);
+          }}
+          onFocus={() => setShowResults(true)}
+          className="flex-1 border-none outline-none text-sm font-medium text-user-text bg-transparent"
+        />
+        {searchQuery && (
+          <button onClick={() => { setSearchQuery(''); setShowResults(false); }} className="bg-none border-none cursor-pointer p-1">
+            <Icon d={Icons.close} size={14} color="#aaa" />
+          </button>
+        )}
+      </div>
+      <SearchResultsDropdown 
+        searchQuery={searchQuery}
+        showResults={showResults}
+        setShowResults={setShowResults}
+        navigate={navigate}
+      />
+    </div>
+    <div className="flex-1" />
+    
+    <LanguageSwitcher 
+      currentLanguage={currentLanguage} 
+      onLanguageChange={onLanguageChange}
+    />
+    
+    <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
+      <Icon d={Icons.bell} size={18} color="#5a3a00" />
+      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
+    </div>
+    
+    {/* Profile Dropdown */}
+    <div className="relative">
+      <button 
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowProfileMenu(!showProfileMenu);
+        }}
+        className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-3xl cursor-pointer transition-colors hover:border-user-primary"
+      >
+        <span className="text-sm font-bold text-user-text max-w-[100px] truncate">{chipName}</span>
+        <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0">
+          <Icon d={Icons.profile} size={16} color="#3d2a00" />
+        </div>
+      </button>
+      {showProfileMenu && (
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden">
+          <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+            <Icon d={Icons.profile} size={14} /> My Profile
+          </button>
+          <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+            <Icon d={Icons.settings} size={14} /> Settings
+          </button>
+          <hr className="my-1" />
+          <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 flex items-center gap-2">
+            <Icon d={Icons.logout} size={14} /> Logout
+          </button>
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+// Mobile Topbar
+const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLanguageChange }) => (
+  <div className="mobile-topbar hidden h-16 bg-user-primary items-center px-4 gap-3 sticky top-0 z-40 shadow-md">
+    <button onClick={onMenuClick} className="bg-none border-none cursor-pointer p-1.5 flex-shrink-0">
+      <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+    </button>
+    <div className="flex-1 flex items-center justify-start">
+      <img src="/logo2.png" alt="Smart Grama Sewa" className="h-10 w-auto" />
+    </div>
+    <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={onLanguageChange} />
+    <div className="w-9 h-9 flex items-center justify-center relative">
+      <Icon d={Icons.bell} size={22} color="#1e1200" />
+      <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
+    </div>
+    <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
+      <Icon d={Icons.profile} size={20} color="#3d2a00" />
+    </div>
+  </div>
+);
+
+// Mobile Sidebar Overlay
+const MobileSidebar = ({ isOpen, onClose, navigate, onLogout }) => {
+  const navItems = [
+    { key: 'dashboard', icon: Icons.dashboard, label: 'Dashboard', path: '/dashboard' },
+    { key: 'announcements', icon: Icons.announcement, label: 'Announcements', path: '/announcements' },
+    { key: 'appointments', icon: Icons.appointments, label: 'Appointments', path: '/appointments' },
+    { key: 'forms', icon: Icons.forms, label: 'Forms', path: '/forms' },
+    { key: 'ai', icon: Icons.ai, label: 'AI assistant', path: '/ai' },
+  ];
+  const bottomNav = [
+    { key: 'profile', icon: Icons.profile, label: 'Profile', path: '/profile' },
+    { key: 'settings', icon: Icons.settings, label: 'Settings', path: '/settings' },
+    { key: 'logout', icon: Icons.logout, label: 'Sign out', action: 'logout' },
+  ];
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div onClick={onClose} className="fixed inset-0 bg-black/50 z-[1000]" />
+      <div className="fixed top-0 left-0 w-[250px] h-screen bg-user-primary z-[1001] overflow-y-auto py-5">
+        <div className="px-5 pb-5 text-right">
+          <button onClick={onClose} className="bg-none border-none text-2xl cursor-pointer text-white">✕</button>
+        </div>
+        <div className="px-5 pb-5 border-b border-white/20 mb-2 flex justify-center">
+          <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
+        </div>
+        {navItems.map((item) => (
+          <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => { navigate(item.path); onClose(); }} />
+        ))}
+        <div className="border-t border-white/20 my-3 pt-3">
+          {bottomNav.map((item) => (
+            <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => { if (item.action === 'logout') onLogout(); else navigate(item.path); onClose(); }} />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+};
+
+// Desktop Sidebar
+const DesktopSidebar = ({ navigate, onLogout }) => {
+  const navItems = [
+    { key: 'dashboard', icon: Icons.dashboard, label: 'Dashboard', path: '/dashboard' },
+    { key: 'announcements', icon: Icons.announcement, label: 'Announcements', path: '/announcements' },
+    { key: 'appointments', icon: Icons.appointments, label: 'Appointments', path: '/appointments' },
+    { key: 'forms', icon: Icons.forms, label: 'Forms', path: '/forms' },
+    { key: 'ai', icon: Icons.ai, label: 'AI assistant', path: '/ai' },
+  ];
+  const bottomNav = [
+    { key: 'profile', icon: Icons.profile, label: 'Profile', path: '/profile' },
+    { key: 'settings', icon: Icons.settings, label: 'Settings', path: '/settings' },
+    { key: 'logout', icon: Icons.logout, label: 'Sign out', action: 'logout' },
+  ];
+
+  return (
+    <div className="desktop-sidebar w-[220px] flex-shrink-0 bg-user-primary flex flex-col sticky top-0 h-screen overflow-y-auto">
+      <div className="p-5 pb-4 border-b border-black/10">
+        <img src="/logo2.png" alt="Smart Grama Sewa" className="h-20 w-auto" />
+      </div>
+      <div className="flex-1 p-3">
+        {navItems.map((item) => (
+          <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => navigate(item.path)} />
+        ))}
+      </div>
+      <div className="p-3 pt-2 border-t border-black/10">
+        {bottomNav.map((item) => (
+          <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => item.action === 'logout' ? onLogout() : navigate(item.path)} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // Info row (view mode)
 const InfoRow = ({ label, value }) => (
-  <div style={{ marginBottom: '18px' }}>
-    <div style={{ fontSize: '12px', fontWeight: 700, color: '#B46A02', marginBottom: '6px' }}>{label}</div>
-    <div style={{ fontSize: '15px', fontWeight: 600, color: '#1e1200', paddingBottom: '10px', borderBottom: '1px solid #f0e8d0' }}>
+  <div className="mb-4">
+    <div className="text-xs font-extrabold text-user-warning mb-1.5">{label}</div>
+    <div className="text-sm font-semibold text-user-text pb-2.5 border-b border-user-border-light">
       {value || '—'}
     </div>
   </div>
@@ -136,35 +283,26 @@ const InfoRow = ({ label, value }) => (
 
 // Form field (edit mode)
 const Field = ({ label, value, onChange, type = 'text', placeholder = '', disabled = false }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-    <label style={{ fontSize: '12px', fontWeight: 700, color: '#B46A02' }}>{label}</label>
+  <div className="flex flex-col gap-1.5">
+    <label className="text-xs font-extrabold text-user-warning">{label}</label>
     <input
       type={type}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
-      style={{
-        padding: '12px 14px', fontSize: '14px', fontWeight: 600,
-        color: disabled ? '#aaa' : '#1e1200',
-        backgroundColor: disabled ? '#f8f6f0' : '#fff',
-        border: '1.5px solid #e8d5ac', borderRadius: '10px',
-        outline: 'none', width: '100%', boxSizing: 'border-box',
-      }}
+      className={`w-full py-3 px-3.5 text-sm font-semibold border border-user-border rounded-lg outline-none transition-colors focus:border-user-primary ${disabled ? 'bg-user-secondary-light text-user-text-lighter' : 'bg-white text-user-text'}`}
     />
   </div>
 );
 
 const GenderSelect = ({ value, onChange }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-    <label style={{ fontSize: '12px', fontWeight: 700, color: '#B46A02' }}>Gender</label>
+  <div className="flex flex-col gap-1.5">
+    <label className="text-xs font-extrabold text-user-warning">Gender</label>
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      style={{
-        width: '100%', padding: '12px 14px', fontSize: '14px', fontWeight: 600,
-        backgroundColor: '#fff', border: '1.5px solid #e8d5ac', borderRadius: '10px',
-      }}
+      className="w-full py-3 px-3.5 text-sm font-semibold bg-white border border-user-border rounded-lg outline-none focus:border-user-primary"
     >
       <option value="">Select…</option>
       <option value="Male">Male</option>
@@ -186,6 +324,9 @@ const Profile = () => {
 
   // LANGUAGE STATE
   const [currentLanguage, setCurrentLanguage] = useState('en');
+  
+  // PROFILE DROPDOWN STATE
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -249,6 +390,7 @@ const Profile = () => {
   const handleSave = async () => {
     if (!currentUser) return;
     setSaving(true);
+    setSaveError('');
     try {
       await updateDoc(doc(db, 'users', currentUser.uid), {
         fullName: form.fullName, dob: form.dob, gender: form.gender,
@@ -280,243 +422,122 @@ const Profile = () => {
   const chipName = userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
   const nicMasked = userData?.nic ? userData.nic.slice(0, 3) + 'XXXXX' : 'XXXXXXXXXXXX';
 
-  const navItems = [
-    { key: 'dashboard', icon: Icons.dashboard, label: 'Dashboard', path: '/dashboard' },
-    { key: 'announcements', icon: Icons.announcement, label: 'Announcements', path: '/announcements' },
-    { key: 'appointments', icon: Icons.appointments, label: 'Appointments', path: '/appointments' },
-    { key: 'forms', icon: Icons.forms, label: 'Forms', path: '/forms' },
-    { key: 'ai', icon: Icons.ai, label: 'AI assistant', path: '/ai' },
-  ];
-
-  const bottomNav = [
-    { key: 'profile', icon: Icons.profile, label: 'Profile', path: '/profile' },
-    { key: 'settings', icon: Icons.settings, label: 'Settings', path: '/settings' },
-    { key: 'logout', icon: Icons.logout, label: 'Sign out' },
-  ];
-
   if (authLoading) return <PageLoadingSkeleton />;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'Nunito, system-ui, sans-serif', backgroundColor: '#f8f6f0' }}>
-      <div style={{ flex: 1, display: 'flex' }}>
+    <div className="user-module min-h-screen flex flex-col font-sans bg-user-background">
+      <div className="flex-1 flex">
+        {/* Desktop Sidebar */}
+        {!isMobile && <DesktopSidebar navigate={navigate} onLogout={handleLogout} />}
 
-        {/* DESKTOP SIDEBAR */}
-        {!isMobile && (
-          <div style={{
-            width: '220px', backgroundColor: '#F5C400', display: 'flex', flexDirection: 'column',
-            position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
-          }}>
-            <div style={{ padding: '20px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-              <img src="/logo2.png" alt="Logo" style={{ height: '80px', width: 'auto' }} />
-            </div>
-            <div style={{ flex: 1, padding: '12px 10px' }}>
-              {navItems.map(item => (
-                <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => navigate(item.path)} />
-              ))}
-            </div>
-            <div style={{ padding: '10px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-              {bottomNav.map(item => (
-                <NavItem 
-                  key={item.key} 
-                  iconPath={item.icon} 
-                  label={item.label} 
-                  onClick={() => item.key === 'logout' ? handleLogout() : navigate(item.path)} 
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Mobile Sidebar Overlay */}
+        <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} navigate={navigate} onLogout={handleLogout} />
 
-        {/* MOBILE SIDEBAR OVERLAY */}
-        {isMobile && mobileMenuOpen && (
-          <>
-            <div onClick={() => setMobileMenuOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000 }} />
-            <div style={{ position: 'fixed', top: 0, left: 0, width: '250px', height: '100vh', backgroundColor: '#F5C400', zIndex: 1001, overflowY: 'auto', padding: '20px 0' }}>
-              <div style={{ padding: '0 20px 20px', textAlign: 'right' }}>
-                <button onClick={() => setMobileMenuOpen(false)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>✕</button>
-              </div>
-              {navItems.map(item => (
-                <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => { navigate(item.path); setMobileMenuOpen(false); }} />
-              ))}
-              <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', margin: '10px 0', paddingTop: '10px' }}>
-                {bottomNav.map(item => (
-                  <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => { if (item.key === 'logout') handleLogout(); else navigate(item.path); setMobileMenuOpen(false); }} />
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* MAIN CONTENT */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-
-          {/* DESKTOP TOPBAR - WITH SEARCH AND LANGUAGE SWITCHER */}
+        {/* MAIN COLUMN */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Desktop Topbar */}
           {!isMobile && (
-            <div style={{
-              height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #ede8d8',
-              display: 'flex', alignItems: 'center', padding: '0 28px', gap: '14px',
-              position: 'sticky', top: 0, zIndex: 40,
-            }}>
-              <div style={{ flex: 1, maxWidth: '400px', position: 'relative' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: '999px', padding: '9px 18px' }}>
-                  <Icon d={Icons.search} size={16} color="#aaa" />
-                  <input
-                    type="text"
-                    placeholder="Search for a page or function..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setShowSearchResults(true);
-                    }}
-                    onFocus={() => setShowSearchResults(true)}
-                    style={{
-                      flex: 1,
-                      border: 'none',
-                      outline: 'none',
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      color: '#1e1200',
-                      background: 'transparent',
-                    }}
-                  />
-                  {searchQuery && (
-                    <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
-                      <Icon d={Icons.close} size={14} color="#aaa" />
-                    </button>
-                  )}
-                </div>
-                {showSearchResults && <SearchResultsDropdown searchQuery={searchQuery} onNavigate={navigate} onClose={() => setShowSearchResults(false)} />}
-              </div>
-              <div style={{ flex: 1 }} />
-              <LanguageSwitcher 
-                currentLanguage={currentLanguage} 
-                onLanguageChange={handleLanguageChange}
+            <DesktopTopbar 
+              chipName={chipName}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              showResults={showSearchResults}
+              setShowResults={setShowSearchResults}
+              navigate={navigate}
+              currentLanguage={currentLanguage}
+              onLanguageChange={handleLanguageChange}
+              showProfileMenu={showProfileMenu}
+              setShowProfileMenu={setShowProfileMenu}
+              handleLogout={handleLogout}
+              userData={userData}
+              currentUser={currentUser}
+            />
+          )}
+
+          {/* Mobile Topbar */}
+          <MobileTopbar 
+            chipName={chipName}
+            onMenuClick={() => setMobileMenuOpen(true)}
+            navigate={navigate}
+            currentLanguage={currentLanguage}
+            onLanguageChange={handleLanguageChange}
+          />
+
+          {/* Mobile Search Bar - NOT STICKY */}
+          <div className="md:hidden pt-3 px-3.5 relative">
+            <div className="flex items-center gap-2.5 bg-white border border-user-border rounded-lg px-4 py-2.5">
+              <Icon d={Icons.search} size={16} color="#aaa" />
+              <input
+                type="text"
+                placeholder="Search for a page..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSearchResults(true);
+                }}
+                onFocus={() => setShowSearchResults(true)}
+                className="flex-1 border-none outline-none text-sm font-medium text-user-text bg-transparent"
               />
-              <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                <Icon d={Icons.bell} size={18} color="#5a3a00" />
-                <div style={{ position: 'absolute', top: '4px', right: '4px', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#e05050' }} />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 14px', backgroundColor: '#f5f0e8', borderRadius: '999px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e1200' }}>{chipName}</span>
-                <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: '#F5C400', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon d={Icons.profile} size={16} color="#3d2a00" />
-                </div>
-              </div>
+              {searchQuery && (
+                <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="bg-none border-none cursor-pointer p-1">
+                  <Icon d={Icons.close} size={14} color="#aaa" />
+                </button>
+              )}
             </div>
-          )}
+            {showSearchResults && (
+              <SearchResultsDropdown 
+                searchQuery={searchQuery}
+                showResults={showSearchResults}
+                setShowResults={setShowSearchResults}
+                navigate={navigate}
+              />
+            )}
+          </div>
 
-          {/* MOBILE TOPBAR - WITH SEARCH AND LANGUAGE SWITCHER */}
-          {isMobile && (
-            <>
-              {/* Sticky Header */}
-              <div style={{
-                backgroundColor: '#F5C400',
-                position: 'sticky',
-                top: 0,
-                zIndex: 100,
-              }}>
-                <div style={{
-                  height: '64px', display: 'flex', alignItems: 'center',
-                  padding: '0 16px', gap: '12px',
-                }}>
-                  <button onClick={() => setMobileMenuOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6 }}>
-                    <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
-                      <line x1="3" y1="6" x2="21" y2="6" />
-                      <line x1="3" y1="12" x2="21" y2="12" />
-                      <line x1="3" y1="18" x2="21" y2="18" />
-                    </svg>
-                  </button>
-                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'left' }}>
-                    <img src="/logo2.png" alt="Logo" style={{ height: '48px', width: 'auto' }} />
-                  </div>
-                  <LanguageSwitcher 
-                    currentLanguage={currentLanguage} 
-                    onLanguageChange={handleLanguageChange}
-                  />
-                  <div style={{ position: 'relative' }}>
-                    <Icon d={Icons.bell} size={22} color="#1e1200" />
-                    <div style={{ position: 'absolute', top: '2px', right: '2px', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#e05050' }} />
-                  </div>
-                  <div onClick={() => navigate('/profile')} style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                    <Icon d={Icons.profile} size={20} color="#3d2a00" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Mobile Search Bar - Non-sticky, below header */}
-              <div style={{
-                padding: '12px 16px',
-                backgroundColor: '#f8f6f0',
-                position: 'relative',
-              }}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  backgroundColor: '#fff', border: '1.5px solid #e8d8b0',
-                  borderRadius: 999, padding: '12px 16px',
-                }}>
-                  <Icon d={Icons.search} size={16} color="#aaa" />
-                  <input
-                    type="text"
-                    placeholder="Search for a page..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setShowSearchResults(true);
-                    }}
-                    onFocus={() => setShowSearchResults(true)}
-                    style={{
-                      flex: 1,
-                      border: 'none',
-                      outline: 'none',
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      color: '#1e1200',
-                      background: 'transparent',
-                    }}
-                  />
-                  {searchQuery && (
-                    <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
-                      <Icon d={Icons.close} size={14} color="#aaa" />
-                    </button>
-                  )}
-                </div>
-                {showSearchResults && <SearchResultsDropdown searchQuery={searchQuery} onNavigate={navigate} onClose={() => setShowSearchResults(false)} />}
-              </div>
-            </>
-          )}
-
-          {/* CONTENT */}
-          <div style={{ padding: '16px' }}>
+          {/* DESKTOP & MOBILE CONTENT */}
+          <div className="flex-1 p-4 md:p-6 overflow-y-auto">
             {!userData && !isEditing && <ProfileSkeleton />}
             
             {!isEditing && userData && (
               <>
-                <h1 style={{ fontSize: '26px', fontWeight: 900, marginBottom: '24px' }}>My Profile</h1>
+                <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-6">My Profile</h1>
 
                 {saveSuccess && (
-                  <div style={{ backgroundColor: '#e6f9ee', border: '1.5px solid #7ec07e', borderRadius: '12px', padding: '12px', marginBottom: '18px' }}>
-                    <Icon d={Icons.tick} size={14} color="#1a7a3a" /> Profile updated successfully!
+                  <div className="flex items-center gap-2 bg-user-success-light border border-user-success rounded-xl p-3 mb-4">
+                    <Icon d={Icons.tick} size={14} color="#1a7a3a" strokeWidth={2.5} />
+                    <span className="text-sm font-semibold text-user-success">Profile updated successfully!</span>
                   </div>
                 )}
 
-                <div style={{ backgroundColor: '#fff', border: '1.5px solid #e8d5ac', borderRadius: '18px', padding: '22px', display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                  <div style={{ position: 'relative' }}>
-                    <div style={{ width: '76px', height: '76px', borderRadius: '50%', border: '3px solid #1e1200', backgroundColor: '#f0ece4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {/* Profile Header Card */}
+                <div className="bg-user-surface border border-user-border rounded-xl p-5 flex flex-col md:flex-row items-center md:items-start gap-5 mb-5">
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-full border-3 border-user-text bg-user-secondary-light flex items-center justify-center">
                       <Icon d={Icons.profile} size={36} color="#5a4030" />
                     </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '20px', fontWeight: 900 }}>{userData?.fullName || chipName}</div>
-                    <div style={{ fontSize: '14px', color: '#888' }}>Citizen ID : {nicMasked}</div>
+                  <div className="flex-1 text-center md:text-left">
+                    <div className="text-xl font-black text-user-text">{userData?.fullName || chipName}</div>
+                    <div className="text-sm text-user-text-lighter font-semibold mt-1">Citizen ID : {nicMasked}</div>
+                    <div className="flex items-center justify-center md:justify-start gap-2 mt-2">
+                      <div className="flex items-center gap-1 text-xs text-user-success">
+                        <div className="w-2 h-2 rounded-full bg-user-success" />
+                        <span>Active Account</span>
+                      </div>
+                    </div>
                   </div>
-                  <button onClick={() => setIsEditing(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '11px 22px', backgroundColor: '#F5C400', borderRadius: '999px', border: 'none', cursor: 'pointer' }}>
+                  <button 
+                    onClick={() => setIsEditing(true)} 
+                    className="flex items-center justify-center gap-2 py-2.5 px-6 bg-user-primary rounded-round text-sm font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark"
+                  >
                     <Icon d={Icons.edit} size={15} /> Edit Profile
                   </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '18px' }}>
-                  <div style={{ backgroundColor: '#fff', border: '1.5px solid #e8d5ac', borderRadius: '18px', padding: '22px' }}>
-                    <h3>Personal Info</h3>
+                {/* Info Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-user-surface border border-user-border rounded-xl p-5">
+                    <h3 className="text-base font-extrabold text-user-text mb-4 pb-2 border-b border-user-border-light">Personal Information</h3>
                     <InfoRow label="Full Name" value={userData?.fullName} />
                     <InfoRow label="NIC Number" value={userData?.nic} />
                     <InfoRow label="Date Of Birth" value={userData?.dob} />
@@ -525,8 +546,8 @@ const Profile = () => {
                     <InfoRow label="Occupation" value={userData?.occupation} />
                   </div>
 
-                  <div style={{ backgroundColor: '#fff', border: '1.5px solid #e8d5ac', borderRadius: '18px', padding: '22px' }}>
-                    <h3>Contact Details</h3>
+                  <div className="bg-user-surface border border-user-border rounded-xl p-5">
+                    <h3 className="text-base font-extrabold text-user-text mb-4 pb-2 border-b border-user-border-light">Contact Details</h3>
                     <InfoRow label="Mobile Number" value={userData?.mobile} />
                     <InfoRow label="Email Address" value={currentUser?.email} />
                     <InfoRow label="District" value={userData?.district} />
@@ -539,35 +560,48 @@ const Profile = () => {
 
             {isEditing && (
               <>
-                <h1 style={{ fontSize: '26px', fontWeight: 900, marginBottom: '6px' }}>Edit Profile</h1>
-                <p style={{ fontSize: '14px', color: '#888', fontWeight: 600, marginBottom: '28px' }}>
-                  Update your personal information and contact details.
-                </p>
+                <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-1">Edit Profile</h1>
+                <p className="text-sm text-user-text-lighter font-semibold mb-7">Update your personal information and contact details.</p>
 
                 {saveError && (
-                  <div style={{ backgroundColor: '#fde8e8', border: '1.5px solid #f0a0a0', borderRadius: '12px', padding: '12px 18px', marginBottom: '18px', fontSize: '14px', fontWeight: 700, color: '#8b1a1a', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b1a1a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <div className="flex items-center gap-2 bg-user-error-light border border-user-error rounded-xl p-3 mb-4">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
                       <circle cx="12" cy="12" r="10" />
                       <line x1="12" y1="8" x2="12" y2="12" />
                       <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
-                    {saveError}
+                    <span className="text-sm font-semibold text-user-error">{saveError}</span>
                   </div>
                 )}
 
-                <div style={{ backgroundColor: '#fff', border: '1.5px solid #e8d5ac', borderRadius: '18px', padding: '28px', marginBottom: '18px' }}>
-                  <div style={{ marginBottom: '16px' }}><Field label="Full Name" value={form.fullName} onChange={update('fullName')} /></div>
-                  <div style={{ marginBottom: '16px' }}><Field label="Date Of Birth" value={form.dob} onChange={update('dob')} type="date" /></div>
-                  <div style={{ marginBottom: '16px' }}><Field label="Occupation" value={form.occupation} onChange={update('occupation')} /></div>
-                  <div style={{ marginBottom: '16px' }}><GenderSelect value={form.gender} onChange={update('gender')} /></div>
-                  <div style={{ marginBottom: '16px' }}><Field label="Home Address" value={form.address} onChange={update('address')} /></div>
-                  <div style={{ marginBottom: '16px' }}><Field label="Mobile Number" value={form.mobile} onChange={update('mobile')} disabled={true} /></div>
-                  <div style={{ marginBottom: '16px' }}><Field label="Email Address" value={form.email} onChange={update('email')} disabled={true} /></div>
+                <div className="bg-user-surface border border-user-border rounded-xl p-5 md:p-7 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <Field label="Full Name" value={form.fullName} onChange={update('fullName')} />
+                    <Field label="Date Of Birth" value={form.dob} onChange={update('dob')} type="date" />
+                    <Field label="Occupation" value={form.occupation} onChange={update('occupation')} />
+                    <GenderSelect value={form.gender} onChange={update('gender')} />
+                    <div className="md:col-span-2">
+                      <Field label="Home Address" value={form.address} onChange={update('address')} />
+                    </div>
+                    <Field label="Mobile Number" value={form.mobile} onChange={update('mobile')} disabled={true} />
+                    <Field label="Email Address" value={form.email} onChange={update('email')} disabled={true} />
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                  <button onClick={handleCancel} style={{ padding: '13px 32px', backgroundColor: '#8a6040', border: 'none', borderRadius: '999px', color: '#fff', cursor: 'pointer' }}>Cancel</button>
-                  <button onClick={handleSave} style={{ padding: '13px 32px', backgroundColor: '#F5C400', border: 'none', borderRadius: '999px', cursor: 'pointer' }}>Save Changes</button>
+                <div className="flex justify-end gap-3">
+                  <button 
+                    onClick={handleCancel} 
+                    className="py-3 px-8 bg-user-secondary rounded-round text-sm font-extrabold text-white cursor-pointer transition-all hover:bg-user-secondary-dark"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleSave} 
+                    disabled={saving}
+                    className={`py-3 px-8 bg-user-primary rounded-round text-sm font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {saving ? 'Saving...' : 'Save Changes'}
+                  </button>
                 </div>
               </>
             )}
@@ -576,9 +610,31 @@ const Profile = () => {
       </div>
 
       {/* FOOTER */}
-      <footer style={{ backgroundColor: '#6A2301', color: '#fff', textAlign: 'center', padding: '13px 16px', fontSize: '13px', fontWeight: 600 }}>
-        ©2026 Smart Grama Sewa
+      <footer className="bg-[#6A2301] text-white text-center py-3 px-4 text-sm font-semibold">
+        © 2026 Smart Grama Sewa. All rights reserved.
       </footer>
+
+      <style>{`
+        .rounded-round {
+          border-radius: 999px;
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        @media (min-width: 769px) {
+          .desktop-sidebar { display: flex !important; }
+          .desktop-topbar { display: flex !important; }
+          .mobile-topbar { display: none !important; }
+        }
+
+        @media (max-width: 768px) {
+          .desktop-sidebar { display: none !important; }
+          .desktop-topbar { display: none !important; }
+          .mobile-topbar { display: flex !important; }
+        }
+      `}</style>
     </div>
   );
 };
