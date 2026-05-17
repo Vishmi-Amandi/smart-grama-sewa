@@ -8,6 +8,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { useNavigate } from "react-router-dom";
+import { logActivity } from "../../../logActivity";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -87,6 +88,7 @@ const AnnouncementList = ({ gnStatus, theme }) => {
     setDeletingId(id);
     try {
       await deleteDoc(doc(db, "announcements", id));
+      await logActivity("announcement", "Deleted", item?.title || "Announcement", "Announcement deleted");
       setAnnouncements((prev) => prev.filter((a) => a.id !== id));
       setConfirmDelete(null);
     } catch (err) {
@@ -112,6 +114,7 @@ const handleSaveEdit = async () => {
 
     // ✅ Actually save to Firestore
     await updateDoc(doc(db, "announcements", editingItem.id), updates);
+    await logActivity("announcement", "Edited", editForm.title, "Announcement updated");
 
     // ✅ Update local state
     setAnnouncements((prev) =>

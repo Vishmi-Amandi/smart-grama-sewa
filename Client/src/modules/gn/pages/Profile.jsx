@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
-import { Pencil } from "lucide-react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, query, where, orderBy, getDocs, limit } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+
 
 const generateInitials = (fullName) => {
   if (!fullName) return "N/A";
@@ -58,27 +59,60 @@ const Profile = ({ gnStatus, theme }) => {
   // Photo
   const [photoUploading,      setPhotoUploading]      = useState(false);
 
+  //Activity Log
+  const [activities,      setActivities]      = useState([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityFilter,  setActivityFilter]  = useState("All");
+
   const t = getThemeClasses(theme);
 
-  // ─── Load user data ──────────────────────────────────────────────────────────
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const docRef  = doc(db, "gn_officers", user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (!data.photoURL && data.photograph) {
-            await updateDoc(docRef, { photoURL: data.photograph });
-            data.photoURL = data.photograph;
-          }
-          setUserData(data);
+ // ─── useEffect 1 — Load user data (keep exactly as before) ───────────────────
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const docRef  = doc(db, "gn_officers", user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (!data.photoURL && data.photograph) {
+          await updateDoc(docRef, { photoURL: data.photograph });
+          data.photoURL = data.photograph;
         }
+        setUserData(data);
       }
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+    }
+    setLoading(false);
+  });
+  return () => unsubscribe();
+}, []);   // ← empty array, no activeTab here
+
+// ─── useEffect 2 — Fetch activity log (separate, new) ────────────────────────
+useEffect(() => {
+  if (activeTab !== "activity") return;
+  const fetchActivities = async () => {
+    setActivityLoading(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const q = query(
+        collection(db, "activity_logs"),
+        where("uid", "==", user.uid),
+        orderBy("createdAt", "desc"),
+        limit(50)
+      );
+      const snap = await getDocs(q);
+      setActivities(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    } catch (err) {
+      console.error("Fetch activities error:", err);
+    } finally {
+      setActivityLoading(false);
+    }
+  };
+  fetchActivities();
+}, [activeTab]);  // ← activeTab dependency here
+  
+
+
 
   // ─── Save office address ─────────────────────────────────────────────────────
   const handleSaveLocation = async () => {
@@ -576,72 +610,89 @@ const Profile = ({ gnStatus, theme }) => {
       )}
 
       {/* ── Activity Log ── */}
-      {activeTab === "activity" && (
-        <div>
-          <h2 className={`text-xl font-bold mb-4 ${t.text}`}>Activity Log</h2>
+{activeTab === "activity" && (
+  <div>
+    <h2 className={`text-xl font-bold mb-4 ${t.text}`}>Activity Log</h2>
 
-          <div className={`${t.card} rounded-2xl shadow p-5 mb-6`}>
-            <p className={`text-sm font-semibold mb-4 ${t.text}`}>📅 This Month</p>
-            <div className="grid grid-cols-3 gap-4">
-              {[
-                { label: "Total Appointments", value: "124", change: "+12%", color: "text-green-600", bg: "bg-green-50", width: "w-3/4" },
-                { label: "New Announcements",  value: "18",  change: "+5%",  color: "text-green-600", bg: "bg-green-50", width: "w-1/2" },
-                { label: "System Logins",      value: "850", change: "-2%",  color: "text-red-500",   bg: "bg-red-50",   width: "w-full" },
-              ].map((item) => (
-                <div key={item.label} className={`border ${t.border} rounded-xl p-4`}>
-                  <div className="flex items-center justify-between mb-1">
-                    <p className={`text-xs ${t.subtext}`}>{item.label}</p>
-                    <span className={`text-xs font-semibold ${item.color} ${item.bg} px-2 py-0.5 rounded-full`}>{item.change}</span>
-                  </div>
-                  <p className={`text-3xl font-bold ${t.text}`}>{item.value}</p>
-                  <div className={`h-1 bg-[#E5A800] rounded-full mt-3 ${item.width}`}></div>
-                </div>
-              ))}
+    {/* Stats */}
+    <div className="grid grid-cols-3 gap-4 mb-6">
+      {[
+        { label: "Total Activities", value: activities.length },
+        { label: "Announcements",    value: activities.filter((a) => a.type === "announcement").length },
+        { label: "Transfers",        value: activities.filter((a) => a.type === "transfer").length },
+      ].map((item) => (
+        <div key={item.label} className={`${t.card} rounded-2xl shadow p-5`}>
+          <p className={`text-xs ${t.subtext} mb-1`}>{item.label}</p>
+          <p className={`text-3xl font-bold text-[#8B4513]`}>
+            {activityLoading ? "—" : item.value}
+          </p>
+        </div>
+      ))}
+    </div>
+
+    {/* Filter Tabs */}
+    <div className="flex gap-2 mb-4">
+      {["All", "announcement", "transfer"].map((f) => (
+        <button key={f} onClick={() => setActivityFilter(f)}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold capitalize transition
+            ${activityFilter === f
+              ? "bg-[#8B4513] text-white"
+              : `border ${t.border} ${t.subtext} hover:border-[#8B4513]`}`}>
+          {f === "All" ? "All" : f === "announcement" ? "Announcements" : "Transfers"}
+        </button>
+      ))}
+    </div>
+
+    {/* Activity Feed */}
+    <div className={`${t.card} rounded-2xl shadow p-5`}>
+      {activityLoading ? (
+        <div className="flex items-center justify-center py-12 gap-2">
+          <Loader2 size={20} className="animate-spin text-[#E5A800]" />
+          <p className={`text-sm ${t.subtext}`}>Loading activities...</p>
+        </div>
+      ) : (activityFilter === "All" ? activities : activities.filter((a) => a.type === activityFilter)).length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-4xl mb-3">📋</p>
+          <p className={`text-sm font-semibold ${t.subtext}`}>No activities recorded yet.</p>
+          <p className={`text-xs mt-1 ${t.subtext}`}>
+            Activities will appear here when you publish announcements or submit transfer requests.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {(activityFilter === "All"
+            ? activities
+            : activities.filter((a) => a.type === activityFilter)
+          ).map((item) => (
+            <div key={item.id} className={`flex items-center gap-4 border ${t.border} rounded-xl px-4 py-3`}>
+              <p className={`text-xs w-24 flex-shrink-0 ${t.subtext}`}>
+                {item.createdAt?.toDate?.()?.toLocaleString("en-US", {
+                  month: "short", day: "numeric",
+                  hour: "2-digit", minute: "2-digit"
+                }) || "—"}
+              </p>
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                item.type === "announcement" ? "bg-blue-400" :
+                item.type === "transfer"     ? "bg-orange-400" : "bg-gray-300"
+              }`} />
+              <div className="flex-1">
+                <p className={`text-sm font-semibold ${t.text}`}>{item.title}</p>
+                <p className={`text-xs ${t.subtext}`}>{item.description}</p>
+              </div>
+              <span className={`text-xs font-semibold px-3 py-1 rounded-full flex-shrink-0 ${
+                item.type === "announcement" ? "bg-blue-100 text-blue-600"     :
+                item.type === "transfer"     ? "bg-orange-100 text-orange-600" :
+                                               "bg-gray-100 text-gray-600"
+              }`}>
+                {item.action?.toUpperCase()}
+              </span>
             </div>
-          </div>
-
-          <div className={`${t.card} rounded-2xl shadow p-5`}>
-            <p className={`text-sm font-semibold mb-4 ${t.text}`}>🕐 Recent Activities</p>
-
-            <p className={`text-xs font-semibold uppercase tracking-wide mb-3 ${t.subtext}`}>Today</p>
-            <div className="space-y-3 mb-6">
-              {[
-                { time: "09:30 AM", dot: "bg-yellow-400", title: "Land Deed Certification",        sub: "Applicant: M. Perera",                tag: "APPOINTMENT",  tagColor: "bg-orange-100 text-orange-600" },
-                { time: "11:15 AM", dot: "bg-blue-400",   title: "Village Council Meeting Notice",  sub: "Broadcast to: All Residents",         tag: "ANNOUNCEMENT", tagColor: "bg-blue-100 text-blue-600" },
-                { time: "02:00 PM", dot: "bg-gray-300",   title: "Admin System Access",             sub: "Session started from IP: 192.168.1.1", tag: "SYSTEM",       tagColor: "bg-gray-100 text-gray-600" },
-              ].map((item) => (
-                <div key={item.time} className={`flex items-center gap-4 border ${t.border} rounded-xl px-4 py-3`}>
-                  <p className={`text-xs w-16 ${t.subtext}`}>{item.time}</p>
-                  <span className={`w-2 h-2 rounded-full ${item.dot} flex-shrink-0`} />
-                  <div className="flex-1">
-                    <p className={`text-sm font-semibold ${t.text}`}>{item.title}</p>
-                    <p className={`text-xs ${t.subtext}`}>{item.sub}</p>
-                  </div>
-                  <span className={`text-xs font-semibold px-3 py-1 rounded-full ${item.tagColor}`}>{item.tag}</span>
-                </div>
-              ))}
-            </div>
-
-            <p className={`text-xs font-semibold uppercase tracking-wide mb-3 ${t.subtext}`}>Yesterday</p>
-            <div className="space-y-3">
-              {[
-                { time: "10:00 AM", dot: "bg-yellow-400", title: "Identity Verification",  sub: "Applicant: K. Silva",     tag: "APPOINTMENT", tagColor: "bg-orange-100 text-orange-600" },
-                { time: "03:45 PM", dot: "bg-yellow-400", title: "Pensioner Verification", sub: "Applicant: D. Rajapaksa", tag: "APPOINTMENT", tagColor: "bg-orange-100 text-orange-600" },
-              ].map((item) => (
-                <div key={item.time} className={`flex items-center gap-4 border ${t.border} rounded-xl px-4 py-3`}>
-                  <p className={`text-xs w-16 ${t.subtext}`}>{item.time}</p>
-                  <span className={`w-2 h-2 rounded-full ${item.dot} flex-shrink-0`} />
-                  <div className="flex-1">
-                    <p className={`text-sm font-semibold ${t.text}`}>{item.title}</p>
-                    <p className={`text-xs ${t.subtext}`}>{item.sub}</p>
-                  </div>
-                  <span className={`text-xs font-semibold px-3 py-1 rounded-full ${item.tagColor}`}>{item.tag}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
       )}
+    </div>
+  </div>
+)}
 
     </GNLayout>
   );

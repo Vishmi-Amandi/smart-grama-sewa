@@ -4,6 +4,7 @@ import { Paperclip, Eye, Send, Save, X, Clock, Loader2 } from "lucide-react";
 import { collection, addDoc,doc,updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { useLocation, useNavigate } from "react-router-dom";
+import { logActivity } from "../../../logActivity";
 
 const CreateAnnouncement = ({ gnStatus, theme }) => {
   const t = getThemeClasses(theme);
@@ -145,6 +146,7 @@ if (draft?.id) {
         createdAt: serverTimestamp(),
       });
     }
+    await logActivity("announcement", "Draft Saved", title, `Draft saved — Category: ${category}`);
     setSuccess("Draft saved successfully!");
     setTimeout(() => navigate("/announcement-list"), 1500);
   } catch (err) {
@@ -186,8 +188,9 @@ const handlePublish = async () => {
         createdByUid: user.uid,
         createdAt: serverTimestamp(),
         publishedAt: serverTimestamp(),
-      });
+      });  
     }
+    await logActivity("announcement", "Published", title, `Category: ${category}, Priority: ${priority}`);
     setSuccess("Announcement published successfully!");
     setTimeout(() => navigate("/announcement-list"), 1500);
   } catch (err) {
@@ -204,6 +207,7 @@ const handlePublish = async () => {
     setScheduling(true);
     try {
       await addDoc(collection(db, "announcements"), buildDoc("Scheduled"));
+      await logActivity("announcement", "Scheduled", title, `Scheduled for ${scheduleDate} at ${scheduleTime}`);
       showSuccess(`🕐 Announcement scheduled for ${scheduleDate} at ${scheduleTime}.`);
       resetForm();
     } catch (err) {

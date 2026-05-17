@@ -4,6 +4,7 @@ import { Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../../firebase";
+import { logActivity } from "../../../logActivity";
 
 const TransferRequest = ({ gnStatus, theme }) => {
   const t = getThemeClasses(theme);
@@ -52,6 +53,12 @@ const handleSubmit = async () => {
   status:          "Pending",
   createdAt:       serverTimestamp(),
 });
+await logActivity(
+  "transfer",
+  "Submitted",
+  `Transfer to ${form.toDivision}`,
+  `From ${form.fromDivision} (${form.fromDistrict}) → ${form.toDivision} (${form.toDistrict})`
+);
     setSuccess(true);
   } catch (err) {
     setError("Failed to submit request. Please try again.");
