@@ -1,5 +1,59 @@
 @import "tailwindcss";
 
+/* Theme Variables - Light Mode (default) */
+:root {
+  --bg-page: #f5f0e8;
+  --bg-sidebar: #F5C400;
+  --bg-card: #ffffff;
+  --bg-topbar: #ffffff;
+  --text-main: #1e1200;
+  --text-sub: #888888;
+  --border: #e8d5ac;
+}
+
+/* Dark Mode */
+:root.dark {
+  --bg-page: #1a1a2e;
+  --bg-sidebar: #16213e;
+  --bg-card: #2d2d44;
+  --bg-topbar: #16213e;
+  --text-main: #f0f0f0;
+  --text-sub: #aaaacc;
+  --border: #3a3a5c;
+}
+
+/* Text Size Classes */
+body[data-textsize="small"] {
+  font-size: 14px;
+}
+
+body[data-textsize="normal"] {
+  font-size: 16px;
+}
+
+body[data-textsize="large"] {
+  font-size: 18px;
+}
+
+/* Apply variables to elements */
+body {
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode specific overrides for Tailwind classes */
+.dark .bg-white {
+  background-color: var(--bg-card) !important;
+}
+
+.dark .text-user-text {
+  color: var(--text-main) !important;
+}
+
+.dark .border-user-border {
+  border-color: var(--border) !important;
+}
 
 @theme {
   /* User Module Colors - Light Mode */
@@ -61,4 +115,29 @@
 /* Smooth transition for theme switching */
 * {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+
+/* Fix for active sidebar item in dark mode - makes text readable */
+.dark .bg-white\/90 {
+  background-color: #000 !important;
+}
+
+.dark .bg-white\/90 .text-user-text,
+.dark .bg-white\/90 span,
+.dark .bg-white\/90 .font-extrabold {
+  color: #1e1200 !important;
+}
+
+/* Ensure text size applies to entire page using html element */
+html[data-textsize="small"] {
+  font-size: 14px;
+}
+
+html[data-textsize="normal"] {
+  font-size: 16px;
+}
+
+html[data-textsize="large"] {
+  font-size: 18px;
 }

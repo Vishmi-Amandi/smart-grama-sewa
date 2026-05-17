@@ -1,14 +1,14 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: 'class', // Use class strategy (not media query)
+  darkMode: 'class',
   content: [
     "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
     extend: {
       colors: {
-        // User Module Colors - Light Mode (default)
+        // User Module Colors
         'user-primary': {
           DEFAULT: '#F5C400',
           dark: '#d4a800',
@@ -47,42 +47,42 @@ export default {
           light: '#eff6ff',
         },
         
-        // Dark Mode Colors (will be applied when dark class is added)
-        dark: {
-          primary: '#F5C400',
-          'primary-dark': '#d4a800',
-          'primary-light': '#2a2400',
-          secondary: '#6a4020',
-          'secondary-dark': '#5a3520',
-          'secondary-light': '#2a2015',
-          text: '#e8e0c8',
-          'text-light': '#c0b898',
-          'text-lighter': '#a09878',
-          border: '#4a3a28',
-          'border-light': '#3a2a1a',
-          background: '#1a1510',
-          surface: '#2a2018',
-          success: '#22c55e',
-          'success-light': '#1a3a1a',
-          warning: '#f59e0b',
-          'warning-light': '#3a2a10',
-          error: '#ef4444',
-          'error-light': '#3a1a1a',
-          info: '#3b82f6',
-          'info-light': '#1a2a4a',
-        },
+        // Dark Mode Specific Colors
+        'dark-bg': '#121826',
+        'dark-sidebar': '#1a2332',
+        'dark-surface': '#1e293b',
+        'dark-hover': '#2d3a4f',
+        'dark-border': '#334155',
+        'dark-text': '#f1f5f9',
+        'dark-text-sub': '#94a3b8',
       },
       fontFamily: {
         sans: ['Nunito', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
-        'sm': '4px',
-        'md': '8px',
-        'lg': '12px',
-        'xl': '16px',
-        '2xl': '20px',
-        '3xl': '24px',
+        'sm': '8px',
+        'md': '12px',
+        'lg': '16px',
+        'xl': '20px',
         'round': '999px',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.2s ease',
+        'slide-up': 'slideUp 0.3s ease',
+        'spin-slow': 'spin 0.8s linear infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        spin: {
+          'to': { transform: 'rotate(360deg)' },
+        },
       },
     },
   },
