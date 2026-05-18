@@ -703,7 +703,7 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
 
         {SERVICE_CATS.map(cat => (
           <div key={cat.key} className="mb-2.5">
-            <button onClick={() => toggleCat(cat.key)} className={`w-full flex items-center gap-2.5 p-3.5 border border-user-border rounded-t-xl ${openCats[cat.key] ? 'bg-yellow-50' : 'bg-gray-50 rounded-xl'} cursor-pointer transition-all`}>
+            <button onClick={() => toggleCat(cat.key)} className={`w-full flex items-center gap-2.5 p-3.5 border border-user-border rounded-t-xl ${openCats[cat.key] ? 'bg-neutral-800' : 'bg-neutral-800 rounded-xl'} cursor-pointer transition-all`}>
               <Icon d={openCats[cat.key] ? IC.chevDown : IC.chevR} size={16} color="#B46A02" />
               <span className="text-sm font-extrabold text-user-text">{cat.label}</span>
             </button>
@@ -714,7 +714,7 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
                   const selected = booking.service?.id === svc.id;
                   return (
                     <div key={svc.id} onClick={() => selectService(svc)} className={`p-4 cursor-pointer border-b border-yellow-50 transition-all ${selected ? 'bg-yellow-100' : 'bg-white hover:bg-yellow-50'}`} style={{ borderLeft: selected ? '4px solid #F5C400' : '4px solid transparent' }}>
-                      <div className="text-sm font-extrabold text-user-text mb-0.5">{svc.name}</div>
+                      <div className={`text-sm font-extrabold mb-0.5 ${selected ? 'text-gray-600' : 'text-gray-200'}`}>{svc.name}</div>
                       <div className="text-xs font-semibold text-gray-500">{svc.desc}</div>
                     </div>
                   );
@@ -725,7 +725,7 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
         ))}
 
         {booking.service && (
-          <div className="mt-4 p-3.5 bg-yellow-50 border border-yellow-400 rounded-xl flex items-center gap-3">
+          <div className="mt-4 p-3.5 bg-neutral-800 border border-yellow-400 rounded-xl flex items-center gap-3">
             <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0"><Icon d={IC.check} size={14} color="#3d2a00" sw={2.5} /></div>
             <div className="flex-1"><div className="text-[10px] font-extrabold text-warning uppercase tracking-wider mb-0.5">Selected Service</div><div className="text-sm font-black text-user-text">{booking.service.name}</div></div>
             <button onClick={() => setBooking(p => ({ ...p, service: null }))} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-user-border rounded-round text-xs font-bold text-gray-500 cursor-pointer"><Icon d={IC.x} size={12} color="#888" /> CHANGE</button>
@@ -895,18 +895,18 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-5 md:p-6">
           <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-6 md:gap-8`}>
             <div className="flex-1">
-              <div className="text-[11px] md:text-[11px] font-extrabold text-warning uppercase tracking-wider mb-3.5 flex items-center gap-2"><Icon d={IC.calendar} size={14} color="#B46A02" /> Appointment Details</div>
+              <div className="text-[11px] md:text-[11px] font-extrabold text-gray-900 uppercase tracking-wider mb-3.5 flex items-center gap-2"><Icon d={IC.calendar} size={14} color="#B46A02" /> Appointment Details</div>
               <div className="flex flex-col gap-3.5">
-                <div className="flex items-center gap-3 flex-wrap"><div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0"><Icon d={IC.calendar} size={16} color="#B46A02" /></div><div><div className="text-[11px] font-semibold text-gray-500 mb-0.5">Date</div><div className="text-sm md:text-base font-bold text-user-text">{dateStr}</div></div></div>
-                <div className="flex items-center gap-3 flex-wrap"><div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0"><Icon d={IC.clock} size={16} color="#B46A02" /></div><div><div className="text-[11px] font-semibold text-gray-500 mb-0.5">Time</div><div className="text-sm md:text-base font-bold text-user-text">{timeStr}</div></div></div>
-                <div className="flex items-center gap-3 flex-wrap"><div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0"><Icon d={IC.location} size={16} color="#B46A02" /></div><div><div className="text-[11px] font-semibold text-gray-500 mb-0.5">Location</div><div className="text-sm md:text-base font-bold text-user-text">{userData?.dsDiv ? `Divisional Secretariat, ${userData.dsDiv}` : 'Divisional Secretariat Office'}</div></div></div>
+                <div className="flex items-center gap-3 flex-wrap"><div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0"><Icon d={IC.calendar} size={16} color="#B46A02" /></div><div><div className="text-[11px] font-semibold text-gray-500 mb-0.5">Date</div><div className="text-sm md:text-base font-bold text-gray-600">{dateStr}</div></div></div>
+                <div className="flex items-center gap-3 flex-wrap"><div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0"><Icon d={IC.clock} size={16} color="#B46A02" /></div><div><div className="text-[11px] font-semibold text-gray-500 mb-0.5">Time</div><div className="text-sm md:text-base font-bold text-gray-600">{timeStr}</div></div></div>
+                <div className="flex items-center gap-3 flex-wrap"><div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0"><Icon d={IC.location} size={16} color="#B46A02" /></div><div><div className="text-[11px] font-semibold text-gray-500 mb-0.5">Location</div><div className="text-sm md:text-base font-bold text-gray-600">{userData?.dsDiv ? `Divisional Secretariat, ${userData.dsDiv}` : 'Divisional Secretariat Office'}</div></div></div>
               </div>
             </div>
             {!isMobile && <div className="w-px bg-yellow-200 mx-2" />}
             <div className="flex-1">
-              <div className="text-[11px] md:text-[11px] font-extrabold text-warning uppercase tracking-wider mb-3.5 flex items-center gap-2"><Icon d={IC.profile} size={14} color="#B46A02" /> Applicant Information</div>
+              <div className="text-[11px] md:text-[11px] font-extrabold text-gray-900 uppercase tracking-wider mb-3.5 flex items-center gap-2"><Icon d={IC.profile} size={14} color="#B46A02" /> Applicant Information</div>
               <div className="flex flex-col gap-3.5">
-                <div><div className="text-[11px] font-semibold text-gray-500 mb-1">Full Name</div><div className="text-base md:text-base font-extrabold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</div></div>
+                <div><div className="text-[11px] font-semibold text-gray-500 mb-1">Full Name</div><div className="text-base md:text-base font-extrabold text-gray-600">{userData?.fullName || currentUser?.displayName || 'User'}</div></div>
                 <div><div className="text-[11px] font-semibold text-gray-500 mb-1">NIC Number</div><div className="text-sm md:text-base font-semibold text-gray-600 font-mono">{nicMasked}</div></div>
                 <div><div className="text-[11px] font-semibold text-gray-500 mb-1">Mobile Number</div><div className="text-sm md:text-base font-semibold text-gray-600">{userData?.mobile || currentUser?.phoneNumber || 'Not provided'}</div></div>
               </div>
