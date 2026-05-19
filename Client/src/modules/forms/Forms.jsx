@@ -199,11 +199,22 @@ const Forms = () => {
   );
 };
 
-// --- Custom Multi-Step Overlay with Separated Clean Inputs ---
+// --- Multi-Step Unified Form Engine ---
 const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userData, db }) => {
   if (!form) return null;
 
   const [formStep, setFormStep] = useState(1);
+  
+  const [hasJobIncome, setHasJobIncome] = useState(false);
+  const [hasPropertyIncome, setHasPropertyIncome] = useState(false);
+  const [hasBusinessIncome, setHasBusinessIncome] = useState(false);
+  const [isReliefRecipient, setIsReliefRecipient] = useState(false);
+
+  const empAmt = Number(inputs.summaryEmployment) || 0;
+  const landAmt = Number(inputs.summaryLand) || 0;
+  const bizAmt = Number(inputs.summaryBusiness) || 0;
+  const otherAmt = Number(inputs.summaryOther) || 0;
+  const totalCalculatedIncome = empAmt + landAmt + bizAmt + otherAmt;
 
   const handleInputChange = (field, val) => {
     setInputs(prev => ({ ...prev, [field]: val }));
@@ -211,11 +222,16 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    const maxSteps = (form.id === 1 || form.id === 2) ? 3 : 1;
+    
+    let maxSteps = 1;
+    if (form.id === 1 || form.id === 2) maxSteps = 3; 
+    if (form.id === 3) maxSteps = 4;                 
+
     if (formStep < maxSteps) {
       setFormStep(prev => prev + 1);
     } else {
-      alert(`Backend Submission Triggered for: ${form.title}\nData: ${JSON.stringify(inputs)}`);
+      const finalPayload = form.id === 3 ? { ...inputs, totalAnnualIncome: totalCalculatedIncome } : inputs;
+      alert(`Backend Submission Triggered for: ${form.title}\nData: ${JSON.stringify(finalPayload)}`);
       onClose();
       setFormStep(1);
     }
@@ -232,7 +248,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
         <div style={{ backgroundColor: '#6A2301', color: '#fff', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800 }}>{form.title}</h3>
-            <p style={{ margin: 0, fontSize: '11px', color: '#f0e4cc' }}>Official Grama Niladhari Application Form</p>
+            <p style={{ margin: 0, fontSize: '11px', color: '#f0e4cc' }}>Official Verification Portal</p>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '22px', cursor: 'pointer', fontWeight: 700 }}>×</button>
         </div>
@@ -241,15 +257,26 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
           <div style={{ display: 'flex', backgroundColor: '#f0e8d5', padding: '10px 20px', gap: '8px', borderBottom: '1px solid #e8d5ac', fontSize: '12px', fontWeight: 700, color: '#5a3a00', flexShrink: 0 }}>
             <span style={{ color: formStep === 1 ? '#6A2301' : '#888' }}>1. Division &amp; Applicant Info</span> &gt;
             <span style={{ color: formStep === 2 ? '#6A2301' : '#888' }}>2. Residence &amp; Family</span> &gt;
-            <span style={{ color: formStep === 3 ? '#6A2301' : '#888' }}>3. Background &amp; Reason</span>
+            <span style={{ color: formStep === 3 ? '#6A2301' : '#888' }}>3. Verification &amp; Reason</span>
+          </div>
+        )}
+
+        {form.id === 3 && (
+          <div style={{ display: 'flex', backgroundColor: '#f0e8d5', padding: '10px 20px', gap: '8px', borderBottom: '1px solid #e8d5ac', fontSize: '11px', fontWeight: 700, color: '#5a3a00', flexShrink: 0 }}>
+            <span style={{ color: formStep === 1 ? '#6A2301' : '#888' }}>1. Personal Info</span> &gt;
+            <span style={{ color: formStep === 2 ? '#6A2301' : '#888' }}>2. Income Breakdown</span> &gt;
+            <span style={{ color: formStep === 3 ? '#6A2301' : '#888' }}>3. Total Summary</span> &gt;
+            <span style={{ color: formStep === 4 ? '#6A2301' : '#888' }}>4. Uploads &amp; Declarations</span>
           </div>
         )}
 
         <form onSubmit={handleFormSubmit} style={{ padding: '24px', backgroundColor: '#fffbe8', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
-          {isResidenceOrCharacter ? (
+          {/* ==========================================
+              MODULE A: RESIDENCE & CHARACTER CERTIFICATES 
+             ========================================== */}
+          {isResidenceOrCharacter && (
             <>
-              {/* STEP 1: Admin Divisions & Split Name/Address info */}
               {formStep === 1 && (
                 <>
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>1) Administrative Divisions</span>
@@ -265,12 +292,10 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                   </div>
 
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingTop: '8px', paddingBottom: '4px' }}>2) Information about Applicant</span>
-                  
                   <div>
                     <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Full Name</label>
                     <input type="text" required onChange={e => handleInputChange('applicantName', e.target.value)} value={inputs.applicantName || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Enter Full Name" />
                   </div>
-
                   <div>
                     <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Permanent Address</label>
                     <input type="text" required onChange={e => handleInputChange('applicantAddress', e.target.value)} value={inputs.applicantAddress || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Enter Permanent Address" />
@@ -312,7 +337,6 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                       <input type="text" required onChange={e => handleInputChange('religion', e.target.value)} value={inputs.religion || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Religion" />
                     </div>
                   </div>
-
                   <div>
                     <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Present Occupation</label>
                     <input type="text" required onChange={e => handleInputChange('occupation', e.target.value)} value={inputs.occupation || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. Student, Executive Officer" />
@@ -320,7 +344,6 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                 </>
               )}
 
-              {/* STEP 2: Residence & Separated Family details inputs */}
               {formStep === 2 && (
                 <>
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>Residence Information</span>
@@ -334,12 +357,10 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                       <input type="text" required onChange={e => handleInputChange('gnPeriod', e.target.value)} value={inputs.gnPeriod || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. 5 Years" />
                     </div>
                   </div>
-
                   <div>
                     <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Nature of other evidences in proof of residence</label>
                     <input type="text" required onChange={e => handleInputChange('residenceEvidence', e.target.value)} value={inputs.residenceEvidence || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. Electoral Register, Utility Bills" />
                   </div>
-
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>National Identity Card (NIC) No.</label>
@@ -350,8 +371,6 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                       <input type="text" required onChange={e => handleInputChange('electoralDetails', e.target.value)} value={inputs.electoralDetails || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="List No, Serial No" />
                     </div>
                   </div>
-
-                  {/* SEPARATED FATHER'S NAME AND ADDRESS INPUTS */}
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingTop: '8px', paddingBottom: '4px' }}>Family Particulars</span>
                   <div>
                     <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Name of the Father</label>
@@ -364,11 +383,9 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                 </>
               )}
 
-              {/* STEP 3: Background Verification & Reason strings */}
               {formStep === 3 && (
                 <>
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>Background Verification &amp; Reason</span>
-                  
                   <div>
                     <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Whether convicted by a Court of Law?</label>
                     <select required onChange={e => handleInputChange('courtConviction', e.target.value)} value={inputs.courtConviction || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', backgroundColor: '#fff', outline: 'none' }}>
@@ -376,32 +393,224 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                       <option value="Yes">Yes</option>
                     </select>
                   </div>
-
                   <div>
                     <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Interest in public activities, social service, or community work?</label>
-                    <textarea rows={2} onChange={e => handleInputChange('socialService', e.target.value)} value={inputs.socialService || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }} placeholder="Describe any community contributions or involvement..." />
+                    <textarea rows={2} onChange={e => handleInputChange('socialService', e.target.value)} value={inputs.socialService || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }} placeholder="Describe any community contributions..." />
                   </div>
-
                   <div>
                     <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Purpose for which the certificate is required</label>
                     <input type="text" required onChange={e => handleInputChange('certificatePurpose', e.target.value)} value={inputs.certificatePurpose || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. Employment, Passport, Bank Loan" />
                   </div>
-
                   <div style={{ backgroundColor: '#fff', border: '1.5px dashed #B46A02', borderRadius: '12px', padding: '14px', marginTop: '6px' }}>
                     <span style={{ fontSize: '12px', fontWeight: 700, color: '#3d2a00', display: 'block', marginBottom: '6px' }}>Signature Affirmation</span>
                     <input type="file" required style={{ fontSize: '13px' }} />
-                    <span style={{ display: 'block', fontSize: '10px', color: '#888', marginTop: '4px' }}>Upload a picture of your signature or thumb impression.</span>
                   </div>
                 </>
               )}
             </>
-          ) : (
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Reason for Application</label>
-              <textarea required rows={4} onChange={e => handleInputChange('generalReason', e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', resize: 'none', outline: 'none', fontFamily: 'inherit' }} placeholder="Provide specific context details..." />
-            </div>
           )}
 
+          {/* ==========================================
+              MODULE B: INCOME CERTIFICATE SUBMISSION
+             ========================================== */}
+          {form.id === 3 && (
+            <>
+              {/* STEP 1: Personal Details (Addressing Container Removed) */}
+              {formStep === 1 && (
+                <>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>01. Personal Details</span>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Full Name of the Applicant</label>
+                    <input type="text" required onChange={e => handleInputChange('incFullName', e.target.value)} value={inputs.incFullName || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Enter Full Name" />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Address</label>
+                    <textarea rows={2} required onChange={e => handleInputChange('incAddress', e.target.value)} value={inputs.incAddress || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }} placeholder="Enter Permanent Address" />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>NIC Number</label>
+                      <input type="text" required onChange={e => handleInputChange('incNic', e.target.value)} value={inputs.incNic || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="NIC Number" />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Purpose for requesting certificate</label>
+                      <select required onChange={e => handleInputChange('incPurpose', e.target.value)} value={inputs.incPurpose || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', backgroundColor: '#fff', outline: 'none' }}>
+                        <option value="">-- Select Purpose --</option>
+                        <option value="University Admission">University Admission</option>
+                        <option value="Bank Loan">Bank Loan</option>
+                        <option value="Scholarship">Scholarship</option>
+                        <option value="Other">Other External Verification</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* STEP 2: Conditional Income Breakdown Modules */}
+              {formStep === 2 && (
+                <>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>02. Source of Income Breakdown</span>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#666', fontWeight: 600 }}>Toggle your active financial streams below to fill details:</p>
+
+                  <div style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '10px', border: '1.5px solid #e8d5ac' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 800, color: '#3d2a00', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={hasJobIncome} onChange={e => setHasJobIncome(e.target.checked)} style={{ accentColor: '#6A2301' }} />
+                      1. Income From Employment / Profession
+                    </label>
+                    {hasJobIncome && (
+                      <div style={{ marginTop: '12px', borderTop: '1px solid #f5f0e8', paddingTop: '10px' }}>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Monthly or Annual Income (LKR)</label>
+                        <input type="number" onChange={e => handleInputChange('incomeJobAmt', e.target.value)} value={inputs.incomeJobAmt || ''} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1.5px solid #e8d5ac', outline: 'none' }} placeholder="0.00" />
+                        <span style={{ display: 'block', fontSize: '11px', color: '#888', fontWeight: 600, marginTop: '6px' }}>* Note: Private sector workers must attach an employer-certified salary slip later.</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '10px', border: '1.5px solid #e8d5ac' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 800, color: '#3d2a00', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={hasPropertyIncome} onChange={e => setHasPropertyIncome(e.target.checked)} style={{ accentColor: '#6A2301' }} />
+                      2. Income From Land and Property
+                    </label>
+                    {hasPropertyIncome && (
+                      <div style={{ marginTop: '12px', borderTop: '1px solid #f5f0e8', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Location / Address of Land or Property</label>
+                          <input type="text" onChange={e => handleInputChange('landLoc', e.target.value)} value={inputs.landLoc || ''} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} placeholder="Property Location" />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Deed Number &amp; Date</label>
+                            <input type="text" onChange={e => handleInputChange('landDeed', e.target.value)} value={inputs.landDeed || ''} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} placeholder="Deed Details" />
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Extent of Land (Size)</label>
+                            <input type="text" onChange={e => handleInputChange('landSize', e.target.value)} value={inputs.landSize || ''} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} placeholder="e.g. 20 Perches" />
+                          </div>
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Name of Current Owner</label>
+                          <input type="text" onChange={e => handleInputChange('landOwner', e.target.value)} value={inputs.landOwner || ''} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} placeholder="Owner's Name" />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Net Income received from lands/buildings (LKR)</label>
+                          <input type="number" onChange={e => handleInputChange('incomeLandAmt', e.target.value)} value={inputs.incomeLandAmt || ''} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} placeholder="0.00" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '10px', border: '1.5px solid #e8d5ac' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 800, color: '#3d2a00', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={hasBusinessIncome} onChange={e => setHasBusinessIncome(e.target.checked)} style={{ accentColor: '#6A2301' }} />
+                      3. Income From Businesses
+                    </label>
+                    {hasBusinessIncome && (
+                      <div style={{ marginTop: '12px', borderTop: '1px solid #f5f0e8', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Name of the Business</label>
+                          <input type="text" onChange={e => handleInputChange('bizName', e.target.value)} value={inputs.bizName || ''} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} placeholder="Business Entity Name" />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Business Registration Number</label>
+                            <input type="text" onChange={e => handleInputChange('bizRegNo', e.target.value)} value={inputs.bizRegNo || ''} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} placeholder="BR-XXXXXX" />
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Annual Net Income (LKR)</label>
+                            <input type="number" onChange={e => handleInputChange('incomeBizAmt', e.target.value)} value={inputs.incomeBizAmt || ''} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} placeholder="0.00" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* STEP 3: Summary Sheet */}
+              {formStep === 3 && (
+                <>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>03. Total Consolidated Income (Summary)</span>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#666', fontWeight: 600 }}>Map out your total yearly aggregates below to generate consolidation summaries:</p>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Annual Employment Total (LKR)</label>
+                      <input type="number" onChange={e => handleInputChange('summaryEmployment', e.target.value)} value={inputs.summaryEmployment || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="0.00" />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Annual Lands &amp; Properties (LKR)</label>
+                      <input type="number" onChange={e => handleInputChange('summaryLand', e.target.value)} value={inputs.summaryLand || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="0.00" />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Annual Business Total (LKR)</label>
+                      <input type="number" onChange={e => handleInputChange('summaryBusiness', e.target.value)} value={inputs.summaryBusiness || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="0.00" />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Annual Income from Other Sources</label>
+                      <input type="number" onChange={e => handleInputChange('summaryOther', e.target.value)} value={inputs.summaryOther || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="0.00" />
+                    </div>
+                  </div>
+
+                  <div style={{ backgroundColor: '#6A2301', color: '#fff', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.2)' }}>
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#f0e4cc', display: 'block' }}>Total Annual Income</span>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#e8d5ac' }}>(Auto-Calculated Summary Box)</span>
+                    </div>
+                    <span style={{ fontSize: '24px', fontWeight: 900, color: '#F5C400' }}>Rs. {totalCalculatedIncome.toLocaleString('.2')}</span>
+                  </div>
+                </>
+              )}
+
+              {/* STEP 4: Relief/Welfare Declarations */}
+              {formStep === 4 && (
+                <>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>04. Additional Financial Context &amp; Declarations</span>
+                  
+                  <div style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '10px', border: '1.5px solid #e8d5ac' }}>
+                    <span style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#3d2a00', marginBottom: '6px' }}>Are you a recipient of Samurdhi or any other public relief/allowance?</span>
+                    <div style={{ display: 'flex', gap: '20px', fontSize: '13px', fontWeight: 700 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                        <input type="radio" name="reliefRadio" checked={isReliefRecipient === true} onChange={() => setIsReliefRecipient(true)} style={{ accentColor: '#6A2301' }} /> Yes
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                        <input type="radio" name="reliefRadio" checked={isReliefRecipient === false} onChange={() => { setIsReliefRecipient(false); handleInputChange('reliefName', ''); }} style={{ accentColor: '#6A2301' }} /> No
+                      </label>
+                    </div>
+                    {isReliefRecipient && (
+                      <input type="text" required onChange={e => handleInputChange('reliefName', e.target.value)} value={inputs.reliefName || ''} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', marginTop: '10px' }} placeholder="State name of relief (e.g. Samurdhi, Elderly or Disability Allowance)" />
+                    )}
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>State reasons / evidence to prove the accuracy of income</label>
+                    <textarea rows={2} required onChange={e => handleInputChange('incomeAccuracyEvidence', e.target.value)} value={inputs.incomeAccuracyEvidence || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }} placeholder="Provide evidence summary details..." />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>External institution to which this certificate will be submitted</label>
+                    <input type="text" required onChange={e => handleInputChange('submissionTargetInstitution', e.target.value)} value={inputs.submissionTargetInstitution || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. People's Bank, Department of External Examinations" />
+                  </div>
+
+                  <div style={{ backgroundColor: '#fff', border: '1.5px dashed #B46A02', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#1e1200' }}>Attach Document Audits (Certified Verification Slips)</span>
+                    <input type="file" required style={{ fontSize: '12px' }} />
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', backgroundColor: '#eae5d8', padding: '12px', borderRadius: '10px', marginTop: '4px' }}>
+                    <input type="checkbox" required defaultChecked style={{ accentColor: '#6A2301', marginTop: '3px' }} />
+                    <span style={{ fontSize: '11px', color: '#444', fontWeight: 600, lineHeight: 1.4 }}>
+                      <strong>Applicant Declaration Statement:</strong> "I certify that the information provided above regarding my annual income is true and accurate. I kindly request that an Income Certificate be issued to be presented to the above-mentioned institution."
+                    </span>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+
+          {/* Action Navigation Buttons */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', flexShrink: 0 }}>
             <button 
               type="button" 
@@ -418,7 +627,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
               type="submit" 
               style={{ padding: '10px 24px', borderRadius: '999px', border: 'none', backgroundColor: '#6A2301', color: '#fff', fontWeight: 800, cursor: 'pointer' }}
             >
-              {(formStep === 3 || !isResidenceOrCharacter) ? 'Submit Application' : 'Next Step →'}
+              {((form.id === 3 && formStep === 4) || (form.id !== 3 && formStep === 3)) ? 'Submit Application' : 'Next Step →'}
             </button>
           </div>
         </form>
