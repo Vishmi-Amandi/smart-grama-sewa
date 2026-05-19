@@ -475,6 +475,7 @@ const Step4 = ({ form, update, onBack, onSubmit }) => {
 await setDoc(doc(db, "users", credential.user.uid), {
   role: "gn_officer",
   email: form.email || "",
+  status:    "pending",
   createdAt: serverTimestamp(),
 });
     

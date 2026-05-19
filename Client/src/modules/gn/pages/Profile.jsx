@@ -4,7 +4,7 @@ import { doc, getDoc, updateDoc, collection, query, where, orderBy, getDocs, lim
 import { auth, db } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Pencil, Loader2 } from "lucide-react";
 
 
 const generateInitials = (fullName) => {

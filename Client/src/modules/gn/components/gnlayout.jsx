@@ -29,7 +29,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
   const [showResults, setShowResults] = useState(false);
 
 const searchPages = [
-  { name: "Dashboard", path: "/", icon: <LayoutDashboard size={16} /> },
+  { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={16} /> },
   { name: "Appointments", path: "/appointments", icon: <CalendarDays size={16} /> },
   { name: "Schedule", path: "/schedule", icon: <Clock size={16} /> },
   { name: "Create Announcement", path: "/create-announcement", icon: <Megaphone size={16} /> },
@@ -94,7 +94,7 @@ const filteredPages = searchQuery.trim()
 
           {/* Navigation */}
           <nav className="flex-1 mt-6 px-4 space-y-1">
-            <Link to="/" className={`flex items-center gap-3 rounded-lg px-4 py-2 ${location.pathname === "/" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
+            <Link to="/dashboard" className={`flex items-center gap-3 rounded-lg px-4 py-2 ${location.pathname === "/dashboard" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
   <LayoutDashboard size={18} />
   Dashboard
 </Link>
@@ -157,14 +157,7 @@ const filteredPages = searchQuery.trim()
           </nav>
 
         <button
-  onClick={async () => {
-    try {
-      await signOut(auth);
-      window.location.replace("/login");
-    } catch (err) {
-      console.error("Sign out error:", err);
-    }
-  }}
+  onClick={() => navigate("/home")}
   className="flex items-center gap-3 text-white px-4 py-2 rounded-lg hover:bg-[#9B4D00] w-full"
 >
   <LogOut size={18} />

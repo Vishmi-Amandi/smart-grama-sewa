@@ -14,6 +14,8 @@ import Login  from './modules/gn/pages/Login.jsx';
 import SignUp from './modules/gn/pages/SignUp.jsx';
 import ProtectedRoute from './modules/gn/components/ProtectedRoute.jsx';
 import ForgotPassword from './modules/gn/pages/ForgotPassword.jsx';
+import Home from './modules/home/Home.jsx';
+import SignUpSelect from './modules/gn/pages/SignUpSelect.jsx';
 
 
 function App() {
@@ -30,13 +32,20 @@ function App() {
 return (
   <div style={{ fontSize: fontSizeMap[fontSize] }}>
   <Routes>
+    {/* Landing page */}
+  <Route path="/home" element={<Home />} />
+
   {/* Public Routes */}
   <Route path="/login" element={<Login />} />
   <Route path="/signup" element={<SignUp />} />
-  <Route path="/signup-select" element={<SignUp />} />
+  <Route path="/forgot-password" element={<ForgotPassword />} />
+
+  {/* Root redirects to home */}
+  <Route path="/" element={<Navigate to="/home" replace />} />
+
 
   {/* Protected Routes */}
-  <Route path="/" element={<ProtectedRoute><GNDashboard gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
+  <Route path="/dashboard"         element={<ProtectedRoute><GNDashboard gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
   <Route path="/appointments" element={<ProtectedRoute><AppointmentList gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
   <Route path="/current-status" element={<ProtectedRoute><CurrentStatus gnStatus={gnStatus} setGnStatus={setGnStatus} theme={theme} /></ProtectedRoute>} />
   <Route path="/create-announcement" element={<ProtectedRoute><CreateAnnouncement gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
@@ -46,7 +55,8 @@ return (
   <Route path="/profile" element={<ProtectedRoute><Profile gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
   <Route path="/settings" element={<ProtectedRoute><Settings gnStatus={gnStatus} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} /></ProtectedRoute>} />
   <Route path="/transfer-request" element={<ProtectedRoute><TransferRequest gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
-  <Route path="/forgot-password" element={<ForgotPassword />} />
+  <Route path="/signup-select" element={<SignUpSelect />} />
+  
 </Routes>
   </div>
 );
