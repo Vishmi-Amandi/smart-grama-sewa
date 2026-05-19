@@ -26,6 +26,7 @@ const Icons = {
   eyeOff: 'M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94 M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19 M1 1l22 22',
   spinner: 'M21 12a9 9 0 11-6.219-8.56',
   arrowLeft: 'M19 12H5 M12 19l-7-7 7-7',
+  check: 'M20 6L9 17l-5-5',
 };
 
 const Login = () => {
@@ -42,6 +43,7 @@ const Login = () => {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
 
   // Email verification states
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
@@ -106,10 +108,8 @@ const Login = () => {
     try {
       // Set persistence based on "Remember Me" checkbox
       if (rememberMe) {
-        // Stay logged in even after closing browser
         await setPersistence(auth, browserLocalPersistence);
       } else {
-        // Clear session when browser is closed
         await setPersistence(auth, browserSessionPersistence);
       }
       
@@ -150,7 +150,7 @@ const Login = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!email.trim()) {
+    if (!resetEmail.trim()) {
       setResetError('Please enter your email address');
       return;
     }
@@ -159,7 +159,7 @@ const Login = () => {
     setResetError('');
 
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(auth, resetEmail);
       setResetEmailSent(true);
     } catch (err) {
       console.error('Password reset error:', err);
@@ -176,6 +176,13 @@ const Login = () => {
     } finally {
       setResetLoading(false);
     }
+  };
+
+  const handleBackToLogin = () => {
+    setForgotPasswordMode(false);
+    setResetEmailSent(false);
+    setResetError('');
+    setResetEmail('');
   };
 
   // FORGOT PASSWORD UI
@@ -203,17 +210,13 @@ const Login = () => {
                     </div>
                     <h2 className="text-lg font-extrabold text-[#fdf0dc] mb-3">Check Your Email</h2>
                     <p className="text-sm text-[#fdf0dc] leading-relaxed">
-                      We've sent a password reset link to <strong>{email}</strong>.<br />
+                      We've sent a password reset link to <strong>{resetEmail}</strong>.<br />
                       Please check your inbox and follow the instructions.
                     </p>
                   </div>
                   <button
-                    onClick={() => {
-                      setForgotPasswordMode(false);
-                      setResetEmailSent(false);
-                      setResetError('');
-                    }}
-                    className="w-full bg-[#F5C400] text-[#3d2a00] rounded-xl py-3.5 sm:py-3 text-base sm:text-sm font-bold cursor-pointer"
+                    onClick={handleBackToLogin}
+                    className="w-full bg-[#F5C400] text-[#3d2a00] rounded-xl py-3.5 sm:py-3 text-base sm:text-sm font-bold cursor-pointer transition-colors hover:bg-[#d4a800]"
                   >
                     Back to Sign In
                   </button>
@@ -234,8 +237,8 @@ const Login = () => {
                     <label className="block text-[#fdf0dc] text-sm font-bold mb-2">Email Address</label>
                     <input
                       type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
                       placeholder="your@email.com"
                       className="w-full bg-white text-[#1e1200] border-2 border-transparent rounded-xl px-4 py-3.5 sm:py-3 text-base sm:text-sm font-semibold outline-none focus:border-[#F5C400] transition-colors"
                     />
@@ -244,7 +247,7 @@ const Login = () => {
                   <button
                     onClick={handleForgotPassword}
                     disabled={resetLoading}
-                    className="w-full bg-[#5a6e82] text-[#F5C400] rounded-xl py-4 sm:py-3.5 text-base sm:text-lg font-black cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed mb-3 flex items-center justify-center gap-2"
+                    className="w-full bg-[#5a6e82] text-[#F5C400] rounded-xl py-4 sm:py-3.5 text-base sm:text-lg font-black cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed mb-3 flex items-center justify-center gap-2 transition-colors hover:bg-[#4a5e72]"
                   >
                     {resetLoading ? (
                       <>
@@ -257,11 +260,8 @@ const Login = () => {
                   </button>
 
                   <button
-                    onClick={() => {
-                      setForgotPasswordMode(false);
-                      setResetError('');
-                    }}
-                    className="w-full bg-transparent text-[#fdf0dc] border border-[#fdf0dc] rounded-xl py-3.5 sm:py-3 text-sm sm:text-xs font-semibold cursor-pointer flex items-center justify-center gap-2"
+                    onClick={handleBackToLogin}
+                    className="w-full bg-transparent text-[#fdf0dc] border border-[#fdf0dc] rounded-xl py-3.5 sm:py-3 text-sm sm:text-xs font-semibold cursor-pointer flex items-center justify-center gap-2 transition-colors hover:bg-white/10"
                   >
                     <Icon d={Icons.arrowLeft} size={14} color="#fdf0dc" />
                     Back to Sign In
@@ -302,7 +302,7 @@ const Login = () => {
           <div className="w-[90%] max-w-md bg-[#6a2301]/60 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl">
             {/* Error banner */}
             {error && (
-              <div className="mb-4 bg-white/15 rounded-xl px-4 py-3 text-[#fde8c8] text-xs font-semibold flex items-center gap-2">
+              <div className="mb-4 bg-red-500/20 rounded-xl px-4 py-3 text-[#fde8c8] text-xs font-semibold flex items-center gap-2">
                 <Icon d={Icons.warning} size={14} color="#fde8c8" /> {error}
               </div>
             )}
@@ -320,7 +320,7 @@ const Login = () => {
                 <button
                   onClick={handleResendVerification}
                   disabled={resendLoading}
-                  className="w-full bg-[#F5C400] text-[#3d2a00] rounded-xl py-2.5 text-sm font-bold cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full bg-[#F5C400] text-[#3d2a00] rounded-xl py-2.5 text-sm font-bold cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors hover:bg-[#d4a800]"
                 >
                   {resendLoading ? (
                     <>
@@ -370,7 +370,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-none border-none cursor-pointer text-gray-400 p-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-none border-none cursor-pointer text-gray-400 p-1 hover:text-gray-600 transition-colors"
                 >
                   <Icon d={showPassword ? Icons.eyeOff : Icons.eye} size={18} color="#888" />
                 </button>
@@ -378,8 +378,8 @@ const Login = () => {
             </div>
 
             {/* Keep me signed in & Forgot password */}
-            <div className="flex items-center justify-between mb-5 gap-3">
-              <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-[#fdf0dc]">
+            <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
+              <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-[#fdf0dc] hover:text-white transition-colors">
                 <input
                   type="checkbox"
                   checked={rememberMe}
@@ -389,7 +389,10 @@ const Login = () => {
                 Keep me signed in
               </label>
               <button
-                onClick={() => setForgotPasswordMode(true)}
+                onClick={() => {
+                  setForgotPasswordMode(true);
+                  setResetEmail(email);
+                }}
                 className="text-sm font-bold text-[#fdf0dc] hover:text-white bg-none border-none cursor-pointer transition-colors"
               >
                 Forgot password?
@@ -401,7 +404,7 @@ const Login = () => {
               type="submit"
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full bg-[#5a6e82] text-[#F5C400] rounded-xl py-4 sm:py-3.5 text-base sm:text-lg font-black cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed mb-5 flex items-center justify-center gap-2 transition-colors hover:bg-[#4a5e72] shadow-md"
+              className="w-full bg-[#5a6e82] text-[#F5C400] rounded-xl py-4 sm:py-3.5 text-base sm:text-lg font-black cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed mb-5 flex items-center justify-center gap-2 transition-all hover:bg-[#4a5e72] hover:scale-[1.02] shadow-md"
             >
               {loading ? (
                 <>
@@ -413,15 +416,25 @@ const Login = () => {
               )}
             </button>
 
-            {/* New here */}
-            <p className="text-center text-[#fdf0dc] text-sm font-semibold mb-3">New here ?</p>
+            {/* Divider */}
+            <div className="relative flex items-center justify-center my-6">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#fdf0dc]/30 to-transparent"></div>
+              <div className="flex items-center gap-2 px-4">
+                <div className="w-5 h-px bg-[#fdf0dc]/30"></div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#fdf0dc]/50">
+                  or
+                </span>
+                <div className="w-5 h-px bg-[#fdf0dc]/30"></div>
+              </div>
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#fdf0dc]/30 to-transparent"></div>
+            </div>
 
-            {/* Create your account */}
+            {/* Create your account button */}
             <a
               href="/signup-select"
-              className="block w-full text-center bg-[#F5C400] text-[#3d2a00] rounded-xl py-4 sm:py-3.5 text-base sm:text-lg font-black no-underline transition-colors hover:bg-[#d4a800] shadow-md"
+              className="block w-full text-center bg-[#F5C400] text-[#3d2a00] rounded-xl py-4 sm:py-3.5 text-base sm:text-lg font-black no-underline transition-all hover:bg-[#d4a800] hover:scale-[1.02] shadow-md"
             >
-              Create your account
+              Create new account
             </a>
           </div>
         </div>
@@ -429,8 +442,19 @@ const Login = () => {
 
       {/* Footer */}
       <footer className="text-center bg-[#6A2301] text-white py-3 px-4 text-sm font-semibold">
-        ©2026 Smart Grama Sewa
+        © 2026 Smart Grama Sewa. All rights reserved.
       </footer>
+
+      {/* Add animation styles */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+      `}</style>
     </div>
   );
 };
