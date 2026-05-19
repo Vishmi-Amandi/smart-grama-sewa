@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { auth } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { useLocation } from 'react-router-dom';
 import './ChatbotWidget.css';
 
 const UI_TEXT = {
@@ -44,6 +45,11 @@ const ChatbotWidget = () => {
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const chatBoxRef = useRef(null);
+  const location = useLocation();
+
+  const publicRoutes = ['/', '/login', '/signup-select', '/signup'];
+  const isPublicPage = publicRoutes.includes(location.pathname);
+  const isCustomized = currentUser && !isPublicPage;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -52,15 +58,28 @@ const ChatbotWidget = () => {
         localStorage.setItem('chatbotUserId', user.uid);
       } else {
         setCurrentUser(null);
-        let userId = localStorage.getItem('chatbotUserId');
-        if (!userId || !userId.startsWith('user_')) {
-          userId = 'user_' + Math.random().toString(36).substr(2, 9);
-          localStorage.setItem('chatbotUserId', userId);
-        }
+        localStorage.removeItem('chatbotUserId');
       }
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    // Reset to initial state when switching between customized (logged in & private page) and common views
+    setLanguage(null);
+    setHistoryLoaded(false);
+    setMessages([
+      { 
+        sender: 'bot', 
+        text: 'Welcome to Smart Grama Sewa! Please select your preferred language. / ස්මාර්ට් ග්‍රාම සේවා වෙත සාදරයෙන් පිළිගනිමු! කරුණාකර ඔබගේ භාෂාව තෝරන්න. / ஸ்மார்ட் கிராம சேவாவிற்கு வரவேற்கிறோம்! உங்கள் மொழியை தேர்ந்தெடுக்கவும்.',
+        options: [
+          { label: 'English', value: 'en' },
+          { label: 'සිංහල', value: 'si' },
+          { label: 'தமிழ்', value: 'ta' }
+        ]
+      }
+    ]);
+  }, [isCustomized]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -120,7 +139,7 @@ const ChatbotWidget = () => {
 
   const generateGreeting = (langValue) => {
     let greetingText = UI_TEXT[langValue].initial;
-    const userName = currentUser ? (currentUser.displayName || currentUser.email.split('@')[0]) : null;
+    const userName = isCustomized ? (currentUser.displayName || currentUser.email.split('@')[0]) : null;
     
     if (userName) {
       if (langValue === 'en') {
@@ -206,7 +225,7 @@ const ChatbotWidget = () => {
     setInputValue('');
     setIsTyping(true);
 
-    const userId = localStorage.getItem('chatbotUserId') || 'anonymous';
+    const userId = isCustomized ? (localStorage.getItem('chatbotUserId') || 'anonymous') : 'anonymous';
 
     try {
       const response = await fetch('/api/chat', {
@@ -257,7 +276,7 @@ const ChatbotWidget = () => {
         </header>
         
         <main className="chat-box" ref={chatBoxRef}>
-          {currentUser && !historyLoaded && (
+          {isCustomized && !historyLoaded && (
             <div className="chat-history-btn-container">
               <button onClick={loadHistory} className="chat-history-btn" disabled={loadingHistory}>
                 {loadingHistory ? "Loading..." : "Load Previous Chats"}
