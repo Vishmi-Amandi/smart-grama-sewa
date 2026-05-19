@@ -1,22 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { 
+  signInWithEmailAndPassword, 
+  sendPasswordResetEmail, 
+  sendEmailVerification,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence
+} from 'firebase/auth';
 import { auth } from '../../../firebase';
 
+// Icons Component
+const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+    <path d={d} />
+  </svg>
+);
+
+// Icon paths
+const Icons = {
+  mail: 'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4 M7 10l5 5 5-5 M3 10h18',
+  warning: 'M12 9v4 M12 17h.01 M12 2a10 10 0 100 20 10 10 0 000-20z',
+  eye: 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 8a4 4 0 100 8 4 4 0 000-8z',
+  eyeOff: 'M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94 M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19 M1 1l22 22',
+  spinner: 'M21 12a9 9 0 11-6.219-8.56',
+  arrowLeft: 'M19 12H5 M12 19l-7-7 7-7',
+};
+
 const Login = () => {
-  const [email, setEmail]               = useState('');
-  const [password, setPassword]         = useState('');
-  const [rememberMe, setRememberMe]     = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState('');
-  const [isMobile, setIsMobile]         = useState(window.innerWidth <= 768);
-  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
   // Forgot Password states
   const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState('');
+
+  // Email verification states
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -27,9 +57,41 @@ const Login = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Load saved "Remember Me" preference
+  useEffect(() => {
+    const savedPreference = localStorage.getItem('rememberMe');
+    if (savedPreference === 'true') {
+      setRememberMe(true);
+    }
+  }, []);
+
+  // Save "Remember Me" preference when changed
+  const handleRememberMeChange = (e) => {
+    const checked = e.target.checked;
+    setRememberMe(checked);
+    localStorage.setItem('rememberMe', checked);
+  };
+
+  // Resend verification email
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, unverifiedEmail, password);
+      await sendEmailVerification(userCredential.user);
+      await auth.signOut();
+      setError('Verification email resent! Please check your inbox.');
+      setShowVerificationMessage(false);
+    } catch (err) {
+      setError('Could not resend verification. Please try again.');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setShowVerificationMessage(false);
 
     if (!email.trim()) {
       setError('Please enter your username or email.');
@@ -42,21 +104,31 @@ const Login = () => {
 
     setLoading(true);
     try {
+      // Set persistence based on "Remember Me" checkbox
+      if (rememberMe) {
+        // Stay logged in even after closing browser
+        await setPersistence(auth, browserLocalPersistence);
+      } else {
+        // Clear session when browser is closed
+        await setPersistence(auth, browserSessionPersistence);
+      }
+      
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      
-      // CHECK IF EMAIL IS VERIFIED
+
       if (!user.emailVerified) {
-        setError('Please verify your email before logging in. Check your inbox for verification link.');
+        setUnverifiedEmail(email);
+        setShowVerificationMessage(true);
+        setError('');
         setLoading(false);
         return;
       }
-      
+
       console.log('Login successful:', user.email);
       navigate('/dashboard');
     } catch (err) {
       console.error('Login error:', err);
-      switch(err.code) {
+      switch (err.code) {
         case 'auth/invalid-email':
           setError('Invalid email format');
           break;
@@ -77,22 +149,21 @@ const Login = () => {
     }
   };
 
-  // Forgot Password handler
   const handleForgotPassword = async () => {
     if (!email.trim()) {
       setResetError('Please enter your email address');
       return;
     }
-    
+
     setResetLoading(true);
     setResetError('');
-    
+
     try {
       await sendPasswordResetEmail(auth, email);
       setResetEmailSent(true);
     } catch (err) {
       console.error('Password reset error:', err);
-      switch(err.code) {
+      switch (err.code) {
         case 'auth/user-not-found':
           setResetError('No account found with this email');
           break;
@@ -107,53 +178,31 @@ const Login = () => {
     }
   };
 
-  const inputStyle = {
-    width: '100%',
-    backgroundColor: '#ffffff',
-    color: '#1e1200',
-    border: '2.5px solid transparent',
-    borderRadius: '12px',
-    padding: isMobile ? '14px 16px' : '13px 16px',
-    fontSize: isMobile ? '16px' : '15px',
-    fontWeight: '600',
-    outline: 'none',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.15s',
-  };
-
   // FORGOT PASSWORD UI
   if (forgotPasswordMode) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <div style={{
-          flex: 1,
-          backgroundImage: 'url(/background.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-        }}>
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255, 255, 255, 0.6)', pointerEvents: 'none' }} />
-          
-          <div style={{ position: 'relative', zIndex: 10, padding: isMobile ? '16px 20px' : '20px 24px' }}>
-            <img src="/logo.png" alt="Smart Grama Sewa" style={{ height: isMobile ? '100px' : '120px', width: 'auto' }} />
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1 relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/background.jpg)' }}>
+          <div className="absolute inset-0 bg-white/60 pointer-events-none" />
+
+          <div className="relative z-10 p-4 sm:p-6">
+            <img src="/logo.png" alt="Smart Grama Sewa" className="h-24 sm:h-28 w-auto" />
           </div>
-          
-          <div style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '0 16px 40px' : '0 16px 48px' }}>
-            <h1 style={{ fontSize: isMobile ? '32px' : '40px', fontWeight: 900, color: '#332421', marginBottom: isMobile ? '20px' : '28px', textAlign: 'center' }}>
+
+          <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pb-10 sm:pb-12">
+            <h1 className="text-3xl sm:text-4xl font-black text-[#332421] mb-5 sm:mb-7 text-center">
               Reset Password
             </h1>
-            
-            <div style={{ width: '90%', maxWidth: '440px', backgroundColor: 'rgba(106, 35, 1, 0.6)', borderRadius: isMobile ? '20px' : '24px', padding: isMobile ? '24px 20px' : '32px 32px 28px', boxShadow: '0 20px 60px rgba(0,0,0,0.35)' }}>
-              
+
+            <div className="w-[90%] max-w-md bg-[#6a2301]/60 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl">
               {resetEmailSent ? (
                 <>
-                  <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📧</div>
-                    <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fdf0dc', marginBottom: '12px' }}>Check Your Email</h2>
-                    <p style={{ fontSize: '14px', color: '#fdf0dc', lineHeight: 1.6 }}>
+                  <div className="text-center mb-6">
+                    <div className="mb-4 flex justify-center">
+                      <Icon d={Icons.mail} size={48} color="#F5C400" strokeWidth={1.5} />
+                    </div>
+                    <h2 className="text-lg font-extrabold text-[#fdf0dc] mb-3">Check Your Email</h2>
+                    <p className="text-sm text-[#fdf0dc] leading-relaxed">
                       We've sent a password reset link to <strong>{email}</strong>.<br />
                       Please check your inbox and follow the instructions.
                     </p>
@@ -164,93 +213,66 @@ const Login = () => {
                       setResetEmailSent(false);
                       setResetError('');
                     }}
-                    style={{
-                      width: '100%',
-                      backgroundColor: '#F5C400',
-                      color: '#3d2a00',
-                      border: 'none',
-                      borderRadius: '12px',
-                      padding: isMobile ? '14px' : '13px',
-                      fontSize: isMobile ? '16px' : '15px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      marginBottom: '12px',
-                    }}
+                    className="w-full bg-[#F5C400] text-[#3d2a00] rounded-xl py-3.5 sm:py-3 text-base sm:text-sm font-bold cursor-pointer"
                   >
                     Back to Sign In
                   </button>
                 </>
               ) : (
                 <>
-                  <p style={{ color: '#fdf0dc', fontSize: '14px', marginBottom: '20px', textAlign: 'center' }}>
+                  <p className="text-[#fdf0dc] text-sm mb-5 text-center">
                     Enter your email address and we'll send you a link to reset your password.
                   </p>
-                  
+
                   {resetError && (
-                    <div style={{ marginBottom: '18px', backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: '12px', padding: '11px 16px', color: '#fde8c8', fontSize: '13px', fontWeight: 600 }}>
-                      ⚠ {resetError}
+                    <div className="mb-4 bg-white/15 rounded-xl px-4 py-3 text-[#fde8c8] text-xs font-semibold flex items-center gap-2">
+                      <Icon d={Icons.warning} size={14} color="#fde8c8" /> {resetError}
                     </div>
                   )}
-                  
-                  <div style={{ marginBottom: '24px' }}>
-                    <label style={{ display: 'block', color: '#fdf0dc', fontSize: '14px', fontWeight: 700, marginBottom: '7px' }}>Email Address</label>
+
+                  <div className="mb-6">
+                    <label className="block text-[#fdf0dc] text-sm font-bold mb-2">Email Address</label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your@email.com"
-                      style={inputStyle}
-                      onFocus={(e) => (e.target.style.borderColor = '#F5C400')}
-                      onBlur={(e) => (e.target.style.borderColor = 'transparent')}
+                      className="w-full bg-white text-[#1e1200] border-2 border-transparent rounded-xl px-4 py-3.5 sm:py-3 text-base sm:text-sm font-semibold outline-none focus:border-[#F5C400] transition-colors"
                     />
                   </div>
-                  
+
                   <button
                     onClick={handleForgotPassword}
                     disabled={resetLoading}
-                    style={{
-                      width: '100%',
-                      backgroundColor: resetLoading ? '#4a5e72' : '#5a6e82',
-                      color: '#F5C400',
-                      border: 'none',
-                      borderRadius: '12px',
-                      padding: isMobile ? '16px' : '15px',
-                      fontSize: isMobile ? '16px' : '17px',
-                      fontWeight: 900,
-                      cursor: resetLoading ? 'not-allowed' : 'pointer',
-                      opacity: resetLoading ? 0.7 : 1,
-                      marginBottom: '12px',
-                    }}
+                    className="w-full bg-[#5a6e82] text-[#F5C400] rounded-xl py-4 sm:py-3.5 text-base sm:text-lg font-black cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed mb-3 flex items-center justify-center gap-2"
                   >
-                    {resetLoading ? 'Sending...' : 'Send Reset Link'}
+                    {resetLoading ? (
+                      <>
+                        <Icon d={Icons.spinner} size={18} color="#F5C400" strokeWidth={2.5} className="animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      'Send Reset Link'
+                    )}
                   </button>
-                  
+
                   <button
                     onClick={() => {
                       setForgotPasswordMode(false);
                       setResetError('');
                     }}
-                    style={{
-                      width: '100%',
-                      backgroundColor: 'transparent',
-                      color: '#fdf0dc',
-                      border: '1.5px solid #fdf0dc',
-                      borderRadius: '12px',
-                      padding: isMobile ? '14px' : '13px',
-                      fontSize: isMobile ? '14px' : '13px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
+                    className="w-full bg-transparent text-[#fdf0dc] border border-[#fdf0dc] rounded-xl py-3.5 sm:py-3 text-sm sm:text-xs font-semibold cursor-pointer flex items-center justify-center gap-2"
                   >
-                    ← Back to Sign In
+                    <Icon d={Icons.arrowLeft} size={14} color="#fdf0dc" />
+                    Back to Sign In
                   </button>
                 </>
               )}
             </div>
           </div>
         </div>
-        
-        <footer style={{ textAlign: 'center', backgroundColor: '#6A2301', color: '#ffffff', padding: isMobile ? '12px 16px' : '14px 16px', fontSize: isMobile ? '13px' : '15px', fontWeight: 600 }}>
+
+        <footer className="text-center bg-[#6A2301] text-white py-3 px-4 text-sm font-semibold">
           ©2026 Smart Grama Sewa
         </footer>
       </div>
@@ -259,215 +281,116 @@ const Login = () => {
 
   // MAIN LOGIN UI
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-
+    <div className="min-h-screen flex flex-col">
       {/* Background */}
-      <div
-        style={{
-          flex: 1,
-          backgroundImage: 'url(/background.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-        }}
-      >
-        <div
-          style={{ 
-            position: 'absolute', inset: 0,
-            backgroundColor: 'rgba(255, 255, 255, 0.6)',
-            pointerEvents: 'none'
-          }}
-        />
+      <div className="flex-1 relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/background.jpg)' }}>
+        <div className="absolute inset-0 bg-white/60 pointer-events-none" />
 
         {/* Logo */}
-        <div style={{ position: 'relative', zIndex: 10, padding: isMobile ? '16px 20px' : '20px 24px' }}>
-          <img
-            src="/logo.png"
-            alt="Smart Grama Sewa"
-            style={{ height: isMobile ? '100px' : '120px', width: 'auto' }}
-          />
+        <div className="relative z-10 p-4 sm:p-6">
+          <img src="/logo.png" alt="Smart Grama Sewa" className="h-24 sm:h-28 w-auto" />
         </div>
 
         {/* Main centered section */}
-        <div 
-          style={{
-            position: 'relative',
-            zIndex: 10,
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: isMobile ? '0 16px 40px' : '0 16px 48px',
-          }}
-        >
-
-          {/* "Sign in" title */}
-          <h1 style={{
-            fontSize: isMobile ? '36px' : '48px',
-            fontWeight: 900,
-            color: '#332421',
-            letterSpacing: '-1px',
-            marginBottom: isMobile ? '20px' : '28px',
-            textAlign: 'center',
-          }}>
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pb-10 sm:pb-12">
+          {/* Sign in title */}
+          <h1 className="text-4xl sm:text-5xl font-black text-[#332421] -tracking-wide mb-5 sm:mb-7 text-center">
             Sign in
           </h1>
 
           {/* Semi-transparent brown card */}
-          <div style={{
-            width: '90%',
-            maxWidth: '440px',          
-            backgroundColor: 'rgba(106, 35, 1, 0.6)',
-            borderRadius: isMobile ? '20px' : '24px',
-            padding: isMobile ? '24px 20px' : '32px 32px 28px',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
-          }}>
-
+          <div className="w-[90%] max-w-md bg-[#6a2301]/60 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl">
             {/* Error banner */}
             {error && (
-              <div style={{
-                marginBottom: '18px',
-                backgroundColor: 'rgba(255,255,255,0.15)',
-                borderRadius: '12px',
-                padding: '11px 16px',
-                color: '#fde8c8',
-                fontSize: isMobile ? '13px' : '13px',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}>
-                <span>⚠</span> {error}
+              <div className="mb-4 bg-white/15 rounded-xl px-4 py-3 text-[#fde8c8] text-xs font-semibold flex items-center gap-2">
+                <Icon d={Icons.warning} size={14} color="#fde8c8" /> {error}
+              </div>
+            )}
+
+            {/* Email Verification Message */}
+            {showVerificationMessage && (
+              <div className="mb-4 bg-[#F5C400]/15 rounded-xl p-4 border border-[#F5C400]/50">
+                <div className="flex items-center gap-3 mb-3">
+                  <Icon d={Icons.mail} size={28} color="#F5C400" />
+                  <div>
+                    <div className="font-bold text-[#F5C400] mb-1">Email Not Verified</div>
+                    <div className="text-xs text-[#fdf0dc]">Please verify your email address to continue.</div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleResendVerification}
+                  disabled={resendLoading}
+                  className="w-full bg-[#F5C400] text-[#3d2a00] rounded-xl py-2.5 text-sm font-bold cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {resendLoading ? (
+                    <>
+                      <Icon d={Icons.spinner} size={14} color="#3d2a00" strokeWidth={2.5} className="animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Resend Verification Email'
+                  )}
+                </button>
               </div>
             )}
 
             {/* User name or email */}
-            <div style={{ marginBottom: '18px' }}>
-              <label style={{ 
-                display: 'block', 
-                color: '#fdf0dc', 
-                fontSize: isMobile ? '14px' : '13px', 
-                fontWeight: 700, 
-                marginBottom: '7px' 
-              }}>
-                User name or email
-              </label>
+            <div className="mb-4">
+              <label className="block text-[#fdf0dc] text-sm font-bold mb-2">User name or email</label>
               <input
                 type="text"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError('');
+                  setShowVerificationMessage(false);
+                }}
                 autoComplete="username"
                 required
-                style={inputStyle}
-                onFocus={(e) => (e.target.style.borderColor = '#F5C400')}
-                onBlur={(e)  => (e.target.style.borderColor = 'transparent')}
+                className="w-full bg-white text-[#1e1200] border-2 border-transparent rounded-xl px-4 py-3.5 sm:py-3 text-base sm:text-sm font-semibold outline-none focus:border-[#F5C400] transition-colors"
               />
             </div>
 
             {/* Password */}
-            <div style={{ marginBottom: '18px' }}>
-              <label style={{ 
-                display: 'block', 
-                color: '#fdf0dc', 
-                fontSize: isMobile ? '14px' : '13px', 
-                fontWeight: 700, 
-                marginBottom: '7px' 
-              }}>
-                Password
-              </label>
-              <div style={{ position: 'relative' }}>
+            <div className="mb-4">
+              <label className="block text-[#fdf0dc] text-sm font-bold mb-2">Password</label>
+              <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError('');
+                    setShowVerificationMessage(false);
+                  }}
                   autoComplete="current-password"
                   required
-                  style={{...inputStyle, paddingRight: '48px'}}
-                  onFocus={(e) => (e.target.style.borderColor = '#F5C400')}
-                  onBlur={(e)  => (e.target.style.borderColor = 'transparent')}
+                  className="w-full bg-white text-[#1e1200] border-2 border-transparent rounded-xl px-4 py-3.5 sm:py-3 text-base sm:text-sm font-semibold outline-none focus:border-[#F5C400] transition-colors pr-12"
                 />
-                {/* Eye toggle button */}
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  style={{
-                    position: 'absolute', right: '12px',
-                    top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none',
-                    cursor: 'pointer', color: '#888', padding: '4px',
-                    display: 'flex', alignItems: 'center',
-                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-none border-none cursor-pointer text-gray-400 p-1"
                 >
-                  {showPassword ? (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
-                      <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
-                      <line x1="1" y1="1" x2="23" y2="23"/>
-                    </svg>
-                  ) : (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  )}
+                  <Icon d={showPassword ? Icons.eyeOff : Icons.eye} size={18} color="#888" />
                 </button>
               </div>
             </div>
 
             {/* Keep me signed in & Forgot password */}
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              marginBottom: '20px',
-              flexDirection: 'row',
-              gap: '12px',
-            }}>
-              <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  fontSize: isMobile ? '14px' : '13px',
-                  fontWeight: 600,
-                  color: '#fdf0dc',
-                  flexShrink: 0,
-                }}
-              >
+            <div className="flex items-center justify-between mb-5 gap-3">
+              <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-[#fdf0dc]">
                 <input
                   type="checkbox"
                   checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  style={{
-                    width: '16px',
-                    height: '16px',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    accentColor: '#F5C400'
-                  }}
+                  onChange={handleRememberMeChange}
+                  className="w-4 h-4 rounded accent-[#F5C400] cursor-pointer"
                 />
                 Keep me signed in
               </label>
               <button
                 onClick={() => setForgotPasswordMode(true)}
-                style={{
-                  fontSize: isMobile ? '14px' : '13px',
-                  fontWeight: 700,
-                  color: '#fdf0dc',
-                  textDecoration: 'none',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-                onMouseOver={(e) => (e.target.style.color = '#ffffff')}
-                onMouseOut={(e)  => (e.target.style.color = '#fdf0dc')}
+                className="text-sm font-bold text-[#fdf0dc] hover:text-white bg-none border-none cursor-pointer transition-colors"
               >
                 Forgot password?
               </button>
@@ -478,36 +401,11 @@ const Login = () => {
               type="submit"
               onClick={handleSubmit}
               disabled={loading}
-              style={{
-                width: '100%',
-                backgroundColor: loading ? '#4a5e72' : '#5a6e82',
-                color: '#F5C400',
-                border: 'none',
-                borderRadius: '12px',
-                padding: isMobile ? '16px' : '15px',
-                fontSize: isMobile ? '16px' : '17px',
-                fontWeight: 900,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                marginBottom: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                transition: 'background-color 0.15s',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
-              }}
-              onMouseOver={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#4a5e72'; }}
-              onMouseOut={(e)  => { if (!loading) e.currentTarget.style.backgroundColor = '#5a6e82'; }}
+              className="w-full bg-[#5a6e82] text-[#F5C400] rounded-xl py-4 sm:py-3.5 text-base sm:text-lg font-black cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed mb-5 flex items-center justify-center gap-2 transition-colors hover:bg-[#4a5e72] shadow-md"
             >
               {loading ? (
                 <>
-                  <svg style={{ animation: 'spin 1s linear infinite', width: '18px', height: '18px' }}
-                    viewBox="0 0 24 24" fill="none">
-                    <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="#F5C400" strokeWidth="4"/>
-                    <path style={{ opacity: 0.75 }} fill="#F5C400"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
+                  <Icon d={Icons.spinner} size={18} color="#F5C400" strokeWidth={2.5} className="animate-spin" />
                   Signing in…
                 </>
               ) : (
@@ -516,65 +414,23 @@ const Login = () => {
             </button>
 
             {/* New here */}
-            <p style={{ 
-              textAlign: 'center', 
-              color: '#fdf0dc', 
-              fontSize: isMobile ? '14px' : '13px', 
-              fontWeight: 600, 
-              margin: '0 0 12px' 
-            }}>
-              New here ?
-            </p>
+            <p className="text-center text-[#fdf0dc] text-sm font-semibold mb-3">New here ?</p>
 
             {/* Create your account */}
             <a
               href="/signup-select"
-              style={{
-                display: 'block',
-                width: '100%',
-                textAlign: 'center',
-                backgroundColor: '#F5C400',
-                color: '#3d2a00',
-                borderRadius: '12px',
-                padding: isMobile ? '16px' : '15px',
-                fontSize: isMobile ? '16px' : '17px',
-                fontWeight: 900,
-                textDecoration: 'none',
-                transition: 'background-color 0.15s',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
-                boxSizing: 'border-box',
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#d4a800')}
-              onMouseOut={(e)  => (e.currentTarget.style.backgroundColor = '#F5C400')}
+              className="block w-full text-center bg-[#F5C400] text-[#3d2a00] rounded-xl py-4 sm:py-3.5 text-base sm:text-lg font-black no-underline transition-colors hover:bg-[#d4a800] shadow-md"
             >
               Create your account
             </a>
-
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <footer
-        style={{
-          textAlign: 'center',
-          backgroundColor: '#6A2301',
-          color: '#ffffff',
-          padding: isMobile ? '12px 16px' : '14px 16px',
-          fontSize: isMobile ? '13px' : '15px',
-          fontWeight: 600,
-        }}>
+      <footer className="text-center bg-[#6A2301] text-white py-3 px-4 text-sm font-semibold">
         ©2026 Smart Grama Sewa
       </footer>
-
-      {/* Spin keyframe */}
-      <style>{`
-        @keyframes spin { 
-          from { transform: rotate(0deg); } 
-          to { transform: rotate(360deg); } 
-        }
-      `}</style>
-
     </div>
   );
 };
