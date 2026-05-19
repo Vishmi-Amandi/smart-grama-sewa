@@ -13,6 +13,7 @@ import Settings from './modules/user/pages/settings';
 
 // New module import
 import Home from './modules/home/Home';
+import Forms from './modules/forms/Forms';
 
 // Protected route wrapper
 import { useEffect, useState } from 'react';
@@ -83,6 +84,8 @@ const App = () => {
 
         {/* ── 404 fallback ── */}
         **<Route path="*"  element={<Navigate to="/" replace />} />**
+
+        <Route path="/forms" element={<Forms />} />
 
       </Routes>
     </Router>
