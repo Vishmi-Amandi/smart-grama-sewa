@@ -703,19 +703,60 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
 
         {SERVICE_CATS.map(cat => (
           <div key={cat.key} className="mb-2.5">
-            <button onClick={() => toggleCat(cat.key)} className={`w-full flex items-center gap-2.5 p-3.5 border border-user-border rounded-t-xl ${openCats[cat.key] ? 'bg-neutral-800' : 'bg-neutral-800 rounded-xl'} cursor-pointer transition-all`}>
-              <Icon d={openCats[cat.key] ? IC.chevDown : IC.chevR} size={16} color="#B46A02" />
-              <span className="text-sm font-extrabold text-user-text">{cat.label}</span>
+            {/* Category Header Button */}
+            <button 
+              onClick={() => toggleCat(cat.key)} 
+              className={`w-full flex items-center gap-2.5 p-3.5 border border-gray-200 dark:border-gray-700 rounded-t-xl 
+                ${openCats[cat.key] 
+                  ? 'bg-zinc-500 dark:bg-zinc-700' 
+                  : 'bg-zinc-500 dark:bg-zinc-800 rounded-xl'
+                } 
+                cursor-pointer transition-all hover:bg-gray-200 dark:hover:bg-gray-600`}
+            >
+              <Icon 
+                d={openCats[cat.key] ? IC.chevDown : IC.chevR} 
+                size={16} 
+                color="#000" 
+              />
+              <span className="text-sm font-extrabold text-gray-800 dark:text-white">
+                {cat.label}
+              </span>
             </button>
 
+            {/* Service Items */}
             {openCats[cat.key] && (
-              <div className="border border-user-border border-t-0 rounded-b-xl overflow-hidden">
+              <div className="border border-gray-200 dark:border-gray-700 border-t-0 rounded-b-xl overflow-hidden">
                 {cat.services.map((svc, i) => {
                   const selected = booking.service?.id === svc.id;
                   return (
-                    <div key={svc.id} onClick={() => selectService(svc)} className={`p-4 cursor-pointer border-b border-yellow-50 transition-all ${selected ? 'bg-yellow-100' : 'bg-white hover:bg-yellow-50'}`} style={{ borderLeft: selected ? '4px solid #F5C400' : '4px solid transparent' }}>
-                      <div className={`text-sm font-extrabold mb-0.5 ${selected ? 'text-gray-600' : 'text-gray-200'}`}>{svc.name}</div>
-                      <div className="text-xs font-semibold text-gray-500">{svc.desc}</div>
+                    <div 
+                      key={svc.id} 
+                      onClick={() => selectService(svc)} 
+                      className={`p-4 cursor-pointer border-b border-gray-100 dark:border-gray-700 transition-all 
+                        ${selected 
+                          ? 'bg-yellow-100 dark:bg-yellow-900/60' 
+                          : 'bg-white dark:bg-gray-800 hover:bg-yellow-50 dark:hover:bg-yellow-50'
+                        }`} 
+                      style={{ 
+                        borderLeft: selected ? '4px solid #F5C400' : '4px solid transparent' 
+                      }}
+                    >
+                      <div className={`text-sm font-extrabold mb-0.5 
+                        ${selected 
+                          ? 'text-gray-900 dark:text-white' 
+                          : 'text-zinc-500 dark:text-white'
+                        }`}
+                      >
+                        {svc.name}
+                      </div>
+                      <div className={`text-xs font-semibold 
+                        ${selected 
+                          ? 'text-gray-600 dark:text-gray-300' 
+                          : 'text-gray-500 dark:text-gray-400'
+                        }`}
+                      >
+                        {svc.desc}
+                      </div>
                     </div>
                   );
                 })}
@@ -724,23 +765,62 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
           </div>
         ))}
 
+        {/* Selected Service Summary */}
         {booking.service && (
-          <div className="mt-4 p-3.5 bg-neutral-800 border border-yellow-400 rounded-xl flex items-center gap-3">
-            <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0"><Icon d={IC.check} size={14} color="#3d2a00" sw={2.5} /></div>
-            <div className="flex-1"><div className="text-[10px] font-extrabold text-warning uppercase tracking-wider mb-0.5">Selected Service</div><div className="text-sm font-black text-user-text">{booking.service.name}</div></div>
-            <button onClick={() => setBooking(p => ({ ...p, service: null }))} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-user-border rounded-round text-xs font-bold text-gray-500 cursor-pointer"><Icon d={IC.x} size={12} color="#888" /> CHANGE</button>
+          <div className="mt-4 p-3.5 bg-gray-50 dark:bg-gray-800 border border-yellow-400 dark:border-yellow-600 rounded-xl flex items-center gap-3">
+            <div className="w-7 h-7 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
+              <Icon d={IC.check} size={14} color="#fff" sw={2.5} />
+            </div>
+            <div className="flex-1">
+              <div className="text-[10px] font-extrabold text-yellow-700 dark:text-yellow-400 uppercase tracking-wider mb-0.5">
+                Selected Service
+              </div>
+              <div className="text-sm font-black text-gray-800 dark:text-white">
+                {booking.service.name}
+              </div>
+            </div>
+            <button 
+              onClick={() => setBooking(p => ({ ...p, service: null }))} 
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-round text-xs font-bold text-gray-500 dark:text-gray-300 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600"
+            >
+              <Icon d={IC.x} size={12} color="#888" /> CHANGE
+            </button>
           </div>
         )}
       </div>
 
-      <div className="bg-white border border-user-border rounded-xl p-5 md:p-7 mb-6">
-        <h2 className="text-base font-extrabold text-user-text mb-3">Additional notes (optional)</h2>
-        <textarea value={notes} onChange={e => { setNotes(e.target.value); setBooking(p => ({ ...p, notes: e.target.value })); }} placeholder="Please provide any specific details or requirements for your request..." rows={4} className="w-full p-3 text-sm font-semibold text-user-text bg-white border border-user-border rounded-lg outline-none resize-vertical transition-colors focus:border-user-primary" />
+      {/* Additional Notes */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 md:p-7 mb-6">
+        <h2 className="text-base font-extrabold text-zinc-500 dark:text-white mb-3">
+          Additional notes (optional)
+        </h2>
+        <textarea 
+          value={notes} 
+          onChange={e => { 
+            setNotes(e.target.value); 
+            setBooking(p => ({ ...p, notes: e.target.value })); 
+          }} 
+          placeholder="Please provide any specific details or requirements for your request..." 
+          rows={4} 
+          className="w-full p-3 text-sm font-semibold text-zinc-500 dark:text-white bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none resize-vertical transition-colors focus:border-yellow-500 dark:focus:border-yellow-400" 
+        />
       </div>
 
+      {/* Buttons */}
       <div className={`flex justify-between gap-3 ${isMobile ? 'flex-col' : 'flex-row'}`}>
-        <button onClick={onCancel} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round border-2 border-user-border bg-white text-sm font-extrabold text-user-secondary cursor-pointer ${isMobile ? 'w-full' : ''}`}>Cancel</button>
-        <button onClick={onNext} disabled={!booking.service} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round text-sm font-extrabold text-white transition-all ${!booking.service ? 'bg-user-secondary/50 cursor-not-allowed' : 'bg-user-secondary hover:bg-user-secondary-dark cursor-pointer'} ${isMobile ? 'w-full' : ''}`}>Next → Pick a time & date</button>
+        <button 
+          onClick={onCancel} 
+          className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-neutral-800 text-sm font-extrabold text-gray-600 dark:text-gray-200 cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-700 ${isMobile ? 'w-full' : ''}`}
+        >
+          Cancel
+        </button>
+        <button 
+          onClick={onNext} 
+          disabled={!booking.service} 
+          className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round text-sm font-extrabold text-white transition-all ${!booking.service ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed' : 'bg-yellow-600 dark:bg-yellow-600 hover:bg-yellow-700 dark:hover:bg-yellow-500 cursor-pointer'} ${isMobile ? 'w-full' : ''}`}
+        >
+          Next → Pick a time & date
+        </button>
       </div>
     </div>
   );
