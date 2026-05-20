@@ -309,7 +309,7 @@ const Dashboard = () => {
       if (snap.docs.length > 0) {
         setAnnouncements(snap.docs.map(d => ({
           id: d.id, title: d.data().title || 'Announcement',
-          body: d.data().body || d.data().message || '',
+          body: d.data().body || d.data().description || '',
           date: d.data().createdAt?.toDate?.().toISOString().split('T')[0] || '',
         })));
       } else {
