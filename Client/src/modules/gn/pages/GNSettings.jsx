@@ -18,7 +18,7 @@ const Toggle = ({ value, onChange }) => (
   </div>
 );
 
-const Settings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
+const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
   const t = getThemeClasses(theme);
   const [searchParams] = useSearchParams();
 const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "notification");
@@ -636,4 +636,4 @@ const handleSaveHours = async () => {
   );
 };
 
-export default Settings;
+export default GNSettings;

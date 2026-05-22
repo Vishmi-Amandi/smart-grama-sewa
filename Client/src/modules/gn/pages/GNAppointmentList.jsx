@@ -3,7 +3,7 @@ import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { auth, db } from "../../firebase";
 import { collection, query, where, getDocs, doc, updateDoc, orderBy, getDoc } from "firebase/firestore";
 
-const AppointmentList = ({ gnStatus, theme }) => {
+const GNAppointmentList = ({ gnStatus, theme }) => {
   const t = getThemeClasses(theme);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -195,4 +195,4 @@ const handleCancel = async (id) => {
   );
 };
 
-export default AppointmentList;
+export default GNAppointmentList;

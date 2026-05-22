@@ -2,7 +2,7 @@ import { useState } from "react";
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { UserCheck, CalendarDays, Map, RefreshCw, Clock } from "lucide-react";
 
-const CurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
+const GNCurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
   const [selected, setSelected] = useState(gnStatus);
   const t = getThemeClasses(theme);
 
@@ -96,4 +96,4 @@ const CurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
   );
 };
 
-export default CurrentStatus;
+export default GNCurrentStatus;

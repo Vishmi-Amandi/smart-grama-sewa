@@ -4,7 +4,7 @@ import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../../firebase";
 import { Loader2, Mail, ArrowLeft } from "lucide-react";
 
-const ForgotPassword = () => {
+const GNForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -154,4 +154,4 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword;
+export default GNForgotPassword;

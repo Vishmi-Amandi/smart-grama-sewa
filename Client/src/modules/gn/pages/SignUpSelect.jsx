@@ -17,7 +17,7 @@ const SignUpSelect = () => {
   if (role === 'citizen') {
     navigate('/citizen-signup');
   } else if (role === 'gn') {
-    navigate('/signup');
+    navigate('/gn-signup');
   }
 };
 

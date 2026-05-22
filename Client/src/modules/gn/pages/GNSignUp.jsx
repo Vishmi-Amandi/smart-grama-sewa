@@ -92,9 +92,11 @@ const Step1 = ({ form, update, onNext }) => {
     if (!form.fullName.trim()) e.fullName = "Full name is required.";
     if (!form.nic.trim())      e.nic = "NIC is required.";
     else if (!/^(\d{9}[VvXx]|\d{12})$/.test(form.nic.trim())) e.nic = "Enter a valid NIC.";
+    if(!form.address.trim())   e.address= "Permanent address is required";
     if (!form.dob)             e.dob = "Date of birth is required.";
     if (!form.gender)          e.gender = "Gender is required.";
     if (!form.mobile.trim())   e.mobile = "Mobile number is required.";
+    else if (!/^\d{10}$/.test(form.mobile.trim())) e.mobile = "Enter a valid mobile number (10 digits).";
     if (!form.email.trim())    e.email = "Email is required.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email.";
     setErrors(e);
@@ -117,6 +119,7 @@ const Step1 = ({ form, update, onNext }) => {
             <label className={labelClass}>Permanent Address</label>
             <input type="text" value={form.address} onChange={(e) => update("address", e.target.value)}
               placeholder="No. 45, Main Street, Colombo 07" className={inputClass} />
+              <FieldError msg={errors.address} />
           </div>
           <div>
             <label className={labelClass}>NIC Number</label>
@@ -188,6 +191,7 @@ const Step2 = ({ form, update, onNext, onBack }) => {
     if (!form.divisionalSecretariat)  e.divisionalSecretariat = "Please select a DS Division.";
     if (!form.officeAddress.trim())   e.officeAddress = "Office address is required.";
     if (!form.officeMobile.trim())    e.officeMobile = "Office mobile is required.";
+    else if (!/^\d{10}$/.test(form.officeMobile.trim())) e.officeMobile = "Enter a valid mobile number (10 digits).";
     if (!form.officialEmail.trim())   e.officialEmail = "Official email is required.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.officialEmail)) e.officialEmail = "Enter a valid email.";
     setErrors(e);
@@ -298,12 +302,23 @@ const Step2 = ({ form, update, onNext, onBack }) => {
 
 // ─── STEP 3 — Document Upload ─────────────────────────────────────────────────
 const Step3 = ({ form, update, onNext, onBack }) => {
-  const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({});
+  const [errors, setErrors] = useState({});
+
+  const requiredFields = [
+    { fieldName: "appointmentLetter", label: "Appointment Letter" },
+    { fieldName: "photograph", label: "Recent Photograph" },
+    { fieldName: "nicFront", label: "NIC Front Side" },
+    { fieldName: "nicBack", label: "NIC Back Side" },
+    { fieldName: "signature", label: "Signature" },
+  ];
 
   const handleUpload = async (file, fieldName) => {
     if (!file) return;
-    setUploading(true);
+
+    // Set uploading only for this specific field
+    setUploadProgress((prev) => ({ ...prev, [fieldName]: "uploading" }));
+    setErrors((prev) => ({ ...prev, [fieldName]: false }));
 
     try {
       const formData = new FormData();
@@ -326,82 +341,150 @@ const Step3 = ({ form, update, onNext, onBack }) => {
         setUploadProgress((prev) => ({ ...prev, [fieldName]: "done" }));
       } else {
         console.error("Upload failed:", data);
+        setUploadProgress((prev) => ({ ...prev, [fieldName]: "error" }));
       }
     } catch (err) {
       console.error("Upload error:", err);
-    } finally {
-      setUploading(false);
+      setUploadProgress((prev) => ({ ...prev, [fieldName]: "error" }));
     }
   };
 
-  const DocumentBox = ({ label, fieldName }) => (
-    <div className="flex flex-col gap-2">
-      <label className={labelClass}>{label}</label>
-      <label className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-[#E5A800] transition
-        ${uploadProgress[fieldName] === "done" ? "border-green-400 bg-green-50" : "border-gray-200 bg-white"}`}>
-        <input
-          type="file"
-          accept=".pdf,.png,.jpg,.jpeg"
-          className="hidden"
-          onChange={(e) => handleUpload(e.target.files[0], fieldName)}
-        />
-        {uploadProgress[fieldName] === "done" ? (
-          <>
-            <span className="text-3xl mb-2">✅</span>
-            <p className="text-xs font-semibold text-green-600">Uploaded successfully!</p>
-            <p className="text-xs text-gray-400 mt-1">Click to replace</p>
-          </>
-        ) : uploading ? (
-          <>
-            <span className="text-3xl mb-2">⏳</span>
-            <p className="text-xs font-semibold text-yellow-600">Uploading...</p>
-          </>
-        ) : (
-          <>
-            <span className="text-3xl mb-2">📄</span>
-            <p className="text-xs font-semibold text-gray-600 text-center">Click to upload or drag and drop</p>
-            <p className="text-xs text-gray-400 mt-1 text-center">PNG, JPG or PDF (Max. 5MB)</p>
-          </>
+  const handleNext = () => {
+    const newErrors = {};
+    requiredFields.forEach(({ fieldName }) => {
+      if (uploadProgress[fieldName] !== "done") {
+        newErrors[fieldName] = true;
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    onNext();
+  };
+
+  // True only if at least one field is currently uploading
+  const isAnyUploading = Object.values(uploadProgress).some((v) => v === "uploading");
+
+  const DocumentBox = ({ label, fieldName }) => {
+    const status = uploadProgress[fieldName]; // "uploading" | "done" | "error" | undefined
+
+    return (
+      <div className="flex flex-col gap-2">
+        <label className={labelClass}>{label}</label>
+        <label
+          className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition
+            ${
+              errors[fieldName]
+                ? "border-red-400 bg-red-50"
+                : status === "done"
+                ? "border-green-400 bg-green-50"
+                : status === "uploading"
+                ? "border-yellow-300 bg-yellow-50"
+                : "border-gray-200 bg-white hover:border-[#E5A800]"
+            }`}
+        >
+          <input
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg"
+            className="hidden"
+            disabled={status === "uploading"}
+            onChange={(e) => handleUpload(e.target.files[0], fieldName)}
+          />
+
+          {status === "done" && (
+            <>
+              <span className="text-3xl mb-2">✅</span>
+              <p className="text-xs font-semibold text-green-600">Uploaded successfully!</p>
+              <p className="text-xs text-gray-400 mt-1">Click to replace</p>
+            </>
+          )}
+
+          {status === "uploading" && (
+            <>
+              <span className="text-3xl mb-2">⏳</span>
+              <p className="text-xs font-semibold text-yellow-600">Uploading...</p>
+            </>
+          )}
+
+          {status === "error" && (
+            <>
+              <span className="text-3xl mb-2">❌</span>
+              <p className="text-xs font-semibold text-red-500">Upload failed. Click to retry</p>
+            </>
+          )}
+
+          {!status && (
+            <>
+              <span className="text-3xl mb-2">{errors[fieldName] ? "⚠️" : "📄"}</span>
+              <p className={`text-xs font-semibold text-center ${errors[fieldName] ? "text-red-500" : "text-gray-600"}`}>
+                {errors[fieldName] ? "This document is required" : "Click to upload or drag and drop"}
+              </p>
+              <p className="text-xs text-gray-400 mt-1 text-center">PNG, JPG or PDF (Max. 5MB)</p>
+            </>
+          )}
+        </label>
+
+        {errors[fieldName] && (
+          <p className="text-xs text-red-500 font-semibold flex items-center gap-1">
+            ⚠️ Please upload your {label}
+          </p>
         )}
-      </label>
-    </div>
-  );
+      </div>
+    );
+  };
+
+  const missingDocs = requiredFields.filter(({ fieldName }) => uploadProgress[fieldName] !== "done");
 
   return (
     <>
       <h2 className="text-lg font-black text-gray-800 mb-6">Document Upload</h2>
 
-      {uploading && (
+      {isAnyUploading && (
         <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-sm font-semibold text-yellow-700 flex items-center gap-2">
           ⏳ Uploading document... please wait
         </div>
       )}
 
-      {/* Appointment Letter + Recent Photograph */}
+      {Object.keys(errors).length > 0 && missingDocs.length > 0 && (
+        <div className="mb-4 bg-red-50 border border-red-300 rounded-xl px-4 py-3 text-sm text-red-700">
+          <p className="font-bold mb-1">⚠️ Please upload the following documents before continuing:</p>
+          <ul className="list-disc list-inside space-y-0.5">
+            {missingDocs.map(({ label }) => (
+              <li key={label} className="text-xs font-medium">{label}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4 mb-4">
         <DocumentBox label="Appointment Letter" fieldName="appointmentLetter" />
         <DocumentBox label="Recent Photograph" fieldName="photograph" />
       </div>
 
-      {/* NIC Front + Back */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <DocumentBox label="NIC Front Side" fieldName="nicFront" />
         <DocumentBox label="NIC Back Side" fieldName="nicBack" />
       </div>
 
-      {/* Signature */}
       <div className="mb-6">
         <DocumentBox label="Signature" fieldName="signature" />
       </div>
 
-      {/* Buttons */}
       <div className="flex justify-between mt-2">
-        <button onClick={onBack}
-          className="border-2 border-[#3B1F0A] text-[#3B1F0A] hover:bg-[#3B1F0A] hover:text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition text-sm">
+        <button
+          onClick={onBack}
+          className="border-2 border-[#3B1F0A] text-[#3B1F0A] hover:bg-[#3B1F0A] hover:text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition text-sm"
+        >
           <ArrowLeft size={15} /> Previous Step
         </button>
-        <button onClick={onNext} disabled={uploading}
-          className="bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-[#3d2a00] font-black px-6 py-2.5 rounded-xl flex items-center gap-2 transition shadow text-sm">
+        <button
+          onClick={handleNext}
+          disabled={isAnyUploading}
+          className="bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-[#3d2a00] font-black px-6 py-2.5 rounded-xl flex items-center gap-2 transition shadow text-sm"
+        >
           Save & Continue <ArrowRight size={15} />
         </button>
       </div>
@@ -592,7 +675,7 @@ await setDoc(doc(db, "users", credential.user.uid), {
 };
 
 // ─── Main SignUp ──────────────────────────────────────────────────────────────
-const SignUp = () => {
+const GNSignUp = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
 
@@ -650,4 +733,4 @@ const SignUp = () => {
   );
 };
 
-export default SignUp;
+export default GNSignUp;

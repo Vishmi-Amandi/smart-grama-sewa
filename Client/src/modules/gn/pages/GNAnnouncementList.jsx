@@ -12,7 +12,7 @@ import { logActivity } from "../../../logActivity";
 
 const ITEMS_PER_PAGE = 5;
 
-const AnnouncementList = ({ gnStatus, theme }) => {
+const GNAnnouncementList = ({ gnStatus, theme }) => {
   const t = getThemeClasses(theme);
 
   const [announcements, setAnnouncements]   = useState([]);
@@ -391,4 +391,4 @@ const handleSaveEdit = async () => {
   );
 };
 
-export default AnnouncementList;
+export default GNAnnouncementList;

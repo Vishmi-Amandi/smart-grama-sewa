@@ -6,7 +6,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { logActivity } from "../../../logActivity";
 
-const TransferRequest = ({ gnStatus, theme }) => {
+const GNChangeGNDivision = ({ gnStatus, theme }) => {
   const t = getThemeClasses(theme);
   const navigate = useNavigate();
 
@@ -25,6 +25,8 @@ const [confirmed, setConfirmed] = useState(false);
 const [loading, setLoading] = useState(false);
 const [error, setError] = useState("");
 const [success, setSuccess] = useState(false);
+const [transferLetter, setTransferLetter] = useState("");
+const [uploading, setUploading] = useState(false);
 
 const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -40,18 +42,19 @@ const handleSubmit = async () => {
   setError("");
   try {
     const user = auth.currentUser;
-    await addDoc(collection(db, "transfer_requests"), {
-  uid:             user.uid,
-  email:           user.email,
-  fromDivision:    form.fromDivision,
-  fromDistrict:    form.fromDistrict,   // ← correct field name
-  toDivision:      form.toDivision,
-  toDistrict:      form.toDistrict,     // ← correct field name
-  effectiveDate:   form.effectiveDate,
-  reason:          form.reason,
-  additionalNotes: form.additionalNotes || "",
-  status:          "Pending",
-  createdAt:       serverTimestamp(),
+await addDoc(collection(db, "gn_change_gn_division"), {
+  uid: user.uid,
+  email: user.email,
+  fromDivision: form.fromDivision,
+  fromDistrict: form.fromDistrict,
+  toDivision: form.toDivision,
+  toDistrict: form.toDistrict,
+  effectiveDate: form.effectiveDate,
+  reason: form.reason,
+  additionalNotes: form.additionalNotes,
+  transferLetter: transferLetter || "",
+  status: "Pending",
+  createdAt: serverTimestamp(),
 });
 await logActivity(
   "transfer",
@@ -68,11 +71,35 @@ await logActivity(
   }
 };
 
+const handleUpload = async (file) => {
+  if (!file) return;
+  setUploading(true);
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "gn_documents");
+    formData.append("cloud_name", "dsi9xh1fd");
+
+    const response = await fetch(
+      "https://api.cloudinary.com/v1_1/dsi9xh1fd/auto/upload",
+      { method: "POST", body: formData }
+    );
+    const data = await response.json();
+    if (data.secure_url) {
+      setTransferLetter(data.secure_url);
+    }
+  } catch (err) {
+    console.error("Upload error:", err);
+  } finally {
+    setUploading(false);
+  }
+};
+
 return (
   <GNLayout gnStatus={gnStatus} theme={theme}>
 
     {/* Page Title */}
-    <h1 className="text-2xl font-bold text-[#8B4513] mb-6">Transfer Request</h1>
+    <h1 className="text-2xl font-bold text-[#8B4513] mb-6">Change GN Division</h1>
 
     {success ? (
       /* Success State */
@@ -82,7 +109,7 @@ return (
         </div>
         <h2 className={`text-xl font-bold mb-2 ${t.text}`}>Request Submitted!</h2>
         <p className={`text-sm mb-6 ${t.subtext}`}>
-          Your transfer request has been submitted successfully. You will be notified once it is reviewed.
+          Your change GN division request has been submitted successfully. You will be notified once it is reviewed.
         </p>
         <button
           onClick={() => navigate("/")}
@@ -208,6 +235,45 @@ return (
 
         <hr className={`${t.border} mb-6`} />
 
+        {/* Supporting Documents */}
+<div className="mb-6">
+  <p className={`text-sm font-semibold mb-4 flex items-center gap-2 ${t.text}`}>
+    📄 Supporting Documents
+  </p>
+  <label className={`text-xs font-semibold mb-2 block ${t.subtext}`}>
+    Upload Transfer Letter
+  </label>
+  <label className={`border-2 border-dashed ${t.border} rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-[#E5A800] transition
+    ${transferLetter ? "border-green-400 bg-green-50" : ""}`}>
+    <input
+      type="file"
+      accept=".pdf,.png,.jpg,.jpeg"
+      className="hidden"
+      onChange={(e) => handleUpload(e.target.files[0])}
+    />
+    {uploading ? (
+      <>
+        <span className="text-3xl mb-2">⏳</span>
+        <p className="text-xs font-semibold text-yellow-600">Uploading...</p>
+      </>
+    ) : transferLetter ? (
+      <>
+        <span className="text-3xl mb-2">✅</span>
+        <p className="text-xs font-semibold text-green-600">Uploaded successfully!</p>
+        <p className="text-xs text-gray-400 mt-1">Click to replace</p>
+      </>
+    ) : (
+      <>
+        <Upload size={28} className="text-gray-400 mb-2" />
+        <p className={`text-sm font-semibold ${t.text}`}>Click to upload or drag and drop</p>
+        <p className={`text-xs mt-1 ${t.subtext}`}>PDF, PNG, JPG (Max. 5MB)</p>
+      </>
+    )}
+  </label>
+</div>
+
+<hr className={`${t.border} mb-6`} />
+
         {/* Additional Notes */}
         <div className="mb-6">
           <p className={`text-sm font-semibold mb-4 flex items-center gap-2 ${t.text}`}>
@@ -261,4 +327,4 @@ return (
   </GNLayout>
 );
 };
-export default TransferRequest;
+export default GNChangeGNDivision;

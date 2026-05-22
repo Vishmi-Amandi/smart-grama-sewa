@@ -48,7 +48,7 @@ const getMonday = (date) => {
   return d;
 };
 
-const Schedule = ({ gnStatus, theme }) => {
+const GNSchedule = ({ gnStatus, theme }) => {
   const t = getThemeClasses(theme);
   const [weekStart, setWeekStart] = useState(getMonday(new Date()));
   const [events, setEvents] = useState({
@@ -317,4 +317,4 @@ const Schedule = ({ gnStatus, theme }) => {
   );
 };
 
-export default Schedule;
+export default GNSchedule;

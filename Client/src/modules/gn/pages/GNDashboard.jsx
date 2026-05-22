@@ -148,21 +148,21 @@ const GNDashboard = ({ gnStatus, theme }) => {
             ⚡ Quick Actions
           </p>
           <div className="grid grid-cols-2 gap-4">
-            <Link to="/appointments" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
+            <Link to="/gn-appointments" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
               <CalendarCheck size={22} />
               View Appointments
             </Link>
-            <Link to="/schedule" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
+            <Link to="/gn-schedule" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
               <Clock size={22} />
               Update Schedule
             </Link>
-            <Link to="/create-announcement" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
+            <Link to="/gn-create-announcement" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
               <Megaphone size={22} />
               Create Announcement
             </Link>
-            <Link to="/transfer-request" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
+            <Link to="/gn-change-gn-division" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
               <ArrowLeftRight size={22} />
-              Transfer Request
+              Change GN Division
             </Link>
           </div>
         </div>
@@ -176,7 +176,7 @@ const GNDashboard = ({ gnStatus, theme }) => {
             <Megaphone size={16} className="text-[#8B4513]" />
             Recent Announcements List
           </p>
-          <Link to="/announcement-list" className="text-xs text-[#E5A800] font-semibold hover:underline">
+          <Link to="/gn-announcement-list" className="text-xs text-[#E5A800] font-semibold hover:underline">
             View All →
           </Link>
         </div>

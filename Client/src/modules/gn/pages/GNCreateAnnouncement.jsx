@@ -6,7 +6,7 @@ import { auth, db } from "../../firebase";
 import { useLocation, useNavigate } from "react-router-dom";
 import { logActivity } from "../../../logActivity";
 
-const CreateAnnouncement = ({ gnStatus, theme }) => {
+const GNCreateAnnouncement = ({ gnStatus, theme }) => {
   const t = getThemeClasses(theme);
 
   //_______read draft data___________________
@@ -148,7 +148,7 @@ if (draft?.id) {
     }
     await logActivity("announcement", "Draft Saved", title, `Draft saved — Category: ${category}`);
     setSuccess("Draft saved successfully!");
-    setTimeout(() => navigate("/announcement-list"), 1500);
+    setTimeout(() => navigate("/gn-announcement-list"), 1500);
   } catch (err) {
     setError("Failed to save draft. Please try again.");
     console.error(err);
@@ -192,7 +192,7 @@ const handlePublish = async () => {
     }
     await logActivity("announcement", "Published", title, `Category: ${category}, Priority: ${priority}`);
     setSuccess("Announcement published successfully!");
-    setTimeout(() => navigate("/announcement-list"), 1500);
+    setTimeout(() => navigate("/gn-announcement-list"), 1500);
   } catch (err) {
     setError("Failed to publish. Please try again.");
     console.error(err);
@@ -483,4 +483,4 @@ const handlePublish = async () => {
   );
 };
 
-export default CreateAnnouncement;
+export default GNCreateAnnouncement;

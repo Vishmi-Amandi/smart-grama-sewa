@@ -28,7 +28,7 @@ const avatarColor = (name) => {
   return colors[i];
 };
 
-const CitizenSearch = ({ gnStatus, theme }) => {
+const GNCitizenSearch = ({ gnStatus, theme }) => {
   const t = getThemeClasses(theme);
 
   const [nameInput,    setNameInput]    = useState("");
@@ -385,4 +385,4 @@ const CitizenSearch = ({ gnStatus, theme }) => {
   );
 };
 
-export default CitizenSearch;
+export default GNCitizenSearch;

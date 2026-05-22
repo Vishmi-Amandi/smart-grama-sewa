@@ -29,16 +29,16 @@ const GNLayout = ({ children, gnStatus, theme }) => {
   const [showResults, setShowResults] = useState(false);
 
 const searchPages = [
-  { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={16} /> },
-  { name: "Appointments", path: "/appointments", icon: <CalendarDays size={16} /> },
-  { name: "Schedule", path: "/schedule", icon: <Clock size={16} /> },
-  { name: "Create Announcement", path: "/create-announcement", icon: <Megaphone size={16} /> },
-  { name: "Announcement List", path: "/announcement-list", icon: <Megaphone size={16} /> },
-  { name: "Citizen Search", path: "/citizen-search", icon: <Search size={16} /> },
-  { name: "Profile", path: "/profile", icon: <User size={16} /> },
-  { name: "Settings", path: "/settings", icon: <Settings size={16} /> },
-  { name: "Current Status", path: "/current-status", icon: <User size={16} /> },
-  { name: "Transfer Request", path: "/transfer-request", icon: <LogOut size={16} /> },
+  { name: "Dashboard", path: "/gn-dashboard", icon: <LayoutDashboard size={16} /> },
+  { name: "Appointments", path: "/gn-appointments", icon: <CalendarDays size={16} /> },
+  { name: "Schedule", path: "/gn-schedule", icon: <Clock size={16} /> },
+  { name: "Create Announcement", path: "/gn-create-announcement", icon: <Megaphone size={16} /> },
+  { name: "Announcement List", path: "/gn-announcement-list", icon: <Megaphone size={16} /> },
+  { name: "Citizen Search", path: "/gn-citizen-search", icon: <Search size={16} /> },
+  { name: "Profile", path: "/gn-profile", icon: <User size={16} /> },
+  { name: "Settings", path: "/gn-settings", icon: <Settings size={16} /> },
+  { name: "Current Status", path: "/gn-current-status", icon: <User size={16} /> },
+  { name: "Change GN Division", path: "/gn-change-gn-division", icon: <LogOut size={16} /> },
 ];
 
 const filteredPages = searchQuery.trim()
@@ -80,7 +80,7 @@ const filteredPages = searchQuery.trim()
           </div>
 
           {/* Status Badge */}
-          <Link to="/current-status" className="mx-4 mt-4 bg-[#9B4D00] rounded-lg px-4 py-3 block hover:bg-[#7a3b00] transition">
+          <Link to="/gn-current-status" className="mx-4 mt-4 bg-[#9B4D00] rounded-lg px-4 py-3 block hover:bg-[#7a3b00] transition">
   <p className="text-xs text-gray-300">Current Status</p>
   <div className="flex items-center gap-2 mt-1">
     <span className={`w-2 h-2 rounded-full
@@ -94,17 +94,17 @@ const filteredPages = searchQuery.trim()
 
           {/* Navigation */}
           <nav className="flex-1 mt-6 px-4 space-y-1">
-            <Link to="/dashboard" className={`flex items-center gap-3 rounded-lg px-4 py-2 ${location.pathname === "/dashboard" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
+            <Link to="/gn-dashboard" className={`flex items-center gap-3 rounded-lg px-4 py-2 ${location.pathname === "/gn-dashboard" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
   <LayoutDashboard size={18} />
   Dashboard
 </Link>
 
-<Link to="/appointments" className={`flex items-center gap-3 rounded-lg px-4 py-2 ${location.pathname === "/appointments" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
+<Link to="/gn-appointments" className={`flex items-center gap-3 rounded-lg px-4 py-2 ${location.pathname === "/gn-appointments" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
   <CalendarDays size={18} />
   Appointments
 </Link>
-           <Link to="/schedule" className={`flex items-center gap-3 px-4 py-2 rounded-lg
-  ${location.pathname === "/schedule" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
+           <Link to="/gn-schedule" className={`flex items-center gap-3 px-4 py-2 rounded-lg
+  ${location.pathname === "/gn-schedule" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
   <Clock size={18} />
   Schedule
 </Link>
@@ -114,7 +114,7 @@ const filteredPages = searchQuery.trim()
               <div
   onClick={() => setShowAnnouncements(!showAnnouncements)}
   className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer
-    ${location.pathname === "/create-announcement" || location.pathname === "/announcement-list"
+    ${location.pathname === "/gn-create-announcement" || location.pathname === "/gn-announcement-list"
       ? "bg-[#E5A800] text-black font-semibold"
       : "text-white hover:bg-[#9B4D00]"
     }`}
@@ -125,18 +125,18 @@ const filteredPages = searchQuery.trim()
               </div>
               {showAnnouncements && (
                 <div className="ml-8 mt-1 space-y-1">
-                  <Link to="/create-announcement" className="flex items-center gap-2 text-orange-200 px-4 py-2 rounded-lg hover:bg-[#9B4D00] text-sm">
+                  <Link to="/gn-create-announcement" className="flex items-center gap-2 text-orange-200 px-4 py-2 rounded-lg hover:bg-[#9B4D00] text-sm">
   Create Announcement
 </Link>
-                  <Link to="/announcement-list" className="flex items-center gap-2 text-orange-200 px-4 py-2 rounded-lg hover:bg-[#9B4D00] text-sm">
+                  <Link to="/gn-announcement-list" className="flex items-center gap-2 text-orange-200 px-4 py-2 rounded-lg hover:bg-[#9B4D00] text-sm">
   Announcement List
 </Link>
                 </div>
               )}
             </div>
 
-           <Link to="/citizen-search" className={`flex items-center gap-3 px-4 py-2 rounded-lg
-  ${location.pathname === "/citizen-search" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
+           <Link to="/gn-citizen-search" className={`flex items-center gap-3 px-4 py-2 rounded-lg
+  ${location.pathname === "/gn-citizen-search" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
   <Search size={18} />
   Citizen Search
 </Link>
@@ -144,13 +144,13 @@ const filteredPages = searchQuery.trim()
             {/* Divider */}
             <hr className="border-[#9B4D00] my-2" />
 
-            <Link to="/profile" className={`flex items-center gap-3 px-4 py-2 rounded-lg
-  ${location.pathname === "/profile" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
+            <Link to="/gn-profile" className={`flex items-center gap-3 px-4 py-2 rounded-lg
+  ${location.pathname === "/gn-profile" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
   <User size={18} />
   Profile
 </Link>
-           <Link to="/settings" className={`flex items-center gap-3 px-4 py-2 rounded-lg
-  ${location.pathname === "/settings" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
+           <Link to="/gn-settings" className={`flex items-center gap-3 px-4 py-2 rounded-lg
+  ${location.pathname === "/gn-settings" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}>
   <Settings size={18} />
   Settings
 </Link>
@@ -289,7 +289,7 @@ const filteredPages = searchQuery.trim()
               <span className="text-gray-500 text-xl cursor-pointer">🔔</span>
 
               {/* User Info */}
-<Link to="/profile" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
+<Link to="/gn-profile" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
   <div className="text-right">
     <p className="text-sm font-semibold text-gray-800">
       {userData?.fullName || "Officer"}

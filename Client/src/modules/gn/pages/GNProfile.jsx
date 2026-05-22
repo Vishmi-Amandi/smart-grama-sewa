@@ -34,7 +34,7 @@ const safeHours = (val, fallback = "N/A") => {
   return fallback;
 };
 
-const Profile = ({ gnStatus, theme }) => {
+const GNProfile = ({ gnStatus, theme }) => {
   const navigate = useNavigate();
   const [activeTab,           setActiveTab]           = useState("personal");
   const [userData,            setUserData]            = useState(null);
@@ -619,7 +619,7 @@ useEffect(() => {
       {[
         { label: "Total Activities", value: activities.length },
         { label: "Announcements",    value: activities.filter((a) => a.type === "announcement").length },
-        { label: "Transfers",        value: activities.filter((a) => a.type === "transfer").length },
+        { label: "Change GN Division",        value: activities.filter((a) => a.type === "change").length },
       ].map((item) => (
         <div key={item.label} className={`${t.card} rounded-2xl shadow p-5`}>
           <p className={`text-xs ${t.subtext} mb-1`}>{item.label}</p>
@@ -632,13 +632,13 @@ useEffect(() => {
 
     {/* Filter Tabs */}
     <div className="flex gap-2 mb-4">
-      {["All", "announcement", "transfer"].map((f) => (
+      {["All", "announcement", "change"].map((f) => (
         <button key={f} onClick={() => setActivityFilter(f)}
           className={`px-4 py-1.5 rounded-full text-xs font-bold capitalize transition
             ${activityFilter === f
               ? "bg-[#8B4513] text-white"
               : `border ${t.border} ${t.subtext} hover:border-[#8B4513]`}`}>
-          {f === "All" ? "All" : f === "announcement" ? "Announcements" : "Transfers"}
+          {f === "All" ? "All" : f === "announcement" ? "Announcements" : "Changes"}
         </button>
       ))}
     </div>
@@ -655,7 +655,7 @@ useEffect(() => {
           <p className="text-4xl mb-3">📋</p>
           <p className={`text-sm font-semibold ${t.subtext}`}>No activities recorded yet.</p>
           <p className={`text-xs mt-1 ${t.subtext}`}>
-            Activities will appear here when you publish announcements or submit transfer requests.
+            Activities will appear here when you publish announcements or submit change Gn division requests.
           </p>
         </div>
       ) : (
@@ -673,7 +673,7 @@ useEffect(() => {
               </p>
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
                 item.type === "announcement" ? "bg-blue-400" :
-                item.type === "transfer"     ? "bg-orange-400" : "bg-gray-300"
+                item.type === "change"     ? "bg-orange-400" : "bg-gray-300"
               }`} />
               <div className="flex-1">
                 <p className={`text-sm font-semibold ${t.text}`}>{item.title}</p>
@@ -681,7 +681,7 @@ useEffect(() => {
               </div>
               <span className={`text-xs font-semibold px-3 py-1 rounded-full flex-shrink-0 ${
                 item.type === "announcement" ? "bg-blue-100 text-blue-600"     :
-                item.type === "transfer"     ? "bg-orange-100 text-orange-600" :
+                item.type === "change"     ? "bg-orange-100 text-orange-600" :
                                                "bg-gray-100 text-gray-600"
               }`}>
                 {item.action?.toUpperCase()}
@@ -698,4 +698,4 @@ useEffect(() => {
   );
 };
 
-export default Profile;
+export default GNProfile;

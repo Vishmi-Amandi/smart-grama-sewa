@@ -10,7 +10,7 @@ import {
 import { doc, getDoc, serverTimestamp, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
-const Login = () => {
+const GNLogin = () => {
   const [username, setUsername] = useState("");
   const [password,     setPassword]     = useState("");
   const [rememberMe,   setRememberMe]   = useState(false);
@@ -62,7 +62,7 @@ const Login = () => {
     await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
 
     await signInWithEmailAndPassword(auth, email, password);
-    navigate("/dashboard");
+    navigate("/gn-dashboard");
 
   } catch (err) {
     switch (err.code) {
@@ -175,7 +175,7 @@ const Login = () => {
                       className="w-4 h-4 rounded cursor-pointer accent-[#E5A800]" />
                     Keep me signed in
                   </label>
-                  <a href="/forgot-password" className="text-sm font-bold text-[#fdf0dc] hover:text-white transition">
+                  <a href="/gn-forgot-password" className="text-sm font-bold text-[#fdf0dc] hover:text-white transition">
                     Forgot password?
                   </a>
                 </div>
@@ -214,4 +214,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default GNLogin;
