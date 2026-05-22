@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+} from "firebase/auth";
 import { doc, getDoc, serverTimestamp, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
@@ -27,12 +32,9 @@ const Login = () => {
 
   setLoading(true);
   try {
-    console.log("1. Searching for username:", username.trim());
     // Find officer by username
     const q    = query(collection(db, "gn_officers"), where("username", "==", username.trim()));
     const snap = await getDocs(q);
-
-    console.log("2. Docs found:", snap.size);
 
     if (snap.empty) {
       setError("No account found with this username.");
@@ -41,11 +43,7 @@ const Login = () => {
     }
 
     const officerData = snap.docs[0].data();
-    const email       = officerData.email; 
-    console.log("3. Officer data:", officerData);
-  console.log("4. Email:", officerData.email);
-  console.log("5. Status:", officerData.status);
- // ✅ get email, not username
+    const email       = officerData.email;
 
     // Check approval status
     if (officerData.status === "pending") {
@@ -60,15 +58,13 @@ const Login = () => {
       return;
     }
 
-    // ✅ Sign in with email from Firestore
-    console.log("6. Attempting sign in with email:", officerData.email);
+    // ✅ Set persistence BEFORE signing in based on rememberMe checkbox
+    await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+
     await signInWithEmailAndPassword(auth, email, password);
-    console.log("7. Sign in successful");
     navigate("/dashboard");
 
   } catch (err) {
-    console.log("ERROR code:", err.code);
-  console.log("ERROR message:", err.message);
     switch (err.code) {
       case "auth/wrong-password":    setError("Incorrect password.");                 break;
       case "auth/too-many-requests": setError("Too many attempts. Try again later."); break;
