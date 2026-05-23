@@ -12,11 +12,13 @@ import Announcements from './modules/user/pages/announcements';
 import Settings      from './modules/user/pages/settings';
 import ContactGN from './modules/user/pages/contactGN';
 
+// New module import
+import Home from './modules/home/Home';
+
 // Protected route wrapper
-// Redirects to /login if Firebase user is not logged in
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebase'; // ← adjust path if needed
+import { auth } from './firebase'; 
 
 const ProtectedRoute = ({ children }) => {
   const [checking, setChecking] = useState(true);
@@ -30,7 +32,6 @@ const ProtectedRoute = ({ children }) => {
     return () => unsub();
   }, []);
 
-  // While checking auth state show a minimal loader
   if (checking) {
     return (
       <div style={{
@@ -48,7 +49,6 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  // Not logged in → redirect to login
   return isAuth ? children : <Navigate to="/login" replace />;
 };
 
@@ -65,6 +65,7 @@ const App = () => {
           {/* Citizen signup — reached after selecting "Citizen" on role screen */}
           <Route path="/signup" element={<SignUp />} />
 
+          **<Route path="/" element={<Home />} />**
           {/* Protected routes (must be logged in) */}
           <Route path="/dashboard" element={
             <ProtectedRoute><Dashboard /></ProtectedRoute>
@@ -81,18 +82,21 @@ const App = () => {
           <Route path="/settings" element={
             <ProtectedRoute><Settings /></ProtectedRoute>
           } />
-
+      <Routes>
+        
+     
           <Route path="/contact-gn" element={
             <ProtectedRoute><ContactGN /></ProtectedRoute>
           } />
 
           {/* ── Default redirect ── */}
-          {/* Visiting "/" → go to dashboard (which redirects to login if not authed) */}
           <Route path="/"   element={<Navigate to="/dashboard" replace />} />
 
           {/* ── 404 fallback ── */}
           <Route path="*"   element={<Navigate to="/dashboard" replace />} />
-
+        {/* ── Default redirect ── */}
+        **<Route path="/"  element={<Home />} />**
+          
         </Routes>
       </ErrorBoundary>
       

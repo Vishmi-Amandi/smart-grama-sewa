@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 /* Theme Variables - Light Mode (default) */
+
+/* Default light theme CSS variables */
 :root {
   --bg-page: #f5f0e8;
   --bg-sidebar: #F5C400;
