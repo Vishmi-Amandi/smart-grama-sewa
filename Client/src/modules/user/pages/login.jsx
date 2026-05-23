@@ -1,7 +1,10 @@
+// Client/src/modules/user/pages/login.jsx
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../../firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../../../firebase';
 
 const Login = () => {
   const [email, setEmail]               = useState('');
@@ -28,18 +31,42 @@ const Login = () => {
 
     setLoading(true);
     try {
-      // Actual Firebase authentication
+      // Step 1: Authenticate with Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const uid = userCredential.user.uid;
       console.log('Login successful:', userCredential.user.email);
-      
-      // Redirect to dashboard on success
-      navigate('/dashboard');
-      
+
+      // Step 2: Check gn_officers collection first (uid is the document ID)
+      // gn_officers fields: uid, role, fullName, email, gnDiv, district ...
+      const gnOfficerSnap = await getDoc(doc(db, 'gn_officers', uid));
+      if (gnOfficerSnap.exists()) {
+        const gnData = gnOfficerSnap.data();
+        if (gnData.role === 'admin') {
+          navigate('/admin/dashboard');
+          return;
+        }
+      }
+
+      // Step 3: Check users collection (uid is the document ID)
+      // users fields: uid, role, fullName, email, gnDiv, district ...
+      const userSnap = await getDoc(doc(db, 'users', uid));
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        if (userData.role === 'admin') {
+          navigate('/admin/dashboard');
+          return;
+        }
+        // Any other role → regular user dashboard
+        navigate('/dashboard');
+        return;
+      }
+
+      // Step 4: Document not found in either collection
+      setError('Account not found. Please contact support.');
+
     } catch (err) {
       console.error('Login error:', err);
-      
-      // Handle Firebase error codes with user-friendly messages
-      switch(err.code) {
+      switch (err.code) {
         case 'auth/invalid-email':
           setError('Invalid email format');
           break;
@@ -78,24 +105,21 @@ const Login = () => {
     <div className="min-h-screen flex flex-col">
 
       {/* Background */}
-      <div
-        style={{
-          flex: 1,
-          backgroundImage: 'url(/background.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-        }}
-      >
-        <div
-          style={{ 
-            position: 'absolute', inset: 0,
-            backgroundColor: 'rgba(255, 255, 255, 0.6)',
-            pointerEvents: 'none' }}
-        />
+      <div style={{
+        flex: 1,
+        backgroundImage: 'url(/background.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+      }}>
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundColor: 'rgba(255, 255, 255, 0.6)',
+          pointerEvents: 'none',
+        }} />
 
         {/* Logo */}
         <div style={{ position: 'relative', zIndex: 10, padding: '20px 24px' }}>
@@ -106,39 +130,27 @@ const Login = () => {
           />
         </div>
 
-        {/* Main centered section */}
-        <div 
-          style={{
-            position: 'relative',
-            zIndex: 10,
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '0 16px 48px',
-          }}
-        >
+        {/* Centered card section */}
+        <div style={{
+          position: 'relative', zIndex: 10, flex: 1,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          padding: '0 16px 48px',
+        }}>
 
-          {/* "Sign in" title */}
+          {/* Title */}
           <h1 style={{
-            fontSize: '48px',
-            fontWeight: 900,
-            color: '#332421',
-            letterSpacing: '-1px',
-            marginBottom: '28px',
-            textAlign: 'center',
+            fontSize: '48px', fontWeight: 900, color: '#332421',
+            letterSpacing: '-1px', marginBottom: '28px', textAlign: 'center',
           }}>
             Sign in
           </h1>
 
-          {/* Semi-transparent brown card */}
+          {/* Card */}
           <div style={{
-            width: '100%',
-            maxWidth: '440px',          
+            width: '100%', maxWidth: '440px',
             backgroundColor: 'rgba(106, 35, 1, 0.6)',
-            borderRadius: '24px',
-            padding: '32px 32px 28px',
+            borderRadius: '24px', padding: '32px 32px 28px',
             boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
           }}>
 
@@ -147,22 +159,20 @@ const Login = () => {
               <div style={{
                 marginBottom: '18px',
                 backgroundColor: 'rgba(255,255,255,0.15)',
-                borderRadius: '12px',
-                padding: '11px 16px',
-                color: '#fde8c8',
-                fontSize: '13px',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
+                borderRadius: '12px', padding: '11px 16px',
+                color: '#fde8c8', fontSize: '13px', fontWeight: 600,
+                display: 'flex', alignItems: 'center', gap: '8px',
               }}>
                 <span>⚠</span> {error}
               </div>
             )}
 
-            {/* User name or email */}
+            {/* Email */}
             <div style={{ marginBottom: '18px' }}>
-              <label style={{ display: 'block', color: '#fdf0dc', fontSize: '13px', fontWeight: 700, marginBottom: '7px' }}>
+              <label style={{
+                display: 'block', color: '#fdf0dc',
+                fontSize: '13px', fontWeight: 700, marginBottom: '7px',
+              }}>
                 User name or email
               </label>
               <input
@@ -179,7 +189,10 @@ const Login = () => {
 
             {/* Password */}
             <div style={{ marginBottom: '18px' }}>
-              <label style={{ display: 'block', color: '#fdf0dc', fontSize: '13px', fontWeight: 700, marginBottom: '7px' }}>
+              <label style={{
+                display: 'block', color: '#fdf0dc',
+                fontSize: '13px', fontWeight: 700, marginBottom: '7px',
+              }}>
                 Password
               </label>
               <div className="relative">
@@ -189,11 +202,10 @@ const Login = () => {
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   autoComplete="current-password"
                   required
-                  style={{...inputStyle, paddingRight: '48px'}}
+                  style={{ ...inputStyle, paddingRight: '48px' }}
                   onFocus={(e) => (e.target.style.borderColor = '#F5C400')}
                   onBlur={(e)  => (e.target.style.borderColor = 'transparent')}
                 />
-                {/* Eye toggle button */}
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
@@ -206,7 +218,6 @@ const Login = () => {
                   }}
                 >
                   {showPassword ? (
-                    /* Eye-slash (hide) */
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
@@ -214,7 +225,6 @@ const Login = () => {
                       <line x1="1" y1="1" x2="23" y2="23"/>
                     </svg>
                   ) : (
-                    /* Eye (show) */
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -225,12 +235,10 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Keep me signed in */}
+            {/* Remember me + Forgot password */}
             <div className="flex items-center justify-between mb-5">
-              <label
-                className="flex items-center gap-2 cursor-pointer select-none text-sm font-semibold"
-                style={{ color: '#fdf0dc' }}
-              >
+              <label className="flex items-center gap-2 cursor-pointer select-none text-sm font-semibold"
+                style={{ color: '#fdf0dc' }}>
                 <input
                   type="checkbox"
                   checked={rememberMe}
@@ -240,14 +248,11 @@ const Login = () => {
                 />
                 Keep me signed in
               </label>
-              {/* Forgot password */}
-              <a
-                href="/forgot-password"
+              <a href="/forgot-password"
                 className="text-sm font-bold transition-colors"
                 style={{ color: '#fdf0dc' }}
                 onMouseOver={(e) => (e.target.style.color = '#ffffff')}
-                onMouseOut={(e)  => (e.target.style.color = '#fdf0dc')}
-              >
+                onMouseOut={(e)  => (e.target.style.color = '#fdf0dc')}>
                 Forgot password?
               </a>
             </div>
@@ -260,20 +265,12 @@ const Login = () => {
               style={{
                 width: '100%',
                 backgroundColor: loading ? '#4a5e72' : '#5a6e82',
-                color: '#F5C400',
-                border: 'none',
-                borderRadius: '12px',
-                padding: '15px',
-                fontSize: '17px',
-                fontWeight: 900,
+                color: '#F5C400', border: 'none', borderRadius: '12px',
+                padding: '15px', fontSize: '17px', fontWeight: 900,
                 cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                marginBottom: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                transition: 'background-color 0.15s',
+                opacity: loading ? 0.7 : 1, marginBottom: '20px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: '8px', transition: 'background-color 0.15s',
                 boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
               }}
               onMouseOver={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#4a5e72'; }}
@@ -289,37 +286,28 @@ const Login = () => {
                   </svg>
                   Signing in…
                 </>
-              ) : (
-                'Sign in'
-              )}
+              ) : 'Sign in'}
             </button>
 
             {/* New here */}
-            <p style={{ textAlign: 'center', color: '#fdf0dc', fontSize: '13px', fontWeight: 600, margin: '0 0 12px' }}>
+            <p style={{
+              textAlign: 'center', color: '#fdf0dc',
+              fontSize: '13px', fontWeight: 600, margin: '0 0 12px',
+            }}>
               New here ?
             </p>
 
-            {/* Create your account ) */}
-            <a
-              href="/signup-select"
-              style={{
-                display: 'block',
-                width: '100%',
-                textAlign: 'center',
-                backgroundColor: '#F5C400',
-                color: '#3d2a00',
-                borderRadius: '12px',
-                padding: '15px',
-                fontSize: '17px',
-                fontWeight: 900,
-                textDecoration: 'none',
-                transition: 'background-color 0.15s',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
-                boxSizing: 'border-box',
-              }}
+            {/* Create account */}
+            <a href="/signup-select" style={{
+              display: 'block', width: '100%', textAlign: 'center',
+              backgroundColor: '#F5C400', color: '#3d2a00',
+              borderRadius: '12px', padding: '15px',
+              fontSize: '17px', fontWeight: 900, textDecoration: 'none',
+              transition: 'background-color 0.15s',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.15)', boxSizing: 'border-box',
+            }}
               onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#d4a800')}
-              onMouseOut={(e)  => (e.currentTarget.style.backgroundColor = '#F5C400')}
-            >
+              onMouseOut={(e)  => (e.currentTarget.style.backgroundColor = '#F5C400')}>
               Create your account
             </a>
 
@@ -328,21 +316,15 @@ const Login = () => {
       </div>
 
       {/* Footer */}
-      <footer
-        style={{
-                textAlign: 'center',
-                backgroundColor: '#6A2301',
-                color: '#ffffff',
-                padding: '14px 16px',
-                fontSize: '15px',
-                fontWeight: 600,
-              }}>
+      <footer style={{
+        textAlign: 'center', backgroundColor: '#6A2301',
+        color: '#ffffff', padding: '14px 16px',
+        fontSize: '15px', fontWeight: 600,
+      }}>
         ©2026 Smart Grama Sewa
       </footer>
 
-      {/* Spin keyframe */}
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-
     </div>
   );
 };

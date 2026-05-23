@@ -1,3 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;
@@ -182,3 +189,30 @@
     border-right-color: var(--border);
   }
 }
+
+
+
+
+/* admin app.css */
+
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Lato', sans-serif;
+  background-color: #F5F0E8;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.recharts-tooltip-wrapper {
+  outline: none;
+}
+
+aside::-webkit-scrollbar        { width: 4px; }
+aside::-webkit-scrollbar-track  { background: transparent; }
+aside::-webkit-scrollbar-thumb  { background-color: #C8B89A; border-radius: 4px; }
