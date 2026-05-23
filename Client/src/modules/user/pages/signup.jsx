@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
+import gnDivisionsData from '../data/gnDivisions.json';
 
 // Step Progress Indicator
 const StepIndicator = ({ current }) => {
@@ -349,11 +350,13 @@ const Step1 = ({ data, onChange, onNext }) => {
   );
 };
 
-// STEP 2 — Contact Details (Mobile Responsive)
+// STEP 2 — Contact Details with Real GN Divisions
 const Step2 = ({ data, onChange, onNext, onBack }) => {
   const [errors, setErrors] = useState({});
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  
+  const [gnDivisions, setGnDivisions] = useState([]);
+  const [loadingGn, setLoadingGn] = useState(false);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
@@ -361,6 +364,30 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
   }, []);
 
   const dsDivisions = data.district ? (DISTRICT_DS_MAP[data.district] || []) : [];
+
+  // Load GN divisions when DS Division changes
+  useEffect(() => {
+    if (!data.district || !data.dsDiv) {
+      setGnDivisions([]);
+      return;
+    }
+    
+    setLoadingGn(true);
+    try {
+      // Use the already imported gnDivisionsData (from top of file)
+      const districtData = gnDivisionsData[data.district];
+      if (districtData && districtData[data.dsDiv]) {
+        setGnDivisions(districtData[data.dsDiv]);
+      } else {
+        setGnDivisions([]);
+      }
+    } catch (error) {
+      console.error('Error loading GN divisions:', error);
+      setGnDivisions([]);
+    } finally {
+      setLoadingGn(false);
+    }
+  }, [data.district, data.dsDiv]);
 
   const handleDistrictChange = (val) => {
     onChange('district', val);
@@ -385,12 +412,13 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
 
   const validate = () => {
     const e = {};
-    if (!data.email.trim())  e.email = 'Email is required.';
+    if (!data.email.trim()) e.email = 'Email is required.';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
       e.email = 'Enter a valid email.';
     if (!data.mobile.trim()) e.mobile = 'Mobile number is required.';
-    if (!data.district)      e.district = 'Please select your district.';
-    if (!data.dsDiv)         e.dsDiv = 'Please select your DS Division.';
+    if (!data.district) e.district = 'Please select your district.';
+    if (!data.dsDiv) e.dsDiv = 'Please select your DS Division.';
+    if (!data.gnDiv) e.gnDiv = 'Please select your GN Division.';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -401,6 +429,7 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         Contact Details
       </h2>
 
+      {/* Email and Mobile */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
@@ -425,7 +454,7 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
             type="tel"
             value={data.mobile}
             onChange={(e) => onChange('mobile', e.target.value)}
-            placeholder=""
+            placeholder="0712345678"
             style={inp(isMobile, errors.mobile)}
             onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
             onBlur={(e)  => (e.target.style.borderColor = errors.mobile ? '#e05050' : '#d4c9a8')}
@@ -434,6 +463,7 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         </div>
       </div>
 
+      {/* District, DS Division, GN Division */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', 
@@ -480,19 +510,21 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
           <select
             value={data.gnDiv}
             onChange={(e) => onChange('gnDiv', e.target.value)}
-            disabled={!data.dsDiv}
+            disabled={!data.dsDiv || loadingGn}
             style={{
               ...selectStyle(false),
-              opacity: data.dsDiv ? 1 : 0.5,
-              cursor: data.dsDiv ? 'pointer' : 'not-allowed',
+              opacity: (data.dsDiv && !loadingGn) ? 1 : 0.5,
+              cursor: (data.dsDiv && !loadingGn) ? 'pointer' : 'not-allowed',
             }}
           >
-            <option value="">{data.dsDiv ? 'Select GN Division…' : 'Select DS Division first'}</option>
-            <option value="GN Division 01">GN Division 01</option>
-            <option value="GN Division 02">GN Division 02</option>
-            <option value="GN Division 03">GN Division 03</option>
-            <option value="GN Division 04">GN Division 04</option>
-            <option value="GN Division 05">GN Division 05</option>
+            <option value="">
+              {loadingGn 
+                ? 'Loading GN Divisions...' 
+                : (data.dsDiv ? 'Select GN Division…' : 'Select DS Division first')}
+            </option>
+            {gnDivisions.map((gn) => (
+              <option key={gn} value={gn}>{gn}</option>
+            ))}
           </select>
         </div>
       </div>
