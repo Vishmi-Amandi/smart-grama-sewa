@@ -241,7 +241,7 @@ const DISTRICT_DS_MAP = {
   'Kegalle': ['Aranayaka', 'Bulathkohupitiya', 'Deraniyagala', 'Dehiovita', 'Galigamuwa', 'Kegalle', 'Mawanella', 'Rambukkana', 'Ruwanwella', 'Warakapola', 'Yatiyanthota'],
 };
 
-// STEP 1 — About You (Mobile Responsive)
+// STEP 1 — About You
 const Step1 = ({ data, onChange, onNext }) => {
   const [errors, setErrors] = useState({});
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
