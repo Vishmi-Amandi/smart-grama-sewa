@@ -45,7 +45,7 @@ const Home = () => {
             We're bringing the Grama Niladhari office to your fingertips for a 
             faster, more transparent Sri Lanka.
           </p>
-          <Link to="/login" className="bg-[#FFCB05] text-black px-10 py-3 rounded-full font-bold hover:bg-yellow-500 transition inline-block">
+          <Link to="/gn-login" className="bg-[#FFCB05] text-black px-10 py-3 rounded-full font-bold hover:bg-yellow-500 transition inline-block">
             Get Started
           </Link>
         </div>
@@ -69,6 +69,3 @@ const Home = () => {
 };
 
 export default Home;
-
-
-   

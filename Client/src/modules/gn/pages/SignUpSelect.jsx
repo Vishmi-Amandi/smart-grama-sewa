@@ -14,12 +14,12 @@ const SignUpSelect = () => {
     }, []);
 
     const handleContinue = (role) => {
-        if (role === 'citizen') {
-            navigate('/user-signup');           
-        } else if (role === 'gn') {
-            navigate('/gn-signup');
-        }
-    };
+  if (role === 'citizen') {
+    navigate('//user-signup');
+  } else if (role === 'gn') {
+    navigate('/gn-signup');
+  }
+};
 
     const RoleCard = ({ role, label }) => {
         const isSelected = selected === role;
