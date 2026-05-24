@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { onAuthStateChanged, signOut, updateEmail } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { auth, db } from '../../../firebase'; // ← adjust path if needed
+import { auth, db } from '../../../firebase';
+import { PageLoadingSkeleton, ProfileSkeleton } from '../components/skeleton';
+import LanguageSwitcher from '../components/languageSwitcher';
 
 // Icons
 const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
@@ -11,6 +13,7 @@ const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
     <path d={d} />
   </svg>
 );
+
 const Icons = {
   dashboard:    'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10',
   announcement: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
@@ -26,34 +29,256 @@ const Icons = {
   signout:      'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
   camera:       'M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z M12 17a4 4 0 100-8 4 4 0 000 8z',
   chevDown:     'M6 9l6 6 6-6',
+  tick:         'M4 12l5 5L20 6',
+  close:        'M18 6L6 18M6 6l12 12',
+  phone:        'M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z',
+  mail:         'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6',
+  location:     'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z M12 10a1 1 0 100-2 1 1 0 000 2z',
+  calendar:     'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
 };
 
-// Shared sidebar nav item
+// List of all pages/functions for search
+const PAGE_ACTIONS = [
+  { name: 'Dashboard', path: '/dashboard', icon: Icons.dashboard },
+  { name: 'Announcements', path: '/announcements', icon: Icons.announcement },
+  { name: 'Appointments', path: '/appointments', icon: Icons.appointments },
+  { name: 'Forms', path: '/forms', icon: Icons.forms },
+  { name: 'AI Assistant', path: '/ai', icon: Icons.ai },
+  { name: 'Profile', path: '/profile', icon: Icons.profile },
+  { name: 'Settings', path: '/settings', icon: Icons.settings },
+];
+
+// Search Results Dropdown Component
+const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate }) => {
+  const [filteredPages, setFilteredPages] = useState([]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredPages([]);
+      return;
+    }
+    const query = searchQuery.toLowerCase();
+    const filtered = PAGE_ACTIONS.filter(page =>
+      page.name.toLowerCase().includes(query)
+    );
+    setFilteredPages(filtered);
+  }, [searchQuery]);
+
+  if (!showResults || filteredPages.length === 0) return null;
+
+  return (
+    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-user-border z-[1000] overflow-hidden">
+      {filteredPages.map((page, idx) => (
+        <button
+          key={page.path}
+          onClick={() => {
+            navigate(page.path);
+            setShowResults(false);
+          }}
+          className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background ${idx !== filteredPages.length - 1 ? 'border-b border-user-border-light' : ''}`}
+        >
+          <Icon d={page.icon} size={18} color="#B46A02" />
+          <div>
+            <div className="text-sm font-bold text-user-text">{page.name}</div>
+            <div className="text-[11px] text-user-text-lighter">Click to go to {page.name}</div>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// NavItem
 const NavItem = ({ iconPath, label, active, onClick }) => (
-  <button onClick={onClick} style={{
-    width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
-    padding: '11px 16px', borderRadius: '10px', border: 'none',
-    cursor: 'pointer', fontFamily: 'inherit',
-    backgroundColor: active ? 'rgba(255,255,255,0.9)' : 'transparent',
-    color: '#3d2a00', fontWeight: active ? 800 : 600, fontSize: '14px',
-    transition: 'all 0.15s', textAlign: 'left', marginBottom: '2px',
-    boxShadow: active ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
-  }}
-    onMouseOver={(e) => { if (!active) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.4)'; }}
-    onMouseOut={(e)  => { if (!active) e.currentTarget.style.backgroundColor = 'transparent'; }}
+  <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
+    active 
+      ? 'bg-white/90 dark:bg-user-primary text-user-text font-extrabold shadow-md' 
+      : 'bg-transparent text-user-text font-semibold hover:bg-white/40 dark:hover:bg-white/10'
+  }`}
+    style={{ color: active ? '#B46A02' : '#5a3a00' }}
   >
     <Icon d={iconPath} size={18} color={active ? '#B46A02' : '#5a3a00'} />
     {label}
   </button>
 );
 
+// Desktop Topbar
+const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser }) => (
+  <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
+    <div className="flex-1 max-w-[400px] relative">
+      <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-3xl px-4 py-2 transition-colors hover:border-user-primary">
+        <Icon d={Icons.search} size={16} color="#aaa" />
+        <input
+          type="text"
+          placeholder="Search for a page or function..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setShowResults(true);
+          }}
+          onFocus={() => setShowResults(true)}
+          className="flex-1 border-none outline-none text-sm font-medium text-user-text bg-transparent"
+        />
+        {searchQuery && (
+          <button onClick={() => { setSearchQuery(''); setShowResults(false); }} className="bg-none border-none cursor-pointer p-1">
+            <Icon d={Icons.close} size={14} color="#aaa" />
+          </button>
+        )}
+      </div>
+      <SearchResultsDropdown 
+        searchQuery={searchQuery}
+        showResults={showResults}
+        setShowResults={setShowResults}
+        navigate={navigate}
+      />
+    </div>
+    <div className="flex-1" />
+    
+    <LanguageSwitcher 
+      currentLanguage={currentLanguage} 
+      onLanguageChange={onLanguageChange}
+    />
+    
+    <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
+      <Icon d={Icons.bell} size={18} color="#5a3a00" />
+      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
+    </div>
+    
+    {/* Profile Dropdown */}
+    <div className="relative">
+      <button 
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowProfileMenu(!showProfileMenu);
+        }}
+        className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-3xl cursor-pointer transition-colors hover:border-user-primary"
+      >
+        <span className="text-sm font-bold text-user-text max-w-[100px] truncate">{chipName}</span>
+        <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0">
+          <Icon d={Icons.profile} size={16} color="#3d2a00" />
+        </div>
+      </button>
+      {showProfileMenu && (
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden">
+          <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+            <Icon d={Icons.profile} size={14} /> My Profile
+          </button>
+          <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
+            <Icon d={Icons.settings} size={14} /> Settings
+          </button>
+          <hr className="my-1" />
+          <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 flex items-center gap-2">
+            <Icon d={Icons.logout} size={14} /> Logout
+          </button>
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+// Mobile Topbar
+const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLanguageChange }) => (
+  <div className="mobile-topbar hidden h-16 bg-user-primary items-center px-4 gap-3 sticky top-0 z-40 shadow-md">
+    <button onClick={onMenuClick} className="bg-none border-none cursor-pointer p-1.5 flex-shrink-0">
+      <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+    </button>
+    <div className="flex-1 flex items-center justify-start">
+      <img src="/logo2.png" alt="Smart Grama Sewa" className="h-10 w-auto" />
+    </div>
+    <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={onLanguageChange} />
+    <div className="w-9 h-9 flex items-center justify-center relative">
+      <Icon d={Icons.bell} size={22} color="#1e1200" />
+      <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
+    </div>
+    <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
+      <Icon d={Icons.profile} size={20} color="#3d2a00" />
+    </div>
+  </div>
+);
+
+// Mobile Sidebar Overlay
+const MobileSidebar = ({ isOpen, onClose, navigate, onLogout }) => {
+  const navItems = [
+    { key: 'dashboard', icon: Icons.dashboard, label: 'Dashboard', path: '/dashboard' },
+    { key: 'announcements', icon: Icons.announcement, label: 'Announcements', path: '/announcements' },
+    { key: 'appointments', icon: Icons.appointments, label: 'Appointments', path: '/appointments' },
+    { key: 'forms', icon: Icons.forms, label: 'Forms', path: '/forms' },
+    { key: 'ai', icon: Icons.ai, label: 'AI assistant', path: '/ai' },
+  ];
+  const bottomNav = [
+    { key: 'profile', icon: Icons.profile, label: 'Profile', path: '/profile' },
+    { key: 'settings', icon: Icons.settings, label: 'Settings', path: '/settings' },
+    { key: 'logout', icon: Icons.logout, label: 'Sign out', action: 'logout' },
+  ];
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div onClick={onClose} className="fixed inset-0 bg-black/50 z-[1000]" />
+      <div className="fixed top-0 left-0 w-[250px] h-screen bg-user-primary z-[1001] overflow-y-auto py-5">
+        <div className="px-5 pb-5 text-right">
+          <button onClick={onClose} className="bg-none border-none text-2xl cursor-pointer text-white">✕</button>
+        </div>
+        <div className="px-5 pb-5 border-b border-white/20 mb-2 flex justify-center">
+          <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
+        </div>
+        {navItems.map((item) => (
+          <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => { navigate(item.path); onClose(); }} />
+        ))}
+        <div className="border-t border-white/20 my-3 pt-3">
+          {bottomNav.map((item) => (
+            <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => { if (item.action === 'logout') onLogout(); else navigate(item.path); onClose(); }} />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+};
+
+// Desktop Sidebar
+const DesktopSidebar = ({ navigate, onLogout }) => {
+  const navItems = [
+    { key: 'dashboard', icon: Icons.dashboard, label: 'Dashboard', path: '/dashboard' },
+    { key: 'announcements', icon: Icons.announcement, label: 'Announcements', path: '/announcements' },
+    { key: 'appointments', icon: Icons.appointments, label: 'Appointments', path: '/appointments' },
+    { key: 'forms', icon: Icons.forms, label: 'Forms', path: '/forms' },
+    { key: 'ai', icon: Icons.ai, label: 'AI assistant', path: '/ai' },
+  ];
+  const bottomNav = [
+    { key: 'profile', icon: Icons.profile, label: 'Profile', path: '/profile' },
+    { key: 'settings', icon: Icons.settings, label: 'Settings', path: '/settings' },
+    { key: 'logout', icon: Icons.logout, label: 'Sign out', action: 'logout' },
+  ];
+
+  return (
+    <div className="desktop-sidebar w-[220px] flex-shrink-0 bg-user-primary flex flex-col sticky top-0 h-screen overflow-y-auto">
+      <div className="p-5 pb-4 border-b border-black/10">
+        <img src="/logo2.png" alt="Smart Grama Sewa" className="h-20 w-auto" />
+      </div>
+      <div className="flex-1 p-3">
+        {navItems.map((item) => (
+          <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => navigate(item.path)} />
+        ))}
+      </div>
+      <div className="p-3 pt-2 border-t border-black/10">
+        {bottomNav.map((item) => (
+          <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => item.action === 'logout' ? onLogout() : navigate(item.path)} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // Info row (view mode)
 const InfoRow = ({ label, value }) => (
-  <div style={{ marginBottom: '18px' }}>
-    <div style={{ fontSize: '12px', fontWeight: 700, color: '#B46A02', marginBottom: '6px' }}>
-      {label}
-    </div>
-    <div style={{ fontSize: '15px', fontWeight: 600, color: '#1e1200', paddingBottom: '10px', borderBottom: '1px solid #f0e8d0' }}>
+  <div className="mb-4">
+    <div className="text-xs font-extrabold text-user-warning mb-1.5">{label}</div>
+    <div className="text-sm font-semibold text-user-text pb-2.5 border-b border-user-border-light">
       {value || '—'}
     </div>
   </div>
@@ -61,167 +286,85 @@ const InfoRow = ({ label, value }) => (
 
 // Form field (edit mode)
 const Field = ({ label, value, onChange, type = 'text', placeholder = '', disabled = false }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-    <label style={{ fontSize: '12px', fontWeight: 700, color: '#B46A02' }}>{label}</label>
+  <div className="flex flex-col gap-1.5">
+    <label className="text-xs font-extrabold text-user-warning">{label}</label>
     <input
       type={type}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
-      style={{
-        padding: '12px 14px', fontSize: '14px', fontWeight: 600,
-        color: disabled ? '#aaa' : '#1e1200',
-        backgroundColor: disabled ? '#f8f6f0' : '#fff',
-        border: '1.5px solid #e8d5ac', borderRadius: '10px',
-        outline: 'none', width: '100%', boxSizing: 'border-box',
-        transition: 'border-color 0.15s',
-        cursor: disabled ? 'not-allowed' : 'text',
-      }}
-      onFocus={(e) => { if (!disabled) e.target.style.borderColor = '#F5C400'; }}
-      onBlur={(e)  => { if (!disabled) e.target.style.borderColor = '#e8d5ac'; }}
+      className={`w-full py-3 px-3.5 text-sm font-semibold border border-user-border rounded-lg outline-none transition-colors focus:border-user-primary ${disabled ? 'bg-user-secondary-light text-user-text-lighter' : 'bg-white text-user-text'}`}
     />
   </div>
 );
 
-// Gender select
 const GenderSelect = ({ value, onChange }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-    <label style={{ fontSize: '12px', fontWeight: 700, color: '#B46A02' }}>Gender</label>
-    <div style={{ position: 'relative' }}>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          width: '100%', padding: '12px 36px 12px 14px',
-          fontSize: '14px', fontWeight: 600, color: '#1e1200',
-          backgroundColor: '#fff', border: '1.5px solid #e8d5ac',
-          borderRadius: '10px', outline: 'none', appearance: 'none',
-          cursor: 'pointer', boxSizing: 'border-box', transition: 'border-color 0.15s',
-        }}
-        onFocus={(e) => (e.target.style.borderColor = '#F5C400')}
-        onBlur={(e)  => (e.target.style.borderColor = '#e8d5ac')}
-      >
-        <option value="">Select…</option>
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
-        <option value="Other">Other</option>
-        <option value="Prefer not to say">Prefer not to say</option>
-      </select>
-      <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-        <Icon d={Icons.chevDown} size={16} color="#888" />
-      </div>
-    </div>
+  <div className="flex flex-col gap-1.5">
+    <label className="text-xs font-extrabold text-user-warning">Gender</label>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full py-3 px-3.5 text-sm font-semibold bg-white border border-user-border rounded-lg outline-none focus:border-user-primary"
+    >
+      <option value="">Select…</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
+    </select>
   </div>
 );
 
-// Shared Topbar
-const Topbar = ({ chipName }) => (
-  <div style={{
-    height: '64px', backgroundColor: '#fff',
-    borderBottom: '1px solid #ede8d8',
-    display: 'flex', alignItems: 'center',
-    padding: '0 28px', gap: '14px',
-    position: 'sticky', top: 0, zIndex: 40,
-    boxShadow: '0 1px 0 #ede8d8',
-  }}>
-    <div style={{
-      flex: 1, maxWidth: '400px', display: 'flex', alignItems: 'center', gap: '10px',
-      backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
-      borderRadius: '999px', padding: '9px 18px',
-    }}>
-      <Icon d={Icons.search} size={16} color="#aaa" />
-      <span style={{ fontSize: '14px', color: '#bbb', fontWeight: 600 }}>search</span>
-    </div>
-    <div style={{ flex: 1 }} />
-    <span style={{ fontSize: '14px', fontWeight: 800, color: '#1e1200' }}>EN</span>
-    <div style={{
-      width: '38px', height: '38px', borderRadius: '50%',
-      backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-    }}>
-      <Icon d={Icons.bell} size={18} color="#5a3a00" />
-    </div>
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px',
-      padding: '5px 14px 5px 6px',
-      backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0',
-      borderRadius: '999px', cursor: 'pointer',
-    }}>
-      <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e1200' }}>{chipName}</span>
-      <div style={{
-        width: '30px', height: '30px', borderRadius: '50%',
-        backgroundColor: '#F5C400',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <Icon d={Icons.profile} size={16} color="#3d2a00" />
-      </div>
-    </div>
-  </div>
-);
-
-// Shared Sidebar 
-const Sidebar = ({ activePage, onNavigate, onLogout }) => {
-  const navItems = [
-    { key: 'dashboard',     icon: Icons.dashboard,    label: 'Dashboard'     },
-    { key: 'announcements', icon: Icons.announcement, label: 'Announcements' },
-    { key: 'appointments',  icon: Icons.appointments, label: 'Appointments'  },
-    { key: 'forms',         icon: Icons.forms,        label: 'Forms'         },
-    { key: 'ai',            icon: Icons.ai,           label: 'AI assistant'  },
-  ];
-  const bottomNav = [
-    { key: 'profile',  icon: Icons.profile,  label: 'Profile'  },
-    { key: 'settings', icon: Icons.settings, label: 'Settings' },
-    { key: 'logout',   icon: Icons.logout,   label: 'Logout'   },
-  ];
-  return (
-    <div style={{
-      width: '220px', flexShrink: 0, backgroundColor: '#F5C400',
-      display: 'flex', flexDirection: 'column',
-      position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
-    }}>
-      <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-        <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '64px', width: 'auto' }} />
-      </div>
-      <div style={{ flex: 1, padding: '12px 10px' }}>
-        {navItems.map((item) => (
-          <NavItem key={item.key} iconPath={item.icon} label={item.label}
-            active={activePage === item.key} onClick={() => item.key === 'ai' ? window.dispatchEvent(new CustomEvent('open-chatbot')) : onNavigate(item.key)} />
-        ))}
-      </div>
-      <div style={{ padding: '10px 10px 20px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-        {bottomNav.map((item) => (
-          <NavItem key={item.key} iconPath={item.icon} label={item.label}
-            active={activePage === item.key}
-            onClick={() => item.key === 'logout' ? onLogout() : onNavigate(item.key)} />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-//  MAIN PROFILE COMPONENT
+// MAIN PROFILE COMPONENT
 const Profile = () => {
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // SEARCH STATE
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
-  // Auth + Firestore state 
+  // LANGUAGE STATE
+  const [currentLanguage, setCurrentLanguage] = useState('en');
+  
+  // PROFILE DROPDOWN STATE
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  
   const [currentUser, setCurrentUser] = useState(null);
-  const [userData,    setUserData]    = useState(null);
+  const [userData, setUserData] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-
-  // UI state 
-  const [isEditing,   setIsEditing]   = useState(false);
-  const [saving,      setSaving]      = useState(false);
-  const [saveError,   setSaveError]   = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
-
-  // Edit form state (pre-filled from Firestore)
   const [form, setForm] = useState({
     fullName: '', dob: '', gender: '', address: '',
-    occupation: '', mobile: '', email: '',
+    occupation: '', mobile: '', email: '', district: '', dsDiv: '', gnDiv: '',
   });
 
-  // Load auth + Firestore on mount
+  // Handle resize for mobile detection
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Click outside to close search results
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowSearchResults(false);
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  // Handle language change
+  const handleLanguageChange = (langCode) => {
+    setCurrentLanguage(langCode);
+    console.log('Language changed to:', langCode);
+  };
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -231,400 +374,270 @@ const Profile = () => {
           if (snap.exists()) {
             const data = snap.data();
             setUserData(data);
-            // Pre-fill edit form
             setForm({
-              fullName:   data.fullName   || '',
-              dob:        data.dob        || '',
-              gender:     data.gender     || '',
-              address:    data.address    || '',
-              occupation: data.occupation || '',
-              mobile:     data.mobile     || '',
-              email:      user.email      || '',
+              fullName: data.fullName || '', dob: data.dob || '', gender: data.gender || '',
+              address: data.address || '', occupation: data.occupation || '',
+              mobile: data.mobile || '', email: user.email || '',
+              district: data.district || '', dsDiv: data.dsDiv || '', gnDiv: data.gnDiv || '',
             });
           }
-        } catch (e) {
-          console.warn('Profile load error:', e.message);
-        }
-      } else {
-        navigate('/login');
-      }
+        } catch (e) { console.warn(e); }
+      } else { navigate('/login'); }
       setAuthLoading(false);
     });
     return () => unsub();
   }, [navigate]);
 
-  // Logout 
-  const handleLogout = async () => {
-    await signOut(auth);
-    navigate('/login');
-  };
+  const handleLogout = async () => { await signOut(auth); navigate('/login'); };
 
-  //  Save changes to Firestore 
   const handleSave = async () => {
     if (!currentUser) return;
     setSaving(true);
     setSaveError('');
-    setSaveSuccess(false);
-
     try {
-      // Update Firestore user document
       await updateDoc(doc(db, 'users', currentUser.uid), {
-        fullName:   form.fullName,
-        dob:        form.dob,
-        gender:     form.gender,
-        address:    form.address,
-        occupation: form.occupation,
-        mobile:     form.mobile,
+        fullName: form.fullName, dob: form.dob, gender: form.gender,
+        address: form.address, occupation: form.occupation, mobile: form.mobile,
       });
-
-      // Update local userData state so view reflects changes immediately
-      setUserData((prev) => ({ ...prev, ...form }));
+      setUserData(prev => ({ ...prev, ...form }));
       setSaveSuccess(true);
       setIsEditing(false);
-
-      // Clear success message after 3s
       setTimeout(() => setSaveSuccess(false), 3000);
-
-    } catch (e) {
-      console.error('Save error:', e.message);
-      setSaveError('Failed to save changes. Please try again.');
-    } finally {
-      setSaving(false);
-    }
+    } catch (e) { setSaveError('Failed to save changes.'); }
+    finally { setSaving(false); }
   };
 
-  // Cancel edit — reset form to current userData 
   const handleCancel = () => {
     if (userData) {
       setForm({
-        fullName:   userData.fullName   || '',
-        dob:        userData.dob        || '',
-        gender:     userData.gender     || '',
-        address:    userData.address    || '',
-        occupation: userData.occupation || '',
-        mobile:     userData.mobile     || '',
-        email:      currentUser?.email  || '',
+        fullName: userData.fullName || '', dob: userData.dob || '', gender: userData.gender || '',
+        address: userData.address || '', occupation: userData.occupation || '',
+        mobile: userData.mobile || '', email: currentUser?.email || '',
+        district: userData.district || '', dsDiv: userData.dsDiv || '', gnDiv: userData.gnDiv || '',
       });
     }
     setSaveError('');
     setIsEditing(false);
   };
 
-  const update = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
+  const update = (key) => (val) => setForm(f => ({ ...f, [key]: val }));
 
-  // Derived
-  const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
-  const nicMasked = userData?.nic
-    ? userData.nic.slice(0, 3) + 'X'.repeat(Math.max(0, userData.nic.length - 3))
-    : 'XXXXXXXXXXXX';
+  const chipName = userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
+  const nicMasked = userData?.nic ? userData.nic.slice(0, 3) + 'XXXXX' : 'XXXXXXXXXXXX';
 
-  // Loading 
-  if (authLoading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8f6f0' }}>
-        <div style={{ textAlign: 'center', fontFamily: 'Nunito, sans-serif' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '4px solid #F5C400', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
-          <div style={{ fontSize: '15px', color: '#888', fontWeight: 600 }}>Loading profile…</div>
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
+  if (authLoading) return <PageLoadingSkeleton />;
 
-  //  RENDER
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'Nunito, system-ui, sans-serif', backgroundColor: '#f8f6f0' }}>
+    <div className="user-module min-h-screen flex flex-col font-sans bg-user-background">
+      <div className="flex-1 flex">
+        {/* Desktop Sidebar */}
+        {!isMobile && <DesktopSidebar navigate={navigate} onLogout={handleLogout} />}
 
-      <div style={{ flex: 1, display: 'flex' }}>
+        {/* Mobile Sidebar Overlay */}
+        <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} navigate={navigate} onLogout={handleLogout} />
 
-        {/* Sidebar */}
-        <Sidebar
-          activePage="profile"
-          onNavigate={(key) => navigate(`/${key}`)}
-          onLogout={handleLogout}
-        />
+        {/* MAIN COLUMN */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Desktop Topbar */}
+          {!isMobile && (
+            <DesktopTopbar 
+              chipName={chipName}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              showResults={showSearchResults}
+              setShowResults={setShowSearchResults}
+              navigate={navigate}
+              currentLanguage={currentLanguage}
+              onLanguageChange={handleLanguageChange}
+              showProfileMenu={showProfileMenu}
+              setShowProfileMenu={setShowProfileMenu}
+              handleLogout={handleLogout}
+              userData={userData}
+              currentUser={currentUser}
+            />
+          )}
 
-        {/* Main */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          {/* Mobile Topbar */}
+          <MobileTopbar 
+            chipName={chipName}
+            onMenuClick={() => setMobileMenuOpen(true)}
+            navigate={navigate}
+            currentLanguage={currentLanguage}
+            onLanguageChange={handleLanguageChange}
+          />
 
-          <Topbar chipName={chipName} />
+          {/* Mobile Search Bar - NOT STICKY */}
+          <div className="md:hidden pt-3 px-3.5 relative">
+            <div className="flex items-center gap-2.5 bg-white border border-user-border rounded-lg px-4 py-2.5">
+              <Icon d={Icons.search} size={16} color="#aaa" />
+              <input
+                type="text"
+                placeholder="Search for a page..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSearchResults(true);
+                }}
+                onFocus={() => setShowSearchResults(true)}
+                className="flex-1 border-none outline-none text-sm font-medium text-user-text bg-transparent"
+              />
+              {searchQuery && (
+                <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="bg-none border-none cursor-pointer p-1">
+                  <Icon d={Icons.close} size={14} color="#aaa" />
+                </button>
+              )}
+            </div>
+            {showSearchResults && (
+              <SearchResultsDropdown 
+                searchQuery={searchQuery}
+                showResults={showSearchResults}
+                setShowResults={setShowSearchResults}
+                navigate={navigate}
+              />
+            )}
+          </div>
 
-          <div style={{ padding: '28px 32px', flex: 1 }}>
-
-            {/* VIEW MODE */}
-            {!isEditing && (
+          {/* DESKTOP & MOBILE CONTENT */}
+          <div className="flex-1 p-4 md:p-6 overflow-y-auto">
+            {!userData && !isEditing && <ProfileSkeleton />}
+            
+            {!isEditing && userData && (
               <>
-                <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#1e1200', marginBottom: '24px', letterSpacing: '-0.4px' }}>
-                  My Profile
-                </h1>
+                <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-6">My Profile</h1>
 
-                {/* Success banner */}
                 {saveSuccess && (
-                  <div style={{
-                    backgroundColor: '#e6f9ee', border: '1.5px solid #7ec07e',
-                    borderRadius: '12px', padding: '12px 18px', marginBottom: '18px',
-                    fontSize: '14px', fontWeight: 700, color: '#1a5c1a',
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                  }}>
-                    ✅ Profile updated successfully!
+                  <div className="flex items-center gap-2 bg-user-success-light border border-user-success rounded-xl p-3 mb-4">
+                    <Icon d={Icons.tick} size={14} color="#1a7a3a" strokeWidth={2.5} />
+                    <span className="text-sm font-semibold text-user-success">Profile updated successfully!</span>
                   </div>
                 )}
 
-                {/* Profile header card */}
-                <div style={{
-                  backgroundColor: '#fff', border: '1.5px solid #e8d5ac',
-                  borderRadius: '18px', padding: '22px 26px',
-                  display: 'flex', alignItems: 'center', gap: '20px',
-                  marginBottom: '20px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-                }}>
-                  {/* Avatar */}
-                  <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <div style={{
-                      width: '76px', height: '76px', borderRadius: '50%',
-                      border: '3px solid #1e1200',
-                      backgroundColor: '#f0ece4',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <Icon d={Icons.profile} size={36} color="#5a4030" strokeWidth={1.5} />
-                    </div>
-                    {/* Camera edit bubble */}
-                    <div style={{
-                      position: 'absolute', bottom: 0, right: 0,
-                      width: '24px', height: '24px', borderRadius: '50%',
-                      backgroundColor: '#F5C400', border: '2px solid #fff',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer',
-                    }}>
-                      <Icon d={Icons.camera} size={12} color="#3d2a00" />
+                {/* Profile Header Card */}
+                <div className="bg-user-surface border border-user-border rounded-xl p-5 flex flex-col md:flex-row items-center md:items-start gap-5 mb-5">
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-full border-3 border-user-text bg-user-secondary-light flex items-center justify-center">
+                      <Icon d={Icons.profile} size={36} color="#5a4030" />
                     </div>
                   </div>
-
-                  {/* Name + NIC */}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '20px', fontWeight: 900, color: '#1e1200', marginBottom: '4px' }}>
-                      {userData?.fullName || chipName}
-                    </div>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#888' }}>
-                      Citizen ID : {nicMasked}
+                  <div className="flex-1 text-center md:text-left">
+                    <div className="text-xl font-black text-user-text">{userData?.fullName || chipName}</div>
+                    <div className="text-sm text-user-text-lighter font-semibold mt-1">Citizen ID : {nicMasked}</div>
+                    <div className="flex items-center justify-center md:justify-start gap-2 mt-2">
+                      <div className="flex items-center gap-1 text-xs text-user-success">
+                        <div className="w-2 h-2 rounded-full bg-user-success" />
+                        <span>Active Account</span>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Edit Profile button */}
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '8px',
-                      padding: '11px 22px',
-                      backgroundColor: '#F5C400', border: '1.5px solid #d4a800',
-                      borderRadius: '999px', fontSize: '14px', fontWeight: 800,
-                      color: '#3d2a00', cursor: 'pointer', transition: 'all 0.15s',
-                      flexShrink: 0,
-                    }}
-                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#d4a800'; }}
-                    onMouseOut={(e)  => { e.currentTarget.style.backgroundColor = '#F5C400'; }}
+                  <button 
+                    onClick={() => setIsEditing(true)} 
+                    className="flex items-center justify-center gap-2 py-2.5 px-6 bg-user-primary rounded-round text-sm font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark"
                   >
-                    <Icon d={Icons.edit} size={15} color="#3d2a00" />
-                    Edit Profile
+                    <Icon d={Icons.edit} size={15} /> Edit Profile
                   </button>
                 </div>
 
-                {/* Info cards row */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginBottom: '20px' }}>
-
-                  {/* Personal Info */}
-                  <div style={{
-                    backgroundColor: '#fff', border: '1.5px solid #e8d5ac',
-                    borderRadius: '18px', padding: '22px 24px',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
-                  }}>
-                    <div style={{ fontSize: '16px', fontWeight: 900, color: '#1e1200', marginBottom: '20px' }}>
-                      Personal Info
-                    </div>
-                    <InfoRow label="Full Name"    value={userData?.fullName}   />
-                    <InfoRow label="Date Of Birth" value={userData?.dob}       />
-                    <InfoRow label="Gender"        value={userData?.gender}    />
-                    <InfoRow label="Home Address"  value={userData?.address}   />
-                    <InfoRow label="Occupation"  value={userData?.occupation}   />                  </div>
-
-                  {/* Contact Details */}
-                  <div style={{
-                    backgroundColor: '#fff', border: '1.5px solid #e8d5ac',
-                    borderRadius: '18px', padding: '22px 24px',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
-                  }}>
-                    <div style={{ fontSize: '16px', fontWeight: 900, color: '#1e1200', marginBottom: '20px' }}>
-                      Contact Details
-                    </div>
-                    <InfoRow label="Mobile Number" value={userData?.mobile}         />
-                    <InfoRow label="Email Address" value={currentUser?.email}       />
+                {/* Info Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-user-surface border border-user-border rounded-xl p-5">
+                    <h3 className="text-base font-extrabold text-user-text mb-4 pb-2 border-b border-user-border-light">Personal Information</h3>
+                    <InfoRow label="Full Name" value={userData?.fullName} />
+                    <InfoRow label="NIC Number" value={userData?.nic} />
+                    <InfoRow label="Date Of Birth" value={userData?.dob} />
+                    <InfoRow label="Gender" value={userData?.gender} />
+                    <InfoRow label="Home Address" value={userData?.address} />
+                    <InfoRow label="Occupation" value={userData?.occupation} />
                   </div>
-                </div>
 
-                {/* Sign out button */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <button
-                    onClick={handleLogout}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '9px',
-                      padding: '13px 26px',
-                      backgroundColor: '#3d2a00', border: 'none',
-                      borderRadius: '999px', fontSize: '14px', fontWeight: 800,
-                      color: '#fff', cursor: 'pointer', transition: 'all 0.15s',
-                    }}
-                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#5a3a10'; }}
-                    onMouseOut={(e)  => { e.currentTarget.style.backgroundColor = '#3d2a00'; }}
-                  >
-                    <Icon d={Icons.signout} size={16} color="#fff" />
-                    Sign out
-                  </button>
+                  <div className="bg-user-surface border border-user-border rounded-xl p-5">
+                    <h3 className="text-base font-extrabold text-user-text mb-4 pb-2 border-b border-user-border-light">Contact Details</h3>
+                    <InfoRow label="Mobile Number" value={userData?.mobile} />
+                    <InfoRow label="Email Address" value={currentUser?.email} />
+                    <InfoRow label="District" value={userData?.district} />
+                    <InfoRow label="DS Division" value={userData?.dsDiv} />
+                    <InfoRow label="GN Division" value={userData?.gnDiv} />
+                  </div>
                 </div>
               </>
             )}
 
-            {/* EDIT MODE */}
             {isEditing && (
               <>
-                <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#1e1200', marginBottom: '6px', letterSpacing: '-0.4px' }}>
-                  Edit Profile
-                </h1>
-                <p style={{ fontSize: '14px', color: '#888', fontWeight: 600, marginBottom: '28px' }}>
-                  Update your personal information and contact details.
-                </p>
+                <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-1">Edit Profile</h1>
+                <p className="text-sm text-user-text-lighter font-semibold mb-7">Update your personal information and contact details.</p>
 
-                {/* Error banner */}
                 {saveError && (
-                  <div style={{
-                    backgroundColor: '#fde8e8', border: '1.5px solid #f0a0a0',
-                    borderRadius: '12px', padding: '12px 18px', marginBottom: '18px',
-                    fontSize: '14px', fontWeight: 700, color: '#8b1a1a',
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                  }}>
-                    ⚠ {saveError}
+                  <div className="flex items-center gap-2 bg-user-error-light border border-user-error rounded-xl p-3 mb-4">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <span className="text-sm font-semibold text-user-error">{saveError}</span>
                   </div>
                 )}
 
-                <div style={{
-                  backgroundColor: '#fff', border: '1.5px solid #e8d5ac',
-                  borderRadius: '18px', padding: '28px 28px',
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.05)', marginBottom: '18px',
-                }}>
-
-                  {/* Personal Info section */}
-                  <div style={{ fontSize: '16px', fontWeight: 900, color: '#1e1200', marginBottom: '20px' }}>
-                    Personal Info
-                  </div>
-                  <div style={{ marginBottom: '16px' }}>
-                    <Field label="Full Name" value={form.fullName} onChange={update('fullName')} placeholder="Your full name" />
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '24px' }}>
-                    <Field  label="Date Of Birth" value={form.dob}        onChange={update('dob')}        type="date" />
-                    <Field  label="Occupation"    value={form.occupation}  onChange={update('occupation')} placeholder="e.g. Teacher" />
+                <div className="bg-user-surface border border-user-border rounded-xl p-5 md:p-7 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <Field label="Full Name" value={form.fullName} onChange={update('fullName')} />
+                    <Field label="Date Of Birth" value={form.dob} onChange={update('dob')} type="date" />
+                    <Field label="Occupation" value={form.occupation} onChange={update('occupation')} />
                     <GenderSelect value={form.gender} onChange={update('gender')} />
-                  </div>
-
-                  {/* Home Address */}
-                  <div style={{ fontSize: '16px', fontWeight: 900, color: '#1e1200', marginBottom: '14px' }}>
-                    Home Address
-                  </div>
-                  <div style={{ marginBottom: '24px' }}>
-                    <textarea
-                      value={form.address}
-                      onChange={(e) => update('address')(e.target.value)}
-                      rows={3}
-                      style={{
-                        width: '100%', padding: '12px 14px',
-                        fontSize: '14px', fontWeight: 600, color: '#1e1200',
-                        backgroundColor: '#fff', border: '1.5px solid #e8d5ac',
-                        borderRadius: '10px', outline: 'none', resize: 'vertical',
-                        boxSizing: 'border-box', fontFamily: 'inherit',
-                        transition: 'border-color 0.15s',
-                      }}
-                      onFocus={(e) => (e.target.style.borderColor = '#F5C400')}
-                      onBlur={(e)  => (e.target.style.borderColor = '#e8d5ac')}
-                    />
-                  </div>
-
-                  {/* Contact Details */}
-                  <div style={{ fontSize: '16px', fontWeight: 900, color: '#1e1200', marginBottom: '14px' }}>
-                    Contact Details
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                    <Field label="Mobile Number" value={form.mobile} onChange={update('mobile')} placeholder="+94 77 XXX XXXX" />
-                    <Field label="Email Address" value={form.email}  onChange={update('email')}  type="email" disabled={true} />
-                  </div>
-                  <p style={{ fontSize: '12px', color: '#aaa', fontWeight: 600, marginTop: '8px' }}>
-                    * Email address cannot be changed here for security reasons.
-                  </p>
-
-                  <div style={{ fontSize: '16px', fontWeight: 900, color: '#1e1200', margin: '22px 0 14px' }}>
-                    Location
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#aaa', marginLeft: '8px' }}>
-                      (set during sign up — contact support to change)
-                    </span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
-                    <Field label="District"    value={form.district} onChange={() => {}} disabled={true} />
-                    <Field label="DS Division" value={form.dsDiv}    onChange={() => {}} disabled={true} />
-                    <Field label="GN Division" value={form.gnDiv}    onChange={() => {}} disabled={true} />
+                    <div className="md:col-span-2">
+                      <Field label="Home Address" value={form.address} onChange={update('address')} />
+                    </div>
+                    <Field label="Mobile Number" value={form.mobile} onChange={update('mobile')} disabled={true} />
+                    <Field label="Email Address" value={form.email} onChange={update('email')} disabled={true} />
                   </div>
                 </div>
 
-                {/* Cancel + Save buttons */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                  <button
-                    onClick={handleCancel}
-                    disabled={saving}
-                    style={{
-                      padding: '13px 32px', backgroundColor: '#8a6040',
-                      border: 'none', borderRadius: '999px',
-                      fontSize: '15px', fontWeight: 800, color: '#fff',
-                      cursor: saving ? 'not-allowed' : 'pointer',
-                      opacity: saving ? 0.6 : 1, transition: 'all 0.15s',
-                    }}
-                    onMouseOver={(e) => { if (!saving) e.currentTarget.style.backgroundColor = '#6a4020'; }}
-                    onMouseOut={(e)  => { if (!saving) e.currentTarget.style.backgroundColor = '#8a6040'; }}
+                <div className="flex justify-end gap-3">
+                  <button 
+                    onClick={handleCancel} 
+                    className="py-3 px-8 bg-user-secondary rounded-round text-sm font-extrabold text-white cursor-pointer transition-all hover:bg-user-secondary-dark"
                   >
                     Cancel
                   </button>
-                  <button
-                    onClick={handleSave}
+                  <button 
+                    onClick={handleSave} 
                     disabled={saving}
-                    style={{
-                      padding: '13px 32px', backgroundColor: saving ? '#d4a800' : '#F5C400',
-                      border: '1.5px solid #d4a800', borderRadius: '999px',
-                      fontSize: '15px', fontWeight: 800, color: '#3d2a00',
-                      cursor: saving ? 'not-allowed' : 'pointer',
-                      display: 'flex', alignItems: 'center', gap: '8px',
-                      transition: 'all 0.15s',
-                    }}
-                    onMouseOver={(e) => { if (!saving) e.currentTarget.style.backgroundColor = '#d4a800'; }}
-                    onMouseOut={(e)  => { if (!saving) e.currentTarget.style.backgroundColor = '#F5C400'; }}
+                    className={`py-3 px-8 bg-user-primary rounded-round text-sm font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    {saving ? (
-                      <>
-                        <div style={{ width: '16px', height: '16px', border: '2px solid #3d2a00', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-                        Saving…
-                      </>
-                    ) : 'Save Changes'}
+                    {saving ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </>
             )}
-
           </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <footer style={{
-        backgroundColor: '#6A2301', color: '#fff',
-        textAlign: 'center', padding: '13px 16px',
-        fontSize: '13px', fontWeight: 600,
-      }}>
-        ©2026 Smart Grama Sewa
+      {/* FOOTER */}
+      <footer className="bg-[#6A2301] text-white text-center py-3 px-4 text-sm font-semibold">
+        © 2026 Smart Grama Sewa. All rights reserved.
       </footer>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        .rounded-round {
+          border-radius: 999px;
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        @media (min-width: 769px) {
+          .desktop-sidebar { display: flex !important; }
+          .desktop-topbar { display: flex !important; }
+          .mobile-topbar { display: none !important; }
+        }
+
+        @media (max-width: 768px) {
+          .desktop-sidebar { display: none !important; }
+          .desktop-topbar { display: none !important; }
+          .mobile-topbar { display: flex !important; }
+        }
+      `}</style>
     </div>
   );
 };
