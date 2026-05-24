@@ -73,7 +73,7 @@ const handleSubmit = async (e) => {
         });
         navigate("/gn-dashboard");
       } else if (role === "citizen") {
-        navigate("/citizen-dashboard");
+        navigate("/dashboard");
       } else {
         setError("Unknown role. Please contact support.");
       }
