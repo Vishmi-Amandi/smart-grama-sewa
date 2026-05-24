@@ -8,6 +8,13 @@ import {
   doc, onSnapshot, orderBy, query, serverTimestamp,
 } from "firebase/firestore";
 
+import {
+  LayoutDashboard, ArrowLeftRight, BarChart2, UserCheck,
+  Activity, Megaphone, Bell, Search, ChevronDown, User,
+  TrendingUp, Clock, CheckCircle, XCircle, RefreshCw,
+  Loader2, AlertCircle, LogOut,
+} from 'lucide-react';
+
 // ─── Design tokens (matches your existing COLORS object) ──────────────────────
 const COLORS = {
   bg:        "#FFF9F0",
@@ -123,7 +130,7 @@ const Icon = {
 };
 
 // ─── NavItem — exactly your shared component ──────────────────────────────────
-function NavItem({ icon: IconComp, label, active, bold, onClick }) {
+function NavItem({ icon: Icon, label, active, bold, onClick }) {
   return (
     <li
       onClick={onClick}
@@ -132,10 +139,10 @@ function NavItem({ icon: IconComp, label, active, bold, onClick }) {
         : bold  ? "text-amber-900 font-bold hover:bg-amber-100"
                 : "text-amber-800 hover:bg-amber-100"
       }`}
-      style={{ fontSize: bold && !IconComp ? "0.85rem" : "0.82rem" }}
+      style={{ fontSize: bold && !Icon ? "0.85rem" : "0.82rem" }}
     >
-      {IconComp && (
-        <IconComp size={16} color={active ? "#fff" : COLORS.primary} />
+      {Icon && (
+        <Icon size={16} color={active ? "#fff" : COLORS.primary} />
       )}
       <span>{label}</span>
     </li>
@@ -152,7 +159,8 @@ function Sidebar({ active, setActive }) {
     >
       {/* Logo */}
       <div className="flex items-center gap-2 px-3 mb-6">
-        <div
+        <img src="/logo2.png"></img>
+        {/* <div
           className="w-12 h-12 rounded-xl flex items-center justify-center"
           style={{ background: COLORS.primary }}
         >
@@ -172,13 +180,13 @@ function Sidebar({ active, setActive }) {
         <div>
           <p className="text-xs font-black" style={{ color: COLORS.primary }}>Smart</p>
           <p className="text-xs font-black" style={{ color: COLORS.accent }}>Grama Sewa</p>
-        </div>
+        </div> */}
       </div>
 
       {/* Nav */}
       <ul className="flex flex-col gap-1">
         <NavItem
-          icon={Icon.LayoutDashboard} label="Dashboard"
+          icon={LayoutDashboard} label="Dashboard"
           active={active === "dashboard"} onClick={nav("dashboard")}
         />
 
@@ -186,11 +194,11 @@ function Sidebar({ active, setActive }) {
           GN management
         </li>
         <NavItem
-          icon={Icon.UserCheck} label="Registration Requests"
+          icon={UserCheck} label="Registration Requests"
           active={active === "registration"} onClick={nav("registration")}
         />
         <NavItem
-          icon={Icon.ArrowLeftRight} label="Transfer Request"
+          icon={ArrowLeftRight} label="Transfer Request"
           active={active === "transfer"} onClick={nav("transfer")}
         />
 
@@ -198,27 +206,27 @@ function Sidebar({ active, setActive }) {
           Reports
         </li>
         <NavItem
-          icon={Icon.BarChart2} label="System reports"
+          icon={BarChart2} label="System reports"
           active={active === "system-reports"} onClick={nav("system-reports")}
         />
         <NavItem
-          icon={Icon.User} label="Individual user access"
+          icon={User} label="Individual user access"
           active={active === "user-access"} onClick={nav("user-access")}
         />
         <NavItem
-          icon={Icon.Activity} label="Gn activity reports"
+          icon={Activity} label="Gn activity reports"
           active={active === "gn-activity"} onClick={nav("gn-activity")}
         />
 
         <li className="px-4 pt-4">
           <NavItem
-            icon={Icon.Megaphone} label="Announcements" bold
+            icon={Megaphone} label="Announcements" bold
             active={active === "announcements"} onClick={nav("announcements")}
           />
         </li>
         <li className="px-4 pt-1">
           <NavItem
-            icon={Icon.Bell} label="Notifications" bold
+            icon={Bell} label="Notifications" bold
             active={active === "notifications"} onClick={nav("notifications")}
           />
         </li>
@@ -237,7 +245,7 @@ function Topbar() {
     >
       {/* Search */}
       <div className="flex-1 relative">
-        <Icon.Search
+        <Search
           size={16}
           className="absolute left-4 top-1/2 -translate-y-1/2"
           color={COLORS.textMuted}
@@ -256,7 +264,7 @@ function Topbar() {
         className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
         style={{ borderColor: "#C8B89A", color: COLORS.text, background: "#FFF9F0" }}
       >
-        English <Icon.ChevronDown size={14} />
+        English <ChevronDown size={14} />
       </button>
 
       {/* Bell */}

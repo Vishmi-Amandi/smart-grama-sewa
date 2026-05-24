@@ -176,14 +176,14 @@ function Sidebar({ onLogout }) {
         <NavItem icon={Activity}  label="GN activity reports"
           onClick={() => navigate('/admin/reports/gn-activity')} />
 
-        <li className="px-4 pt-4">
+        <li className="pt-4">
           <NavItem icon={Megaphone} label="Announcements" bold
             onClick={() => navigate('/admin/announcements')} />
         </li>
-        <li className="px-4 pt-1">
+        {/* <li className="px-4 pt-1">
           <NavItem icon={Bell} label="Notifications" bold
             onClick={() => navigate('/admin/notifications')} />
-        </li>
+        </li> */}
       </ul>
 
       {/* Logout */}

@@ -140,7 +140,7 @@ const App = () => {
         <Route path="/admin/dashboard" element={
           <AdminRoute><AdminDashboard /></AdminRoute>
         } />
-        <Route path="/admin/announcementpage" element={
+        <Route path="/admin/announcements" element={
           <AdminRoute><AdminAnnouncementPage /></AdminRoute>
         } />
 
