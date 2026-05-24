@@ -11,9 +11,13 @@ import { doc, getDoc, serverTimestamp, updateDoc, collection, query, where, getD
 import { auth, db } from "../../firebase";
 
 const GNLogin = () => {
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(
+  localStorage.getItem("rememberedUsername") || ""
+);
   const [password,     setPassword]     = useState("");
-  const [rememberMe,   setRememberMe]   = useState(false);
+  const [rememberUsername, setRememberUsername] = useState(
+  localStorage.getItem("rememberedUsername") ? true : false
+);
   const [showPassword, setShowPassword] = useState(false);
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState("");
@@ -23,56 +27,82 @@ const GNLogin = () => {
   const inputClass =
     "w-full bg-white text-[#1e1200] border-2 border-transparent rounded-xl px-4 py-3 text-sm font-semibold outline-none transition focus:border-[#E5A800] placeholder:text-gray-400";
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
   setError("");
 
-  if (!username.trim()) { setError("Please enter your username."); return; }
+  if (!username.trim()) { setError("Please enter your username or email."); return; }
   if (!password)        { setError("Please enter your password."); return; }
 
   setLoading(true);
   try {
-    // Find officer by username
-    const q    = query(collection(db, "gn_officers"), where("username", "==", username.trim()));
-    const snap = await getDocs(q);
+    let userEmail = username.trim();
 
-    if (snap.empty) {
-      setError("No account found with this username.");
-      setLoading(false);
-      return;
+    // Check if input is username (not email)
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username.trim());
+
+    if (!isEmail) {
+      // Search Firestore for username
+      const q = query(
+        collection(db, "gn_officers"),
+        where("username", "==", username.trim())
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        setError("No account found with this username or email.");
+        setLoading(false);
+        return;
+      }
+
+      userEmail = querySnapshot.docs[0].data().email;
     }
 
-    const officerData = snap.docs[0].data();
-    const email       = officerData.email;
+    // Login with email + password
+    const userCredential = await signInWithEmailAndPassword(auth, userEmail, password);
+    const user = userCredential.user;
 
-    // Check approval status
-    if (officerData.status === "pending") {
-      setError("pending");
-      setLoading(false);
-      return;
+    // Check role
+    const userRoleDoc = await getDoc(doc(db, "users", user.uid));
+
+    if (userRoleDoc.exists()) {
+      const role = userRoleDoc.data().role;
+      if (role === "gn_officer") {
+        await updateDoc(doc(db, "gn_officers", user.uid), {
+          lastLogin: serverTimestamp(),
+        });
+        navigate("/gn-dashboard");
+      } else if (role === "citizen") {
+        navigate("/citizen-dashboard");
+      } else {
+        setError("Unknown role. Please contact support.");
+      }
+    } else {
+      navigate("/");
     }
-
-    if (officerData.status === "rejected") {
-      setError("rejected");
-      setLoading(false);
-      return;
-    }
-
-    // ✅ Set persistence BEFORE signing in based on rememberMe checkbox
-    await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
-
-    await signInWithEmailAndPassword(auth, email, password);
-    navigate("/gn-dashboard");
 
   } catch (err) {
+    console.log("Error:", err.code, err.message);
     switch (err.code) {
-      case "auth/wrong-password":    setError("Incorrect password.");                 break;
-      case "auth/too-many-requests": setError("Too many attempts. Try again later."); break;
+      case "auth/invalid-email":     setError("Invalid email format.");                      break;
+      case "auth/user-not-found":    setError("No account found with this email.");          break;
+      case "auth/wrong-password":    setError("Incorrect password.");                        break;
+      case "auth/too-many-requests": setError("Too many failed attempts. Try again later."); break;
       default:                       setError("Incorrect credentials. Please try again.");
     }
   } finally {
     setLoading(false);
   }
+
+  // Always use session persistence for security
+await setPersistence(auth, browserSessionPersistence);
+
+// Save username if remember is checked
+if (rememberUsername) {
+  localStorage.setItem("rememberedUsername", username.trim());
+} else {
+  localStorage.removeItem("rememberedUsername");
+}
 };
   return (
     <div className="min-h-screen flex flex-col">
@@ -140,13 +170,16 @@ const GNLogin = () => {
                 {/* Username */}
                 <div className="mb-4">
                   <label className="block text-[#fdf0dc] text-xs font-bold mb-1.5 uppercase tracking-wide">
-                    Username
-                  </label>
-                  
-<input type="text" value={username}
+  Username or Email
+</label>
+<input
+  type="text"
+  value={username}
   onChange={(e) => { setUsername(e.target.value); setError(""); }}
-  placeholder="Enter your username"
-  className={inputClass} />
+  autoComplete="username"
+  placeholder="Enter your username or email"
+  className={inputClass}
+/>
                 </div>
 
                 {/* Password */}
@@ -169,12 +202,15 @@ const GNLogin = () => {
 
                 {/* Remember + Forgot */}
                 <div className="flex items-center justify-between mb-6">
-                  <label className="flex items-center gap-2 cursor-pointer select-none text-sm font-semibold text-[#fdf0dc]">
-                    <input type="checkbox" checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded cursor-pointer accent-[#E5A800]" />
-                    Keep me signed in
-                  </label>
+                 <label className="flex items-center gap-2 cursor-pointer select-none text-sm font-semibold text-[#fdf0dc]">
+  <input
+    type="checkbox"
+    checked={rememberUsername}
+    onChange={(e) => setRememberUsername(e.target.checked)}
+    className="w-4 h-4 rounded cursor-pointer accent-[#E5A800]"
+  />
+  Remember my username
+</label>
                   <a href="/gn-forgot-password" className="text-sm font-bold text-[#fdf0dc] hover:text-white transition">
                     Forgot password?
                   </a>
