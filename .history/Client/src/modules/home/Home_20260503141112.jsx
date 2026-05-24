@@ -20,9 +20,9 @@ const Home = () => {
           <a href="#">Contact</a>
         </div>
         <div className="text-sm">
-          <a href="#">     සිංහල     </a> ||
-          <a href="#">     தமிழ்   </a> ||
-          <a href="#">     English     </a></div>
+          <a href="#">සිංහල ||</a>
+          <a href="#"> தமிழ் ||</a>
+          <a href="#"> English</a>සිංහල || தமிழ் || English</div>
       </nav>
 
       {/* 2. Hero Section - Using the overlay image style */}
@@ -36,16 +36,14 @@ const Home = () => {
       >
         <div className="max-w-2xl text-white py-20">
           <h1 className="text-5xl font-extrabold mb-6 leading-tight">
-            Smart Grama Sewa: <br />
-            Your Village, Digitally <br />
-            Connected.
+            Smart Grama Sewa: Your Village, Digitally Connected.
           </h1>
           <p className="text-lg mb-8">
             Access essential Grama Niladhari services from the comfort of your home. 
             We're bringing the Grama Niladhari office to your fingertips for a 
             faster, more transparent Sri Lanka.
           </p>
-          <Link to="/gn-login" className="bg-[#FFCB05] text-black px-10 py-3 rounded-full font-bold hover:bg-yellow-500 transition inline-block">
+          <Link to="/login" className="bg-[#FFCB05] text-black px-10 py-3 rounded-full font-bold hover:bg-yellow-500 transition inline-block">
             Get Started
           </Link>
         </div>
@@ -69,3 +67,6 @@ const Home = () => {
 };
 
 export default Home;
+
+
+   

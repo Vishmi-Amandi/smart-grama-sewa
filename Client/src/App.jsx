@@ -1,5 +1,10 @@
-import { useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './firebase';
+import ErrorBoundary from './modules/user/components/errorBoundary';
+
+// ===== GN MODULE IMPORTS =====
 import GNDashboard from './modules/gn/pages/GNDashboard.jsx';
 import GNAppointmentList from './modules/gn/pages/GNAppointmentList.jsx';
 import GNCurrentStatus from './modules/gn/pages/GNCurrentStatus.jsx';
@@ -10,56 +15,204 @@ import GNCitizenSearch from './modules/gn/pages/GNCitizenSearch.jsx';
 import GNProfile from './modules/gn/pages/GNProfile.jsx';
 import GNSettings from './modules/gn/pages/GNSettings.jsx';
 import GNChangeGNDivision from './modules/gn/pages/GNChangeGNDivision.jsx';
-import GNLogin  from './modules/gn/pages/GNLogin.jsx';
+import GNLogin from './modules/gn/pages/GNLogin.jsx';
 import GNSignUp from './modules/gn/pages/GNSignUp.jsx';
-import ProtectedRoute from './modules/gn/components/ProtectedRoute.jsx';
 import GNForgotPassword from './modules/gn/pages/GNForgotPassword.jsx';
-import Home from './modules/home/Home.jsx';
 import SignUpSelect from './modules/gn/pages/SignUpSelect.jsx';
 
+// ===== USER MODULE IMPORTS =====
+import Login from './modules/user/pages/login';
+import SignUp from './modules/user/pages/SignUp';
+import Dashboard from './modules/user/pages/dashboard';
+import Profile from './modules/user/pages/profile';
+import Appointments from './modules/user/pages/appointments';
+import Announcements from './modules/user/pages/announcements';
+import Settings from './modules/user/pages/settings';
+import ContactGN from './modules/user/pages/contactGN';
 
+// ===== SHARED IMPORTS =====
+import Home from './modules/home/Home.jsx';
+
+// ===== GN PROTECTED ROUTE =====
+const GNProtectedRoute = ({ children }) => {
+  const [gnAuth, setGnAuth] = useState(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    // Check GN authentication
+    const checkGnAuth = () => {
+      const gnUser = localStorage.getItem('gnUser');
+      setGnAuth(!!gnUser);
+      setChecking(false);
+    };
+    checkGnAuth();
+  }, []);
+
+  if (checking) {
+    return <div>Loading GN Portal...</div>;
+  }
+
+  return gnAuth ? children : <Navigate to="/gn-login" replace />;
+};
+
+// ===== USER PROTECTED ROUTE =====
+const UserProtectedRoute = ({ children }) => {
+  const [checking, setChecking] = useState(true);
+  const [isAuth, setIsAuth] = useState(false);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setIsAuth(!!user);
+      setChecking(false);
+    });
+    return () => unsub();
+  }, []);
+
+  if (checking) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+        backgroundColor: '#f8f6f0', fontFamily: 'Nunito, sans-serif',
+      }}>
+        <div style={{
+          width: '44px', height: '44px', borderRadius: '50%',
+          border: '4px solid #F5C400', borderTopColor: 'transparent',
+          animation: 'spin 0.8s linear infinite',
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  return isAuth ? children : <Navigate to="/login" replace />;
+};
+
+// ===== MAIN APP COMPONENT (COMBINED) =====
 function App() {
+  // GN Module state (from your branch)
   const [gnStatus, setGnStatus] = useState("Available");
   const [theme, setTheme] = useState("light");
   const [fontSize, setFontSize] = useState("medium");
 
   const fontSizeMap = {
-  small: "12px",
-  medium: "16px",
-  large: "18px",
-};
+    small: "12px",
+    medium: "16px",
+    large: "18px",
+  };
 
-return (
-  <div style={{ fontSize: fontSizeMap[fontSize] }}>
-  <Routes>
-    {/* Landing page */}
-  <Route path="/home" element={<Home />} />
+  return (
+    <Router>
+      <ErrorBoundary>
+        <div style={{ fontSize: fontSizeMap[fontSize] }}>
+          <Routes>
+            {/* ===== LANDING PAGE ===== */}
+            <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Home />} />
 
-  {/* Public Routes */}
-  <Route path="/gn-login" element={<GNLogin />} />
-  <Route path="/gn-signup" element={<GNSignUp />} />
-  <Route path="/gn-forgot-password" element={<GNForgotPassword />} />
+            {/* ===== GN MODULE ROUTES  ===== */}
+            {/* Public GN Routes */}
+            <Route path="/gn-login" element={<GNLogin />} />
+            <Route path="/gn-signup" element={<GNSignUp />} />
+            <Route path="/gn-forgot-password" element={<GNForgotPassword />} />
+            <Route path="/signup-select" element={<SignUpSelect />} />
 
-  {/* Root redirects to home */}
-  <Route path="/" element={<Navigate to="/home" replace />} />
+            {/* Protected GN Routes */}
+            <Route path="/gn-dashboard" element={
+              <GNProtectedRoute>
+                <GNDashboard gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-appointments" element={
+              <GNProtectedRoute>
+                <GNAppointmentList gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-current-status" element={
+              <GNProtectedRoute>
+                <GNCurrentStatus gnStatus={gnStatus} setGnStatus={setGnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-create-announcement" element={
+              <GNProtectedRoute>
+                <GNCreateAnnouncement gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-announcement-list" element={
+              <GNProtectedRoute>
+                <GNAnnouncementList gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-schedule" element={
+              <GNProtectedRoute>
+                <GNSchedule gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-citizen-search" element={
+              <GNProtectedRoute>
+                <GNCitizenSearch gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-profile" element={
+              <GNProtectedRoute>
+                <GNProfile gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-settings" element={
+              <GNProtectedRoute>
+                <GNSettings gnStatus={gnStatus} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-change-gn-division" element={
+              <GNProtectedRoute>
+                <GNChangeGNDivision gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
 
+            {/* ===== USER MODULE ROUTES ===== */}
+            {/* Public User Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/user-signup" element={<SignUp />} />
 
-  {/* Protected Routes */}
-  <Route path="/gn-dashboard"         element={<ProtectedRoute><GNDashboard gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
-  <Route path="/gn-appointments" element={<ProtectedRoute><GNAppointmentList gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
-  <Route path="/gn-current-status" element={<ProtectedRoute><GNCurrentStatus gnStatus={gnStatus} setGnStatus={setGnStatus} theme={theme} /></ProtectedRoute>} />
-  <Route path="/gn-create-announcement" element={<ProtectedRoute><GNCreateAnnouncement gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
-  <Route path="/gn-announcement-list" element={<ProtectedRoute><GNAnnouncementList gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
-  <Route path="/gn-schedule" element={<ProtectedRoute><GNSchedule gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
-  <Route path="/gn-citizen-search" element={<ProtectedRoute><GNCitizenSearch gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
-  <Route path="/gn-profile" element={<ProtectedRoute><GNProfile gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
-  <Route path="/gn-settings" element={<ProtectedRoute><GNSettings gnStatus={gnStatus} theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} /></ProtectedRoute>} />
-  <Route path="/gn-change-gn-division" element={<ProtectedRoute><GNChangeGNDivision gnStatus={gnStatus} theme={theme} /></ProtectedRoute>} />
-  <Route path="/signup-select" element={<SignUpSelect />} />
-  
-</Routes>
-  </div>
-);
+            {/* Protected User Routes */}
+            <Route path="/dashboard" element={
+              <UserProtectedRoute>
+                <Dashboard />
+              </UserProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <UserProtectedRoute>
+                <Profile />
+              </UserProtectedRoute>
+            } />
+            <Route path="/appointments" element={
+              <UserProtectedRoute>
+                <Appointments />
+              </UserProtectedRoute>
+            } />
+            <Route path="/announcements" element={
+              <UserProtectedRoute>
+                <Announcements />
+              </UserProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <UserProtectedRoute>
+                <Settings />
+              </UserProtectedRoute>
+            } />
+            <Route path="/contact-gn" element={
+              <UserProtectedRoute>
+                <ContactGN />
+              </UserProtectedRoute>
+            } />
+
+            {/* 404 Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </ErrorBoundary>
+    </Router>
+  );
 }
 
 export default App;
