@@ -111,11 +111,18 @@ return (
         <p className={`text-sm mb-6 ${t.subtext}`}>
           Your change GN division request has been submitted successfully. You will be notified once it is reviewed.
         </p>
-        <button
-          onClick={() => navigate("/")}
-          className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-6 py-2 rounded-xl transition">
-          Back to Dashboard
-        </button>
+        <div className="flex gap-3 justify-center">
+  <button
+    onClick={() => navigate("/gn-dashboard")}
+    className={`border ${t.border} font-semibold px-6 py-2 rounded-xl ${t.text} transition`}>
+    Back to Dashboard
+  </button>
+  <button
+    onClick={() => navigate("/change-gn-request-status")}
+    className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-6 py-2 rounded-xl transition">
+    View Request Status
+  </button>
+</div>
       </div>
     ) : (
       <div className={`${t.card} rounded-2xl shadow p-8`}>

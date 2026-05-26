@@ -704,7 +704,7 @@ const GNSignUp = () => {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-gray-300 text-xs cursor-pointer">🌐 English ▾</span>
-          <button onClick={() => navigate("/login")}
+          <button onClick={() => navigate("/gn-login")}
             className="bg-[#E5A800] text-[#3d2a00] font-bold px-4 py-1.5 rounded-lg text-xs hover:bg-[#cc9600] transition">
             Sign In
           </button>

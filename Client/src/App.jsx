@@ -19,6 +19,7 @@ import GNLogin from './modules/gn/pages/GNLogin.jsx';
 import GNSignUp from './modules/gn/pages/GNSignUp.jsx';
 import GNForgotPassword from './modules/gn/pages/GNForgotPassword.jsx';
 import SignUpSelect from './modules/gn/pages/SignUpSelect.jsx';
+import ChangeGNRequestStatus from './modules/gn/pages/ChangeGNRequestStatus.jsx';
 
 // ===== USER MODULE IMPORTS =====
 import Login from './modules/user/pages/login';
@@ -176,6 +177,10 @@ function App() {
                 <GNChangeGNDivision gnStatus={gnStatus} theme={theme} />
               </GNProtectedRoute>
             } />
+
+            <Route path="/change-gn-request-status" element={
+              <GNProtectedRoute><ChangeGNRequestStatus gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>} />
 
             {/* ===== USER MODULE ROUTES ===== */}
             <Route path="/login" element={<Login />} />
