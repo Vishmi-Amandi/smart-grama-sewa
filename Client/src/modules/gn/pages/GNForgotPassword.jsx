@@ -57,18 +57,26 @@ const GNForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fefde8]">
-      <div className="p-5">
-        <img src="/logo.png" alt="Smart Grama Sewa" className="h-24 w-auto" />
-      </div>
+      <div className="flex-1 relative flex flex-col">
+         {/* Background */}
+      <div className="flex-1 relative flex flex-col"
+        style={{ backgroundImage: "url(/background.jpg)", backgroundSize: "cover", backgroundPosition: "center" }}>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-4 pb-12">
-        <h1 className="text-4xl font-black text-[#332421] tracking-tight mb-7">
-          Forgot Password
-        </h1>
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-white/60 pointer-events-none" />
 
-        <div className="w-full max-w-md rounded-3xl p-8 shadow-2xl"
-          style={{ backgroundColor: "rgba(106, 35, 1, 0.6)" }}>
+        {/* Logo */}
+        <div className="relative z-10 p-5">
+          <img src="/logo.png" alt="Smart Grama Sewa" className="h-24 w-auto" />
+        </div>
+
+        {/* Centered Card */}
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pb-12">
+
+          <h1 className="text-5xl font-black text-[#332421] tracking-tight mb-7">Forgot Password</h1>
+
+          <div className="w-full max-w-md rounded-3xl p-8 shadow-2xl"
+            style={{ backgroundColor: "rgba(106, 35, 1, 0.6)" }}>
 
           {!sent ? (
             <>
@@ -177,6 +185,7 @@ const GNForgotPassword = () => {
       <footer className="bg-[#6A2301] text-white text-center py-3.5 text-sm font-semibold">
         © 2026 Smart Grama Sewa. All rights reserved.
       </footer>
+    </div>
     </div>
   );
 };

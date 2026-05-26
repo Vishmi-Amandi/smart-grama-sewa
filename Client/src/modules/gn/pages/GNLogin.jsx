@@ -30,33 +30,59 @@ const GNLogin = () => {
 const handleSubmit = async (e) => {
   e.preventDefault();
   setError("");
-
+  
   if (!username.trim()) { setError("Please enter your username or email."); return; }
   if (!password)        { setError("Please enter your password."); return; }
 
   setLoading(true);
+  // Check internet connection first
+if (!navigator.onLine) {
+  setError("No proper internet connection. Please check your network and try again.");
+  setLoading(false);
+  return;
+}
+
   try {
     let userEmail = username.trim();
 
     // Check if input is username (not email)
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username.trim());
 
-    if (!isEmail) {
-      // Search Firestore for username
-      const q = query(
-        collection(db, "gn_officers"),
-        where("username", "==", username.trim())
-      );
-      const querySnapshot = await getDocs(q);
+  if (!isEmail) {
+  try {
+    const q = query(
+      collection(db, "gn_officers"),
+      where("username", "==", username.trim())
+    );
+    const querySnapshot = await getDocs(q);
 
-      if (querySnapshot.empty) {
-        setError("No account found with this username or email.");
-        setLoading(false);
-        return;
-      }
+    console.log("=== DIAGNOSTIC START ===");
+console.log("Input username:", username.trim());
+console.log("Query snapshot empty?", querySnapshot.empty);
+console.log("Query snapshot size:", querySnapshot.size);
 
-      userEmail = querySnapshot.docs[0].data().email;
+    if (querySnapshot.empty) {
+      setError("No account found with this username or email.");
+      setLoading(false);
+      return;
     }
+
+    userEmail = querySnapshot.docs[0].data().email;
+  } catch (firestoreErr) {
+    if (
+      firestoreErr.code === "unavailable" ||
+      firestoreErr.message?.includes("network") ||
+      !navigator.onLine
+    ) {
+      setError("No proper internet connection. Please check your network and try again.");
+    } else {
+      setError("Unable to connect. Please try again.");
+    }
+    setLoading(false);
+    return;
+  }
+
+}
 
     // Login with email + password
     const userCredential = await signInWithEmailAndPassword(auth, userEmail, password);
@@ -77,12 +103,13 @@ const handleSubmit = async (e) => {
       } else {
         setError("Unknown role. Please contact support.");
       }
-    } else {
-      navigate("/");
-    }
+    } 
 
-  } catch (err) {
-    console.log("Error:", err.code, err.message);
+} catch (err) {
+  console.log("Error:", err.code, err.message);
+  if (!navigator.onLine || err.code === "unavailable") {
+    setError("No proper internet connection. Please check your network and try again.");
+  } else {
     switch (err.code) {
       case "auth/invalid-email":     setError("Invalid email format.");                      break;
       case "auth/user-not-found":    setError("No account found with this email.");          break;
@@ -90,7 +117,8 @@ const handleSubmit = async (e) => {
       case "auth/too-many-requests": setError("Too many failed attempts. Try again later."); break;
       default:                       setError("Incorrect credentials. Please try again.");
     }
-  } finally {
+  }
+} finally {
     setLoading(false);
   }
 

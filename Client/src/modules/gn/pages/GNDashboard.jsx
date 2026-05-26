@@ -1,16 +1,39 @@
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
-import { CalendarCheck, ClipboardList, Megaphone, TrendingUp, AlertCircle, Clock, ArrowLeftRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { CalendarCheck, ClipboardList, Megaphone, TrendingUp, AlertCircle, Clock, ArrowLeftRight, ArrowRightLeft} from "lucide-react";
+import { Link, useNavigate} from "react-router-dom";
 import { useEffect, useState } from "react";
 import { collection, query, where, getDocs, doc, getDoc, orderBy, limit } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
 const GNDashboard = ({ gnStatus, theme }) => {
   const t = getThemeClasses(theme);
+  const navigate = useNavigate();
 
   const [appointmentStats, setAppointmentStats] = useState({ today: 0, pending: 0 });
   const [announcements, setAnnouncements] = useState([]);
   const [announcementStats, setAnnouncementStats] = useState({ total: 0, active: 0 });
+  const [divisionRequest, setDivisionRequest] = useState(null);
+  const [showDivisionModal, setShowDivisionModal] = useState(false);
+
+  useEffect(() => {
+  const fetchRequest = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const q = query(
+        collection(db, "gn_change_gn_division"),
+        where("uid", "==", user.uid),
+        orderBy("createdAt", "desc"),
+        limit(1)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) setDivisionRequest(snap.docs[0].data());
+    } catch (err) {
+      console.error("Fetch division request error:", err);
+    }
+  };
+  fetchRequest();
+}, []);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -160,10 +183,19 @@ const GNDashboard = ({ gnStatus, theme }) => {
               <Megaphone size={22} />
               Create Announcement
             </Link>
-            <Link to="/gn-change-gn-division" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
-              <ArrowLeftRight size={22} />
-              Change GN Division
-            </Link>
+            {/* Change GN Division Button / Status */}
+<button
+  onClick={() => {
+    if (divisionRequest) {
+      setShowDivisionModal(true);
+    } else {
+      navigate("/gn-change-gn-division");
+    }
+  }}
+  className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
+  <ArrowRightLeft size={22} />
+  Change GN Division
+</button>
           </div>
         </div>
 
@@ -215,6 +247,84 @@ const GNDashboard = ({ gnStatus, theme }) => {
           )}
         </div>
       </div>
+      {/* Division Request Status Modal */}
+{showDivisionModal && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+    <div className={`${t.card} rounded-2xl shadow-2xl w-full max-w-md p-6`}>
+
+      <div className="flex items-center justify-between mb-4">
+        <h2 className={`text-base font-bold ${t.text}`}>GN Division Change Request</h2>
+        <button onClick={() => setShowDivisionModal(false)}
+          className={`${t.subtext} hover:text-gray-600`}>✕</button>
+      </div>
+
+      {/* Status Badge */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className={`text-xs ${t.subtext}`}>Requested Division</p>
+          <p className={`text-sm font-bold ${t.text}`}>{divisionRequest?.toDivision}</p>
+          <p className={`text-xs ${t.subtext}`}>{divisionRequest?.toDistrict}</p>
+        </div>
+        <span className={`text-sm font-bold px-4 py-2 rounded-full ${
+          divisionRequest?.status === "Pending"  ? "bg-yellow-100 text-yellow-700" :
+          divisionRequest?.status === "Approved" ? "bg-green-100 text-green-700"  :
+          divisionRequest?.status === "Rejected" ? "bg-red-100 text-red-600"      :
+          "bg-gray-100 text-gray-500"
+        }`}>
+          {divisionRequest?.status === "Pending"  ? "⏳ Pending"  :
+           divisionRequest?.status === "Approved" ? "✅ Approved" :
+           divisionRequest?.status === "Rejected" ? "❌ Rejected" :
+           divisionRequest?.status}
+        </span>
+      </div>
+
+      {/* Submitted date */}
+      <p className={`text-xs ${t.subtext} mb-4`}>
+        Submitted: {divisionRequest?.createdAt?.toDate?.()?.toLocaleDateString("en-US", {
+          year: "numeric", month: "short", day: "numeric"
+        }) || "—"}
+      </p>
+
+      {/* Status messages */}
+      {divisionRequest?.status === "Pending" && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 mb-4">
+          <p className="text-xs text-yellow-700 font-semibold">
+            Your request is currently under review by the admin.
+          </p>
+        </div>
+      )}
+      {divisionRequest?.status === "Approved" && (
+        <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4">
+          <p className="text-xs text-green-700 font-semibold">
+            Your division change has been approved!
+          </p>
+        </div>
+      )}
+      {divisionRequest?.status === "Rejected" && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
+          <p className="text-xs text-red-600 font-semibold">
+            Your request was rejected. You can submit a new request.
+          </p>
+        </div>
+      )}
+
+      {/* Buttons */}
+      <div className="flex gap-3">
+        <button onClick={() => setShowDivisionModal(false)}
+          className={`flex-1 border ${t.border} ${t.subtext} font-semibold py-2 rounded-xl hover:bg-gray-50 transition text-sm`}>
+          Close
+        </button>
+        {divisionRequest?.status === "Rejected" && (
+          <button onClick={() => { setShowDivisionModal(false); navigate("/gn-change-gn-division"); }}
+            className="flex-1 bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold py-2 rounded-xl transition text-sm">
+            New Request
+          </button>
+        )}
+      </div>
+
+    </div>
+  </div>
+)}
 
     </GNLayout>
   );
