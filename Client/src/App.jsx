@@ -1,9 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ErrorBoundary from './modules/user/components/errorBoundary';
+
 // Page imports
 import Login       from './modules/user/pages/login';
-import SignUpSelect  from './modules/user/pages/signupSelect';  // ← role selection screen
+import SignUpSelect  from './modules/user/pages/signupSelect';
 import SignUp       from './modules/user/pages/SignUp';
 import Dashboard   from './modules/user/pages/dashboard';
 import Profile     from './modules/user/pages/profile';
@@ -57,15 +58,12 @@ const App = () => {
     <Router>
       <ErrorBoundary>
         <Routes>
-
           {/* Public routes (no auth needed) */}
-          <Route path="/login"  element={<Login  />} />
-          {/* Role selection — shown when user clicks "Sign Up" from Login */}
+          <Route path="/login" element={<Login />} />
           <Route path="/signup-select" element={<SignUpSelect />} />
-          {/* Citizen signup — reached after selecting "Citizen" on role screen */}
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/" element={<Home />} />
 
-          **<Route path="/" element={<Home />} />**
           {/* Protected routes (must be logged in) */}
           <Route path="/dashboard" element={
             <ProtectedRoute><Dashboard /></ProtectedRoute>
@@ -82,24 +80,15 @@ const App = () => {
           <Route path="/settings" element={
             <ProtectedRoute><Settings /></ProtectedRoute>
           } />
-      <Routes>
-        
-     
           <Route path="/contact-gn" element={
             <ProtectedRoute><ContactGN /></ProtectedRoute>
           } />
 
-          {/* ── Default redirect ── */}
-          <Route path="/"   element={<Navigate to="/dashboard" replace />} />
-
-          {/* ── 404 fallback ── */}
-          <Route path="*"   element={<Navigate to="/dashboard" replace />} />
-        {/* ── Default redirect ── */}
-        **<Route path="/"  element={<Home />} />**
           
+          {/* 404 fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ErrorBoundary>
-      
     </Router>
   );
 };
