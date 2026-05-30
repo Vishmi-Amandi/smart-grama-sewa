@@ -10,6 +10,14 @@
       "dependencies": {
         "@tailwindcss/vite": "^4.3.0",
         "firebase": "^12.10.0",
+<<<<<<< HEAD
+        "i18next": "^26.2.0",
+        "i18next-browser-languagedetector": "^8.2.1",
+        "react": "^19.2.4",
+        "react-dom": "^19.2.4",
+        "react-i18next": "^17.0.8",
+        "react-router-dom": "^7.13.1"
+=======
         "leaflet": "^1.9.4",
         "lucide-react": "^0.577.0",
         "react": "^19.2.4",
@@ -17,6 +25,7 @@
         "react-leaflet": "^5.0.0",
         "react-router-dom": "^7.13.1",
         "tailwindcss": "^4.3.0"
+>>>>>>> origin/dev
       },
       "devDependencies": {
         "@eslint/js": "^9.39.4",
@@ -1081,8 +1090,14 @@
       }
     },
     "node_modules/@oxc-project/types": {
+<<<<<<< HEAD
+      "version": "0.127.0",
+      "resolved": "https://registry.npmjs.org/@oxc-project/types/-/types-0.127.0.tgz",
+      "integrity": "sha512-aIYXQBo4lCbO4z0R3FHeucQHpF46l2LbMdxRvqvuRuW2OxdnSkcng5B8+K12spgLDj93rtN3+J2Vac/TIO+ciQ==",
+=======
       "version": "0.115.0",
       "dev": true,
+>>>>>>> origin/dev
       "license": "MIT",
       "funding": {
         "url": "https://github.com/sponsors/Boshen"
@@ -2476,7 +2491,12 @@
     },
     "node_modules/fdir": {
       "version": "6.5.0",
+<<<<<<< HEAD
+      "resolved": "https://registry.npmjs.org/fdir/-/fdir-6.5.0.tgz",
+      "integrity": "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==",
+=======
       "dev": true,
+>>>>>>> origin/dev
       "license": "MIT",
       "engines": {
         "node": ">=12.0.0"
@@ -3269,12 +3289,23 @@
     },
     "node_modules/picocolors": {
       "version": "1.1.1",
+<<<<<<< HEAD
+      "resolved": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz",
+      "integrity": "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==",
+      "license": "ISC"
+    },
+    "node_modules/picomatch": {
+      "version": "4.0.4",
+      "resolved": "https://registry.npmjs.org/picomatch/-/picomatch-4.0.4.tgz",
+      "integrity": "sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==",
+=======
       "dev": true,
       "license": "ISC"
     },
     "node_modules/picomatch": {
       "version": "4.0.3",
       "dev": true,
+>>>>>>> origin/dev
       "license": "MIT",
       "engines": {
         "node": ">=12"
@@ -3284,10 +3315,16 @@
       }
     },
     "node_modules/postcss": {
+<<<<<<< HEAD
+      "version": "8.5.13",
+      "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.5.13.tgz",
+      "integrity": "sha512-qif0+jGGZoLWdHey3UFHHWP0H7Gbmsk8T5VEqyYFbWqPr1XqvLGBbk/sl8V5exGmcYJklJOhOQq1pV9IcsiFag==",
+=======
       "version": "8.5.15",
       "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.5.15.tgz",
       "integrity": "sha512-FfR8sjd4em2T6fb3I2MwAJU7HWVMr9zba+enmQeeWFfCbm+UOC/0X4DS8XtpUTMwWMGbjKYP7xjfNekzyGmB3A==",
       "dev": true,
+>>>>>>> origin/dev
       "funding": [
         {
           "type": "opencollective",
@@ -3456,8 +3493,14 @@
       }
     },
     "node_modules/rolldown": {
+<<<<<<< HEAD
+      "version": "1.0.0-rc.17",
+      "resolved": "https://registry.npmjs.org/rolldown/-/rolldown-1.0.0-rc.17.tgz",
+      "integrity": "sha512-ZrT53oAKrtA4+YtBWPQbtPOxIbVDbxT0orcYERKd63VJTF13zPcgXTvD4843L8pcsI7M6MErt8QtON6lrB9tyA==",
+=======
       "version": "1.0.0-rc.9",
       "dev": true,
+>>>>>>> origin/dev
       "license": "MIT",
       "dependencies": {
         "@oxc-project/types": "=0.115.0",
@@ -3488,8 +3531,14 @@
       }
     },
     "node_modules/rolldown/node_modules/@rolldown/pluginutils": {
+<<<<<<< HEAD
+      "version": "1.0.0-rc.17",
+      "resolved": "https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.0.0-rc.17.tgz",
+      "integrity": "sha512-n8iosDOt6Ig1UhJ2AYqoIhHWh/isz0xpicHTzpKBeotdVsTEcxsSA/i3EVM7gQAj0rU27OLAxCjzlj15IWY7bg==",
+=======
       "version": "1.0.0-rc.9",
       "dev": true,
+>>>>>>> origin/dev
       "license": "MIT"
     },
     "node_modules/safe-buffer": {
@@ -3617,8 +3666,14 @@
       }
     },
     "node_modules/tinyglobby": {
+<<<<<<< HEAD
+      "version": "0.2.16",
+      "resolved": "https://registry.npmjs.org/tinyglobby/-/tinyglobby-0.2.16.tgz",
+      "integrity": "sha512-pn99VhoACYR8nFHhxqix+uvsbXineAasWm5ojXoN8xEwK5Kd3/TrhNn1wByuD52UxWRLy8pu+kRMniEi6Eq9Zg==",
+=======
       "version": "0.2.15",
       "dev": true,
+>>>>>>> origin/dev
       "license": "MIT",
       "dependencies": {
         "fdir": "^6.5.0",
@@ -3697,8 +3752,14 @@
       }
     },
     "node_modules/vite": {
+<<<<<<< HEAD
+      "version": "8.0.10",
+      "resolved": "https://registry.npmjs.org/vite/-/vite-8.0.10.tgz",
+      "integrity": "sha512-rZuUu9j6J5uotLDs+cAA4O5H4K1SfPliUlQwqa6YEwSrWDZzP4rhm00oJR5snMewjxF5V/K3D4kctsUTsIU9Mw==",
+=======
       "version": "8.0.0",
       "dev": true,
+>>>>>>> origin/dev
       "license": "MIT",
       "dependencies": {
         "@oxc-project/runtime": "0.115.0",

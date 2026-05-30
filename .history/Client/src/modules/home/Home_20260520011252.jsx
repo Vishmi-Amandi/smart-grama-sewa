@@ -66,13 +66,13 @@ const Home = () => {
         }}
       >
         <div className="max-w-2xl text-white py-20">
+          {/* 4. DYNAMIC TRANSLATION: Title, descriptions, and buttons pulled from dictionaries */}
           <h1 className="text-5xl font-extrabold mb-6 leading-tight whitespace-pre-line">
             {t('hero_title')}
           </h1>
           <p className="text-lg mb-8">
             {t('hero_desc')}
           </p>
-          {/* CLEANED UP: Single link structure */}
           <Link to="/login" className="bg-[#FFCB05] text-black px-10 py-3 rounded-full font-bold hover:bg-yellow-500 transition inline-block">
             {t('btn_get_started')}
           </Link>
@@ -96,3 +96,6 @@ const Home = () => {
 };
 
 export default Home;
+
+
+   

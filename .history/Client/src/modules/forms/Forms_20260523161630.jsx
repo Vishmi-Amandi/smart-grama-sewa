@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase'; 
 // --- Added i18next Core Hook ---
 import { useTranslation } from 'react-i18next'; 
@@ -25,8 +25,6 @@ const IC = {
   logout: 'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4 M16 17l5-5-5-5 M21 12H9',
   search: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0',
   bell: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
-  plus: 'M12 5v14M5 12h14',
-  trash: 'M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2',
 };
 
 const S = {
@@ -36,9 +34,7 @@ const S = {
   topbar: { height: '64px', backgroundColor: '#fff', borderBottom: '1px solid #e8d8b0', display: 'flex', alignItems: 'center', padding: '0 28px', flexShrink: 0 },
   scrollArea: { flex: 1, overflowY: 'auto', padding: '28px 32px' },
   card: { backgroundColor: '#fff', border: '1.5px solid #e8d5ac', borderRadius: '16px', padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' },
-  footer: { backgroundColor: '#6A2301', color: '#fff', textAlign: 'center', padding: '13px', fontSize: '12px' },
-  errorMsg: { color: '#d32f2f', fontSize: '11px', fontWeight: 'bold', marginTop: '4px', display: 'block' },
-  th: { backgroundColor: '#6A2301', color: '#fff', padding: '10px', fontSize: '12px', fontWeight: 'bold', textAlign: 'left' }
+  footer: { backgroundColor: '#6A2301', color: '#fff', textAlign: 'center', padding: '13px', fontSize: '12px' }
 };
 
 const NavItem = ({ d, label, active, onClick }) => (
@@ -53,12 +49,17 @@ const NavItem = ({ d, label, active, onClick }) => (
 
 const Forms = () => {
   const navigate = useNavigate();
+  
+  // --- Active Core Translation Hooks ---
   const { t, i18n } = useTranslation();
-  const changeLanguage = (lngCode) => { i18n.changeLanguage(lngCode); };
+  const changeLanguage = (lngCode) => {
+    i18n.changeLanguage(lngCode);
+  };
 
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [tab, setTab] = useState('All');
+  
   const [selectedForm, setSelectedForm] = useState(null); 
   const [formInputs, setFormInputs] = useState({});       
 
@@ -71,7 +72,7 @@ const Forms = () => {
     { id: 4, title: "Valuation Certificate", cat: "Certificates", imgSrc: "/icons/valuation.png", desc: "Property valuation for legal needs" },
     { id: 5, title: "Identity Card Application", cat: "Applications", imgSrc: "/icons/id-card.png", desc: "New or replacement NIC application" },
     { id: 6, title: "Living Funds for Disabled Persons", cat: "Recommendations", imgSrc: "/icons/disabled.png", desc: "Financial assistance application for persons with disabilities" },
-    { id: 7, title: "Voter Registration Form", cat: "Applications", imgSrc: "/icons/voter.png", desc: "Register or revise names on the local voting list" },
+    { id: 7, title: "Voter Registration Form", cat: "Applications", imgSrc: "/icons/voter.png", desc: "Register for the local voting list" },
     { id: 8, title: "Permit for Felling Trees", cat: "Recommendations", imgSrc: "/icons/tree.png", desc: "Approval to cut down Jack or protected trees" },
     { id: 9, title: "Permit for Timber Transportation", cat: "Recommendations", imgSrc: "/icons/timber.png", desc: "Legal permit to move timber between areas" },
     { id: 10, title: "Business Registration Recommendation", cat: "Recommendations", imgSrc: "/icons/business.png", desc: "GN approval for new business starts" },
@@ -96,6 +97,7 @@ const Forms = () => {
 
   return (
     <div style={S.page}>
+      {/* 1. Sidebar */}
       <div style={S.sidebar}>
         <div style={{ padding: '20px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
           <img src="/logo2.png" alt="Smart Grama Sewa" style={{ height: '70px' }} />
@@ -114,17 +116,21 @@ const Forms = () => {
         </div>
       </div>
 
+      {/* 2. Main Content Area */}
       <div style={S.main}>
+        {/* Fixed Topbar */}
         <div style={S.topbar}>
           <div style={{ flex: 1, maxWidth: 400, display: 'flex', alignItems: 'center', gap: 10, backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: 999, padding: '8px 16px' }}>
             <Icon d={IC.search} size={16} color="#999" />
             <input type="text" placeholder={t('search_placeholder')} style={{ background: 'none', border: 'none', outline: 'none', fontSize: '14px', width: '100%' }} />
           </div>
           <div style={{ flex: 1 }} />
+          
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <button onClick={() => changeLanguage('en')} style={{ background: 'none', border: 'none', fontWeight: i18n.language === 'en' ? 900 : 600, color: i18n.language === 'en' ? '#6A2301' : '#5a3a00', cursor: 'pointer', fontSize: '14px' }}>EN</button>
             <button onClick={() => changeLanguage('si')} style={{ background: 'none', border: 'none', fontWeight: i18n.language === 'si' ? 900 : 600, color: i18n.language === 'si' ? '#6A2301' : '#5a3a00', cursor: 'pointer', fontSize: '14px' }}>සිං</button>
             <button onClick={() => changeLanguage('ta')} style={{ background: 'none', border: 'none', fontWeight: i18n.language === 'ta' ? 900 : 600, color: i18n.language === 'ta' ? '#6A2301' : '#5a3a00', cursor: 'pointer', fontSize: '14px' }}>தமிழ்</button>
+
             <div style={{ width: '1px', height: '20px', backgroundColor: '#e8d8b0', marginLeft: '4px', marginRight: '4px' }} />
             <Icon d={IC.bell} size={20} color="#5a3a00" />
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 12px', backgroundColor: '#f5f0e8', border: '1.5px solid #e8d8b0', borderRadius: 999 }}>
@@ -136,11 +142,13 @@ const Forms = () => {
           </div>
         </div>
 
+        {/* Scrollable Content */}
         <div style={S.scrollArea}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1e1200' }}>{t('nav_forms')}</h1>
           </div>
 
+          {/* Tabs */}
           <div style={{ display: 'flex', marginBottom: '20px' }}>
             {tabs.map(t => (
               <button key={t} onClick={() => setTab(t)} style={{
@@ -152,6 +160,7 @@ const Forms = () => {
             <button style={{ marginLeft: 'auto', backgroundColor: '#6A2301', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 32px', fontWeight: 700, cursor: 'pointer' }}>My Forms</button>
           </div>
 
+          {/* Scrolling List of Cards */}
           <div style={{ paddingBottom: '20px' }}>
             {formList.filter(f => tab === 'All' || f.cat === tab).map(form => (
               <div key={form.id} style={S.card}>
@@ -165,7 +174,7 @@ const Forms = () => {
                   </div>
                 </div>
                 <button 
-                  onClick={() => { setSelectedForm(form); setFormInputs({}); setErrors({}); setDisabledMembers([{ name: '', relation: '', gender: '', civilStatus: '', dob: '', nic: '', nature: '' }]); setOtherMembers([{ name: '', relation: '', gender: '', civilStatus: '', dob: '', nic: '', incomeSourceAmt: '' }]); setNewVoters([]); setDeletedVoters([]); setVoterPurpose(''); setTreeLogistics([{ species: '', girth: '', height: '', middleGirth: '', reason: '', proximityDanger: 'No' }]); setTimberGrid([{ species: '', girth: '', height: '', woodVol: '', firewoodVol: '', infraImpact: 'No' }]); setFormStep(1); }}
+                  onClick={() => { setSelectedForm(form); setFormInputs({}); }}
                   style={{ padding: '8px 20px', borderRadius: '8px', border: '1.5px solid #e8d5ac', backgroundColor: '#fff', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
                 >
                   View Form
@@ -185,12 +194,11 @@ const Forms = () => {
   );
 };
 
-// --- Multi-Step Dynamic Overlay Engine (Supports IDs: 1, 2, 3, 4, 5, 6, 7, 8, 9) ---
+// --- Multi-Step Dynamic Overlay Engine (Supports IDs: 1, 2, 3, 4, 5, 6) ---
 const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userData, db }) => {
   if (!form) return null;
 
   const [formStep, setFormStep] = useState(1);
-  const [errors, setErrors] = useState({});
   const [hasJobIncome, setHasJobIncome] = useState(false);
   const [hasPropertyIncome, setHasPropertyIncome] = useState(false);
   const [hasBusinessIncome, setHasBusinessIncome] = useState(false);
@@ -200,104 +208,24 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
   const [disabledMembers, setDisabledMembers] = useState([{ name: '', relation: '', gender: '', civilStatus: '', dob: '', nic: '', nature: '' }]);
   const [otherMembers, setOtherMembers] = useState([{ name: '', relation: '', gender: '', civilStatus: '', dob: '', nic: '', incomeSourceAmt: '' }]);
 
-  // --- Voter Registration Form State Arrays ---
-  const [voterPurpose, setVoterPurpose] = useState('OptionA'); 
-  const [newVoters, setNewVoters] = useState([{ name: '', nic: '', dob: '', gender: '', relation: '', prevAddress: '', prevDistrict: '', prevYear: '' }]);
-  const [deletedVoters, setDeletedVoters] = useState([{ name: '', nic: '', reason: '', deathDate: '', newAddress: '', newPhone: '' }]);
-
-  // --- Tree Felling Permit Form State Arrays ---
-  const [treeLogistics, setTreeLogistics] = useState([{ species: '', girth: '', height: '', middleGirth: '', reason: '', proximityDanger: 'No' }]);
-
-  // --- Tree Timber & Removal Permit Form State Arrays (Form 9) ---
-  const [timberGrid, setTimberGrid] = useState([{ species: '', girth: '', height: '', woodVol: '', firewoodVol: '', infraImpact: 'No' }]);
-
   const empAmt = Number(inputs.summaryEmployment) || 0;
   const landAmt = Number(inputs.summaryLand) || 0;
   const bizAmt = Number(inputs.summaryBusiness) || 0;
   const otherAmt = Number(inputs.summaryOther) || 0;
   const totalCalculatedIncome = empAmt + landAmt + bizAmt + otherAmt;
 
-  const validateValue = (key, val) => {
-    let msg = '';
-    const label = key.toLowerCase();
-
-    if (label.includes('phone') || label.includes('mobile') || label.includes('tele') || label.includes('whatsapp') || label.includes('contact')) {
-      if (val && !/^\d{10}$/.test(val)) {
-        msg = 'Phone number must be exactly 10 digits.';
-      }
-    }
-
-    if (label.includes('nic') || label.includes('identity')) {
-      if (val && !/^(\d{12}|\d{9}[vV])$/.test(val)) {
-        msg = 'NIC must be 12 numbers or 9 numbers followed by a V.';
-      }
-    }
-
-    setErrors(prev => ({ ...prev, [key]: msg }));
-    return msg === '';
-  };
-
   const handleInputChange = (field, val) => {
     setInputs(prev => ({ ...prev, [field]: val }));
-    validateValue(field, val);
-  };
-
-  const handleVoterTableChange = (table, index, field, val) => {
-    if (table === 'Additions') {
-      const updated = [...newVoters]; updated[index][field] = val; setNewVoters(updated);
-      validateValue(`add_nic_${index}`, val);
-    } else {
-      const updated = [...deletedVoters]; updated[index][field] = val; setDeletedVoters(updated);
-      validateValue(`del_nic_${index}`, val); validateValue(`del_phone_${index}`, val);
-    }
-  };
-
-  const handleTreeRowChange = (index, field, val) => {
-    const updated = [...treeLogistics];
-    updated[index][field] = val;
-    setTreeLogistics(updated);
-  };
-
-  const handleTimberGridChange = (index, field, val) => {
-    const updated = [...timberGrid];
-    updated[index][field] = val;
-    setTimberGrid(updated);
-  };
-
-  const handleRemoveRow = (tableType, index) => {
-    if (tableType === 'A') setDisabledMembers(disabledMembers.filter((_, i) => i !== index));
-    if (tableType === 'B') setOtherMembers(otherMembers.filter((_, i) => i !== index));
-    if (tableType === 'voterAdd') setNewVoters(newVoters.filter((_, i) => i !== index));
-    if (tableType === 'voterDel') setDeletedVoters(deletedVoters.filter((_, i) => i !== index));
-    if (tableType === 'treeMatrix') setTreeLogistics(treeLogistics.filter((_, i) => i !== index));
-    if (tableType === 'timberGrid') setTimberGrid(timberGrid.filter((_, i) => i !== index));
-  };
-
-  const stepFieldsHaveErrors = () => {
-    return Object.values(errors).some(err => err !== '');
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-
-    if (stepFieldsHaveErrors()) {
-      alert('Please correct the validation errors highlighted in red before proceeding.');
-      return;
-    }
-
-    if (form.id === 7 && formStep === 3 && voterPurpose === 'OptionA') {
-      const dobTimestamp = new Date(inputs.ycDob).getTime();
-      const minBound = new Date('2008-02-01').getTime();
-      const maxBound = new Date('2010-01-31').getTime();
-      if (!inputs.ycDob || dobTimestamp < minBound || dobTimestamp > maxBound) {
-        alert('Date of Birth must strictly be between 2008-02-01 and 2010-01-31 to utilize the Young Citizen track.');
-        return;
-      }
-    }
-
-    let maxSteps = 3;
-    if (form.id === 3 || form.id === 6 || form.id === 7 || form.id === 9) maxSteps = 4;
-    if (form.id === 8) maxSteps = 5; 
+    let maxSteps = 1;
+    if (form.id === 1 || form.id === 2) maxSteps = 3; 
+    if (form.id === 3) maxSteps = 4;                 
+    if (form.id === 4) maxSteps = 3;                 
+    if (form.id === 5) maxSteps = 3; 
+    if (form.id === 6) maxSteps = 4; 
 
     if (formStep < maxSteps) {
       setFormStep(prev => prev + 1);
@@ -307,13 +235,6 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
         finalPayload = { ...inputs, totalAnnualIncome: totalCalculatedIncome };
       } else if (form.id === 6) {
         finalPayload = { ...inputs, tableAFamilyWithDisabilities: disabledMembers, tableBOtherFamilyMembers: otherMembers };
-      } else if (form.id === 7) {
-        finalPayload = { ...inputs, selectedPurposeMode: voterPurpose, newlyAddedVotersTable: newVoters, deletedVotersTable: deletedVoters };
-        alert(`Digital Receipt Generated!\nThe enumeration form completed by ${inputs.voterChiefName || 'Occupant'} was digitally collected on ${new Date().toLocaleString()}`);
-      } else if (form.id === 8) {
-        finalPayload = { ...inputs, loggedTreesArray: treeLogistics };
-      } else if (form.id === 9) {
-        finalPayload = { ...inputs, timberGridDetails: timberGrid };
       }
       alert(`Backend Submission Triggered for: ${form.title}\nData: ${JSON.stringify(finalPayload)}`);
       onClose();
@@ -326,7 +247,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 100 }} />
-      <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 101, width: '100%', maxWidth: form.id === 6 || form.id === 7 || form.id === 8 || form.id === 9 ? '760px' : '650px', maxHeight: '90vh', backgroundColor: '#fff', borderRadius: '16px', boxShadow: '0 10px 40px rgba(0,0,0,0.15)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 101, width: '100%', maxWidth: '650px', maxHeight: '90vh', backgroundColor: '#fff', borderRadius: '16px', boxShadow: '0 10px 40px rgba(0,0,0,0.15)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         
         <div style={{ backgroundColor: '#6A2301', color: '#fff', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <div>
@@ -369,39 +290,13 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
           </div>
         )}
 
+        {/* Step Indicators: Living Allowance Application (Form ID: 6) */}
         {form.id === 6 && (
           <div style={{ display: 'flex', backgroundColor: '#f0e8d5', padding: '10px 20px', gap: '8px', borderBottom: '1px solid #e8d5ac', fontSize: '11px', fontWeight: 700, color: '#5a3a00', flexShrink: 0 }}>
             <span style={{ color: formStep === 1 ? '#6A2301' : '#888' }}>1. Region &amp; Applicant</span> &gt;
             <span style={{ color: formStep === 2 ? '#6A2301' : '#888' }}>2. Family Details</span> &gt;
             <span style={{ color: formStep === 3 ? '#6A2301' : '#888' }}>3. Bank &amp; Assistance</span> &gt;
             <span style={{ color: formStep === 4 ? '#6A2301' : '#888' }}>4. Upload Certification</span>
-          </div>
-        )}
-
-        {form.id === 7 && (
-          <div style={{ display: 'flex', backgroundColor: '#f0e8d5', padding: '10px 20px', gap: '8px', borderBottom: '1px solid #e8d5ac', fontSize: '11px', fontWeight: 700, color: '#5a3a00', overflowX: 'auto', flexShrink: 0 }}>
-            <span style={{ color: formStep === 1 ? '#6A2301' : '#888' }}>1. Boundaries &amp; Region</span> &gt;
-            <span style={{ color: formStep === 2 ? '#6A2301' : '#888' }}>2. Purpose &amp; Registration Core</span> &gt;
-            <span style={{ color: formStep === 3 ? '#6A2301' : '#888' }}>3. Chief Occupant's Declaration</span>
-          </div>
-        )}
-
-        {form.id === 8 && (
-          <div style={{ display: 'flex', backgroundColor: '#f0e8d5', padding: '10px 20px', gap: '6px', borderBottom: '1px solid #e8d5ac', fontSize: '11px', fontWeight: 700, color: '#5a3a00', overflowX: 'auto', flexShrink: 0 }}>
-            <span style={{ color: formStep === 1 ? '#6A2301' : '#888' }}>1. Applicant Meta</span> &gt;
-            <span style={{ color: formStep === 2 ? '#6A2301' : '#888' }}>2. Property Location</span> &gt;
-            <span style={{ color: formStep === 3 ? '#6A2301' : '#888' }}>3. Spatial Boundaries</span> &gt;
-            <span style={{ color: formStep === 4 ? '#6A2301' : '#888' }}>4. Tree Logistics Matrix</span> &gt;
-            <span style={{ color: formStep === 5 ? '#6A2301' : '#888' }}>5. Document Audits</span>
-          </div>
-        )}
-
-        {form.id === 9 && (
-          <div style={{ display: 'flex', backgroundColor: '#f0e8d5', padding: '10px 20px', gap: '8px', borderBottom: '1px solid #e8d5ac', fontSize: '11px', fontWeight: 700, color: '#5a3a00', overflowX: 'auto', flexShrink: 0 }}>
-            <span style={{ color: formStep === 1 ? '#6A2301' : '#888' }}>1. Request Information</span> &gt;
-            <span style={{ color: formStep === 2 ? '#6A2301' : '#888' }}>2. Property Profile</span> &gt;
-            <span style={{ color: formStep === 3 ? '#6A2301' : '#888' }}>3. Timber Table Matrix</span> &gt;
-            <span style={{ color: formStep === 4 ? '#6A2301' : '#888' }}>4. Layout &amp; Uploads</span>
           </div>
         )}
 
@@ -499,8 +394,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>National Identity Card (NIC) No.</label>
-                      <input type="text" required onChange={e => handleInputChange('nicNumber', e.target.value)} value={inputs.nicNumber || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: errors.nicNumber ? '1.5px solid red' : '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="NIC Number" />
-                      {errors.nicNumber && <span style={S.errorMsg}>{errors.nicNumber}</span>}
+                      <input type="text" required onChange={e => handleInputChange('nicNumber', e.target.value)} value={inputs.nicNumber || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="NIC Number" />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Electoral Register Particulars</label>
@@ -565,8 +459,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>NIC Number</label>
-                      <input type="text" required onChange={e => handleInputChange('incNic', e.target.value)} value={inputs.incNic || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: errors.incNic ? '1.5px solid red' : '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="NIC Number" />
-                      {errors.incNic && <span style={S.errorMsg}>{errors.incNic}</span>}
+                      <input type="text" required onChange={e => handleInputChange('incNic', e.target.value)} value={inputs.incNic || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="NIC Number" />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Purpose for requesting certificate</label>
@@ -618,7 +511,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                           </div>
                           <div>
                             <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Extent of Land (Size)</label>
-                            <input type="text" onChange={e => handleInputChange('landSize', e.target.value)} value={inputs.landSize || ''} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} placeholder="e.g. 20 Perches" />
+                            <input type="text" onChange={e => handleInputChange('landSize', e.target.value)} value={inputs.landSize || ''} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1.5px solid #e8d5ac', outline: 'none' }} placeholder="e.g. 20 Perches" />
                           </div>
                         </div>
                         <div>
@@ -643,7 +536,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                           <div>
                             <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Business Registration Number</label>
-                            <input type="text" onChange={e => handleInputChange('bizRegNo', e.target.value)} value={inputs.bizRegNo || ''} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1.5px solid #e8d5ac', outline: 'none' }} placeholder="BR-XXXXXX" />
+                            <input type="text" onChange={e => handleInputChange('bizRegNo', e.target.value)} value={inputs.bizRegNo || ''} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} placeholder="BR-XXXXXX" />
                           </div>
                           <div>
                             <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Annual Net Income (LKR)</label>
@@ -976,6 +869,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                     </div>
                   </div>
 
+                  {/* Standardized DRP scanning color photo upload block */}
                   <div style={{ backgroundColor: '#fff', border: '1.5px dashed #B46A02', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <span style={{ fontSize: '12px', fontWeight: 800, color: '#1e1200' }}>Affix Color Photograph Registry (35mm x 45mm For Scanning)</span>
                     <input type="file" required style={{ fontSize: '12px' }} />
@@ -1004,7 +898,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
               {formStep === 1 && (
                 <>
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>Step 1: Administrative Region (Header Info)</span>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>District</label>
                       <input type="text" required onChange={e => handleInputChange('lawDistrict', e.target.value)} value={inputs.lawDistrict || userData?.district || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. Colombo" />
@@ -1013,10 +907,10 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                       <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Divisional Secretariat (D.S. Office)</label>
                       <input type="text" required onChange={e => handleInputChange('lawDsOffice', e.target.value)} value={inputs.lawDsOffice || userData?.dsDiv || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. Thimbirigasyaya" />
                     </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Grama Niladhari (G.N.) Division</label>
-                      <input type="text" required onChange={e => handleInputChange('lawGnDivision', e.target.value)} value={inputs.lawGnDivision || userData?.gnDiv || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. Hunupitiya (62B)" />
-                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Grama Niladhari (G.N.) Division</label>
+                    <input type="text" required onChange={e => handleInputChange('lawGnDivision', e.target.value)} value={inputs.lawGnDivision || userData?.gnDiv || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. Hunupitiya (62B)" />
                   </div>
 
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingTop: '10px', paddingBottom: '4px' }}>Step 2: Applicant Information</span>
@@ -1030,7 +924,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                       <input type="text" required onChange={e => handleInputChange('lawDisabilityNature', e.target.value)} value={inputs.lawDisabilityNature || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Specify functional condition" />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Cause of Disability</label>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Cause of Disability (Dynamic Selection)</label>
                       <select required onChange={e => handleInputChange('lawDisabilityCause', e.target.value)} value={inputs.lawDisabilityCause || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', backgroundColor: '#fff', outline: 'none' }}>
                         <option value="">-- Select Cause --</option>
                         <option value="By Birth">By Birth</option>
@@ -1071,37 +965,78 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                   {disabledMembers.map((member, idx) => (
                     <div key={`law-disabled-${idx}`} style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '10px', border: '1.5px solid #e8d5ac', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
-                        <input type="text" required placeholder="Full Name" value={member.name} onChange={e => { const u = [...disabledMembers]; u[idx].name = e.target.value; setDisabledMembers(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
-                        <input type="text" required placeholder="Relationship" value={member.relation} onChange={e => { const u = [...disabledMembers]; u[idx].relation = e.target.value; setDisabledMembers(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
+                        <input type="text" required placeholder="Full Name" value={member.name} onChange={e => {
+                          const updated = [...disabledMembers]; updated[idx].name = e.target.value; setDisabledMembers(updated);
+                        }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
+                        <input type="text" required placeholder="Relationship to Head" value={member.relation} onChange={e => {
+                          const updated = [...disabledMembers]; updated[idx].relation = e.target.value; setDisabledMembers(updated);
+                        }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                        <select required value={member.gender} onChange={e => { const u = [...disabledMembers]; u[idx].gender = e.target.value; setDisabledMembers(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', backgroundColor: '#fff' }}>
+                        <select required value={member.gender} onChange={e => {
+                          const updated = [...disabledMembers]; updated[idx].gender = e.target.value; setDisabledMembers(updated);
+                        }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', backgroundColor: '#fff' }}>
                           <option value="">Gender</option><option value="Male">Male</option><option value="Female">Female</option>
                         </select>
-                        <select required value={member.civilStatus} onChange={e => { const u = [...disabledMembers]; u[idx].civilStatus = e.target.value; setDisabledMembers(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', backgroundColor: '#fff' }}>
-                          <option value="">Status</option><option value="Unmarried">Unmarried</option><option value="Married">Married</option>
+                        <select required value={member.civilStatus} onChange={e => {
+                          const updated = [...disabledMembers]; updated[idx].civilStatus = e.target.value; setDisabledMembers(updated);
+                        }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', backgroundColor: '#fff' }}>
+                          <option value="">Marital Status</option><option value="Unmarried">Unmarried</option><option value="Married">Married</option>
                         </select>
-                        <input type="date" required value={member.dob} onChange={e => { const u = [...disabledMembers]; u[idx].dob = e.target.value; setDisabledMembers(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
+                        <input type="date" required value={member.dob} onChange={e => {
+                          const updated = [...disabledMembers]; updated[idx].dob = e.target.value; setDisabledMembers(updated);
+                        }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                        <input type="text" required placeholder="NIC Number" value={member.nic} onChange={e => { const u = [...disabledMembers]; u[idx].nic = e.target.value; setDisabledMembers(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
-                        <input type="text" required placeholder="Disability" value={member.nature} onChange={e => { const u = [...disabledMembers]; u[idx].nature = e.target.value; setDisabledMembers(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
+                        <input type="text" required placeholder="National Identity Card (NIC) Number" value={member.nic} onChange={e => {
+                          const updated = [...disabledMembers]; updated[idx].nic = e.target.value; setDisabledMembers(updated);
+                        }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
+                        <input type="text" required placeholder="Nature of Disability" value={member.nature} onChange={e => {
+                          const updated = [...disabledMembers]; updated[idx].nature = e.target.value; setDisabledMembers(updated);
+                        }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
                       </div>
                     </div>
                   ))}
-                  <button type="button" onClick={() => setDisabledMembers([...disabledMembers, { name: '', relation: '', gender: '', civilStatus: '', dob: '', nic: '', nature: '' }])} style={{ alignSelf: 'flex-start', padding: '6px 14px', borderRadius: '6px', border: '1px solid #6A2301', color: '#6A2301', backgroundColor: '#fff', cursor: 'pointer', fontSize: '11px', fontWeight: 700, marginBottom: '8px' }}>+ Add Row</button>
+                  <button type="button" onClick={() => setDisabledMembers([...disabledMembers, { name: '', relation: '', gender: '', civilStatus: '', dob: '', nic: '', nature: '' }])} style={{ alignSelf: 'flex-start', padding: '6px 14px', borderRadius: '6px', border: '1px solid #6A2301', color: '#6A2301', backgroundColor: '#fff', cursor: 'pointer', fontSize: '11px', fontWeight: 700, marginBottom: '8px' }}>+ Add Disabled Household Member</button>
 
                   {/* Table B Array */}
                   <p style={{ margin: '6px 0 0 0', fontSize: '12px', fontWeight: 800, color: '#3d2a00' }}>👥 Table B: Other Family Members</p>
                   {otherMembers.map((member, idx) => (
                     <div key={`law-other-${idx}`} style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '10px', border: '1.5px solid #e8d5ac', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
-                        <input type="text" required placeholder="Full Name" value={member.name} onChange={e => { const u = [...otherMembers]; u[idx].name = e.target.value; setOtherMembers(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
-                        <input type="text" required placeholder="Relationship" value={member.relation} onChange={e => { const u = [...otherMembers]; u[idx].relation = e.target.value; setOtherMembers(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
+                        <input type="text" required placeholder="Full Name" value={member.name} onChange={e => {
+                          const updated = [...otherMembers]; updated[idx].name = e.target.value; setOtherMembers(updated);
+                        }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
+                        <input type="text" required placeholder="Relationship to Head" value={member.relation} onChange={e => {
+                          const updated = [...otherMembers]; updated[idx].relation = e.target.value; setOtherMembers(updated);
+                        }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                        <select required value={member.gender} onChange={e => {
+                          const updated = [...otherMembers]; updated[idx].gender = e.target.value; setOtherMembers(updated);
+                        }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', backgroundColor: '#fff' }}>
+                          <option value="">Gender</option><option value="Male">Male</option><option value="Female">Female</option>
+                        </select>
+                        <select required value={member.civilStatus} onChange={e => {
+                          const updated = [...otherMembers]; updated[idx].civilStatus = e.target.value; setOtherMembers(updated);
+                        }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', backgroundColor: '#fff' }}>
+                          <option value="">Marital Status</option><option value="Unmarried">Unmarried</option><option value="Married">Married</option>
+                        </select>
+                        <input type="date" required value={member.dob} onChange={e => {
+                          const updated = [...otherMembers]; updated[idx].dob = e.target.value; setOtherMembers(updated);
+                        }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <input type="text" required placeholder="National Identity Card (NIC) Number" value={member.nic} onChange={e => {
+                          const updated = [...otherMembers]; updated[idx].nic = e.target.value; setOtherMembers(updated);
+                        }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
+                        <input type="text" required placeholder="Monthly Income Source &amp; Amount" value={member.incomeSourceAmt} onChange={e => {
+                          const updated = [...otherMembers]; updated[idx].incomeSourceAmt = e.target.value; setOtherMembers(updated);
+                        }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
                       </div>
                     </div>
                   ))}
-                  <button type="button" onClick={() => setOtherMembers([...otherMembers, { name: '', relation: '', gender: '', civilStatus: '', dob: '', nic: '', incomeSourceAmt: '' }])} style={{ alignSelf: 'flex-start', padding: '6px 14px', borderRadius: '6px', border: '1px solid #6A2301', color: '#6A2301', backgroundColor: '#fff', cursor: 'pointer', fontSize: '11px', fontWeight: 700 }}>+ Add Row</button>
+                  <button type="button" onClick={() => setOtherMembers([...otherMembers, { name: '', relation: '', gender: '', civilStatus: '', dob: '', nic: '', incomeSourceAmt: '' }])} style={{ alignSelf: 'flex-start', padding: '6px 14px', borderRadius: '6px', border: '1px solid #6A2301', color: '#6A2301', backgroundColor: '#fff', cursor: 'pointer', fontSize: '11px', fontWeight: 700 }}>+ Add General Family Member</button>
                 </>
               )}
 
@@ -1111,11 +1046,23 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>Step 3: Bank Account Details (For Direct Benefit Transfer)</span>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                     <div>
-                      <input type="text" required onChange={e => handleInputChange('lawBankAccountNo', e.target.value)} value={inputs.lawBankAccountNo || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac' }} placeholder="Account Number" />
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Applicant's Bank Account Number</label>
+                      <input type="text" required onChange={e => handleInputChange('lawBankAccountNo', e.target.value)} value={inputs.lawBankAccountNo || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Enter Account Number" />
                     </div>
                     <div>
-                      <input type="text" required onChange={e => handleInputChange('lawBankNameBranch', e.target.value)} value={inputs.lawBankNameBranch || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac' }} placeholder="Bank Name &amp; Branch" />
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Bank Name and Branch</label>
+                      <input type="text" required onChange={e => handleInputChange('lawBankNameBranch', e.target.value)} value={inputs.lawBankNameBranch || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. Peoples Bank, Kandy" />
                     </div>
+                  </div>
+
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingTop: '10px', paddingBottom: '4px' }}>Step 4: Existing Financial Assistance</span>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Details of Assistance Currently Received (From State or NGOs in cash or goods)</label>
+                    <textarea rows={2} required onChange={e => handleInputChange('lawAssistanceDetails', e.target.value)} value={inputs.lawAssistanceDetails || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }} placeholder="Describe current cash or material assistance streams received..." />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Current Monthly Income / Value of Assistance (LKR)</label>
+                    <input type="number" required onChange={e => handleInputChange('lawAssistanceValue', e.target.value)} value={inputs.lawAssistanceValue || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="0.00" />
                   </div>
                 </>
               )}
@@ -1124,224 +1071,18 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
               {formStep === 4 && (
                 <>
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>🛠️ Back-End &amp; Official Verification Sections</span>
+                  
+                  {/* Section C Doc Upload */}
                   <div style={{ backgroundColor: '#fff', border: '1.5px dashed #B46A02', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <span style={{ fontSize: '12px', fontWeight: 800, color: '#6A2301' }}>🩺 Section C: Medical Officer Certification</span>
+                    <label style={{ display: 'block', fontSize: '11px', color: '#555' }}>Upload Certified Medical Report / Section C (Filled by Government Hospital Doctor with Patient Name, Disability Nature, Recommendation &amp; Official Stamp)</label>
                     <input type="file" required style={{ fontSize: '12px', marginTop: '4px' }} />
                   </div>
-                </>
-              )}
-            </>
-          )}
 
-          {/* ==========================================
-              MODULE F: VOTER REGISTRATION & REVISION (FORM ID: 7)
-             ========================================== */}
-          {form.id === 7 && (
-            <>
-              {/* Step 1: Boundaries & Polling Regions */}
-              {formStep === 1 && (
-                <>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>Step 1: Administrative &amp; Polling Boundaries</span>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Electoral District</label>
-                      <input type="text" required onChange={e => handleInputChange('voterElectoralDistrict', e.target.value)} value={inputs.voterElectoralDistrict || userData?.district || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. Colombo" />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Polling Division</label>
-                      <input type="text" required onChange={e => handleInputChange('voterPollingDivision', e.target.value)} value={inputs.voterPollingDivision || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. Colombo Central" />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '14px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Polling District Number</label>
-                      <input type="text" required onChange={e => handleInputChange('voterPollingDistrictNo', e.target.value)} value={inputs.voterPollingDistrictNo || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. 14" />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Grama Niladhari Division Name/Number</label>
-                      <input type="text" required onChange={e => handleInputChange('voterGnDivision', e.target.value)} value={inputs.voterGnDivision || userData?.gnDiv || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. Hunupitiya (62B)" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Village / Street / Estate Name</label>
-                    <input type="text" required onChange={e => handleInputChange('voterVillageStreet', e.target.value)} value={inputs.voterVillageStreet || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. Hunupitiya Cross Road" />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Household / Assessment Number</label>
-                    <input type="text" required onChange={e => handleInputChange('voterHouseholdNo', e.target.value)} value={inputs.voterHouseholdNo || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. 45/A" />
-                  </div>
-
-                  <div style={{ backgroundColor: '#fff', border: '1.5px solid #e8d5ac', borderRadius: '12px', padding: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
-                    <div>
-                      <span style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#6A2301' }}>Check Live Electoral Register Profile</span>
-                      <span style={{ fontSize: '11px', color: '#666' }}>Cross-verify registration logs instantly on ec.lk/vrd database.</span>
-                    </div>
-                    <a href="https://ec.lk/vrd" target="_blank" rel="noreferrer" style={{ backgroundColor: '#6A2301', color: '#fff', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', textDecoration: 'none' }}>ec.lk/vrd</a>
-                  </div>
-                </>
-              )}
-
-              {/* Step 2: Form Purpose Selection Selector Toggle & Form Track Renderings */}
-              {formStep === 2 && (
-                <>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>Step 2: Form Purpose Selection</span>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '10px' }}>
-                    <button type="button" onClick={() => setVoterPurpose('OptionA')} style={{ padding: '12px', borderRadius: '10px', border: voterPurpose === 'OptionA' ? '2.5px solid #6A2301' : '1.5px solid #e8d5ac', backgroundColor: voterPurpose === 'OptionA' ? '#fffbe8' : '#fff', fontWeight: voterPurpose === 'OptionA' ? 900 : 600, color: '#3d2a00', cursor: 'pointer', textAlign: 'left', fontSize: '12px' }}>
-                      <div style={{ color: '#6A2301', fontWeight: 800, marginBottom: '2px' }}>[ Option A ]</div>
-                      "I want to register a young citizen turning 18 years old" (YC Form Track)
-                    </button>
-                    <button type="button" onClick={() => setVoterPurpose('OptionB')} style={{ padding: '12px', borderRadius: '10px', border: voterPurpose === 'OptionB' ? '2.5px solid #6A2301' : '1.5px solid #e8d5ac', backgroundColor: voterPurpose === 'OptionB' ? '#fffbe8' : '#fff', fontWeight: voterPurpose === 'OptionB' ? 900 : 600, color: '#3d2a00', cursor: 'pointer', textAlign: 'left', fontSize: '12px' }}>
-                      <div style={{ color: '#6A2301', fontWeight: 800, marginBottom: '2px' }}>[ Option B ]</div>
-                      "I want to update our household's general voter list" (ER Form Track)
-                    </button>
-                  </div>
-
-                  {/* SUB-TRACK A: Young Citizen Enrollment */}
-                  {voterPurpose === 'OptionA' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderTop: '2px dashed #e8d5ac', paddingTop: '10px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#6A2301' }}>Step 3-A: Young Citizen Enrollment (YC Form Logic)</span>
-                      <p style={{ margin: 0, fontSize: '11px', color: '#666', lineHeight: 1.3, fontWeight: 600 }}>This section collects data for citizens born between 01.02.2008 and 31.01.2010 who are turning 18.</p>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Applicant's Full Name (Must match NIC exactly, or Birth Certificate if NIC isn't issued yet)</label>
-                        <input type="text" required onChange={e => handleInputChange('ycFullName', e.target.value)} value={inputs.ycFullName || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Enter Full Name" />
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                        <div>
-                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>National Identity Card (NIC) Number</label>
-                          <input type="text" required onChange={e => handleInputChange('ycNicNo', e.target.value)} value={inputs.ycNicNo || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="NIC Number" />
-                        </div>
-                        <div>
-                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Date of Birth</label>
-                          <input type="date" required min="2008-02-01" max="2010-01-31" onChange={e => handleInputChange('ycDob', e.target.value)} value={inputs.ycDob || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} />
-                        </div>
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
-                        <div>
-                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Gender</label>
-                          <select required onChange={e => handleInputChange('ycGender', e.target.value)} value={inputs.ycGender || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', backgroundColor: '#fff', outline: 'none' }}>
-                            <option value="">-- Select --</option><option value="Male">Male</option><option value="Female">Female</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Civil Status</label>
-                          <select required onChange={e => handleInputChange('ycCivilStatus', e.target.value)} value={inputs.ycCivilStatus || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', backgroundColor: '#fff', outline: 'none' }}>
-                            <option value="">-- Select --</option><option value="Unmarried">Unmarried</option><option value="Married">Married</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Relationship to Chief Occupant</label>
-                          <input type="text" required onChange={e => handleInputChange('ycRelationToChief', e.target.value)} value={inputs.ycRelationToChief || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. Son, Daughter" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* SUB-TRACK B: Annual Electoral Register Revision Tracks */}
-                  {voterPurpose === 'OptionB' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '2px dashed #e8d5ac', paddingTop: '10px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#6A2301' }}>Step 3-B: Annual Electoral Register Revision (ER Form Logic)</span>
-                      
-                      <div style={{ border: '1.5px solid #e8d5ac', padding: '12px', borderRadius: '12px', backgroundColor: '#fff' }}>
-                        <span style={{ fontSize: '11px', fontWeight: 800, color: '#6A2301', display: 'block', marginBottom: '4px' }}>➕ Subsection 1: Persons to be NEWLY Added (Form 2A)</span>
-                        <p style={{ margin: '0 0 8px 0', fontSize: '10px', color: '#888', lineHeight: 1.3 }}>Note: Members already correctly registered in the previous year do not need to be re-entered.</p>
-                        
-                        {newVoters.map((voter, idx) => (
-                          <div key={`newvoter-${idx}`} style={{ borderBottom: idx < newVoters.length - 1 ? '1px solid #f5f0e8' : 'none', paddingBottom: '8px', marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px' }}>
-                              <input type="text" placeholder="Full Name (As on NIC)" value={voter.name} onChange={e => { const u = [...newVoters]; u[idx].name = e.target.value; setNewVoters(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', fontSize: '11px' }} />
-                              <input type="text" placeholder="Relationship to Chief" value={voter.relation} onChange={e => { const u = [...newVoters]; u[idx].relation = e.target.value; setNewVoters(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', fontSize: '11px' }} />
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                              <input type="text" placeholder="NIC Number" value={voter.nic} onChange={e => { const u = [...newVoters]; u[idx].nic = e.target.value; setNewVoters(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', fontSize: '11px' }} />
-                              <input type="date" placeholder="Date of Birth" value={voter.dob} onChange={e => { const u = [...newVoters]; u[idx].dob = e.target.value; setNewVoters(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', fontSize: '11px' }} />
-                              <select value={voter.gender} onChange={e => { const u = [...newVoters]; u[idx].gender = e.target.value; setNewVoters(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', backgroundColor: '#fff', fontSize: '11px' }}>
-                                <option value="">Gender</option><option value="Male">Male</option><option value="Female">Female</option>
-                              </select>
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '8px', backgroundColor: '#fdfbef', padding: '6px', borderRadius: '6px' }}>
-                              <input type="text" placeholder="Previous Address Last Registered" value={voter.prevAddress} onChange={e => { const u = [...newVoters]; u[idx].prevAddress = e.target.value; setNewVoters(u); }} style={{ padding: '6px', borderRadius: '4px', border: '1px solid #e8d5ac', outline: 'none', fontSize: '10px' }} />
-                              <input type="text" placeholder="Prev District" value={voter.prevDistrict} onChange={e => { const u = [...newVoters]; u[idx].prevDistrict = e.target.value; setNewVoters(u); }} style={{ padding: '6px', borderRadius: '4px', border: '1px solid #e8d5ac', outline: 'none', fontSize: '10px' }} />
-                              <input type="number" placeholder="Prev Year" value={voter.prevYear} onChange={e => { const u = [...newVoters]; u[idx].prevYear = e.target.value; setNewVoters(u); }} style={{ padding: '6px', borderRadius: '4px', border: '1px solid #e8d5ac', outline: 'none', fontSize: '10px' }} />
-                            </div>
-                          </div>
-                        ))}
-                        <button type="button" onClick={() => setNewVoters([...newVoters, { name: '', nic: '', dob: '', gender: '', relation: '', prevAddress: '', prevDistrict: '', prevYear: '' }])} style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #6A2301', color: '#6A2301', backgroundColor: '#fff', cursor: 'pointer', fontSize: '10px', fontWeight: 700 }}>+ Add New Elector Addition Entry</button>
-                      </div>
-
-                      {/* Subsection 2: Deletions */}
-                      <div style={{ border: '1.5px solid #e8d5ac', padding: '12px', borderRadius: '12px', backgroundColor: '#fff' }}>
-                        <span style={{ fontSize: '11px', fontWeight: 800, color: '#6A2301', display: 'block', marginBottom: '6px' }}>➖ Subsection 2: Persons to be DELETED / Removed (Form 3)</span>
-                        {deletedVoters.map((voter, idx) => (
-                          <div key={`delvoter-${idx}`} style={{ borderBottom: idx < deletedVoters.length - 1 ? '1px solid #f5f0e8' : 'none', paddingBottom: '8px', marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                              <input type="text" placeholder="Full Name of Elector" value={voter.name} onChange={e => { const u = [...deletedVoters]; u[idx].name = e.target.value; setDeletedVoters(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', fontSize: '11px' }} />
-                              <input type="text" placeholder="NIC Number" value={voter.nic} onChange={e => { const u = [...deletedVoters]; u[idx].nic = e.target.value; setDeletedVoters(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', fontSize: '11px' }} />
-                              <select value={voter.reason} onChange={e => { const u = [...deletedVoters]; u[idx].reason = e.target.value; setDeletedVoters(u); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none', backgroundColor: '#fff', fontSize: '11px' }}>
-                                <option value="">Reason for Removal</option>
-                                <option value="Deceased">Deceased (Death)</option>
-                                <option value="Moved Away">Left the Residence (Moved away)</option>
-                                <option value="Other">Other Reason</option>
-                              </select>
-                            </div>
-
-                            {voter.reason === 'Deceased' && (
-                              <div style={{ backgroundColor: '#fff5f5', padding: '6px', borderRadius: '6px' }}>
-                                <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#c53030', marginBottom: '2px' }}>Conditional Field: Date of Death</label>
-                                <input type="date" value={voter.deathDate} onChange={e => { const u = [...deletedVoters]; u[idx].deathDate = e.target.value; setDeletedVoters(u); }} style={{ padding: '6px', borderRadius: '4px', border: '1px solid #e8d5ac', outline: 'none', fontSize: '11px' }} />
-                              </div>
-                            )}
-
-                            {voter.reason === 'Moved Away' && (
-                              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px', backgroundColor: '#f7fafc', padding: '6px', borderRadius: '6px' }}>
-                                <div>
-                                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#4a5568', marginBottom: '2px' }}>Conditional Field: New Current Address</label>
-                                  <input type="text" value={voter.newAddress} onChange={e => { const u = [...deletedVoters]; u[idx].newAddress = e.target.value; setDeletedVoters(u); }} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #e8d5ac', boxSizing: 'border-box', outline: 'none', fontSize: '11px' }} placeholder="Enter New Address" />
-                                </div>
-                                <div>
-                                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#4a5568', marginBottom: '2px' }}>New Telephone Number</label>
-                                  <input type="text" value={voter.newPhone} onChange={e => { const u = [...deletedVoters]; u[idx].newPhone = e.target.value; setDeletedVoters(u); }} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #e8d5ac', boxSizing: 'border-box', outline: 'none', fontSize: '11px' }} placeholder="New Phone" />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                        <button type="button" onClick={() => setDeletedVoters([...deletedVoters, { name: '', nic: '', reason: '', deathDate: '', newAddress: '', newPhone: '' }])} style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #6A2301', color: '#6A2301', backgroundColor: '#fff', cursor: 'pointer', fontSize: '10px', fontWeight: 700 }}>+ Add Elector Deletion Entry</button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Step 3: Chief Occupant Signatures & Legal Affirmation */}
-              {formStep === 3 && (
-                <>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>Step 4: Chief Occupant's Declaration &amp; Contact Info</span>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Full Name of Chief Occupant</label>
-                    <input type="text" required onChange={e => handleInputChange('voterChiefName', e.target.value)} value={inputs.voterChiefName || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Enter Chief Occupant Name" />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>NIC Number of Chief Occupant</label>
-                    <input type="text" required onChange={e => handleInputChange('voterChiefNic', e.target.value)} value={inputs.voterChiefNic || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Chief Occupant NIC" />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Telephone Number</label>
-                      <input type="text" required onChange={e => handleInputChange('voterChiefPhone', e.target.value)} value={inputs.voterChiefPhone || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. 07XXXXXXXX" />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>WhatsApp Number (For Digital Updates)</label>
-                      <input type="text" required onChange={e => handleInputChange('voterChiefWhatsApp', e.target.value)} value={inputs.voterChiefWhatsApp || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. 07XXXXXXXX" />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', backgroundColor: '#eae5d8', padding: '12px', borderRadius: '10px', marginTop: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', backgroundColor: '#eae5d8', padding: '12px', borderRadius: '10px', marginTop: '4px' }}>
                     <input type="checkbox" required style={{ accentColor: '#6A2301', marginTop: '3px' }} />
-                    <span style={{ fontSize: '11px', color: '#3d2a00', fontWeight: 600, lineHeight: 1.4 }}>
-                      <strong>Legal Acknowledgment Checkbox:</strong> I hereby declare that the particulars given above are true and accurate to the best of my knowledge and belief. I am fully aware that willfully providing false information is a punishable offence under Section 12(4) of the Registration of Electors Act, carrying penalties of a fine up to Rs. 500, up to 1 month imprisonment, or both.
+                    <span style={{ fontSize: '11px', color: '#444', fontWeight: 600, lineHeight: 1.4 }}>
+                      <strong>Submission Affirmation:</strong> I certify that all family profiles and account transfer configurations uploaded here are true. I understand these entries will trigger verification cycles across D.S. and G.N. operational networks.
                     </span>
                   </div>
                 </>
@@ -1349,418 +1090,19 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
             </>
           )}
 
-          {/* ==========================================
-              MODULE H: PERMIT FOR FELLING TREES (FORM ID: 8)
-             ========================================== */}
-          {form.id === 8 && (
-            <>
-              {/* STEP 1: Applicant Designation Specs */}
-              {formStep === 1 && (
-                <>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>Step 1: Core Identification &amp; Administrative Meta</span>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '6px' }}>Applicant Status Designation</label>
-                    <div style={{ display: 'flex', gap: '24px', fontSize: '13px', fontWeight: 700 }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                        <input type="radio" name="tfStatusRadio" checked={inputs.treeApplicantStatus === 'Land Owner'} onChange={() => handleInputChange('treeApplicantStatus', 'Land Owner')} style={{ accentColor: '#6A2301' }} /> Land Owner
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                        <input type="radio" name="tfStatusRadio" checked={inputs.treeApplicantStatus === 'Authorized Representative'} onChange={() => handleInputChange('treeApplicantStatus', 'Authorized Representative')} style={{ accentColor: '#6A2301' }} /> Authorized Representative / Non-Owner
-                      </label>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: '10px' }}>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Full Name of Applicant</label>
-                    <input type="text" required onChange={e => handleInputChange('treeFullName', e.target.value)} value={inputs.treeFullName || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Full Name of Applicant" />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '10px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>National Identity Card (NIC) Number</label>
-                      <input type="text" required onChange={e => handleInputChange('treeNic', e.target.value)} value={inputs.treeNic || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: errors.treeNic ? '1.5px solid red' : '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="NIC Number" />
-                      {errors.treeNic && <span style={S.errorMsg}>{errors.treeNic}</span>}
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Contact Number</label>
-                      <input type="text" required onChange={e => handleInputChange('treePhone', e.target.value)} value={inputs.treePhone || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: errors.treePhone ? '1.5px solid red' : '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Contact Number (10 Digits)" />
-                      {errors.treePhone && <span style={S.errorMsg}>{errors.treePhone}</span>}
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '14px', marginTop: '10px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Permanent Address of Applicant</label>
-                      <input type="text" required onChange={e => handleInputChange('treePermanentAddress', e.target.value)} value={inputs.treePermanentAddress || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Permanent Address of Applicant" />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>WhatsApp Number (Optional)</label>
-                      <input type="text" onChange={e => handleInputChange('treeWhatsApp', e.target.value)} value={inputs.treeWhatsApp || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: errors.treeWhatsApp ? '1.5px solid red' : '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="WhatsApp Number" />
-                      {errors.treeWhatsApp && <span style={S.errorMsg}>{errors.treeWhatsApp}</span>}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* STEP 2: Land Profile & Location Identity */}
-              {formStep === 2 && (
-                <>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>Step 2: Land Profile &amp; Location Identity</span>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '14px', marginTop: '10px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Name of Land / Property Title</label>
-                      <input type="text" required onChange={e => handleInputChange('treeLandName', e.target.value)} value={inputs.treeLandName || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Name of Land / Property Title" />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>District</label>
-                      <input type="text" required onChange={e => handleInputChange('treeDistrict', e.target.value)} value={inputs.treeDistrict || userData?.district || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="District" />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '10px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Divisional Secretariat Division</label>
-                      <input type="text" required onChange={e => handleInputChange('treeDsDivision', e.target.value)} value={inputs.treeDsDivision || userData?.dsDiv || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Divisional Secretariat Division" />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Grama Niladhari (G.N.) Division &amp; Number</label>
-                      <input type="text" required onChange={e => handleInputChange('treeGnDivision', e.target.value)} value={inputs.treeGnDivision || userData?.gnDiv || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Grama Niladhari Division" />
-                    </div>
-                  </div>
-
-                  <div style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '10px', border: '1.5px solid #e8d5ac', marginTop: '10px' }}>
-                    <span style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#6A2301', textTransform: 'uppercase', marginBottom: '6px' }}>Land Extent / Dimensions</span>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                      <input type="number" placeholder="Acres" onChange={e => handleInputChange('treeLandAcres', e.target.value)} value={inputs.treeLandAcres || ''} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
-                      <input type="number" placeholder="Roods" onChange={e => handleInputChange('treeLandRoods', e.target.value)} value={inputs.treeLandRoods || ''} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
-                      <input type="number" placeholder="Perches" onChange={e => handleInputChange('treeLandPerches', e.target.value)} value={inputs.treeLandPerches || ''} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', outline: 'none' }} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '10px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Classification of Land Ownership</label>
-                      <select required onChange={e => handleInputChange('treeOwnershipType', e.target.value)} value={inputs.treeOwnershipType || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', backgroundColor: '#fff', outline: 'none' }}>
-                        <option value="">-- Select Dropdown --</option>
-                        <option value="Private">Private</option>
-                        <option value="Government / State">Government / State</option>
-                        <option value="LDO Lease / Permit Land">LDO Lease / Permit Land</option>
-                        <option value="Temple Property / Viharagam">Temple Property / Viharagam</option>
-                        <option value="Other Tenure Matrix">Other Tenure Matrix</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Deed / Permit Number &amp; Registration Date</label>
-                      <input type="text" required onChange={e => handleInputChange('treeDeedNoDate', e.target.value)} value={inputs.treeDeedNoDate || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Deed / Permit Number &amp; Date" />
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: '10px' }}>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Is the land subject to any ongoing legal disputes or court restrictions?</label>
-                    <select required onChange={e => handleInputChange('treeLegalDisputesExist', e.target.value)} value={inputs.treeLegalDisputesExist || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', backgroundColor: '#fff', outline: 'none' }}>
-                      <option value="">-- Select --</option><option value="No">No</option><option value="Yes">Yes</option>
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {/* STEP 3: Boundary Matrix Configuration fields */}
-              {formStep === 3 && (
-                <>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>Step 3: Four Spatial Boundaries</span>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '10px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>North Boundary</label>
-                      <input type="text" required onChange={e => handleInputChange('treeBoundNorth', e.target.value)} value={inputs.treeBoundNorth || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="North boundary bounded by" />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>East Boundary</label>
-                      <input type="text" required onChange={e => handleInputChange('treeBoundEast', e.target.value)} value={inputs.treeBoundEast || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="East boundary bounded by" />
-                    </div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '10px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>South Boundary</label>
-                      <input type="text" required onChange={e => handleInputChange('treeBoundSouth', e.target.value)} value={inputs.treeBoundSouth || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="South boundary bounded by" />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>West Boundary</label>
-                      <input type="text" required onChange={e => handleInputChange('treeBoundWest', e.target.value)} value={inputs.treeBoundWest || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="West boundary bounded by" />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* STEP 4: Tree Logistics Repeatable Grid Component */}
-              {formStep === 4 && (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301' }}>Step 4: Specific Tree Logistics Array Grid</span>
-                    <button type="button" onClick={() => setTreeLogistics([...treeLogistics, { species: '', girth: '', height: '', middleGirth: '', reason: '', proximityDanger: 'No' }])} style={{ padding: '4px 10px', borderRadius: '4px', border: '1px solid #6A2301', color: '#6A2301', backgroundColor: '#fff', cursor: 'pointer', fontSize: '11px', fontWeight: 700 }}>+ Add Tree Matrix Row</button>
-                  </div>
-                  
-                  {treeLogistics.map((tree, idx) => (
-                    <div key={`tree-row-${idx}`} style={{ backgroundColor: '#fff', padding: '14px', borderRadius: '12px', border: '1.5px solid #e8d5ac', display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '10px' }}>
-                        <input type="text" required placeholder="Tree Species / Variety" value={tree.species} onChange={e => handleTreeRowChange(idx, 'species', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', fontSize: '12px' }} />
-                        <input type="text" required placeholder="Girth in Meters / Inches" value={tree.girth} onChange={e => handleTreeRowChange(idx, 'girth', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', fontSize: '12px' }} />
-                        <input type="text" required placeholder="Height in Meters" value={tree.height} onChange={e => handleTreeRowChange(idx, 'height', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', fontSize: '12px' }} />
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px' }}>
-                        <input type="text" required placeholder="Girth at Breast Height / Middle Girth" value={tree.middleGirth} onChange={e => handleTreeRowChange(idx, 'middleGirth', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', fontSize: '12px' }} />
-                        <input type="text" required placeholder="Specific Reason for Requesting Felling" value={tree.reason} onChange={e => handleTreeRowChange(idx, 'reason', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', fontSize: '12px' }} />
-                      </div>
-                      <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 'bold', color: '#B46A02', cursor: 'pointer' }}>
-                          <input type="checkbox" checked={tree.proximityDanger === 'Yes'} onChange={e => handleTreeRowChange(idx, 'proximityDanger', e.target.checked ? 'Yes' : 'No')} style={{ accentColor: '#6A2301' }} />
-                          Proximity Danger Flag: Is the tree situated dangerously close to utility lines, boundary fences, or neighboring residential buildings?
-                        </label>
-                      </div>
-                      {treeLogistics.length > 1 && (
-                        <button type="button" onClick={() => handleRemoveRow('treeMatrix', idx)} style={{ border: 'none', background: 'none', color: '#d32f2f', fontWeight: 700, fontSize: '11px', cursor: 'pointer', textAlign: 'right' }}>Remove Row ×</button>
-                      )}
-                    </div>
-                  ))}
-                </>
-              )}
-
-              {/* STEP 5: Required Document Verification Streams */}
-              {formStep === 5 && (
-                <>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>Step 5: Required Document Upload Array</span>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '10px' }}>
-                    <div style={{ backgroundColor: '#fff', border: '1.5px dashed #B46A02', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 800 }}>Certified Copy of Title Deed / Lease Permit</span>
-                      <input type="file" required style={{ fontSize: '11px' }} />
-                    </div>
-                    <div style={{ backgroundColor: '#fff', border: '1.5px dashed #B46A02', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 800 }}>Approved Survey Plan PDF</span>
-                      <input type="file" required style={{ fontSize: '11px' }} />
-                    </div>
-                  </div>
-
-                  <div style={{ backgroundColor: '#fff', border: '1.5px dashed #B46A02', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '10px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 800 }}>Photographic Evidence</span>
-                    <span style={{ fontSize: '10px', color: '#666' }}>Upload clear photos showcasing the tree profile and its structural environment context safely.</span>
-                    <input type="file" required style={{ fontSize: '12px', marginTop: '2px' }} />
-                  </div>
-
-                  {inputs.treeOwnershipType === 'Temple Property / Viharagam' && (
-                    <div style={{ backgroundColor: '#fff', border: '1.5px dashed #B46A02', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '4px', animation: 'fadeIn 0.2s ease', marginTop: '10px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#d32f2f' }}>Written Consent / Affidavit of Co-Owners Required</span>
-                      <input type="file" required style={{ fontSize: '11px' }} />
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', backgroundColor: '#eae5d8', padding: '12px', borderRadius: '10px', marginTop: '10px' }}>
-                    <input type="checkbox" required defaultChecked style={{ accentColor: '#6A2301', marginTop: '3px' }} />
-                    <span style={{ fontSize: '11px', color: '#333', fontWeight: 600, lineHeight: 1.4 }}>
-                      I hereby state that all the logged metrics regarding timber dimensions and land tenure classification lines correspond to legal ownership frameworks accurately.
-                    </span>
-                  </div>
-                </>
-              )}
-            </>
-          )}
-
-          {/* ==========================================
-              MODULE I: TREE TIMBER & REMOVAL PERMIT (FORM ID: 9)
-             ========================================== */}
-          {form.id === 9 && (
-            <>
-              {/* Step 1: Applicant & Basic Request Information */}
-              {formStep === 1 && (
-                <>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>Step 1: Applicant &amp; Basic Request Information</span>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Gramasewaka (G.N.) Division</label>
-                      <input type="text" required onChange={e => handleInputChange('removalGnDiv', e.target.value)} value={inputs.removalGnDiv || userData?.gnDiv || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', outline: 'none' }} placeholder="Targeted area division" />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Divisional Secretary (D.S.) Office</label>
-                      <input type="text" required onChange={e => handleInputChange('removalDsOffice', e.target.value)} value={inputs.removalDsOffice || userData?.dsDiv || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', outline: 'none' }} placeholder="e.g. Kahawatta" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Applicant Full Name</label>
-                    <input type="text" required onChange={e => handleInputChange('voterChiefName', e.target.value)} value={inputs.voterChiefName || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', outline: 'none' }} placeholder="Applicant Name" />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Applicant NIC Number</label>
-                      <input type="text" required onChange={e => handleInputChange('voterChiefNic', e.target.value)} value={inputs.voterChiefNic || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: errors.voterChiefNic ? '1.5px solid red' : '1.5px solid #e8d5ac', outline: 'none' }} placeholder="NIC" />
-                      {errors.voterChiefNic && <span style={S.errorMsg}>{errors.voterChiefNic}</span>}
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Contact Number</label>
-                      <input type="text" required onChange={e => handleInputChange('voterChiefPhone', e.target.value)} value={inputs.voterChiefPhone || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: errors.voterChiefPhone ? '1.5px solid red' : '1.5px solid #e8d5ac', outline: 'none' }} placeholder="10 Digits" />
-                      {errors.voterChiefPhone && <span style={S.errorMsg}>{errors.voterChiefPhone}</span>}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Landowner Name(s) (Leave blank if same as applicant)</label>
-                    <input type="text" onChange={e => handleInputChange('removalLandownerName', e.target.value)} value={inputs.removalLandownerName || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', outline: 'none' }} placeholder="Landowner Title Holder Name" />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Reason for cutting/removing the tree(s)</label>
-                    <textarea rows={2} required onChange={e => handleInputChange('treeCuttingReason', e.target.value)} value={inputs.treeCuttingReason || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', outline: 'none', resize: 'none', fontFamily: 'inherit' }} placeholder="e.g. Threat to property stability, development..." />
-                  </div>
-                </>
-              )}
-
-              {/* Step 2: Land Profile & Location Identity */}
-              {formStep === 2 && (
-                <>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>Step 2: Legal Land Profile &amp; Location Identity</span>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Name of the Land</label>
-                      <input type="text" required onChange={e => handleInputChange('removalLandName', e.target.value)} value={inputs.removalLandName || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', outline: 'none' }} placeholder="Land Registry Denomination Name" />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Village / Local Area</label>
-                      <input type="text" required onChange={e => handleInputChange('removalVillageLocalArea', e.target.value)} value={inputs.removalVillageLocalArea || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', outline: 'none' }} placeholder="Village Location" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Type of Land Ownership</label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px', fontWeight: 700, padding: '4px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}><input type="radio" name="remOwnershipRadio" checked={inputs.removalOwnershipType === 'Government Land'} onChange={() => handleInputChange('removalOwnershipType', 'Government Land')} style={{ accentColor: '#6A2301' }} /> Government Land</label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}><input type="radio" name="remOwnershipRadio" checked={inputs.removalOwnershipType === 'Private Land'} onChange={() => handleInputChange('removalOwnershipType', 'Private Land')} style={{ accentColor: '#6A2301' }} /> Private Land</label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}><input type="radio" name="remOwnershipRadio" checked={inputs.removalOwnershipType === 'Traditional Ownership'} onChange={() => handleInputChange('removalOwnershipType', 'Traditional Ownership')} style={{ accentColor: '#6A2301' }} /> Traditional Ownership (Nindagam)</label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}><input type="radio" name="remOwnershipRadio" checked={inputs.removalOwnershipType === 'Other'} onChange={() => handleInputChange('removalOwnershipType', 'Other')} style={{ accentColor: '#6A2301' }} /> Other</label>
-                    </div>
-                  </div>
-
-                  <div style={{ border: '1.5px solid #e8d5ac', borderRadius: '12px', padding: '12px', backgroundColor: '#fff' }}>
-                    <span style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#6A2301', textTransform: 'uppercase', marginBottom: '6px' }}>Four Spatial Boundaries</span>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                      <input type="text" placeholder="North" required onChange={e => handleInputChange('remBoundNorth', e.target.value)} value={inputs.remBoundNorth || ''} style={{ padding: '8px', fontSize: '12px', borderRadius: '6px', border: '1px solid #e8d5ac' }} />
-                      <input type="text" placeholder="East" required onChange={e => handleInputChange('remBoundEast', e.target.value)} value={inputs.remBoundEast || ''} style={{ padding: '8px', fontSize: '12px', borderRadius: '6px', border: '1px solid #e8d5ac' }} />
-                      <input type="text" placeholder="South" required onChange={e => handleInputChange('remBoundSouth', e.target.value)} value={inputs.remBoundSouth || ''} style={{ padding: '8px', fontSize: '12px', borderRadius: '6px', border: '1px solid #e8d5ac' }} />
-                      <input type="text" placeholder="West" required onChange={e => handleInputChange('remBoundWest', e.target.value)} value={inputs.remBoundWest || ''} style={{ padding: '8px', fontSize: '12px', borderRadius: '6px', border: '1px solid #e8d5ac' }} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '14px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Land Deed / Permit / Grant Number</label>
-                      <input type="text" required onChange={e => handleInputChange('removalDeedNumber', e.target.value)} value={inputs.removalDeedNumber || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', outline: 'none' }} placeholder="Deed / Grant Number" />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Date of Deed / Permit</label>
-                      <input type="date" required onChange={e => handleInputChange('removalDeedDate', e.target.value)} value={inputs.removalDeedDate || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', outline: 'none' }} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', marginBottom: '4px' }}>Is there any ongoing legal dispute or court case regarding this land?</label>
-                    <select required onChange={e => handleInputChange('removalDisputeStatus', e.target.value)} value={inputs.removalDisputeStatus || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', backgroundColor: '#fff', outline: 'none' }}>
-                      <option value="">-- Select --</option><option value="No">No</option><option value="Yes">Yes</option>
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {/* Step 3: Tree & Timber Table Array Matrix */}
-              {formStep === 3 && (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301' }}>Step 3: Specific Tree &amp; Timber Details Matrix</span>
-                    <button type="button" onClick={() => setTimberGrid([...timberGrid, { species: '', girth: '', height: '', woodVol: '', firewoodVol: '', infraImpact: 'No' }])} style={{ padding: '4px 10px', borderRadius: '4px', border: '1px solid #6A2301', color: '#6A2301', backgroundColor: '#fff', cursor: 'pointer', fontSize: '11px', fontWeight: 700 }}>+ Add Row</button>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {timberGrid.map((row, idx) => (
-                      <div key={`timber-row-${idx}`} style={{ backgroundColor: '#fff', padding: '14px', borderRadius: '12px', border: '1.5px solid #e8d5ac', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '10px' }}>
-                          <input type="text" required placeholder="Species / Variety of Tree" value={row.species} onChange={e => handleTimberGridChange(idx, 'species', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', fontSize: '12px' }} />
-                          <input type="text" required placeholder="Girth / Circumference (M)" value={row.girth} onChange={e => handleTimberGridChange(idx, 'girth', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', fontSize: '12px' }} />
-                          <input type="text" required placeholder="Height (Meters)" value={row.height} onChange={e => handleTimberGridChange(idx, 'height', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', fontSize: '12px' }} />
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                          <input type="text" required placeholder="Est Wood Volume (m³)" value={row.woodVol} onChange={e => handleTimberGridChange(idx, 'woodVol', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', fontSize: '12px' }} />
-                          <input type="text" required placeholder="Est Firewood Vol (m³)" value={row.firewoodVol} onChange={e => handleTimberGridChange(idx, 'firewoodVol', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', fontSize: '12px' }} />
-                          <select value={row.infraImpact} onChange={e => handleTimberGridChange(idx, 'infraImpact', e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #e8d5ac', fontSize: '12px', backgroundColor: '#fff' }}>
-                            <option value="No">No Infrastructure Threat</option><option value="Yes">Yes (Danger / Impact)</option>
-                          </select>
-                        </div>
-                        {timberGrid.length > 1 && (
-                          <button type="button" onClick={() => handleRemoveRow('timberGrid', idx)} style={{ alignSelf: 'flex-end', background: 'none', border: 'none', color: '#d32f2f', fontWeight: 700, fontSize: '11px', cursor: 'pointer' }}>Remove Row ×</button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {/* Step 4: Visual Sketch Map Layout Diagrams & Mandatory Document Upload Slots */}
-              {formStep === 4 && (
-                <>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>Step 4: Sketch Map &amp; Mandatory Document Upload Array</span>
-                  
-                  <div style={{ backgroundColor: '#fff', border: '1.5px dashed #B46A02', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 800 }}>Land Sketch Map / Layout Diagram *</span>
-                    <span style={{ fontSize: '11px', color: '#666' }}>Upload a hand-drawn sketch or digital map showing the location of the trees on the land plot.</span>
-                    <input type="file" required style={{ fontSize: '11px', marginTop: '4px' }} />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div style={{ backgroundColor: '#fff', border: '1.5px dashed #e8d5ac', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 800 }}>Certified Copy of Title Deed, Permit, or Grant *</span>
-                      <input type="file" required style={{ fontSize: '11px' }} />
-                    </div>
-                    <div style={{ backgroundColor: '#fff', border: '1.5px dashed #e8d5ac', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 800 }}>Certified Copy of Land Plan Map *</span>
-                      <input type="file" required style={{ fontSize: '11px' }} />
-                    </div>
-                  </div>
-
-                  {inputs.removalLandownerName && inputs.removalLandownerName !== '' && (
-                    <div style={{ backgroundColor: '#fff', border: '1.5px dashed #B46A02', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '4px', animation: 'fadeIn 0.2s ease' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#6A2301' }}>Letter of Consent from Co-owners / Shared Registry Title *</span>
-                      <span style={{ fontSize: '10px', color: '#666' }}>Mandatory field upload since the primary applicant name is separate from the deed baseline title holder lines.</span>
-                      <input type="file" required style={{ fontSize: '11px', marginTop: '4px' }} />
-                    </div>
-                  )}
-
-                  <div style={{ backgroundColor: '#fff', border: '1.5px dashed #e8d5ac', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 800 }}>Any other supporting documents justifying tree removal</span>
-                    <input type="file" style={{ fontSize: '11px' }} />
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', backgroundColor: '#eae5d8', padding: '12px', borderRadius: '10px' }}>
-                    <input type="checkbox" required defaultChecked style={{ accentColor: '#6A2301', marginTop: '2px' }} />
-                    <span style={{ fontSize: '11px', color: '#333', fontWeight: 600, lineHeight: 1.4 }}>
-                      I hereby state that all property boundaries, volume projections, and infrastructure threat criteria logged here are valid and accurate to the best of my belief.
-                    </span>
-                  </div>
-                </>
-              )}
-            </>
-          )}
-
-          {/* Action Control Interface Buttons Wizard Panel Tray */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', flexShrink: 0 }}>
             <button 
               type="button" 
               onClick={() => { if (formStep === 1) onClose(); else setFormStep(prev => prev - 1); }} 
               style={{ padding: '10px 24px', borderRadius: '999px', border: '1.5px solid #e8d5ac', backgroundColor: '#fff', fontWeight: 700, cursor: 'pointer', color: '#888' }}
             >
-              Back
+              {formStep === 1 ? 'Cancel' : '← Back'}
             </button>
             <button 
               type="submit" 
-              disabled={form.id === 7 && formStep === 2 && voterPurpose === ''}
-              style={{ padding: '10px 24px', borderRadius: '999px', border: 'none', backgroundColor: (form.id === 7 && formStep === 2 && voterPurpose === '') ? '#ccc' : '#6A2301', color: '#fff', fontWeight: 800, cursor: (form.id === 7 && formStep === 2 && voterPurpose === '') ? 'not-allowed' : 'pointer', marginLeft: 'auto' }}
+              style={{ padding: '10px 24px', borderRadius: '999px', border: 'none', backgroundColor: '#6A2301', color: '#fff', fontWeight: 800, cursor: 'pointer', marginLeft: 'auto' }}
             >
-              {((form.id === 3 && formStep === 4) || (form.id === 6 && formStep === 4) || (form.id === 7 && formStep === 4) || (form.id === 8 && formStep === 5) || (form.id === 9 && formStep === 4) || (form.id !== 3 && form.id !== 6 && form.id !== 7 && form.id !== 8 && form.id !== 9 && formStep === 3)) ? 'Submit' : 'Next'}
+              {((form.id === 3 && formStep === 4) || (form.id === 6 && formStep === 4) || (form.id !== 3 && form.id !== 6 && formStep === 3)) ? 'Submit Application' : 'Next Step →'}
             </button>
           </div>
         </form>
