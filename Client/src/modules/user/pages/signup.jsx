@@ -403,6 +403,13 @@ const Step1 = ({ data, onChange, onNext }) => {
       </div>
 
       <PrivacyNote isMobile={isMobile} />
+
+      <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: '#666' }}>
+        Already have an account?{' '}
+        <a href="/login" style={{ color: '#B46A02', fontWeight: 700, textDecoration: 'none' }}>
+          Sign in
+        </a>
+      </p>
     </div>
   );
 };
@@ -599,6 +606,13 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
       </div>
 
       <PrivacyNote isMobile={isMobile} />
+
+      <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: '#666' }}>
+        Already have an account?{' '}
+        <a href="/login" style={{ color: '#B46A02', fontWeight: 700, textDecoration: 'none' }}>
+          Sign in
+        </a>
+      </p>
     </div>
   );
 };
@@ -893,6 +907,13 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       </div>
 
       <PrivacyNote isMobile={isMobile} />
+
+      <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: '#666' }}>
+        Already have an account?{' '}
+        <a href="/login" style={{ color: '#B46A02', fontWeight: 700, textDecoration: 'none' }}>
+          Sign in
+        </a>
+      </p>
     </div>
   );
 };
