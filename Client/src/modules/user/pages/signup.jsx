@@ -241,13 +241,15 @@ const Step1 = ({ data, onChange, onNext }) => {
   }, []);
 
   const checkNicUniqueness = async (nicValue) => {
-    if (!nicValue || nicValue.trim().length < 9) {
+    const normalized = nicValue.trim().toUpperCase(); // ← add this
+    
+    if (!normalized || normalized.length < 9) {
       setNicAvailable(true);
       setErrors(prev => ({ ...prev, nic: undefined }));
       return;
     }
 
-    const isValidFormat = /^(\d{9}[VvXx]|\d{12})$/.test(nicValue.trim());
+    const isValidFormat = /^(\d{9}[VX]|\d{12})$/.test(normalized); // uppercase only
     if (!isValidFormat) {
       setErrors(prev => ({ ...prev, nic: 'Enter a valid NIC (9 digits+V/X or 12 digits).' }));
       setNicAvailable(false);
@@ -256,10 +258,9 @@ const Step1 = ({ data, onChange, onNext }) => {
 
     setCheckingNic(true);
     try {
-      const nicQuery = query(collection(db, 'users'), where('nic', '==', nicValue.trim()));
+      const nicQuery = query(collection(db, 'users'), where('nic', '==', normalized));
       const snapshot = await getDocs(nicQuery);
       const exists = !snapshot.empty;
-      console.log('NIC check result - exists:', exists, 'snapshot size:', snapshot.size);
       setNicAvailable(!exists);
       if (exists) {
         setErrors(prev => ({ ...prev, nic: 'This NIC is already registered. Please contact support.' }));
@@ -274,7 +275,7 @@ const Step1 = ({ data, onChange, onNext }) => {
   };
 
   const handleNicChange = (e) => {
-    const value = e.target.value;
+    const value = e.target.value.toUpperCase();
     onChange('nic', value);
 
     if (nicCheckTimeout.current) {
