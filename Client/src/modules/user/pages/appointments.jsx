@@ -744,7 +744,7 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
                       <div className={`text-sm font-extrabold mb-0.5 
                         ${selected 
                           ? 'text-gray-900 dark:text-white' 
-                          : 'text-zinc-500 dark:text-white'
+                          : 'text-zinc-500 dark:text-zinc'
                         }`}
                       >
                         {svc.name}
@@ -826,9 +826,79 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
   );
 };
 
-// BOOK STEP 2: DATE & TIME
+// BOOK STEP 2: DATE & TIME (HOURLY BREAKDOWN WITH 15-MINUTE SLOTS)
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Generate all time slots (9:00 AM to 3:45 PM, 15-minute intervals)
+// GN work ends at 4:00 PM, so last appointment at 3:45 PM
+const generateAllTimeSlots = () => {
+  const slots = [];
+  
+  // 9:00 AM to 11:45 AM (Morning)
+  for (let hour = 9; hour <= 11; hour++) {
+    for (let minute of [0, 15, 30, 45]) {
+      const timeStr = `${hour}:${minute.toString().padStart(2, '0')} AM`;
+      slots.push(timeStr);
+    }
+  }
+  
+  // 12:00 PM to 12:45 PM (Noon)
+  for (let minute of [0, 15, 30, 45]) {
+    const timeStr = `12:${minute.toString().padStart(2, '0')} PM`;
+    slots.push(timeStr);
+  }
+  
+  // 1:00 PM to 3:45 PM (Afternoon)
+  for (let hour = 1; hour <= 3; hour++) {
+    for (let minute of [0, 15, 30, 45]) {
+      const timeStr = `${hour}:${minute.toString().padStart(2, '0')} PM`;
+      slots.push(timeStr);
+    }
+  }
+  
+  return slots; // 28 slots total
+};
+
+const ALL_TIME_SLOTS = generateAllTimeSlots();
+
+// Group slots by hour for display
+const groupSlotsByHour = (slots) => {
+  const grouped = {};
+  
+  slots.forEach(slot => {
+    // Extract hour number for grouping
+    let hourNum = parseInt(slot.split(':')[0]);
+    const isPM = slot.includes('PM');
+    
+    // Convert to 12-hour format for display
+    let displayHour = hourNum;
+    let period = isPM ? 'PM' : 'AM';
+    
+    // Special case for 12 PM
+    if (hourNum === 12 && !isPM) {
+      period = 'AM';
+    }
+    
+    const hourKey = `${displayHour} ${period}`;
+    
+    if (!grouped[hourKey]) {
+      grouped[hourKey] = [];
+    }
+    grouped[hourKey].push(slot);
+  });
+  
+  // Sort hours in chronological order
+  const hourOrder = ['9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM'];
+  const sortedGrouped = {};
+  hourOrder.forEach(hour => {
+    if (grouped[hour]) {
+      sortedGrouped[hour] = grouped[hour];
+    }
+  });
+  
+  return sortedGrouped;
+};
 
 const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
   const today = new Date();
@@ -836,47 +906,153 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [selDay, setSelDay] = useState(booking.day || null);
   const [selSlot, setSelSlot] = useState(booking.slot || null);
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [expandedHours, setExpandedHours] = useState({
+    '9 AM': true,
+    '10 AM': true,
+    '11 AM': true,
+    '12 PM': true,
+    '1 PM': true,
+    '2 PM': true,
+    '3 PM': true
+  });
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-  const takenSlots = ['10:30 AM', '03:00 PM'];
-  const morningSlots = ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM'];
-  const afternoonSlots = ['01:00 PM', '01:30 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM'];
+  useEffect(() => { 
+    const handleResize = () => setIsMobile(window.innerWidth <= 768); 
+    window.addEventListener('resize', handleResize); 
+    return () => window.removeEventListener('resize', handleResize); 
+  }, []);
+
+  // Fetch booked slots for the selected date
+  const fetchBookedSlots = async (year, month, day) => {
+    if (!year || month === null || !day) return;
+    
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    
+    setLoadingSlots(true);
+    try {
+      const appointmentsQuery = query(
+        collection(db, 'appointments'),
+        where('date', '==', dateStr),
+        where('status', 'in', ['Pending', 'Confirmed'])
+      );
+      const snapshot = await getDocs(appointmentsQuery);
+      
+      const booked = snapshot.docs.map(doc => doc.data().slot).filter(slot => slot);
+      setBookedSlots(booked);
+      
+      // If current selected slot is now booked, clear it
+      if (selSlot && booked.includes(selSlot)) {
+        setSelSlot(null);
+        setBooking(p => ({ ...p, slot: null }));
+      }
+    } catch (error) {
+      console.error('Error fetching booked slots:', error);
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
+  // Fetch when selected date changes
+  useEffect(() => {
+    if (selDay !== null && viewMonth !== null && viewYear !== null) {
+      fetchBookedSlots(viewYear, viewMonth, selDay);
+    }
+  }, [selDay, viewYear, viewMonth]);
+
+  const toggleHour = (hour) => {
+    setExpandedHours(prev => ({ ...prev, [hour]: !prev[hour] }));
+  };
 
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-  const prevMonth = () => { if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); } else setViewMonth(m => m - 1); };
-  const nextMonth = () => { if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); } else setViewMonth(m => m + 1); };
+  const prevMonth = () => { 
+    if (viewMonth === 0) { 
+      setViewYear(y => y - 1); 
+      setViewMonth(11); 
+    } else { 
+      setViewMonth(m => m - 1); 
+    } 
+  };
+  
+  const nextMonth = () => { 
+    if (viewMonth === 11) { 
+      setViewYear(y => y + 1); 
+      setViewMonth(0); 
+    } else { 
+      setViewMonth(m => m + 1); 
+    } 
+  };
 
-  const isWeekend = (day) => { const d = new Date(viewYear, viewMonth, day).getDay(); return d === 0 || d === 6; };
-  const isPast = (day) => new Date(viewYear, viewMonth, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  const isWeekend = (day) => { 
+    const d = new Date(viewYear, viewMonth, day).getDay(); 
+    return d === 0 || d === 6; 
+  };
+  
+  const isPast = (day) => {
+    const selectedDate = new Date(viewYear, viewMonth, day);
+    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return selectedDate < todayDate;
+  };
 
-  const pickDay = (day) => { if (isWeekend(day) || isPast(day)) return; setSelDay(day); setSelSlot(null); setBooking(p => ({ ...p, day, month: viewMonth, year: viewYear, slot: null })); };
-  const pickSlot = (slot) => { if (takenSlots.includes(slot)) return; setSelSlot(slot); setBooking(p => ({ ...p, slot })); };
+  const pickDay = (day) => { 
+    if (isWeekend(day) || isPast(day)) return; 
+    setSelDay(day); 
+    setSelSlot(null);
+    setBooking(p => ({ ...p, day, month: viewMonth, year: viewYear, slot: null })); 
+  };
+  
+  const pickSlot = (slot) => { 
+    if (bookedSlots.includes(slot)) return; 
+    setSelSlot(slot); 
+    setBooking(p => ({ ...p, slot })); 
+  };
 
-  const selDateLabel = selDay ? `${DAY_NAMES[new Date(viewYear, viewMonth, selDay).getDay()]}, ${MONTHS[viewMonth]} ${selDay}` : 'No date selected';
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
-  useEffect(() => { const handleResize = () => setIsMobile(window.innerWidth <= 768); window.addEventListener('resize', handleResize); return () => window.removeEventListener('resize', handleResize); }, []);
+  const selDateLabel = selDay ? `${DAY_NAMES[new Date(viewYear, viewMonth, selDay).getDay()]}, ${MONTHS[viewMonth]} ${selDay}, ${viewYear}` : 'No date selected';
+  const isDateSelected = selDay !== null;
+  
+  // Group slots for display
+  const groupedSlots = groupSlotsByHour(ALL_TIME_SLOTS);
+  const availableSlotsCount = ALL_TIME_SLOTS.filter(slot => !bookedSlots.includes(slot)).length;
 
   return (
-    <div className="p-7 flex-1">
+    <div className="p-4 md:p-7 flex-1">
       <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">Book an appointment</h1>
       <StepBar step={2} />
 
-      <div className="bg-white border border-user-border rounded-xl p-6 md:p-7 mb-4">
+      <div className="bg-white border border-user-border rounded-xl p-5 md:p-7 mb-4">
         <h2 className="text-lg font-extrabold text-user-text mb-5">When would you like to visit?</h2>
 
         <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-5`}>
-          <div className="flex-1 border border-user-border rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-4"><Icon d={IC.calendar} size={18} color="#B46A02" /><span className="text-sm font-extrabold text-user-text">Select Date</span></div>
-            <div className="flex items-center justify-between mb-3.5">
-              <button onClick={prevMonth} className="w-8 h-8 rounded-full border border-user-border bg-white cursor-pointer flex items-center justify-center"><Icon d={IC.chevL} size={14} color="#888" /></button>
-              <span className="text-sm font-extrabold">{MONTHS[viewMonth]} {viewYear}</span>
-              <button onClick={nextMonth} className="w-8 h-8 rounded-full border border-user-border bg-white cursor-pointer flex items-center justify-center"><Icon d={IC.chevR} size={14} color="#888" /></button>
+          {/* Calendar Section */}
+          <div className="flex-1 border border-user-border rounded-xl p-4 md:p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Icon d={IC.calendar} size={18} color="#B46A02" />
+              <span className="text-sm font-extrabold text-user-text">Select Date</span>
             </div>
-            <div className="grid grid-cols-7 gap-0.5 mb-2 text-center"><div className="text-[11px] font-extrabold text-gray-400 py-1">S</div><div className="text-[11px] font-extrabold text-gray-400 py-1">M</div><div className="text-[11px] font-extrabold text-gray-400 py-1">T</div><div className="text-[11px] font-extrabold text-gray-400 py-1">W</div><div className="text-[11px] font-extrabold text-gray-400 py-1">T</div><div className="text-[11px] font-extrabold text-gray-400 py-1">F</div><div className="text-[11px] font-extrabold text-gray-400 py-1">S</div></div>
+            <div className="flex items-center justify-between mb-3.5">
+              <button onClick={prevMonth} className="w-8 h-8 rounded-full border border-user-border bg-white cursor-pointer flex items-center justify-center">
+                <Icon d={IC.chevL} size={14} color="#888" />
+              </button>
+              <span className="text-sm font-extrabold">{MONTHS[viewMonth]} {viewYear}</span>
+              <button onClick={nextMonth} className="w-8 h-8 rounded-full border border-user-border bg-white cursor-pointer flex items-center justify-center">
+                <Icon d={IC.chevR} size={14} color="#888" />
+              </button>
+            </div>
+            
+            {/* Day headers */}
+            <div className="grid grid-cols-7 gap-0.5 mb-2 text-center">
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+                <div key={day} className="text-[11px] font-extrabold text-gray-400 py-1">{day}</div>
+              ))}
+            </div>
+            
+            {/* Calendar days */}
             <div className="grid grid-cols-7 gap-0.5">
-              {Array(firstDay).fill(null).map((_, i) => <div key={`e${i}`} />)}
+              {Array(firstDay).fill(null).map((_, i) => <div key={`empty-${i}`} />)}
               {Array(daysInMonth).fill(null).map((_, i) => {
                 const day = i + 1;
                 const weekend = isWeekend(day);
@@ -884,134 +1060,350 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
                 const picked = selDay === day && viewMonth === booking.month && viewYear === booking.year;
                 const disabled = weekend || past;
                 return (
-                  <div key={day} onClick={() => pickDay(day)} className={`w-8 h-8 rounded-full mx-auto my-0.5 flex items-center justify-center text-sm font-semibold transition-all ${picked ? 'bg-user-primary text-user-text font-black shadow-sm' : disabled ? 'text-gray-300 cursor-not-allowed' : 'text-user-text hover:bg-yellow-100 cursor-pointer'}`}>
+                  <div 
+                    key={day} 
+                    onClick={() => pickDay(day)} 
+                    className={`w-8 h-8 rounded-full mx-auto my-0.5 flex items-center justify-center text-sm font-semibold transition-all ${
+                      picked 
+                        ? 'bg-user-primary text-user-text font-black shadow-sm' 
+                        : disabled 
+                          ? 'text-gray-300 cursor-not-allowed bg-gray-50' 
+                          : 'text-user-text hover:bg-yellow-100 cursor-pointer'
+                    }`}
+                  >
                     {day}
                   </div>
                 );
               })}
             </div>
+            
+            {/* Weekend note */}
+            <div className="mt-3 text-center text-[10px] text-gray-400 flex items-center justify-center gap-1">
+              <Icon d={IC.calendar} size={10} color="#aaa" />
+              <span>Weekends closed</span>
+            </div>
           </div>
 
-          <div className="flex-1 border border-user-border rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-4"><Icon d={IC.clock} size={18} color="#B46A02" /><span className="text-sm font-extrabold text-user-text">Select Time</span></div>
-            <div className="text-xs font-extrabold text-warning mb-2.5 flex items-center gap-1.5"><Icon d={IC.sun} size={12} /> Morning</div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-              {morningSlots.map(slot => {
-                const taken = takenSlots.includes(slot);
-                const picked = selSlot === slot;
-                return (
-                  <button key={slot} onClick={() => pickSlot(slot)} disabled={taken} className={`py-2.5 text-xs font-extrabold text-center rounded-lg transition-all ${picked ? 'bg-user-primary text-user-text' : taken ? 'bg-gray-100 text-gray-300 border border-dashed border-gray-300 cursor-not-allowed' : 'border border-user-border bg-white text-user-text hover:bg-yellow-100 cursor-pointer'}`}>
-                    {slot}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="text-xs font-extrabold text-warning mb-2.5 flex items-center gap-1.5"><Icon d={IC.wave} size={12} /> Afternoon</div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {afternoonSlots.map(slot => {
-                const taken = takenSlots.includes(slot);
-                const picked = selSlot === slot;
-                return (
-                  <button key={slot} onClick={() => pickSlot(slot)} disabled={taken} className={`py-2.5 text-xs font-extrabold text-center rounded-lg transition-all ${picked ? 'bg-user-primary text-user-text' : taken ? 'bg-gray-100 text-gray-300 border border-dashed border-gray-300 cursor-not-allowed' : 'border border-user-border bg-white text-user-text hover:bg-yellow-100 cursor-pointer'}`}>
-                    {slot}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex flex-wrap gap-4 justify-center pt-2 mt-2 border-t border-user-border">
-              {[
-                { color: '#F5C400', label: 'Selected' },
-                { color: '#fff', border: '1.5px solid #e8d5ac', label: 'Available' },
-                { color: '#f5f0e8', border: '1.5px dashed #ddd', label: 'Not available' }
-              ].map(l => (
-                <div key={l.label} className="flex items-center gap-1.5">
-                  <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: l.color, border: l.border }} />
-                  <span className="text-[11px] font-bold text-gray-500">{l.label}</span>
+          {/* Time Slots Section with Hourly Breakdown */}
+          <div className="flex-1 border border-user-border rounded-xl p-4 md:p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Icon d={IC.clock} size={18} color="#B46A02" />
+                <span className="text-sm font-extrabold text-user-text">Select Time Slot</span>
+              </div>
+              {loadingSlots && (
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3.5 h-3.5 rounded-full border-2 border-user-primary border-t-transparent animate-spin" />
+                  <span className="text-[10px] text-gray-400">Checking...</span>
                 </div>
-              ))}
+              )}
             </div>
+            
+            {!isDateSelected ? (
+              <div className="text-center py-12">
+                <Icon d={IC.calendar} size={48} color="#ccc" strokeWidth={1.2} />
+                <p className="text-sm font-semibold text-gray-400 mt-3">Select a date first</p>
+              </div>
+            ) : (
+              <>
+                {/* Summary bar */}
+                <div className="mb-4 p-2.5 bg-gray-50 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Icon d={IC.info} size={14} color="#888" />
+                    <span className="text-xs font-semibold text-gray-500">
+                      {availableSlotsCount} slots available today
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    15 min per appointment
+                  </div>
+                </div>
+
+                {/* Hourly breakdown */}
+                <div className="max-h-[400px] overflow-y-auto pr-1">
+                  {Object.entries(groupedSlots).map(([hour, slots]) => {
+                    const availableInHour = slots.filter(slot => !bookedSlots.includes(slot)).length;
+                    const totalInHour = slots.length;
+                    const isExpanded = expandedHours[hour];
+                    
+                    return (
+                      <div key={hour} className="mb-3 border border-gray-100 rounded-lg overflow-hidden">
+                        {/* Hour header */}
+                        <button
+                          onClick={() => toggleHour(hour)}
+                          className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon d={isExpanded ? IC.chevUp : IC.chevDown} size={14} color="#888" />
+                            <span className="text-sm font-extrabold text-user-text">{hour}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs font-semibold ${availableInHour === 0 ? 'text-red-500' : 'text-green-600'}`}>
+                              {availableInHour}/{totalInHour} available
+                            </span>
+                          </div>
+                        </button>
+                        
+                        {/* Time slots grid */}
+                        {isExpanded && (
+                          <div className="p-3 bg-white">
+                            <div className="grid grid-cols-2 gap-2">
+                              {slots.map(slot => {
+                                const isBooked = bookedSlots.includes(slot);
+                                const isSelected = selSlot === slot;
+                                return (
+                                  <button
+                                    key={slot}
+                                    onClick={() => pickSlot(slot)}
+                                    disabled={isBooked}
+                                    className={`py-2.5 px-2 text-xs font-extrabold text-center rounded-lg transition-all ${
+                                      isSelected
+                                        ? 'bg-user-primary text-user-text'
+                                        : isBooked
+                                          ? 'bg-gray-100 text-gray-300 border border-dashed border-gray-300 cursor-not-allowed'
+                                          : 'border border-user-border bg-white text-user-text hover:bg-yellow-100 cursor-pointer'
+                                    }`}
+                                  >
+                                    {slot}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Legend */}
+                <div className="flex flex-wrap gap-4 justify-center pt-3 mt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: '#F5C400' }} />
+                    <span className="text-[10px] font-semibold text-gray-500">Selected</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3.5 h-3.5 rounded border border-user-border bg-white" />
+                    <span className="text-[10px] font-semibold text-gray-500">Available</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3.5 h-3.5 rounded border border-dashed border-gray-300 bg-gray-100" />
+                    <span className="text-[10px] font-semibold text-gray-500">Booked</span>
+                  </div>
+                </div>
+
+                {/* Office hours note */}
+                <div className="mt-3 p-2.5 bg-blue-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Icon d={IC.info} size={12} color="#3b82f6" />
+                    <span className="text-[10px] font-semibold text-blue-700">
+                      Office hours: 9:00 AM - 4:00 PM. Last appointment at 3:45 PM
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        <div className="mt-6 p-3 bg-yellow-50 border border-yellow-400 rounded-lg flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm font-semibold text-yellow-800"><Icon d={IC.info} size={16} color="#B46A02" /> Appointments must be booked at least 24 hours in advance.</div>
-          <div className="text-sm font-bold text-user-text bg-white px-3 py-1.5 rounded-lg border border-yellow-400">Selected date: <strong>{selDateLabel}</strong></div>
-        </div>
+        {/* Selected Date Summary */}
+        {isDateSelected && !loadingSlots && (
+          <div className="mt-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-yellow-800">
+              <Icon d={IC.info} size={16} color="#B46A02" /> 
+              {selSlot ? 'Selected time:' : 'Please select a time slot'}
+            </div>
+            <div className="text-sm font-bold text-user-text bg-white px-3 py-1.5 rounded-lg border border-yellow-200">
+              {selDateLabel} {selSlot && <span className="text-user-primary ml-1">- {selSlot}</span>}
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* Navigation Buttons */}
       <div className={`flex justify-between gap-3 mt-4 ${isMobile ? 'flex-col' : 'flex-row'}`}>
-        <button onClick={onBack} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round border-2 border-user-border bg-white text-sm font-extrabold text-user-secondary cursor-pointer ${isMobile ? 'w-full' : ''}`}>← Back</button>
-        <button onClick={onNext} disabled={!selDay || !selSlot} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round text-sm font-extrabold text-white transition-all ${(!selDay || !selSlot) ? 'bg-user-secondary/50 cursor-not-allowed' : 'bg-user-secondary hover:bg-user-secondary-dark cursor-pointer'} ${isMobile ? 'w-full' : ''}`}>Next → Review & submit</button>
+        <BrownBtn onClick={onBack} isMobile={isMobile}>
+          ← Back
+        </BrownBtn>
+        <BrownBtn 
+          onClick={onNext} 
+          disabled={!selDay || !selSlot} 
+          isMobile={isMobile}
+        >
+          Continue →
+        </BrownBtn>
       </div>
     </div>
   );
 };
 
-// BOOK STEP 3: REVIEW & SUBMIT
+// BOOK STEP 3: REVIEW & SUBMIT (FIXED)
 const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submitting }) => {
-  const dateStr = booking.day ? `${MONTHS[booking.month]} ${booking.day}, ${booking.year}` : '—';
-  const timeEnd = booking.slot ? (() => { const [h, m, ap] = booking.slot.replace(' AM', '').replace(' PM', '').split(/[: ]/).concat([booking.slot.includes('AM') ? 'AM' : 'PM']); let hh = parseInt(h), mm = parseInt(m); mm += 30; if (mm >= 60) { hh += 1; mm -= 60; } if (hh > 12) hh -= 12; return `${hh}:${mm.toString().padStart(2, '0')} ${ap}`; })() : '';
-  const timeStr = booking.slot ? `${booking.slot} — ${timeEnd}` : '—';
-  const nicMasked = userData?.nic ? 'X'.repeat(userData.nic.length) : 'XXXXXXXXXXXX';
+  const [isAgreed, setIsAgreed] = useState(false); // Start as false - NOT ticked by default
   const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => { const handleResize = () => setIsMobile(window.innerWidth <= 768); handleResize(); window.addEventListener('resize', handleResize); return () => window.removeEventListener('resize', handleResize); }, []);
+  useEffect(() => { 
+    const handleResize = () => setIsMobile(window.innerWidth <= 768); 
+    handleResize();
+    window.addEventListener('resize', handleResize); 
+    return () => window.removeEventListener('resize', handleResize); 
+  }, []);
+
+  const dateStr = booking.day ? `${MONTHS[booking.month]} ${booking.day}, ${booking.year}` : '—';
+  
+  // Display just the selected time slot (no end time calculation needed)
+  const timeStr = booking.slot ? booking.slot : '—';
+  
+  const nicMasked = userData?.nic 
+    ? userData.nic.slice(0, 3) + 'XXXXXXXXX' + userData.nic.slice(-1)
+    : 'XXXXXXXXXXXX';
 
   return (
-    <div className="p-7 flex-1">
+    <div className="p-4 md:p-7 flex-1">
       <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">Book an appointment</h1>
       <StepBar step={3} />
 
       <div className="bg-white border border-user-border rounded-xl p-5 md:p-7 mb-6">
         <h2 className="text-xl md:text-2xl font-black text-user-text mb-5">Review your request</h2>
 
+        {/* Selected Service Banner */}
         <div className="bg-user-secondary rounded-xl p-4 md:p-3.5 mb-4">
           <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} items-start gap-3`}>
             <Icon d={IC.doc} size={isMobile ? 20 : 18} color="#f0d890" />
-            <div><div className="text-[10px] md:text-[10px] font-extrabold text-yellow-200 uppercase tracking-wider mb-1">Selected Service</div><div className="text-base md:text-base font-black text-white">{booking.service?.name || '—'}</div></div>
+            <div>
+              <div className="text-[10px] font-extrabold text-yellow-200 uppercase tracking-wider mb-1">
+                Selected Service
+              </div>
+              <div className="text-base font-black text-white">
+                {booking.service?.name || '—'}
+              </div>
+            </div>
           </div>
         </div>
 
+        {/* Main Content Card */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-5 md:p-6">
           <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-6 md:gap-8`}>
+            {/* Left Column - Appointment Details */}
             <div className="flex-1">
-              <div className="text-[11px] md:text-[11px] font-extrabold text-gray-900 uppercase tracking-wider mb-3.5 flex items-center gap-2"><Icon d={IC.calendar} size={14} color="#B46A02" /> Appointment Details</div>
+              <div className="text-[11px] font-extrabold text-gray-900 uppercase tracking-wider mb-3.5 flex items-center gap-2">
+                <Icon d={IC.calendar} size={14} color="#B46A02" /> 
+                Appointment Details
+              </div>
               <div className="flex flex-col gap-3.5">
-                <div className="flex items-center gap-3 flex-wrap"><div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0"><Icon d={IC.calendar} size={16} color="#B46A02" /></div><div><div className="text-[11px] font-semibold text-gray-500 mb-0.5">Date</div><div className="text-sm md:text-base font-bold text-gray-600">{dateStr}</div></div></div>
-                <div className="flex items-center gap-3 flex-wrap"><div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0"><Icon d={IC.clock} size={16} color="#B46A02" /></div><div><div className="text-[11px] font-semibold text-gray-500 mb-0.5">Time</div><div className="text-sm md:text-base font-bold text-gray-600">{timeStr}</div></div></div>
-                <div className="flex items-center gap-3 flex-wrap"><div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0"><Icon d={IC.location} size={16} color="#B46A02" /></div><div><div className="text-[11px] font-semibold text-gray-500 mb-0.5">Location</div><div className="text-sm md:text-base font-bold text-gray-600">{userData?.dsDiv ? `Divisional Secretariat, ${userData.dsDiv}` : 'Divisional Secretariat Office'}</div></div></div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                    <Icon d={IC.calendar} size={16} color="#B46A02" />
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold text-gray-500 mb-0.5">Date</div>
+                    <div className="text-sm md:text-base font-bold text-gray-800">{dateStr}</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                    <Icon d={IC.clock} size={16} color="#B46A02" />
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold text-gray-500 mb-0.5">Time</div>
+                    <div className="text-sm md:text-base font-bold text-gray-800">{timeStr}</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                    <Icon d={IC.location} size={16} color="#B46A02" />
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold text-gray-500 mb-0.5">Location</div>
+                    <div className="text-sm md:text-base font-bold text-gray-800">
+                      {userData?.dsDiv ? `Grama Niladhari Office, ${userData.dsDiv}` : 'Grama Niladhari Office'}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* Divider */}
             {!isMobile && <div className="w-px bg-yellow-200 mx-2" />}
+
+            {/* Right Column - Applicant Information */}
             <div className="flex-1">
-              <div className="text-[11px] md:text-[11px] font-extrabold text-gray-900 uppercase tracking-wider mb-3.5 flex items-center gap-2"><Icon d={IC.profile} size={14} color="#B46A02" /> Applicant Information</div>
+              <div className="text-[11px] font-extrabold text-gray-900 uppercase tracking-wider mb-3.5 flex items-center gap-2">
+                <Icon d={IC.profile} size={14} color="#B46A02" /> 
+                Applicant Information
+              </div>
               <div className="flex flex-col gap-3.5">
-                <div><div className="text-[11px] font-semibold text-gray-500 mb-1">Full Name</div><div className="text-base md:text-base font-extrabold text-gray-600">{userData?.fullName || currentUser?.displayName || 'User'}</div></div>
-                <div><div className="text-[11px] font-semibold text-gray-500 mb-1">NIC Number</div><div className="text-sm md:text-base font-semibold text-gray-600 font-mono">{nicMasked}</div></div>
-                <div><div className="text-[11px] font-semibold text-gray-500 mb-1">Mobile Number</div><div className="text-sm md:text-base font-semibold text-gray-600">{userData?.mobile || currentUser?.phoneNumber || 'Not provided'}</div></div>
+                <div>
+                  <div className="text-[11px] font-semibold text-gray-500 mb-1">Full Name</div>
+                  <div className="text-sm md:text-base font-extrabold text-gray-800">
+                    {userData?.fullName || currentUser?.displayName || 'User'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-semibold text-gray-500 mb-1">NIC Number</div>
+                  <div className="text-sm md:text-base font-semibold text-gray-600 font-mono">
+                    {nicMasked}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-semibold text-gray-500 mb-1">Mobile Number</div>
+                  <div className="text-sm md:text-base font-semibold text-gray-600">
+                    {userData?.mobile || currentUser?.phoneNumber || 'Not provided'}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Mobile Divider */}
           {isMobile && <div className="h-px bg-yellow-200 my-5" />}
 
+          {/* Additional Notes */}
           {booking.notes && (
             <>
-              <div className="mt-5"><div className="text-[11px] font-extrabold text-warning uppercase tracking-wider mb-2.5 flex items-center gap-2"><Icon d={IC.info} size={14} color="#B46A02" /> Additional Notes</div><div className="bg-yellow-100 p-3 md:p-4 rounded-lg border-l-3 border-user-primary text-sm font-semibold text-gray-600 italic">"{booking.notes}"</div></div>
+              <div className="mt-5">
+                <div className="text-[11px] font-extrabold text-yellow-700 uppercase tracking-wider mb-2.5 flex items-center gap-2">
+                  <Icon d={IC.message} size={14} color="#B46A02" /> 
+                  Additional Notes
+                </div>
+                <div className="bg-yellow-100 p-3 md:p-4 rounded-lg border-l-3 border-user-primary text-sm font-semibold text-gray-700 italic">
+                  "{booking.notes}"
+                </div>
+              </div>
               {isMobile && <div className="h-px bg-yellow-200 my-5" />}
             </>
           )}
 
+          {/* Terms & Conditions Checkbox - NOT TICKED BY DEFAULT */}
           <div className={`mt-5 flex items-start gap-3 ${isMobile ? 'bg-yellow-100 p-4 rounded-xl border border-yellow-200' : ''}`}>
-            <input type="checkbox" defaultChecked id="agreementCheckbox" className="w-5 h-5 accent-user-primary mt-0.5 cursor-pointer flex-shrink-0" />
-            <label htmlFor="agreementCheckbox" className="text-xs md:text-xs font-semibold text-gray-500 leading-relaxed cursor-pointer">I confirm that the information provided is accurate and I agree to the appointment terms.</label>
+            <input 
+              type="checkbox" 
+              id="agreementCheckbox" 
+              checked={isAgreed}
+              onChange={(e) => setIsAgreed(e.target.checked)}
+              className="w-5 h-5 accent-user-primary mt-0.5 cursor-pointer flex-shrink-0" 
+            />
+            <label htmlFor="agreementCheckbox" className="text-xs md:text-xs font-semibold text-gray-600 leading-relaxed cursor-pointer">
+              I confirm that the information provided is accurate and I agree to the appointment terms.
+            </label>
           </div>
         </div>
       </div>
 
+      {/* Navigation Buttons */}
       <div className={`flex justify-between gap-3 ${isMobile ? 'flex-col' : 'flex-row'}`}>
-        <button onClick={onBack} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round border-2 border-user-border bg-white text-sm font-extrabold text-user-secondary cursor-pointer ${isMobile ? 'w-full' : ''}`}>← Back</button>
-        <button onClick={onSubmit} disabled={submitting} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round text-sm font-extrabold transition-all ${submitting ? 'bg-user-secondary/50 text-white cursor-not-allowed' : 'bg-user-primary text-user-text hover:bg-user-primary-dark cursor-pointer'} ${isMobile ? 'w-full' : ''}`}>{submitting ? 'Submitting…' : 'Submit appointment request'}</button>
+        <BrownBtn onClick={onBack} isMobile={isMobile}>
+          ← Back
+        </BrownBtn>
+        <BrownBtn 
+          onClick={onSubmit} 
+          disabled={submitting || !isAgreed} 
+          isMobile={isMobile}
+        >
+          {submitting ? 'Submitting...' : 'Submit appointment request'}
+        </BrownBtn>
       </div>
     </div>
   );
@@ -1020,11 +1412,27 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
 // SCREEN — SUCCESS
 const BookSuccess = ({ onBack }) => (
   <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] p-7">
-    <div className="bg-white border border-user-border rounded-2xl p-12 text-center max-w-md">
-      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-5"><Icon d={IC.success} size={36} color="#1a7a3a" sw={2.5} /></div>
-      <h2 className="text-2xl font-black text-user-text mb-2.5">Appointment Requested!</h2>
-      <p className="text-sm text-gray-500 font-semibold leading-relaxed mb-7">Your appointment request has been submitted.<br />You will receive a confirmation once the GN Officer approves it.</p>
-      <YellowBtn onClick={onBack}>← Back to My Appointments</YellowBtn>
+    <div className="bg-white border border-user-border rounded-2xl p-8 md:p-12 text-center max-w-md w-full mx-auto">
+      {/* Success Icon */}
+      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-5">
+        <Icon d={IC.success} size={36} color="#1a7a3a" strokeWidth={2.5} />
+      </div>
+      
+      {/* Title */}
+      <h2 className="text-xl md:text-2xl font-black text-user-text mb-3">
+        Appointment Requested!
+      </h2>
+      
+      {/* Message */}
+      <p className="text-sm text-gray-500 font-semibold leading-relaxed mb-7">
+        Your appointment request has been submitted.<br />
+        You will receive a confirmation once the GN Officer approves it.
+      </p>
+      
+      {/* Button */}
+      <YellowBtn onClick={onBack}>
+        ← Back to My Appointments
+      </YellowBtn>
     </div>
   </div>
 );
