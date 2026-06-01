@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -350,7 +350,7 @@ const HTab = ({ icon, label, active, onClick }) => (
 
 // Toast
 const Toast = ({ show }) => (
-  <div className={`fixed bottom-7 right-7 z-[999] bg-user-text text-white py-3 px-5 rounded-xl text-sm font-bold shadow-xl transition-all duration-300 pointer-events-none ${
+  <div className={`fixed bottom-7 right-7 z-[999] bg-green-600 text-white py-3 px-5 rounded-xl text-sm font-bold shadow-xl transition-all duration-300 pointer-events-none ${
     show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
   }`}>
     ✓ Settings saved
@@ -366,41 +366,124 @@ const ContentCard = ({ children }) => (
 
 // SECURITY TAB COMPONENT
 const SecurityTab = ({ currentUser, userData, db }) => {
+  // Password states
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
   const [pwError, setPwError] = useState('');
   const [pwSuccess, setPwSuccess] = useState(false);
+  const [pwStrength, setPwStrength] = useState({ label: '', color: '', width: '0%' });
+  const [pwTouched, setPwTouched] = useState({ current: false, new: false, confirm: false });
 
+  // Mobile states
   const [newMobile, setNewMobile] = useState('');
-  const [otp, setOtp] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [otpSent, setOtpSent] = useState(false);
   const [mobLoading, setMobLoading] = useState(false);
   const [mobError, setMobError] = useState('');
   const [mobSuccess, setMobSuccess] = useState(false);
-  
+  const [timer, setTimer] = useState(0);
+  const [otpAttempts, setOtpAttempts] = useState(0);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingMobile, setPendingMobile] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
+  const otpInputRefs = useRef([]);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleChangePassword = async () => {
-    setPwError(''); setPwSuccess(false);
-    if (!currentPw || !newPw || !confirmPw) { setPwError('Please fill all fields.'); return; }
-    if (newPw.length < 8) { setPwError('New password must be at least 8 characters.'); return; }
-    if (newPw !== confirmPw) { setPwError("New passwords don't match."); return; }
+  // Timer countdown effect
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => setTimer(t => t - 1), 1000);
+      return () => clearInterval(interval);
+    }
+  }, [timer]);
 
+  // Auto-focus OTP input when OTP is sent
+  useEffect(() => {
+    if (otpSent && otpInputRefs.current[0]) {
+      otpInputRefs.current[0].focus();
+    }
+  }, [otpSent]);
+
+  // Password strength checker
+  const checkPasswordStrength = (password) => {
+    if (!password) return { label: '', color: '', width: '0%' };
+    
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    
+    const strengthMap = {
+      0: { label: 'Very Weak', color: '#ef4444', width: '25%' },
+      1: { label: 'Weak', color: '#f59e0b', width: '50%' },
+      2: { label: 'Fair', color: '#f59e0b', width: '75%' },
+      3: { label: 'Good', color: '#10b981', width: '100%' },
+      4: { label: 'Strong', color: '#10b981', width: '100%' },
+    };
+    return strengthMap[strength] || strengthMap[0];
+  };
+
+  // Password validation
+  const getPasswordErrors = () => {
+    const errors = [];
+    if (newPw && newPw.length < 8) errors.push('At least 8 characters');
+    if (newPw && !/[A-Z]/.test(newPw)) errors.push('One uppercase letter');
+    if (newPw && !/[0-9]/.test(newPw)) errors.push('One number');
+    if (newPw && !/[^A-Za-z0-9]/.test(newPw)) errors.push('One special character');
+    if (newPw && newPw === currentPw) errors.push('Must be different from current password');
+    return errors;
+  };
+
+  const isPasswordValid = () => {
+    return newPw.length >= 8 && 
+           /[A-Z]/.test(newPw) && 
+           /[0-9]/.test(newPw) && 
+           /[^A-Za-z0-9]/.test(newPw) &&
+           newPw !== currentPw &&
+           newPw === confirmPw &&
+           currentPw.length > 0;
+  };
+
+  const handleNewPwChange = (value) => {
+    setNewPw(value);
+    setPwStrength(checkPasswordStrength(value));
+    if (pwError) setPwError('');
+  };
+
+  const handleChangePassword = async () => {
+    if (!isPasswordValid()) return;
+    
     setPwLoading(true);
+    setPwError('');
+    
     try {
       const credential = EmailAuthProvider.credential(currentUser.email, currentPw);
       await reauthenticateWithCredential(currentUser, credential);
       await updatePassword(currentUser, newPw);
       setPwSuccess(true);
-      setCurrentPw(''); setNewPw(''); setConfirmPw('');
+      setCurrentPw('');
+      setNewPw('');
+      setConfirmPw('');
+      setPwTouched({ current: false, new: false, confirm: false });
+      setPwStrength({ label: '', color: '', width: '0%' });
+      
+      setTimeout(() => {
+        alert('Password changed successfully! You will be logged out. Please log in again with your new password.');
+        signOut(auth);
+      }, 2000);
+      
       setTimeout(() => setPwSuccess(false), 3000);
     } catch (e) {
       if (e.code === 'auth/wrong-password') {
@@ -413,38 +496,102 @@ const SecurityTab = ({ currentUser, userData, db }) => {
     }
   };
 
+  // Mobile validation
+  const isValidMobile = (mobile) => {
+    return /^(\+94|0)?[0-9]{9,10}$/.test(mobile.replace(/\s/g, ''));
+  };
+
   const handleSendOtp = () => {
     setMobError('');
-    if (!newMobile.trim()) { setMobError('Please enter a new mobile number.'); return; }
-    if (!/^(\+94|0)?[0-9]{9,10}$/.test(newMobile.replace(/\s/g, ''))) {
-      setMobError('Please enter a valid Sri Lanka mobile number.'); return;
+    if (!newMobile.trim()) {
+      setMobError('Please enter a new mobile number.');
+      return;
     }
+    if (!isValidMobile(newMobile)) {
+      setMobError('Please enter a valid Sri Lanka mobile number (e.g., 0712345678 or +94712345678).');
+      return;
+    }
+    if (otpAttempts >= 3) {
+      setMobError('Too many OTP attempts. Please try again later.');
+      return;
+    }
+    
     setMobLoading(true);
     setTimeout(() => {
       setMobLoading(false);
       setOtpSent(true);
+      setTimer(60);
+      setOtpAttempts(prev => prev + 1);
       setMobError('');
     }, 1000);
   };
 
-  const handleVerifyOtp = async () => {
+  const handleOtpChange = (index, value) => {
+    if (value.length > 1) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    
+    if (value && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
     setMobError('');
-    if (otp.length !== 6) { setMobError('Please enter the 6-digit OTP.'); return; }
-    if (otp !== '123456') { setMobError('Incorrect OTP. Please try again.'); return; }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleVerifyOtp = () => {
+    const otpValue = otp.join('');
+    if (otpValue.length !== 6) {
+      setMobError('Please enter the complete 6-digit OTP.');
+      return;
+    }
+    if (otpValue !== '123456') {
+      setMobError('Incorrect OTP. Please try again.');
+      return;
+    }
+    
+    setPendingMobile(newMobile);
+    setShowConfirmModal(true);
+  };
+
+  const confirmMobileUpdate = async () => {
     setMobLoading(true);
     try {
       if (currentUser) {
-        await updateDoc(doc(db, 'users', currentUser.uid), { mobile: newMobile });
+        await updateDoc(doc(db, 'users', currentUser.uid), { mobile: pendingMobile });
       }
       setMobSuccess(true);
-      setNewMobile(''); setOtp(''); setOtpSent(false);
-      setTimeout(() => setMobSuccess(false), 3000);
+      setNewMobile('');
+      setOtp(['', '', '', '', '', '']);
+      setOtpSent(false);
+      setTimer(0);
+      setShowConfirmModal(false);
+      
+      setTimeout(() => setMobSuccess(false), 5000);
     } catch (e) {
       setMobError('Failed to update mobile. Please try again.');
     } finally {
       setMobLoading(false);
     }
   };
+
+  const handleResendOtp = () => {
+    if (timer > 0) return;
+    if (otpAttempts >= 3) {
+      setMobError('Maximum OTP attempts reached. Please try again later.');
+      return;
+    }
+    handleSendOtp();
+  };
+
+  const passwordErrors = getPasswordErrors();
+  const passwordsMatch = confirmPw && newPw === confirmPw;
+  const currentMobile = userData?.mobile || 'Not set';
 
   return (
     <div className="bg-user-primary-light border border-user-warning rounded-xl p-5 md:p-6">
@@ -455,45 +602,129 @@ const SecurityTab = ({ currentUser, userData, db }) => {
         {/* Change Password Section */}
         <div className="flex-1 bg-white rounded-xl p-5 md:p-5 shadow-sm">
           <div className="text-sm md:text-sm font-extrabold text-user-text mb-4 flex items-center gap-2">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
+            <Icon d={IC.lock} size={16} />
             Change password
           </div>
           
           {pwSuccess && (
-            <div className="flex items-center gap-2 bg-user-success-light border border-user-success rounded-lg p-3 mb-3.5 text-sm font-bold text-user-success">
-              <Icon d={IC.check} size={14} color="#1a5c1a" /> Password changed successfully!
+            <div className="flex items-center gap-2 bg-green-50 border border-green-400 rounded-lg p-3 mb-3.5 text-sm font-bold text-green-700">
+              <Icon d={IC.check} size={14} color="#1a5c1a" /> Password changed successfully! You will be logged out shortly.
             </div>
           )}
           
           {pwError && (
-            <div className="flex items-center gap-2 bg-user-error-light border border-user-error rounded-lg p-3 mb-3.5 text-sm font-bold text-user-error">
+            <div className="flex items-center gap-2 bg-red-50 border border-red-400 rounded-lg p-3 mb-3.5 text-sm font-bold text-red-700">
               <Icon d={IC.alertTriangle} size={14} color="#8b1a1a" /> {pwError}
             </div>
           )}
           
-          <input 
-            type="password" value={currentPw} onChange={e => { setCurrentPw(e.target.value); setPwError(''); }} 
-            placeholder="Current Password" 
-            className="w-full py-3 px-4 text-sm font-semibold bg-user-secondary-light border border-user-border rounded-lg outline-none transition-colors focus:border-user-primary mb-2.5"
-          />
-          <input 
-            type="password" value={newPw} onChange={e => { setNewPw(e.target.value); setPwError(''); }} 
-            placeholder="New Password (min. 8 characters)" 
-            className="w-full py-3 px-4 text-sm font-semibold bg-user-secondary-light border border-user-border rounded-lg outline-none transition-colors focus:border-user-primary mb-2.5"
-          />
-          <input 
-            type="password" value={confirmPw} onChange={e => { setConfirmPw(e.target.value); setPwError(''); }} 
-            placeholder="Confirm New Password" 
-            className="w-full py-3 px-4 text-sm font-semibold bg-user-secondary-light border border-user-border rounded-lg outline-none transition-colors focus:border-user-primary mb-4"
-          />
+          {/* Current Password */}
+          <div className="relative mb-2.5">
+            <input 
+              type={showCurrentPw ? 'text' : 'password'} 
+              value={currentPw} 
+              onChange={e => { setCurrentPw(e.target.value); setPwError(''); setPwTouched(p => ({ ...p, current: true })); }} 
+              placeholder="Current Password" 
+              className={`w-full py-3 px-4 text-sm font-semibold bg-user-secondary-light border rounded-lg outline-none transition-colors focus:border-user-primary pr-12 ${
+                pwTouched.current && currentPw && !pwError ? 'border-green-500' : ''
+              } ${pwError ? 'border-red-500' : 'border-user-border'}`}
+            />
+            <button 
+              type="button" 
+              onClick={() => setShowCurrentPw(!showCurrentPw)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+            >
+              <Icon d={showCurrentPw ? IC.eye : IC.eyeOff} size={18} />
+            </button>
+          </div>
+          
+          {/* New Password */}
+          <div className="relative mb-2.5">
+            <input 
+              type={showNewPw ? 'text' : 'password'} 
+              value={newPw} 
+              onChange={e => { handleNewPwChange(e.target.value); setPwTouched(p => ({ ...p, new: true })); }} 
+              placeholder="New Password (min. 8 characters)" 
+              className={`w-full py-3 px-4 text-sm font-semibold bg-user-secondary-light border rounded-lg outline-none transition-colors focus:border-user-primary pr-12 ${
+                pwTouched.new && newPw && isPasswordValid() ? 'border-green-500' : ''
+              } ${pwTouched.new && passwordErrors.length > 0 ? 'border-red-500' : 'border-user-border'}`}
+            />
+            <button 
+              type="button" 
+              onClick={() => setShowNewPw(!showNewPw)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+            >
+              <Icon d={showNewPw ? IC.eye : IC.eyeOff} size={18} />
+            </button>
+          </div>
+          
+          {/* Password Strength Indicator */}
+          {pwTouched.new && newPw && (
+            <div className="mb-2">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs font-semibold" style={{ color: pwStrength.color }}>{pwStrength.label}</span>
+                {newPw && isPasswordValid() && <Icon d={IC.check} size={12} color="#10b981" />}
+              </div>
+              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-300" style={{ width: pwStrength.width, backgroundColor: pwStrength.color }} />
+              </div>
+            </div>
+          )}
+          
+          {/* Password Requirements Checklist */}
+          {pwTouched.new && newPw && passwordErrors.length > 0 && (
+            <div className="mb-2.5 p-2 bg-gray-50 rounded-lg">
+              <div className="text-[10px] font-semibold text-gray-500 mb-1">Password requires:</div>
+              <div className="flex flex-wrap gap-2">
+                {passwordErrors.map(err => (
+                  <span key={err} className="text-[10px] text-red-500 flex items-center gap-1">
+                    <Icon d={IC.x} size={10} /> {err}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Confirm Password */}
+          <div className="relative mb-4">
+            <input 
+              type={showConfirmPw ? 'text' : 'password'} 
+              value={confirmPw} 
+              onChange={e => { setConfirmPw(e.target.value); setPwError(''); setPwTouched(p => ({ ...p, confirm: true })); }} 
+              placeholder="Confirm New Password" 
+              className={`w-full py-3 px-4 text-sm font-semibold bg-user-secondary-light border rounded-lg outline-none transition-colors focus:border-user-primary pr-12 ${
+                pwTouched.confirm && confirmPw && passwordsMatch ? 'border-green-500' : ''
+              } ${pwTouched.confirm && confirmPw && !passwordsMatch ? 'border-red-500' : 'border-user-border'}`}
+            />
+            <button 
+              type="button" 
+              onClick={() => setShowConfirmPw(!showConfirmPw)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+            >
+              <Icon d={showConfirmPw ? IC.eye : IC.eyeOff} size={18} />
+            </button>
+          </div>
+          
+          {/* Real-time password match message */}
+          {pwTouched.confirm && confirmPw && (
+            <div className={`text-xs font-semibold mb-3 flex items-center gap-1 ${passwordsMatch ? 'text-green-600' : 'text-red-500'}`}>
+              {passwordsMatch ? <Icon d={IC.check} size={12} /> : <Icon d={IC.x} size={12} />}
+              {passwordsMatch ? 'Passwords match!' : 'Passwords do not match'}
+            </div>
+          )}
+          
+          {/* Session Warning */}
+          <div className="bg-red-400 dark:bg-orange-400 border border-red-200 rounded-lg p-2.5 mb-4">
+            <div className="text-[11px] font-semibold text-white dark:text-black flex items-center gap-1.5">
+              <Icon d={IC.alertTriangle} size={12} color="currentColor" />
+              You will be logged out after changing your password. Please log in again with your new password.
+            </div>
+          </div>
           
           <button 
             onClick={handleChangePassword} 
-            disabled={pwLoading} 
-            className="w-full py-3 rounded-lg bg-user-text text-white text-sm font-extrabold flex items-center justify-center gap-2 transition-all hover:bg-user-secondary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={pwLoading || !isPasswordValid()} 
+            className="w-full py-3 rounded-lg bg-user-text dark:bg-amber-900 text-white text-sm font-extrabold flex items-center justify-center gap-2 transition-all hover:bg-user-secondary-dark disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {pwLoading ? (
               <><div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" /> Updating…</>
@@ -504,62 +735,159 @@ const SecurityTab = ({ currentUser, userData, db }) => {
         {/* Update Mobile Section */}
         <div className="flex-1 bg-white rounded-xl p-5 md:p-5 shadow-sm">
           <div className="text-sm md:text-sm font-extrabold text-user-text mb-4 flex items-center gap-2">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-              <line x1="12" y1="18" x2="12.01" y2="18" />
-            </svg>
+            <Icon d={IC.mobile} size={16} />
             Update Mobile Number
           </div>
           
+          {/* Current Mobile Number Display */}
+          <div className="bg-gray-50 dark:bg-transparent border border-gray-600 rounded-lg p-3 mb-4">
+            <div className="text-xs font-semibold text-gray-500 mb-0.5">Current Mobile Number</div>
+            <div className="text-sm font-bold text-user-text">{currentMobile}</div>
+          </div>
+          
           {mobSuccess && (
-            <div className="flex items-center gap-2 bg-user-success-light border border-user-success rounded-lg p-3 mb-3.5 text-sm font-bold text-user-success">
-              <Icon d={IC.check} size={14} color="#1a5c1a" /> Mobile number updated successfully!
+            <div className="flex items-center gap-2 bg-green-50 border border-green-400 rounded-lg p-3 mb-3.5 text-sm font-bold text-green-700">
+              <Icon d={IC.check} size={14} color="#1a5c1a" /> Mobile number updated successfully! SMS sent to your new number.
             </div>
           )}
           
           {mobError && (
-            <div className="flex items-center gap-2 bg-user-error-light border border-user-error rounded-lg p-3 mb-3.5 text-sm font-bold text-user-error">
+            <div className="flex items-center gap-2 bg-red-50 border border-red-400 rounded-lg p-3 mb-3.5 text-sm font-bold text-red-700">
               <Icon d={IC.alertTriangle} size={14} color="#8b1a1a" /> {mobError}
             </div>
           )}
           
+          {/* New Mobile Input */}
           <input 
-            type="tel" value={newMobile} onChange={e => { setNewMobile(e.target.value); setMobError(''); setOtpSent(false); setOtp(''); }} 
-            placeholder="New Mobile Number" 
-            className="w-full py-3 px-4 text-sm font-semibold bg-user-secondary-light border border-user-border rounded-lg outline-none transition-colors focus:border-user-primary mb-2.5"
+            type="tel" 
+            value={newMobile} 
+            onChange={e => { 
+              setNewMobile(e.target.value); 
+              setMobError(''); 
+              setOtpSent(false); 
+              setOtp(['', '', '', '', '', '']);
+              setTimer(0);
+            }} 
+            placeholder="New Mobile Number (e.g., 0712345678)" 
+            className={`w-full py-3 px-4 text-sm font-semibold bg-user-secondary-light border rounded-lg outline-none transition-colors focus:border-user-primary mb-2.5 ${
+              newMobile && isValidMobile(newMobile) ? 'border-green-500' : ''
+            } ${newMobile && !isValidMobile(newMobile) ? 'border-red-500' : 'border-user-border'}`}
           />
           
+          {/* SMS Preview */}
+          {newMobile && isValidMobile(newMobile) && !otpSent && (
+            <div className="text-xs font-semibold text-gray-500 mb-2.5 flex items-center gap-1">
+              <Icon d={IC.send} size={12} />
+              We will send a 6-digit code to {newMobile}. Standard SMS rates may apply.
+            </div>
+          )}
+          
+          {/* Send OTP Button */}
           <button 
             onClick={handleSendOtp} 
-            disabled={mobLoading || otpSent} 
+            disabled={mobLoading || otpSent || !isValidMobile(newMobile)} 
             className="w-full py-3 rounded-lg bg-user-primary text-user-text text-sm font-extrabold flex items-center justify-center gap-2 transition-all hover:bg-user-primary-dark disabled:opacity-50 disabled:cursor-not-allowed mb-3"
           >
-            {mobLoading && !otpSent ? 'Sending OTP…' : otpSent ? <><Icon d={IC.check} size={12} color="#3d2a00" /> OTP Sent</> : 'Send OTP'}
+            {mobLoading && !otpSent ? (
+              <><div className="w-3.5 h-3.5 rounded-full border-2 border-user-text border-t-transparent animate-spin" /> Sending OTP…</>
+            ) : otpSent ? (
+              <><Icon d={IC.check} size={12} /> OTP Sent {timer > 0 && `(${timer}s)`}</>
+            ) : 'Send OTP'}
           </button>
           
-          <input 
-            type="text" value={otp} onChange={e => { setOtp(e.target.value.replace(/\D/g, '').slice(0, 6)); setMobError(''); }} 
-            placeholder="Enter 6-digit OTP" disabled={!otpSent} 
-            className={`w-full py-3 px-4 text-sm font-extrabold text-center tracking-wider bg-user-secondary-light border border-user-border rounded-lg outline-none transition-colors focus:border-user-primary ${
-              otpSent ? 'bg-user-secondary-light' : 'bg-gray-100 cursor-not-allowed opacity-60'
-            }`}
-            style={{ letterSpacing: otp ? (isMobile ? '4px' : '6px') : '0' }}
-          />
-          
+          {/* OTP Input Boxes */}
           {otpSent && (
             <>
+              <div className="flex justify-center gap-2 mb-3">
+                {otp.map((digit, idx) => (
+                  <input 
+                    key={idx}
+                    ref={el => otpInputRefs.current[idx] = el}
+                    type="text"
+                    maxLength="1"
+                    value={digit}
+                    onChange={e => handleOtpChange(idx, e.target.value)}
+                    onKeyDown={e => handleKeyDown(idx, e)}
+                    className="w-12 h-12 text-center text-xl font-extrabold bg-user-secondary-light border border-user-border rounded-lg outline-none focus:border-user-primary"
+                    style={{ caretColor: '#B46A02' }}
+                  />
+                ))}
+              </div>
+              
+              {/* Resend OTP link */}
+              <div className="text-center mb-3">
+                {timer > 0 ? (
+                  <span className="text-xs text-gray-400 flex items-center justify-center gap-1">
+                    <Icon d={IC.refresh} size={12} /> Resend OTP in {timer} seconds
+                  </span>
+                ) : (
+                  <button 
+                    onClick={handleResendOtp}
+                    disabled={otpAttempts >= 3}
+                    className="text-xs font-semibold text-user-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 mx-auto"
+                  >
+                    <Icon d={IC.refresh} size={12} /> Resend OTP {otpAttempts >= 3 && '(Limit reached)'}
+                  </button>
+                )}
+              </div>
+              
+              {/* Verify Button */}
               <button 
                 onClick={handleVerifyOtp} 
-                disabled={mobLoading || otp.length !== 6} 
-                className="w-full py-3 rounded-lg bg-user-text text-white text-sm font-extrabold flex items-center justify-center gap-2 transition-all hover:bg-user-secondary-dark disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                disabled={mobLoading || otp.some(d => !d)} 
+                className="w-full py-3 rounded-lg bg-user-text text-white text-sm font-extrabold flex items-center justify-center gap-2 transition-all hover:bg-user-secondary-dark disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {mobLoading ? (<><div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" /> Verifying…</>) : 'Verify & Update'}
               </button>
-              <p className="text-xs font-semibold text-user-text-lighter mt-3 text-center">Demo OTP: <strong className="text-user-primary">123456</strong></p>
             </>
           )}
+          
+          {/* Warning about consequences */}
+          <div className="bg-red-400 dark:bg-orange-400 border border-red-200 rounded-lg p-2.5 mt-3">
+            <div className="text-[11px] font-semibold text-white dark:text-black flex items-center gap-1.5">
+              <Icon d={IC.alertTriangle} size={14} color="currentColor" />
+              Updating your mobile number will be used for all future communications including appointment reminders and OTP verification.
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-[1000]" onClick={() => setShowConfirmModal(false)} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1001] w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div className="bg-user-secondary-dark p-5">
+              <h3 className="text-lg font-black text-white">Confirm Mobile Number Change</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-600 mb-4">
+                Are you sure you want to change your mobile number from
+              </p>
+              <p className="text-center font-bold text-gray-800 mb-2">
+                {currentMobile} → {pendingMobile}
+              </p>
+              <p className="text-xs text-gray-500 mb-6">
+                This change will take effect immediately and will be used for all future communications.
+              </p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowConfirmModal(false)}
+                  className="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-bold flex items-center justify-center gap-1"
+                >
+                  <Icon d={IC.x} size={14} /> Cancel
+                </button>
+                <button 
+                  onClick={confirmMobileUpdate}
+                  className="flex-1 py-2.5 rounded-lg bg-user-text text-white font-bold flex items-center justify-center gap-1"
+                >
+                  <Icon d={IC.check} size={14} /> Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -623,7 +951,7 @@ const AccountTab = ({ currentUser, userData, navigate }) => {
       <div className="bg-white rounded-xl p-5 md:p-6 mb-4 shadow-sm">
         <div className={`flex items-center justify-between mb-5 ${isMobile ? 'flex-col gap-3' : 'flex-row'}`}>
           <div className="text-sm md:text-sm font-extrabold text-user-text">Account Summary</div>
-          <button onClick={() => navigate('/profile')} className="py-2.5 px-5 bg-user-text rounded-round text-xs font-extrabold text-white cursor-pointer transition-all hover:bg-user-secondary-dark flex items-center justify-center gap-1.5 w-full md:w-auto">
+          <button onClick={() => navigate('/profile')} className="py-2.5 px-5 bg-user-text dark:bg-gray-700 rounded-round text-xs font-extrabold text-white cursor-pointer transition-all hover:bg-user-secondary-dark flex items-center justify-center gap-1.5 w-full md:w-auto">
             Edit profile →
           </button>
         </div>
