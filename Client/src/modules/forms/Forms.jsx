@@ -405,6 +405,14 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
           </div>
         )}
 
+        {form.id === 10 && (
+          <div style={{ display: 'flex', backgroundColor: '#f0e8d5', padding: '10px 20px', gap: '8px', borderBottom: '1px solid #e8d5ac', fontSize: '11px', fontWeight: 700, color: '#5a3a00', overflowX: 'auto', flexShrink: 0 }}>
+            <span style={{ color: formStep === 1 ? '#6A2301' : '#888' }}>1. Owner & Business Meta</span> &gt;
+            <span style={{ color: formStep === 2 ? '#6A2301' : '#888' }}>2. Environmental & Premises Info</span> &gt;
+            <span style={{ color: formStep === 3 ? '#6A2301' : '#888' }}>3. Legal Deed Uploads</span>
+          </div>
+        )}
+
         <form onSubmit={handleFormSubmit} style={{ padding: '24px', backgroundColor: '#fffbe8', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
           {/* ==========================================
@@ -1742,9 +1750,124 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
                     </span>
                   </div>
                 </>
+                
               )}
             </>
           )}
+
+{/* ==========================================
+    MODULE J: BUSINESS REGISTRATION RECOMMENDATION (FORM ID: 10)
+    ========================================== */}
+{form.id === 10 && (
+  <>
+    {/* STEP 1: Owner Profile & Business Baseline Meta */}
+    {formStep === 1 && (
+      <>
+        <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>01. Business Ownership &amp; Identity Baseline</span>
+        
+        <div>
+          <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Proposed Business Entity Name</label>
+          <input type="text" required onChange={e => handleInputChange('biz_prop_name', e.target.value)} value={inputs.biz_prop_name || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="e.g. Smart Grama Services" />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Nature of Business / Category</label>
+            <select required onChange={e => handleInputChange('biz_nature_type', e.target.value)} value={inputs.biz_nature_type || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', backgroundColor: '#fff', outline: 'none' }}>
+              <option value="">-- Select Type --</option>
+              <option value="Retail Store">Retail Shop / Grocery</option>
+              <option value="IT Services">Software / Technology Services</option>
+              <option value="Manufacturing">Manufacturing / Workshop</option>
+              <option value="Other">Other Commercial Entities</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Legal Structure Type</label>
+            <select required onChange={e => handleInputChange('biz_legal_structure', e.target.value)} value={inputs.biz_legal_structure || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', backgroundColor: '#fff', outline: 'none' }}>
+              <option value="Sole Proprietorship">Sole Proprietorship</option>
+              <option value="Partnership">Partnership</option>
+              <option value="Private Limited Company">Private Limited Company</option>
+            </select>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Primary Proprietor Full Name</label>
+            <input type="text" required onChange={e => handleInputChange('biz_owner_name', e.target.value)} value={inputs.biz_owner_name || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="Proprietor's Full Name" />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Owner NIC Number</label>
+            <input type="text" required onChange={e => handleInputChange('biz_owner_nic', e.target.value)} value={inputs.biz_owner_nic || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: errors.biz_owner_nic ? '1.5px solid red' : '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="NIC Number" />
+            {errors.biz_owner_nic && <span style={S.errorMsg}>{errors.biz_owner_nic}</span>}
+          </div>
+        </div>
+      </>
+    )}
+
+    {/* STEP 2: Environmental Compliance Criteria & Premises Tenure Info */}
+    {formStep === 2 && (
+      <>
+        <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>02. Location Profile &amp; Environmental Frameworks</span>
+        
+        <div>
+          <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Physical Address of Business Premises</label>
+          <textarea rows={2} required onChange={e => handleInputChange('biz_premises_address', e.target.value)} value={inputs.biz_premises_address || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none', resize: 'none', fontFamily: 'inherit' }} placeholder="Enter exact structural location details..." />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Premises Ownership Type</label>
+            <select required onChange={e => handleInputChange('biz_tenure_type', e.target.value)} value={inputs.biz_tenure_type || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', backgroundColor: '#fff', outline: 'none' }}>
+              <option value="">-- Select Status --</option>
+              <option value="Owned by Applicant">Owned by Applicant</option>
+              <option value="Rented / Leased Premises">Rented / Leased Premises</option>
+              <option value="Family-Owned">Family-Owned Property</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#B46A02', textTransform: 'uppercase', marginBottom: '4px' }}>Estimated Initial Capital Investment (LKR)</label>
+            <input type="number" required onChange={e => handleInputChange('biz_initial_capital', e.target.value)} value={inputs.biz_initial_capital || ''} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1.5px solid #e8d5ac', boxSizing: 'border-box', outline: 'none' }} placeholder="0.00" />
+          </div>
+        </div>
+
+        <div style={{ backgroundColor: '#fff', padding: '14px', borderRadius: '12px', border: '1.5px solid #e8d5ac', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <span style={{ fontSize: '11px', fontWeight: 800, color: '#6A2301', textTransform: 'uppercase' }}>Environmental Protection Compliance</span>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 600, color: '#3d2a00', cursor: 'pointer' }}>
+            <input type="checkbox" required defaultChecked style={{ accentColor: '#6A2301' }} />
+            I verify that business operations cause no hazardous industrial chemical leakage, waste accumulation, or auditory disturbance violating environmental protocols.
+          </label>
+        </div>
+      </>
+    )}
+
+    {/* STEP 3: Document Uploads */}
+    {formStep === 3 && (
+      <>
+        <span style={{ fontSize: '13px', fontWeight: 800, color: '#6A2301', borderBottom: '1px dashed #e8d5ac', paddingBottom: '4px' }}>03. Verifiable Legal Deeds &amp; Documents</span>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div style={{ backgroundColor: '#fff', border: '1.5px dashed #B46A02', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800 }}>Premises Proof (Deed / Lease Agreement Scan) *</span>
+            <input type="file" required style={{ fontSize: '11px' }} />
+          </div>
+          <div style={{ backgroundColor: '#fff', border: '1.5px dashed #B46A02', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800 }}>Proprietor Identity Copy (NIC Scan) *</span>
+            <input type="file" required style={{ fontSize: '11px' }} />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', backgroundColor: '#eae5d8', padding: '12px', borderRadius: '10px', marginTop: '6px' }}>
+          <input type="checkbox" required defaultChecked style={{ accentColor: '#6A2301', marginTop: '2px' }} />
+          <span style={{ fontSize: '11px', color: '#333', fontWeight: 600, lineHeight: 1.4 }}>
+            I hereby certify that all information submitted regarding company nature, ownership credentials, and commercial assets are completely truthful and valid.
+          </span>
+        </div>
+      </>
+    )}
+  </>
+)}
+
 
           {/* Action Control Interface Buttons Wizard Panel Tray */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', flexShrink: 0 }}>
