@@ -152,7 +152,7 @@ const handleSaveEdit = async () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-[#8B4513]">Announcement List</h1>
-        <Link to="/create-announcement"
+        <Link to="/gn-create-announcement"
           className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition">
           ＋ Create New Announcement
         </Link>

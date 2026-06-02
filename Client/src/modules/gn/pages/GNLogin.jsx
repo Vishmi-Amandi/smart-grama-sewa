@@ -31,16 +31,23 @@ const handleSubmit = async (e) => {
   e.preventDefault();
   setError("");
   
-  if (!username.trim()) { setError("Please enter your username or email."); return; }
-  if (!password)        { setError("Please enter your password."); return; }
-
+  if (!username.trim()) { 
+    setError("Please enter your username or email."); 
+    return; 
+  }
+  if (!password) { 
+    setError("Please enter your password."); 
+    return; 
+  }
+  
   setLoading(true);
+  
   // Check internet connection first
-if (!navigator.onLine) {
-  setError("No proper internet connection. Please check your network and try again.");
-  setLoading(false);
-  return;
-}
+  if (!navigator.onLine) {
+    setError("No proper internet connection. Please check your network and try again.");
+    setLoading(false);
+    return;
+  }
 
   try {
     let userEmail = username.trim();
@@ -48,41 +55,57 @@ if (!navigator.onLine) {
     // Check if input is username (not email)
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username.trim());
 
-  if (!isEmail) {
-  try {
-    const q = query(
-      collection(db, "gn_officers"),
-      where("username", "==", username.trim())
-    );
-    const querySnapshot = await getDocs(q);
+    let gnOfficerData = null;
 
-    console.log("=== DIAGNOSTIC START ===");
-console.log("Input username:", username.trim());
-console.log("Query snapshot empty?", querySnapshot.empty);
-console.log("Query snapshot size:", querySnapshot.size);
+    if (!isEmail) {
+      try {
+        const q = query(
+          collection(db, "gn_officers"),
+          where("username", "==", username.trim())
+        );
 
-    if (querySnapshot.empty) {
-      setError("No account found with this username or email.");
-      setLoading(false);
-      return;
+        const querySnapshot = await getDocs(q);
+
+        console.log("=== DIAGNOSTIC START ===");
+        console.log("Input username:", username.trim());
+        console.log("Query snapshot empty?", querySnapshot.empty);
+        console.log("Query snapshot size:", querySnapshot.size);
+
+        if (querySnapshot.empty) {
+          setError("No account found with this username or email.");
+          setLoading(false);
+          return;
+        }
+
+        gnOfficerData = querySnapshot.docs[0].data();
+        userEmail = gnOfficerData.email;
+        
+        // CHECK STATUS BEFORE PROCEEDING WITH LOGIN
+        const officerStatus = gnOfficerData.status;
+        
+        if (officerStatus === "Pending") {
+          navigate("/gn-account-pending", { replace: true });
+          return;
+        } else if (officerStatus === "Rejected") {
+          navigate("/gn-account-rejected", { replace: true });
+          return;
+        }
+        // If status is "Approved" or any other, continue with login
+        
+      } catch (firestoreErr) {
+        if (
+          firestoreErr.code === "unavailable" ||
+          firestoreErr.message?.includes("network") ||
+          !navigator.onLine
+        ) {
+          setError("No proper internet connection. Please check your network and try again.");
+        } else {
+          setError("Unable to connect. Please try again.");
+        }
+        setLoading(false);
+        return;
+      }
     }
-
-    userEmail = querySnapshot.docs[0].data().email;
-  } catch (firestoreErr) {
-    if (
-      firestoreErr.code === "unavailable" ||
-      firestoreErr.message?.includes("network") ||
-      !navigator.onLine
-    ) {
-      setError("No proper internet connection. Please check your network and try again.");
-    } else {
-      setError("Unable to connect. Please try again.");
-    }
-    setLoading(false);
-    return;
-  }
-
-}
 
     // Login with email + password
     const userCredential = await signInWithEmailAndPassword(auth, userEmail, password);
@@ -103,34 +126,45 @@ console.log("Query snapshot size:", querySnapshot.size);
       } else {
         setError("Unknown role. Please contact support.");
       }
-    } 
-
-} catch (err) {
-  console.log("Error:", err.code, err.message);
-  if (!navigator.onLine || err.code === "unavailable") {
-    setError("No proper internet connection. Please check your network and try again.");
-  } else {
-    switch (err.code) {
-      case "auth/invalid-email":     setError("Invalid email format.");                      break;
-      case "auth/user-not-found":    setError("No account found with this email.");          break;
-      case "auth/wrong-password":    setError("Incorrect password.");                        break;
-      case "auth/too-many-requests": setError("Too many failed attempts. Try again later."); break;
-      default:                       setError("Incorrect credentials. Please try again.");
+    } else {
+      setError("User role not found. Please contact support.");
     }
-  }
-} finally {
+
+    // Set session persistence after successful login
+    await setPersistence(auth, browserSessionPersistence);
+
+    // Save username if remember is checked
+    if (rememberUsername) {
+      localStorage.setItem("rememberedUsername", username.trim());
+    } else {
+      localStorage.removeItem("rememberedUsername");
+    }
+
+  } catch (err) {
+    console.log("Error:", err.code, err.message);
+    if (!navigator.onLine || err.code === "unavailable") {
+      setError("No proper internet connection. Please check your network and try again.");
+    } else {
+      switch (err.code) {
+        case "auth/invalid-email":     
+          setError("Invalid email format.");                      
+          break;
+        case "auth/user-not-found":    
+          setError("No account found with this email.");          
+          break;
+        case "auth/wrong-password":    
+          setError("Incorrect password.");                        
+          break;
+        case "auth/too-many-requests": 
+          setError("Too many failed attempts. Try again later."); 
+          break;
+        default:                       
+          setError("Incorrect credentials. Please try again.");
+      }
+    }
+  } finally {
     setLoading(false);
   }
-
-  // Always use session persistence for security
-await setPersistence(auth, browserSessionPersistence);
-
-// Save username if remember is checked
-if (rememberUsername) {
-  localStorage.setItem("rememberedUsername", username.trim());
-} else {
-  localStorage.removeItem("rememberedUsername");
-}
 };
   return (
     <div className="min-h-screen flex flex-col">
@@ -198,16 +232,16 @@ if (rememberUsername) {
                 {/* Username */}
                 <div className="mb-4">
                   <label className="block text-[#fdf0dc] text-xs font-bold mb-1.5 uppercase tracking-wide">
-  Username or Email
-</label>
-<input
-  type="text"
-  value={username}
-  onChange={(e) => { setUsername(e.target.value); setError(""); }}
-  autoComplete="username"
-  placeholder="Enter your username or email"
-  className={inputClass}
-/>
+                   Username or Email
+                  </label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => { setUsername(e.target.value); setError(""); }}
+                    autoComplete="username"
+                    placeholder="Enter your username or email"
+                    className={inputClass}
+                  />
                 </div>
 
                 {/* Password */}
@@ -231,14 +265,14 @@ if (rememberUsername) {
                 {/* Remember + Forgot */}
                 <div className="flex items-center justify-between mb-6">
                  <label className="flex items-center gap-2 cursor-pointer select-none text-sm font-semibold text-[#fdf0dc]">
-  <input
-    type="checkbox"
-    checked={rememberUsername}
-    onChange={(e) => setRememberUsername(e.target.checked)}
-    className="w-4 h-4 rounded cursor-pointer accent-[#E5A800]"
-  />
-  Remember my username
-</label>
+                  <input
+                   type="checkbox"
+                   checked={rememberUsername}
+                   onChange={(e) => setRememberUsername(e.target.checked)}
+                   className="w-4 h-4 rounded cursor-pointer accent-[#E5A800]"
+                  />
+                  Remember my username
+                </label>
                   <a href="/gn-forgot-password" className="text-sm font-bold text-[#fdf0dc] hover:text-white transition">
                     Forgot password?
                   </a>
@@ -257,11 +291,11 @@ if (rememberUsername) {
                 <p className="text-center text-[#fdf0dc] text-sm font-semibold mb-4">New here?</p>
 
                 <Link
-  to="/signup-select"
-  className="block w-full text-center bg-[#E5A800] hover:bg-[#cc9600] text-[#3d2a00] font-black text-base py-3.5 rounded-xl transition shadow-lg"
->
-  Create your account
-</Link>
+                 to="/signup-select"
+                 className="block w-full text-center bg-[#E5A800] hover:bg-[#cc9600] text-[#3d2a00] font-black text-base py-3.5 rounded-xl transition shadow-lg"
+                 >
+                  Create your account
+                </Link>
               </>
             )}
 

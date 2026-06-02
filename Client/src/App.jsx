@@ -20,6 +20,8 @@ import GNSignUp from './modules/gn/pages/GNSignUp.jsx';
 import GNForgotPassword from './modules/gn/pages/GNForgotPassword.jsx';
 import SignUpSelect from './modules/gn/pages/SignUpSelect.jsx';
 import ChangeGNRequestStatus from './modules/gn/pages/ChangeGNRequestStatus.jsx';
+import GNAccountPending from './modules/gn/pages/GNAccountPending.jsx';
+import GNAccountRejected from './modules/gn/pages/GNAccountRejected.jsx';
 
 // ===== USER MODULE IMPORTS =====
 import Login from './modules/user/pages/login';
@@ -126,6 +128,8 @@ function App() {
             <Route path="/gn-signup" element={<GNSignUp />} />
             <Route path="/gn-forgot-password" element={<GNForgotPassword />} />
             <Route path="/signup-select" element={<SignUpSelect />} />
+            <Route path="/gn-account-pending" element={<GNAccountPending />} />
+            <Route path="/gn-account-rejected" element={<GNAccountRejected />} />
 
             <Route path="/gn-dashboard" element={
               <GNProtectedRoute>

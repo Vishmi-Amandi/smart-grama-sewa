@@ -152,7 +152,7 @@ const Step1 = ({ form, update, onNext }) => {
           <div>
             <label className={labelClass}>Mobile Number</label>
             <input type="tel" value={form.mobile} onChange={(e) => update("mobile", e.target.value)}
-              placeholder="e.g. 071 123 4567" className={inputClass} />
+              placeholder="e.g. 0711234567" className={inputClass} />
             <FieldError msg={errors.mobile} />
           </div>
         </div>
@@ -266,7 +266,7 @@ const Step2 = ({ form, update, onNext, onBack }) => {
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">📞</span>
               <input type="tel" value={form.officeMobile} onChange={(e) => update("officeMobile", e.target.value)}
-                placeholder="+94 11 234 5678" className={`${inputClass} pl-9`} />
+                placeholder="0112345678" className={`${inputClass} pl-9`} />
             </div>
             <FieldError msg={errors.officeMobile} />
           </div>
@@ -511,6 +511,7 @@ const Step4 = ({ form, update, onBack, onSubmit }) => {
   const validate = () => {
     const e = {};
     if (!form.username?.trim()) e.username = "Username is required.";
+    else if (form.username.includes(" ")) {e.username = "Username must not contain spaces.";}
     if (!pw)                    e.password = "Password is required.";
     else if (pw.length < 8)     e.password = "Password must be at least 8 characters.";
     if (!form.confirm)          e.confirm  = "Please confirm your password.";
@@ -532,7 +533,6 @@ const Step4 = ({ form, update, onBack, onSubmit }) => {
   nic: form.nic || "",
   address: form.address || "",
   dob: form.dob || "",
-  tribeType: form.tribeType || "",
   gender: form.gender || "",
   mobile: form.mobile || "",
   altMobile: form.altMobile || "",
@@ -542,7 +542,6 @@ const Step4 = ({ form, update, onBack, onSubmit }) => {
   province: form.province || "",
   district: form.district || "",
   divisionalSecretariat: form.divisionalSecretariat || "",
-  gnDivision: form.gnDivision || "",
   officeAddress: form.officeAddress || "",
   officeMobile: form.officeMobile || "",
   officialEmail: form.officialEmail || "",
@@ -553,6 +552,7 @@ const Step4 = ({ form, update, onBack, onSubmit }) => {
   nicBack: form.nicBack || "",
   signature: form.signature || "",
   role: "gn_officer",
+  status: "Pending",
   createdAt: serverTimestamp(),
 });
 await setDoc(doc(db, "users", credential.user.uid), {
@@ -721,7 +721,7 @@ const GNSignUp = () => {
           {step === 1 && <Step1 form={form} update={update} onNext={() => setStep(2)} />}
           {step === 2 && <Step2 form={form} update={update} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
           {step === 3 && <Step3 form={form} update={update} onNext={() => setStep(4)} onBack={() => setStep(2)} />}
-          {step === 4 && <Step4 form={form} update={update} onBack={() => setStep(3)} onSubmit={() => navigate("/login")} />}
+          {step === 4 && <Step4 form={form} update={update} onBack={() => setStep(3)} onSubmit={() => navigate("/gn-login")} />}
         </div>
       </main>
 
