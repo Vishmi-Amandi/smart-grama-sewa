@@ -1180,7 +1180,7 @@ const Settings = () => {
             onLanguageChange={handleLanguageChange}
           />
 
-          {/* Mobile Search Bar - NOT STICKY */}
+          {/* Mobile Search Bar */}
           <div className="md:hidden pt-3 px-3.5 relative">
             <div className="flex items-center gap-2.5 bg-white border border-user-border rounded-3xl px-4 py-2.5">
               <Icon d={IC.search} size={16} color="#aaa" />

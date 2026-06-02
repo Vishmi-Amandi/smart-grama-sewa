@@ -698,8 +698,8 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
       <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">Book an appointment</h1>
       <StepBar step={1} />
 
-      <div className="bg-white border border-user-border rounded-xl p-6 md:p-7 mb-4">
-        <h2 className="text-lg font-extrabold text-user-text mb-5">What is this appointment for?</h2>
+      <div className="bg-user-primary-light border border-user-border rounded-xl p-6 md:p-7 mb-4">
+        <h2 className="text-lg font-extrabold text-user-text-light mb-5">What is this appointment for?</h2>
 
         {SERVICE_CATS.map(cat => (
           <div key={cat.key} className="mb-2.5">
@@ -708,15 +708,15 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
               onClick={() => toggleCat(cat.key)} 
               className={`w-full flex items-center gap-2.5 p-3.5 border border-gray-200 dark:border-gray-600
                 ${openCats[cat.key] ? 'rounded-t-xl' : 'rounded-xl'}
-                bg-gray-100 dark:bg-gray-700
-                cursor-pointer transition-all hover:bg-gray-200 dark:hover:bg-gray-600`}
+                bg-user-secondary
+                cursor-pointer transition-all hover:bg-user-background`}
             >
               <Icon 
                 d={openCats[cat.key] ? IC.chevDown : IC.chevR} 
                 size={16} 
                 color="currentColor" 
               />
-              <span className="text-sm font-extrabold text-gray-400 dark:text-gray-600">
+              <span className="text-sm font-extrabold text-user-text">
                 {cat.label}
               </span>
             </button>
@@ -731,8 +731,8 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
                       onClick={() => selectService(svc)} 
                       className={`p-4 cursor-pointer border-b border-gray-100 dark:border-gray-600 transition-all 
                         ${selected 
-                          ? 'bg-yellow-100 dark:bg-yellow-900/40' 
-                          : 'bg-white dark:bg-gray-800 hover:bg-yellow-50 dark:hover:bg-gray-700'
+                          ? 'bg-yellow-100' 
+                          : 'bg-user-secondary-light hover:bg-user-primary-light'
                         }`} 
                       style={{ 
                         borderLeft: selected ? '4px solid #F5C400' : '4px solid transparent' 
@@ -740,15 +740,15 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
                     >
                       <div className={`text-sm font-extrabold mb-0.5 
                         ${selected 
-                          ? 'text-gray-900 dark:text-white' 
-                          : 'text-gray-800 dark:text-gray-100'
+                          ? 'text-gray-700' 
+                          : 'user-text-lighter'
                         }`}
                       >
                         {svc.name}
                       </div>
                       <div className={`text-xs font-semibold 
                         ${selected 
-                          ? 'text-gray-600 dark:text-gray-300' 
+                          ? 'text-gray-600' 
                           : 'text-gray-500 dark:text-gray-400'
                       }`}
                       >
@@ -787,8 +787,8 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
       </div>
 
       {/* Additional Notes */}
-      <div className="bg-gray-800 dark:bg-white border border-gray-200 dark:border-gray-700 rounded-xl p-5 md:p-7 mb-6">
-        <h2 className="text-base font-extrabold text-white dark:text-zinc-500 mb-3">
+      <div className="bg-user-primary-light border border-user-border rounded-xl p-5 md:p-7 mb-6">
+        <h2 className="text-base font-extrabold text-user-text-light mb-3">
           Additional notes (optional)
         </h2>
         <textarea 
@@ -799,7 +799,7 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
           }} 
           placeholder="Please provide any specific details or requirements for your request..." 
           rows={4} 
-          className="w-full p-3 text-sm font-semibold text-white dark:text-zinc-500 bg-gray-700 dark:bg-white border border-gray-200 dark:border-gray-600 rounded-lg outline-none resize-vertical transition-colors focus:border-yellow-500 dark:focus:border-yellow-400" 
+          className="w-full p-3 text-sm font-semibold text-white dark:text-zinc-500 bg-user-surface border border-gray-200 dark:border-gray-600 rounded-lg outline-none resize-vertical transition-colors focus:border-yellow-500 dark:focus:border-yellow-400" 
         />
       </div>
 
@@ -1020,12 +1020,12 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
       <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">Book an appointment</h1>
       <StepBar step={2} />
 
-      <div className="bg-white border border-user-border rounded-xl p-5 md:p-7 mb-4">
+      <div className="bg-user-primary-light border border-user-border rounded-xl p-5 md:p-7 mb-4">
         <h2 className="text-lg font-extrabold text-user-text mb-5">When would you like to visit?</h2>
 
         <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-5`}>
           {/* Calendar Section */}
-          <div className="flex-1 border border-user-border dark:border-gray-700 rounded-xl p-4 md:p-5 bg-white dark:bg-gray-800">
+          <div className="flex-1 border border-user-border rounded-xl p-4 md:p-5 bg-user-secondary-light">
             <div className="flex items-center gap-2 mb-4">
               <Icon d={IC.calendar} size={18} color="#B46A02" />
               <span className="text-sm font-extrabold text-user-text">Select Date</span>
@@ -1034,7 +1034,7 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
               <button onClick={prevMonth} className="w-8 h-8 rounded-full border border-user-border bg-white cursor-pointer flex items-center justify-center">
                 <Icon d={IC.chevL} size={14} color="#888" />
               </button>
-              <span className="text-sm font-extrabold text-user-text dark:text-white">{MONTHS[viewMonth]} {viewYear}</span>
+              <span className="ttext-sm font-extrabold text-user-text">{MONTHS[viewMonth]} {viewYear}</span>
               <button onClick={nextMonth} className="w-8 h-8 rounded-full border border-user-border bg-white cursor-pointer flex items-center justify-center">
                 <Icon d={IC.chevR} size={14} color="#888" />
               </button>
@@ -1064,8 +1064,8 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
                       picked 
                         ? 'bg-user-primary text-user-text font-black shadow-sm' 
                         : disabled 
-                          ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-transparent' 
-                          : 'text-user-text dark:text-gray-200 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 cursor-pointer'
+                          ? 'text-gray-300 cursor-not-allowed bg-gray-50 dark:bg-transparent' 
+                          : 'text-user-text hover:bg-user-primary-light cursor-pointer'
                     }`}
                   >
                     {day}
@@ -1082,7 +1082,7 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
           </div>
 
           {/* Time Slots Section */}
-          <div className="flex-1 border border-user-border dark:border-gray-700 rounded-xl p-4 md:p-5 bg-white dark:bg-gray-800">
+          <div className="flex-1 border border-user-border rounded-xl p-4 md:p-5 bg-user-secondary-light flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Icon d={IC.clock} size={18} color="#B46A02" />
@@ -1097,17 +1097,17 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
             </div>
             
             {!isDateSelected ? (
-              <div className="text-center py-12">
+              <div className="flex-1 flex flex-col items-center justify-center min-h-[280px] text-center">
                 <Icon d={IC.calendar} size={48} color="#ccc" strokeWidth={1.2} />
-                <p className="text-sm font-semibold text-gray-400 mt-3">Select a date first</p>
+                <p className="text-sm font-semibold text-gray-400 dark:text-gray-500 mt-3">Select a date first</p>
               </div>
             ) : (
               <>
                 {/* Summary bar */}
-                <div className="mb-4 p-2.5 bg-gray-50 dark:bg-gray-700 rounded-lg flex items-center justify-between">
+                <div className="mb-4 p-2.5 bg-user-surface rounded-lg flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Icon d={IC.info} size={14} color="#888" />
-                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-300">
+                    <span className="text-xs font-semibold text-user-text-lighter">
                       {availableSlotsCount} slots available today
                     </span>
                   </div>
@@ -1128,11 +1128,11 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
                         {/* Hour header */}
                         <button
                           onClick={() => toggleHour(hour)}
-                          className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                          className="w-full flex items-center justify-between p-3 bg-user-secondary hover:bg-user-background transition-colors"
                         >
                           <div className="flex items-center gap-2">
                             <Icon d={isExpanded ? IC.chevUp : IC.chevDown} size={14} color="#888" />
-                            <span className="text-sm font-extrabold text-user-text dark:text-white">{hour}</span>
+                            <span className="text-sm font-extrabold text-user-text">{hour}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className={`text-xs font-semibold ${availableInHour === 0 ? 'text-red-500' : 'text-green-600'}`}>
@@ -1157,8 +1157,8 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
                                       isSelected
                                         ? 'bg-user-primary text-user-text'
                                         : isBooked
-                                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-300 dark:text-gray-600 border border-dashed border-gray-300 dark:border-gray-600 cursor-not-allowed'
-                                          : 'border border-user-border dark:border-gray-600 bg-white dark:bg-gray-800 text-user-text dark:text-gray-200 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 cursor-pointer'
+                                          ? 'bg-user-surface text-user-text-lighter border border-dashed border-user-border cursor-not-allowed'
+                                          : 'border border-user-border bg-user-secondary-light text-user-text hover:bg-user-primary-light cursor-pointer'
                                     }`}
                                   >
                                     {slot}
@@ -1190,10 +1190,10 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
                 </div>
 
                 {/* Office hours note */}
-                <div className="mt-3 p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                <div className="mt-3 p-2.5 bg-user-surface rounded-lg">
                   <div className="flex items-center gap-2">
                     <Icon d={IC.info} size={12} color="#3b82f6" />
-                    <span className="text-[10px] font-semibold text-blue-700 dark:text-blue-300">
+                    <span className="text-[10px] font-semibold text-user-text-lighter">
                       Office hours: 9:00 AM - 4:00 PM. Last appointment at 3:45 PM
                     </span>
                   </div>
@@ -1205,12 +1205,12 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
 
         {/* Selected Date Summary */}
         {isDateSelected && !loadingSlots && (
-          <div className="mt-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-sm font-semibold text-yellow-800">
+          <div className="mt-6 p-3 bg-user-primary-light border border-user-border rounded-lg flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-user-text">
               <Icon d={IC.info} size={16} color="#B46A02" /> 
               {selSlot ? 'Selected time:' : 'Please select a time slot'}
             </div>
-            <div className="text-sm font-bold text-user-text bg-white px-3 py-1.5 rounded-lg border border-yellow-200">
+            <div className="text-sm font-bold text-user-text bg-user-surface px-3 py-1.5 rounded-lg border border-user-border">
               {selDateLabel} {selSlot && <span className="text-user-primary ml-1">- {selSlot}</span>}
             </div>
           </div>
@@ -1236,7 +1236,7 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
 
 // BOOK STEP 3: REVIEW & SUBMIT
 const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submitting }) => {
-  const [isAgreed, setIsAgreed] = useState(false); // Start as false - NOT ticked by default
+  const [isAgreed, setIsAgreed] = useState(false); 
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => { 
@@ -1260,7 +1260,7 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
       <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">Book an appointment</h1>
       <StepBar step={3} />
 
-      <div className="bg-white dark:bg-gray-800 border border-user-border dark:border-gray-700 rounded-xl p-5 md:p-7 mb-6">
+      <div className="bg-user-primary-light border border-user-border rounded-xl p-5 md:p-7 mb-6">
         <h2 className="text-xl md:text-2xl font-black text-user-text mb-5">Review your request</h2>
 
         {/* Selected Service Banner */}
@@ -1279,42 +1279,42 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
         </div>
 
         {/* Main Content Card */}
-        <div className="bg-yellow-50 dark:bg-gray-700/50 border border-yellow-200 dark:border-gray-600 rounded-xl p-5 md:p-6">
+        <div className="bg-user-surface border border-user-border rounded-xl p-5 md:p-6">
           <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-6 md:gap-8`}>
             {/* Left Column - Appointment Details */}
             <div className="flex-1">
-              <div className="text-[11px] font-extrabold text-gray-900 uppercase tracking-wider mb-3.5 flex items-center gap-2">
+              <div className="text-[11px] font-extrabold text-user-text uppercase tracking-wider mb-3.5 flex items-center gap-2">
                 <Icon d={IC.calendar} size={14} color="#B46A02" /> 
                 Appointment Details
               </div>
               <div className="flex flex-col gap-3.5">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-user-primary-light flex items-center justify-center flex-shrink-0">
                     <Icon d={IC.calendar} size={16} color="#B46A02" />
                   </div>
                   <div>
-                    <div className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-0.5">Date</div>
-                    <div className="text-sm md:text-base font-bold text-gray-800 dark:text-white">{dateStr}</div>
+                    <div className="text-[11px] font-semibold text-user-text-lighter mb-0.5">Date</div>
+                    <div className="text-sm md:text-base font-bold text-user-text">{dateStr}</div>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-3 flex-wrap">
-                  <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-user-primary-light flex items-center justify-center flex-shrink-0">
                     <Icon d={IC.clock} size={16} color="#B46A02" />
                   </div>
                   <div>
-                    <div className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-0.5">Time</div>
-                    <div className="text-sm md:text-base font-bold text-gray-800 dark:text-white">{timeStr}</div>
+                    <div className="text-[11px] font-semibold text-user-text-lighter mb-0.5">Time</div>
+                    <div className="text-sm md:text-base font-bold text-user-text">{timeStr}</div>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-3 flex-wrap">
-                  <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-user-primary-light flex items-center justify-center flex-shrink-0">
                     <Icon d={IC.location} size={16} color="#B46A02" />
                   </div>
                   <div>
-                    <div className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-0.5">Location</div>
-                    <div className="text-sm md:text-base font-bold text-gray-800 dark:text-white">
+                    <div className="text-[11px] font-semibold text-user-text-lighter mb-0.5">Location</div>
+                    <div className="text-sm md:text-base font-bold text-user-text">
                       {userData?.dsDiv ? `Grama Niladhari Office, ${userData.dsDiv}` : 'Grama Niladhari Office'}
                     </div>
                   </div>
@@ -1327,7 +1327,7 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
 
             {/* Right Column - Applicant Information */}
             <div className="flex-1">
-              <div className="text-[11px] font-extrabold text-gray-900 uppercase tracking-wider mb-3.5 flex items-center gap-2">
+              <div className="text-[11px] font-extrabold text-user-text uppercase tracking-wider mb-3.5 flex items-center gap-2">
                 <Icon d={IC.profile} size={14} color="#B46A02" /> 
                 Applicant Information
               </div>
@@ -1365,7 +1365,7 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
                   <Icon d={IC.message} size={14} color="#B46A02" /> 
                   Additional Notes
                 </div>
-                <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 md:p-4 rounded-lg border-l-3 border-user-primary text-sm font-semibold text-gray-700 dark:text-gray-300 italic">
+                <div className="bg-user-primary-light p-3 md:p-4 rounded-lg border-l-3 border-user-primary text-sm font-semibold text-user-text italic">
                   "{booking.notes}"
                 </div>
               </div>
@@ -1374,7 +1374,7 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
           )}
 
           {/* Terms & Conditions Checkbox */}
-          <div className={`mt-5 flex items-start gap-3 ${isMobile ? 'bg-yellow-100 p-4 rounded-xl border border-yellow-200' : ''}`}>
+          <div className={`mt-5 flex items-start gap-3 ${isMobile ? 'bg-user-primary-light p-4 rounded-xl border border-user-border' : ''}`}>
             <input 
               type="checkbox" 
               id="agreementCheckbox" 
@@ -1382,7 +1382,7 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
               onChange={(e) => setIsAgreed(e.target.checked)}
               className="w-5 h-5 accent-user-primary mt-0.5 cursor-pointer flex-shrink-0" 
             />
-            <label htmlFor="agreementCheckbox" className="text-xs font-semibold text-gray-600 leading-relaxed cursor-pointer">
+            <label htmlFor="agreementCheckbox" className="text-xs font-semibold text-user-text leading-relaxed cursor-pointer">
               I confirm that the information provided is accurate and I agree to the appointment terms.
             </label>
           </div>
@@ -1418,7 +1418,7 @@ const BookSuccess = ({ onBack }) => {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center min-h-[70vh] p-7">
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 md:p-12 text-center max-w-md w-full mx-auto shadow-sm">
+      <div className="bg-user-surface border border-gray-200 dark:border-gray-700 rounded-2xl p-8 md:p-12 text-center max-w-md w-full mx-auto shadow-sm">
         
         {/* Success Icon */}
         <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-600/30 flex items-center justify-center mx-auto mb-5">
@@ -1426,19 +1426,19 @@ const BookSuccess = ({ onBack }) => {
         </div>
         
         {/* Title */}
-        <h2 className="text-xl md:text-2xl font-black text-gray-800 dark:text-white mb-3">
+        <h2 className="text-xl md:text-2xl font-black user-text mb-3">
           Appointment Requested!
         </h2>
         
-        {/* Message - Each line centered properly */}
-        <p className="text-sm text-gray-600 dark:text-gray-400 font-semibold leading-relaxed mb-2">
+        {/* Message */}
+        <p className="text-sm text-user-text-light font-semibold leading-relaxed mb-2">
           Your appointment request has been submitted.
         </p>
-        <p className="text-sm text-gray-600 dark:text-gray-400 font-semibold leading-relaxed mb-7">
+        <p className="text-sm text-user-text-light font-semibold leading-relaxed mb-7">
           You will receive a confirmation once the GN Officer approves it.
         </p>
         
-        {/* Button - Centered */}
+        {/* Button */}
         <div className="flex justify-center">
           <YellowBtn onClick={onBack} isMobile={isMobile}>
             ← Back to My Appointments
