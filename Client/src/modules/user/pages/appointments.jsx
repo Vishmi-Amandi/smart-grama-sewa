@@ -414,7 +414,9 @@ const DetailsModal = ({ appt, onClose, onCancel, cancelling }) => {
   return (
     <>
       <div onClick={onClose} className="fixed inset-0 bg-black/45 z-[100] animate-fade-in" />
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-full max-w-[520px] bg-white rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-full max-w-[520px] bg-user-surface rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
+        
+        {/* Header */}
         <div className="bg-user-secondary-dark p-5 flex items-center justify-between">
           <div>
             <div className="text-[10px] font-extrabold text-yellow-200 uppercase tracking-wider mb-0.5">Appointment Details</div>
@@ -422,11 +424,13 @@ const DetailsModal = ({ appt, onClose, onCancel, cancelling }) => {
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/15 border-none cursor-pointer text-white flex items-center justify-center text-lg font-bold">×</button>
         </div>
-        
-        <div className="p-6 bg-yellow-50">
+
+        {/* Body */}
+        <div className="p-6 bg-user-primary-light">
           <div className="flex items-center gap-2.5 mb-4">
-            <span className="text-sm font-bold text-gray-500">Status:</span>
-            <span className={`px-3.5 py-1 rounded-full text-xs font-extrabold border`} style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
+            <span className="text-sm font-bold text-user-text-lighter">Status:</span>
+            <span className="px-3.5 py-1 rounded-full text-xs font-extrabold border"
+              style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
               {appt.status}
             </span>
           </div>
@@ -437,40 +441,43 @@ const DetailsModal = ({ appt, onClose, onCancel, cancelling }) => {
             { icon: <Icon d={IC.doc} size={16} color="#B46A02" />, label: 'Service', value: appt.title },
             { icon: <Icon d={IC.location} size={16} color="#B46A02" />, label: 'Location', value: appt.location || 'Grama Niladhari Office' },
           ].map(row => (
-            <div key={row.label} className="flex items-start gap-3 py-2.5 border-b border-yellow-100">
+            <div key={row.label} className="flex items-start gap-3 py-2.5 border-b border-user-border">
               <span className="flex-shrink-0">{row.icon}</span>
               <div>
-                <div className="text-[11px] font-extrabold text-warning uppercase tracking-wider mb-0.5">{row.label}</div>
+                <div className="text-[11px] font-extrabold text-user-warning uppercase tracking-wider mb-0.5">{row.label}</div>
                 <div className="text-sm font-bold text-user-text">{row.value || '—'}</div>
               </div>
             </div>
           ))}
 
+          {/* Notes */}
           {appt.notes && (
-            <div className="py-2.5 border-b border-yellow-100">
-              <div className="flex items-start gap-3">
-                <Icon d={IC.message} size={16} color="#B46A02" />
-                <div>
-                  <div className="text-[11px] font-extrabold text-warning uppercase tracking-wider mb-0.5">Notes</div>
-                  <div className="text-sm font-semibold text-gray-600 italic">"{appt.notes}"</div>
-                </div>
+            <div className="flex items-start gap-3 py-2.5 border-b border-user-border">
+              <Icon d={IC.message} size={16} color="#B46A02" />
+              <div>
+                <div className="text-[11px] font-extrabold text-user-warning uppercase tracking-wider mb-0.5">Notes</div>
+                <div className="text-sm font-semibold text-user-text-lighter italic">"{appt.notes}"</div>
               </div>
             </div>
           )}
         </div>
 
-        <div className="p-4 bg-white flex justify-between items-center border-t border-yellow-100">
-          <button onClick={onClose} className="px-6 py-2.5 rounded-round border border-user-border bg-white text-sm font-bold text-gray-500 cursor-pointer transition-all hover:border-warning">Close</button>
+        {/* Footer */}
+        <div className="p-4 bg-user-surface flex justify-between items-center border-t border-user-border">
+          <button onClick={onClose} className="px-6 py-2.5 rounded-round border border-user-border bg-user-surface text-sm font-bold text-user-text-lighter cursor-pointer transition-all hover:border-user-warning">
+            Close
+          </button>
           {canCancel && (
-            <button onClick={onCancel} disabled={cancelling} className={`px-6 py-2.5 rounded-round border border-red-300 bg-white text-sm font-extrabold text-red-700 cursor-pointer flex items-center gap-1.5 transition-all hover:bg-red-50 ${cancelling ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            <button onClick={onCancel} disabled={cancelling}
+              className={`px-6 py-2.5 rounded-round border border-red-300 bg-user-surface text-sm font-extrabold text-red-500 cursor-pointer flex items-center gap-1.5 transition-all hover:bg-red-50 ${cancelling ? 'opacity-50 cursor-not-allowed' : ''}`}>
               {cancelling ? (
                 <>
-                  <div className="w-3.5 h-3.5 rounded-full border-2 border-red-700 border-t-transparent animate-spin" />
+                  <div className="w-3.5 h-3.5 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />
                   Cancelling...
                 </>
               ) : (
                 <>
-                  <Icon d={IC.x} size={14} color="#8b1a1a" sw={2} />
+                  <Icon d={IC.x} size={14} color="#ef4444" sw={2} />
                   Cancel Appointment
                 </>
               )}
