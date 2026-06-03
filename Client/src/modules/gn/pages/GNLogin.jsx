@@ -178,7 +178,7 @@ const handleSubmit = async (e) => {
 
         {/* Logo */}
         <div className="relative z-10 p-5">
-          <img src="/logo.png" alt="Smart Grama Sewa" className="h-24 w-auto" />
+          <img src="/logo2.png" alt="Smart Grama Sewa" className="h-24 w-auto" />
         </div>
 
         {/* Centered Card */}

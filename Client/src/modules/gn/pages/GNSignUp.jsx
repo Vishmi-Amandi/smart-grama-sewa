@@ -520,11 +520,40 @@ const Step4 = ({ form, update, onBack, onSubmit }) => {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (!validate()) return;
-    setLoading(true);
-    try {
-      const credential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+const handleSubmit = async () => {
+  if (!validate()) return;
+  setLoading(true);
+  try {
+    // Check if NIC already exists
+    const { getDocs, collection, query, where } = await import("firebase/firestore");
+    const { db } = await import("../../firebase");
+
+    const nicQuery = query(
+      collection(db, "gn_officers"),
+      where("nic", "==", form.nic.trim())
+    );
+    const nicSnap = await getDocs(nicQuery);
+
+    if (!nicSnap.empty) {
+      setErrors((p) => ({ ...p, firebase: "An account with this NIC already exists. Please contact your divisional office." }));
+      setLoading(false);
+      return;
+    }
+
+    // Check if email already exists
+    const emailQuery = query(
+      collection(db, "gn_officers"),
+      where("email", "==", form.email.trim())
+    );
+    const emailSnap = await getDocs(emailQuery);
+
+    if (!emailSnap.empty) {
+      setErrors((p) => ({ ...p, firebase: "An account with this email already exists." }));
+      setLoading(false);
+      return;
+    }
+
+    const credential = await createUserWithEmailAndPassword(auth, form.email, form.password);
       await updateProfile(credential.user, { displayName: form.username });
       await setDoc(doc(db, "gn_officers", credential.user.uid), {
   uid: credential.user.uid,
