@@ -24,6 +24,12 @@
   --border: #3a3a5c;
 }
 
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 /* Text Size Classes */
 body[data-textsize="small"] {
   font-size: 14px;
