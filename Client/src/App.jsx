@@ -117,6 +117,13 @@ function App() {
     <ErrorBoundary>
       <div style={{ fontSize: fontSizeMap[fontSize] }}>
         <Routes>
+          {/* Public routes (no auth needed) */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup-select" element={<SignUpSelect />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/" element={<Home />} />
+
+          {/* Protected routes (must be logged in) */}
           {/* ===== LANDING PAGE ===== */}
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />

@@ -596,7 +596,7 @@ const Announcements = () => {
             return {
               id: d.id,
               title: data.title || 'Announcement',
-              body: data.body || data.message || '',
+              body: data.body || data.description || '',
               tag: data.tag || 'Information',
               dateLabel: ts.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
             };
