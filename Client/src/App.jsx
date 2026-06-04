@@ -182,7 +182,6 @@ function App() {
                 <GNChangeGNDivision gnStatus={gnStatus} theme={theme} />
               </GNProtectedRoute>
             } />
->>>>>>> 6cfaa6191d90fb6b26ba7c04f56cb15ed53642c7
 
             <Route path="/change-gn-request-status" element={
               <GNProtectedRoute><ChangeGNRequestStatus gnStatus={gnStatus} theme={theme} />
