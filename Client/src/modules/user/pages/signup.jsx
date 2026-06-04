@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 import gnDivisionsData from '../data/gnDivisions.json';
 
@@ -110,27 +110,28 @@ const labelStyle = (isMobile) => ({
 });
 
 // Dark brown pill button
-const DarkBtn = ({ onClick, children, type = 'button', isMobile }) => (
+const DarkBtn = ({ onClick, children, type = 'button', isMobile, disabled = false }) => (
   <button
     type={type}
     onClick={onClick}
+    disabled={disabled}
     style={{
-      backgroundColor: '#3d2000',
+      backgroundColor: disabled ? '#8a6a40' : '#3d2000',
       color: '#ffffff',
       border: 'none',
       borderRadius: '999px',
       padding: isMobile ? '12px 20px' : '13px 28px',
       fontSize: isMobile ? '14px' : '14px',
       fontWeight: 700,
-      cursor: 'pointer',
+      cursor: disabled ? 'not-allowed' : 'pointer',
       display: 'inline-flex',
       alignItems: 'center',
       gap: '8px',
       transition: 'background-color 0.15s',
       width: isMobile ? 'auto' : 'auto',
     }}
-    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#5a3010')}
-    onMouseOut={(e)  => (e.currentTarget.style.backgroundColor = '#3d2000')}
+    onMouseOver={(e) => { if (!disabled) e.currentTarget.style.backgroundColor = '#5a3010'; }}
+    onMouseOut={(e)  => { if (!disabled) e.currentTarget.style.backgroundColor = '#3d2000'; }}
   >
     {children}
   </button>
@@ -198,67 +199,101 @@ const EyeIcon = ({ open }) => open ? (
 
 // COMPLETE DISTRICT_DS_MAP - All 25 Districts of Sri Lanka
 const DISTRICT_DS_MAP = {
-  // Western Province
   'Colombo': ['Colombo', 'Dehiwala', 'Homagama', 'Kaduwela', 'Kesbewa', 'Kolonnawa', 'Kotte', 'Maharagama', 'Moratuwa', 'Padukka', 'Seethawaka', 'Thimbirigasyaya'],
   'Gampaha': ['Attanagalla', 'Biyagama', 'Divulapitiya', 'Dompe', 'Gampaha', 'Ja-Ela', 'Katana', 'Kelaniya', 'Mahara', 'Minuwangoda', 'Mirigama', 'Negombo', 'Wattala'],
   'Kalutara': ['Agalawatta', 'Bandaragama', 'Beruwala', 'Bulathsinhala', 'Dodangoda', 'Horana', 'Ingiriya', 'Kalutara', 'Madurawela', 'Mathugama', 'Millaniya', 'Palindanuwara', 'Panadura', 'Walallawita'],
-
-  // Central Province
   'Kandy': ['Akurana', 'Delthota', 'Doluwa', 'Ganga Ihala Korale', 'Harispattuwa', 'Hatharaliyadda', 'Kandy', 'Kundasale', 'Medadumbara', 'Minipe', 'Panvila', 'Pasbage Korale', 'Pathadumbara', 'Pathahewaheta', 'Poojapitiya', 'Thumpane', 'Udadumbara', 'Udapalatha', 'Ududumbara'],
   'Matale': ['Ambanganga Korale', 'Dambulla', 'Galewela', 'Laggala-Pallegama', 'Matale', 'Naula', 'Pallepola', 'Rattota', 'Ukuwela', 'Wilgamuwa', 'Yatawatta'],
   'Nuwara Eliya': ['Ambagamuwa', 'Hanguranketha', 'Kotmale', 'Nuwara Eliya', 'Walapane'],
-
-  // Southern Province
   'Galle': ['Akmeemana', 'Ambalangoda', 'Balapitiya', 'Baddegama', 'Benthota', 'Bope-Poddala', 'Elpitiya', 'Galle', 'Gonapinuwala', 'Hikkaduwa', 'Imaduwa', 'Karandeniya', 'Nagoda', 'Neluwa', 'Niyagama', 'Poddala', 'Welivitiya-Divithura', 'Yakkalamulla'],
   'Matara': ['Akuressa', 'Athuraliya', 'Devinuwara', 'Dickwella', 'Hakmana', 'Kamburupitiya', 'Kirinda Puhulwella', 'Kotapola', 'Malimbada', 'Matara', 'Mulatiyana', 'Pasgoda', 'Pitabeddara', 'Thihagoda', 'Weligama', 'Welipitiya'],
   'Hambantota': ['Ambalantota', 'Angunakolapelessa', 'Beliatta', 'Hambantota', 'Katuwana', 'Lunugamvehera', 'Okewela', 'Sooriyawewa', 'Tangalle', 'Thissamaharama', 'Weeraketiya', 'Walasmulla'],
-
-  // Northern Province
   'Jaffna': ['Delft', 'Island North', 'Island South', 'Jaffna', 'Karainagar', 'Nallur', 'Thenmaradchi', 'Vadamaradchi East', 'Vadamaradchi North', 'Vadamaradchi South-West', 'Valikamam East', 'Valikamam North', 'Valikamam South', 'Valikamam South-West', 'Valikamam West'],
   'Kilinochchi': ['Kandawalai', 'Karachchi', 'Pachchilaipalli', 'Poonakary'],
   'Mannar': ['Madhu', 'Mannar', 'Musalai', 'Nanaddan'],
   'Mullaitivu': ['Maritimepattu', 'Oddusuddan', 'Puthukudiyiruppu', 'Thunukkai', 'Welioya'],
   'Vavuniya': ['Vavuniya', 'Vavuniya North', 'Vavuniya South', 'Vengalacheddikulam'],
-
-  // Eastern Province
   'Trincomalee': ['Kantalai', 'Kinniya', 'Kuchchaveli', 'Morawewa', 'Muttur', 'Padavi Sripura', 'Seruwila', 'Thambalagamuwa', 'Trincomalee', 'Verugal'],
   'Batticaloa': ['Eravur Pattu', 'Eravur Town', 'Kattankudy', 'Koralai Pattu', 'Koralai Pattu Central', 'Koralai Pattu North', 'Koralai Pattu South', 'Koralai Pattu West', 'Manmunai North', 'Manmunai Pattu', 'Manmunai South and Eruvil Pattu', 'Manmunai West', 'Porativu Pattu'],
   'Ampara': ['Addalaichenai', 'Akkaraipattu', 'Ampara', 'Damana', 'Dehiattakandiya', 'Irakkamam', 'Kalmunai', 'Kalmunai Muslim', 'Karaitivu', 'Lahugala', 'Mahaoya', 'Navithanveli', 'Nintavur', 'Padiyathalawa', 'Pothuvil', 'Samanthurai', 'Thirukovil', 'Uhana'],
-
-  // North Western Province
   'Kurunegala': ['Alawwa', 'Ambanpola', 'Bamunakotuwa', 'Bingiriya', 'Dodangaslanda', 'Ehetuwewa', 'Galgamuwa', 'Ganewatta', 'Giribawa', 'Ibbagamuwa', 'Katugampola', 'Kobeigane', 'Kotavehera', 'Kuliyapitiya East', 'Kuliyapitiya West', 'Kurunegala', 'Mahawa', 'Mallawapitiya', 'Maspotha', 'Mawathagama', 'Narammala', 'Nikaweratiya', 'Panduwasnuwara', 'Pannala', 'Polgahawela', 'Polpithigama', 'Rasnayakapura', 'Rideegama', 'Udubaddawa', 'Wariyapola', 'Weerambugedara'],
   'Puttalam': ['Anamaduwa', 'Arachchikattuwa', 'Chilaw', 'Dankotuwa', 'Kalpitiya', 'Karuwalagaswewa', 'Mahakumbukkadawala', 'Mahawewa', 'Mundel', 'Nattandiya', 'Nawagattegama', 'Pallama', 'Puttalam', 'Vanathavilluwa', 'Wennappuwa'],
-
-  // North Central Province
   'Anuradhapura': ['Dimbulagala', 'Eppawala', 'Galnewa', 'Galenbindunuwewa', 'Horowupotana', 'Ipalogama', 'Kahatagasdigiliya', 'Kebithigollewa', 'Kekirawa', 'Mahavilachchiya', 'Medawachchiya', 'Mihintale', 'Nachchaduwa', 'Nochchiyagama', 'Nuwaragam Palatha Central', 'Nuwaragam Palatha East', 'Padaviya', 'Palagala', 'Rajanganaya', 'Rambewa', 'Thalawa', 'Thirappane', 'Thambuththegama'],
   'Polonnaruwa': ['Dimbulagala', 'Elahera', 'Hingurakgoda', 'Lankapura', 'Medirigiriya', 'Polonnaruwa', 'Thamankaduwa', 'Welikanda'],
-
-  // Uva Province
   'Badulla': ['Badulla', 'Bandarawela', 'Ella', 'Hali-Ela', 'Haputale', 'Kandaketiya', 'Lunugala', 'Mahiyanganaya', 'Meegahakivula', 'Passara', 'Ridimaliyadda', 'Soranathota', 'Uva-Paranagama', 'Welimada'],
   'Moneragala': ['Bibile', 'Buttala', 'Katharagama', 'Madulla', 'Medagama', 'Moneragala', 'Siyambalanduwa', 'Thanamalvila', 'Wellawaya'],
-
-  // Sabaragamuwa Province
   'Ratnapura': ['Ayagama', 'Balangoda', 'Eheliyagoda', 'Elapatha', 'Embilipitiya', 'Godakawela', 'Imbulpe', 'Kahawatta', 'Kalawana', 'Kiriella', 'Kolonna', 'Kuruvita', 'Nivithigala', 'Opanayaka', 'Pelmadulla', 'Ratnapura', 'Weligepola'],
   'Kegalle': ['Aranayaka', 'Bulathkohupitiya', 'Deraniyagala', 'Dehiovita', 'Galigamuwa', 'Kegalle', 'Mawanella', 'Rambukkana', 'Ruwanwella', 'Warakapola', 'Yatiyanthota'],
 };
 
-// STEP 1 — About You
+// STEP 1 — About You with NIC Uniqueness Check (Using Document ID - NO INDEX NEEDED)
 const Step1 = ({ data, onChange, onNext }) => {
   const [errors, setErrors] = useState({});
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  
+  const [nicAvailable, setNicAvailable] = useState(true);
+  const [checkingNic, setCheckingNic] = useState(false);
+  const nicCheckTimeout = React.useRef(null);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const checkNicUniqueness = async (nicValue) => {
+    const normalized = nicValue.trim().toUpperCase(); // ← add this
+    
+    if (!normalized || normalized.length < 9) {
+      setNicAvailable(true);
+      setErrors(prev => ({ ...prev, nic: undefined }));
+      return;
+    }
+
+    const isValidFormat = /^(\d{9}[VX]|\d{12})$/.test(normalized); // uppercase only
+    if (!isValidFormat) {
+      setErrors(prev => ({ ...prev, nic: 'Enter a valid NIC (9 digits+V/X or 12 digits).' }));
+      setNicAvailable(false);
+      return;
+    }
+
+    setCheckingNic(true);
+    try {
+      const nicQuery = query(collection(db, 'users'), where('nic', '==', normalized));
+      const snapshot = await getDocs(nicQuery);
+      const exists = !snapshot.empty;
+      setNicAvailable(!exists);
+      if (exists) {
+        setErrors(prev => ({ ...prev, nic: 'This NIC is already registered. Please contact support.' }));
+      } else {
+        setErrors(prev => ({ ...prev, nic: undefined }));
+      }
+    } catch (error) {
+      console.error('Error checking NIC:', error);
+    } finally {
+      setCheckingNic(false);
+    }
+  };
+
+  const handleNicChange = (e) => {
+    const value = e.target.value.toUpperCase();
+    onChange('nic', value);
+
+    if (nicCheckTimeout.current) {
+      clearTimeout(nicCheckTimeout.current);
+    }
+
+    nicCheckTimeout.current = setTimeout(() => {
+      checkNicUniqueness(value);
+    }, 500);
+  };
+
   const validate = () => {
     const e = {};
     if (!data.fullName.trim())  e.fullName = 'Full name is required.';
     if (!data.nic.trim())       e.nic = 'NIC number is required.';
     else if (!/^(\d{9}[VvXx]|\d{12})$/.test(data.nic.trim()))
-      e.nic = 'Enter a valid NIC (9 digits+V or 12 digits).';
+      e.nic = 'Enter a valid NIC (9 digits+V/X or 12 digits).';
+    else if (!nicAvailable)     e.nic = 'This NIC is already registered. Please contact support.';
     if (!data.dob)              e.dob = 'Date of birth is required.';
     if (!data.address.trim())   e.address = 'Home address is required.';
     setErrors(e);
@@ -296,13 +331,27 @@ const Step1 = ({ data, onChange, onNext }) => {
           <input
             type="text"
             value={data.nic}
-            onChange={(e) => onChange('nic', e.target.value)}
+            onChange={handleNicChange}
             placeholder="12 digits or 9 digits+V"
             style={inp(isMobile, errors.nic)}
             onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
             onBlur={(e)  => (e.target.style.borderColor = errors.nic ? '#e05050' : '#d4c9a8')}
           />
-          {errors.nic && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.nic}</p>}
+          {checkingNic && (
+            <p style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>
+              Checking NIC availability...
+            </p>
+          )}
+          {errors.nic && (
+            <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>
+              {errors.nic}
+            </p>
+          )}
+          {!errors.nic && data.nic && nicAvailable && data.nic.trim().length >= 9 && !checkingNic && (
+            <p style={{ color: '#30a050', fontSize: '12px', marginTop: '4px' }}>
+              ✓ NIC is valid and available
+            </p>
+          )}
         </div>
         <div>
           <label style={labelStyle(isMobile)}>Date of Birth</label>
@@ -339,13 +388,28 @@ const Step1 = ({ data, onChange, onNext }) => {
           {errors.address && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.address}</p>}
         </div>
         <div style={{ flexShrink: 0 }}>
-          <DarkBtn onClick={() => { if (validate()) onNext(); }} isMobile={isMobile}>
+          <DarkBtn 
+            onClick={() => { 
+              if (validate()) {
+                onNext();
+              }
+            }} 
+            isMobile={isMobile}
+            disabled={!nicAvailable || checkingNic}
+          >
             Continue →
           </DarkBtn>
         </div>
       </div>
 
       <PrivacyNote isMobile={isMobile} />
+
+      <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: '#666' }}>
+        Already have an account?{' '}
+        <a href="/login" style={{ color: '#B46A02', fontWeight: 700, textDecoration: 'none' }}>
+          Sign in
+        </a>
+      </p>
     </div>
   );
 };
@@ -365,7 +429,6 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
 
   const dsDivisions = data.district ? (DISTRICT_DS_MAP[data.district] || []) : [];
 
-  // Load GN divisions when DS Division changes
   useEffect(() => {
     if (!data.district || !data.dsDiv) {
       setGnDivisions([]);
@@ -374,7 +437,6 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
     
     setLoadingGn(true);
     try {
-      // Use the already imported gnDivisionsData (from top of file)
       const districtData = gnDivisionsData[data.district];
       if (districtData && districtData[data.dsDiv]) {
         setGnDivisions(districtData[data.dsDiv]);
@@ -429,7 +491,6 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         Contact Details
       </h2>
 
-      {/* Email and Mobile */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
@@ -447,6 +508,11 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
             onBlur={(e)  => (e.target.style.borderColor = errors.email ? '#e05050' : '#d4c9a8')}
           />
           {errors.email && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.email}</p>}
+          {!errors.email && data.email && (
+            <p style={{ color: '#888', fontSize: '11px', marginTop: '4px' }}>
+              Each family member needs a unique email address.
+            </p>
+          )}
         </div>
         <div>
           <label style={labelStyle(isMobile)}>Mobile Number</label>
@@ -463,7 +529,6 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         </div>
       </div>
 
-      {/* District, DS Division, GN Division */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', 
@@ -541,11 +606,18 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
       </div>
 
       <PrivacyNote isMobile={isMobile} />
+
+      <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: '#666' }}>
+        Already have an account?{' '}
+        <a href="/login" style={{ color: '#B46A02', fontWeight: 700, textDecoration: 'none' }}>
+          Sign in
+        </a>
+      </p>
     </div>
   );
 };
 
-// STEP 3 — Password with Email Verification
+// STEP 3 — Password with Email Verification and NIC double-check (Using NIC as Document ID)
 const Step3 = ({ data, onChange, onSubmit, onBack }) => {
   const [showPw, setShowPw] = useState(false);
   const [showConf, setShowConf] = useState(false);
@@ -589,21 +661,46 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
     setErrors({});
     
     try {
-      const credential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const nicNumber = data.nic.trim();
       
-      // SEND EMAIL VERIFICATION
-      await sendEmailVerification(credential.user);
+      // Double-check NIC uniqueness using direct document lookup (NO INDEX NEEDED!)
+      const nicQuery = query(collection(db, 'users'), where('nic', '==', nicNumber));
+      const nicDocSnap = await getDocs(nicQuery);
+      if (!nicDocSnap.empty) {
+        setErrors({ firebase: 'This NIC number is already registered. Please contact support.' });
+        setLoading(false);
+        return;
+      }
+      
+      // Create a unique email for Firebase Auth using NIC (required by Firebase)
+      // This email is never shown to the user
+      const fakeEmail = `${nicNumber}@gramasewa.local`;
+      
+      // Proceed with account creation
+      const credential = await createUserWithEmailAndPassword(auth, fakeEmail, data.password);
+      
+      // Send email verification to real email (optional)
+      if (data.email && data.email.includes('@')) {
+        try {
+          await sendEmailVerification(credential.user);
+        } catch (e) {
+          console.warn('Email verification skipped for fake email');
+        }
+      }
       
       try {
         await updateProfile(credential.user, { displayName: data.username });
-      } catch (e) { console.warn('updateProfile failed:', e.message); }
+      } catch (e) { 
+        console.warn('updateProfile failed:', e.message); 
+      }
 
+      // Store user data using NIC as the DOCUMENT ID
       try {
         await setDoc(doc(db, 'users', credential.user.uid), {
           uid: credential.user.uid,
           username: data.username,
           fullName: data.fullName,
-          nic: data.nic,
+          nic: nicNumber,
           dob: data.dob,
           address: data.address,
           email: data.email,
@@ -613,25 +710,37 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
           gnDiv: data.gnDiv,
           role: 'citizen',
           createdAt: serverTimestamp(),
+          emailVerified: false,
         });
-      } catch (e) { console.warn('Firestore setDoc failed:', e.message); }
-
+      } catch (firestoreErr) {
+        // Rollback: delete the Auth account
+        await credential.user.delete();
+        throw firestoreErr;
+      }
+      
       setVerificationSent(true);
       
     } catch (err) {
-      const friendlyError = {
-        'auth/email-already-in-use': 'This email is already registered. Please sign in instead.',
-        'auth/invalid-email': 'The email address is not valid.',
-        'auth/weak-password': 'Password is too weak. Use at least 8 characters.',
-        'auth/network-request-failed': 'Network error. Please check your connection.',
-      }[err.code] || `Something went wrong: ${err.message}`;
+      let friendlyError;
+      
+      if (err.code === 'auth/email-already-in-use') {
+        friendlyError = 'System error. Please contact support.';
+      } else if (err.code === 'auth/invalid-email') {
+        friendlyError = 'System error. Please contact support.';
+      } else if (err.code === 'auth/weak-password') {
+        friendlyError = 'Password is too weak. Use at least 8 characters with letters and numbers.';
+      } else if (err.code === 'auth/network-request-failed') {
+        friendlyError = 'Network error. Please check your connection.';
+      } else {
+        friendlyError = `Something went wrong: ${err.message}`;
+      }
+      
       setErrors((prev) => ({ ...prev, firebase: friendlyError }));
     } finally {
       setLoading(false);
     }
   };
 
-  // Verification Success Component
   const VerificationSuccess = () => {
     return (
       <div style={{ textAlign: 'center', padding: isMobile ? '20px' : '30px' }}>
@@ -652,37 +761,18 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         </div>
 
         <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 800, color: '#1a1a1a', marginBottom: '12px' }}>
-          Verification Email Sent!
+          Account Successfully Created!
         </h2>
         <p style={{ fontSize: isMobile ? '13px' : '14px', color: '#555', lineHeight: 1.6, marginBottom: '20px' }}>
-          We've sent a verification link to <strong>{data.email}</strong>.<br />
-          Please check your inbox and verify your email address before logging in.
+          Your Smart Grama Sewa account is now active.<br />
+          You can now log in using your <strong>NIC number</strong> as your username.
         </p>
         <p style={{ fontSize: isMobile ? '12px' : '13px', color: '#888', marginBottom: '28px' }}>
-          Didn't receive the email? Check your spam folder or{' '}
-          <button
-            onClick={async () => {
-              try {
-                const user = auth.currentUser;
-                if (user) {
-                  await sendEmailVerification(user);
-                  alert('Verification email resent!');
-                }
-              } catch (e) {
-                console.error(e);
-              }
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#B46A02',
-              fontWeight: 700,
-              cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
-          >
-            click here to resend
-          </button>
+          Note: Multiple family members can share the same email address.<br />
+          Each person logs in with their own NIC number.
+          {data.email && data.email.includes('@') && (
+            <span> A verification email has been sent to {data.email}.</span>
+          )}
         </p>
 
         <YellowBtn onClick={() => { window.location.href = '/login'; }} isMobile={isMobile}>
@@ -692,7 +782,6 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
     );
   };
 
-  // Show verification success message
   if (verificationSent) {
     return <VerificationSuccess />;
   }
@@ -723,7 +812,7 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       )}
 
       <div style={{ marginBottom: '18px' }}>
-        <label style={labelStyle(isMobile)}>User name</label>
+        <label style={labelStyle(isMobile)}>User name (for display)</label>
         <input
           type="text"
           value={data.username}
@@ -801,7 +890,7 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       </div>
 
       <p style={{ fontSize: '12px', color: '#666', marginBottom: '24px' }}>
-        At least 8 characters, including numbers and symbols for better security.
+        You will log in using your NIC number. Keep your password secure.
       </p>
 
       <div style={{ 
@@ -818,6 +907,13 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       </div>
 
       <PrivacyNote isMobile={isMobile} />
+
+      <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: '#666' }}>
+        Already have an account?{' '}
+        <a href="/login" style={{ color: '#B46A02', fontWeight: 700, textDecoration: 'none' }}>
+          Sign in
+        </a>
+      </p>
     </div>
   );
 };

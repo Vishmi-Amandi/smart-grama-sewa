@@ -435,11 +435,11 @@ const ContactGN = () => {
                   {userData?.gnDiv || userData?.dsDiv || 'Your GN Division'}
                 </p>
                 <div className="flex gap-3">
-                  <button onClick={handleCall} className="flex-1 flex items-center justify-center gap-2 py-3 bg-user-info-light border-none rounded-round cursor-pointer">
+                  <button onClick={handleCall} className="flex-1 flex items-center justify-center gap-2 py-3 bg-user-info-light border-none rounded-xl cursor-pointer">
                     <Icon d={Icons.phone} size={18} color="#3b82f6" strokeWidth={2} />
                     <span className="text-sm font-bold text-user-text">Call</span>
                   </button>
-                  <button onClick={handleEmail} className="flex-1 flex items-center justify-center gap-2 py-3 bg-user-warning-light border-none rounded-round cursor-pointer">
+                  <button onClick={handleEmail} className="flex-1 flex items-center justify-center gap-2 py-3 bg-user-warning-light border-none rounded-xl cursor-pointer">
                     <Icon d={Icons.mail} size={18} color="#d97706" strokeWidth={2} />
                     <span className="text-sm font-bold text-user-text">Email</span>
                   </button>
@@ -511,7 +511,7 @@ const ContactGN = () => {
             {/* Book Appointment Button */}
             <button
               onClick={() => navigate('/appointments')}
-              className="w-full flex items-center justify-center gap-2.5 py-3.5 md:py-4 bg-user-primary border-none rounded-round text-base md:text-lg font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark hover:-translate-y-0.5 active:translate-y-0"
+              className="w-full flex items-center justify-center gap-2.5 py-3.5 md:py-4 bg-user-primary border-none rounded-lg text-base md:text-lg font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark hover:-translate-y-0.5 active:translate-y-0"
             >
               <Icon d={Icons.calendar} size={20} color="#3d2a00" />
               Book an Appointment
