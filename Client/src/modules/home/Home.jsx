@@ -1,18 +1,15 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
+// --- 1. Import i18n translation hook ---
+import { useTranslation } from 'react-i18next';
 
 const Home = () => {
-  const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // --- 2. Extract translation utilities ---
+  const { t, i18n } = useTranslation();
 
-  // Navigation items for bottom bar (mobile) and top bar (desktop)
-  const navItems = [
-    { path: '/', label: 'Home', icon: '🏠' },
-    { path: '/about', label: 'About', icon: '📖' },
-    { path: '/news', label: 'News', icon: '📰' },
-    { path: '/contact', label: 'Contact', icon: '📞' },
-    { path: '/gn-login', label: 'Login', icon: '🔑' }
-  ];
+  const changeLanguage = (lngCode) => {
+    i18n.changeLanguage(lngCode);
+  };
 
   return (
     <div 
@@ -27,78 +24,45 @@ const Home = () => {
       >
         {/* Logo */}
         <div className="font-bold text-2xl flex items-center gap-3">
-          <img src="/logo2.png" alt="Logo" className="h-12 md:h-14 w-auto" />
+          <img src="/logo2.png" alt="Logo" className="h-15 w-auto" />
         </div>
         
-        {/* Desktop Navigation Links */}
-        <div className="space-x-6 lg:space-x-8 font-semibold">
-          {navItems.map((item) => (
-            <Link 
-              key={item.path} 
-              to={item.path}
-              className={`hover:text-yellow-500 transition ${
-                location.pathname === item.path ? 'text-yellow-600 border-b-2 border-yellow-500' : ''
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
+        <div className="space-x-8 font-semibold">
+          <Link to="/">Home</Link>
+          <a href="#">About</a>
+          <a href="#">News &amp; Notices</a>
+          <a href="#">Contact</a>
         </div>
 
-        {/* Language Switcher */}
-        <div className="text-sm space-x-2">
-          <a href="#" className="hover:text-yellow-500">සිංහල</a>
-          <span>|</span>
-          <a href="#" className="hover:text-yellow-500">தமிழ்</a>
-          <span>|</span>
-          <a href="#" className="hover:text-yellow-500">English</a>
+        {/* 3. FIXED: Linked language switcher buttons to replace static hashtag lines */}
+        <div className="text-sm flex items-center gap-2 font-bold">
+          <button 
+            onClick={() => changeLanguage('si')} 
+            style={{ background: 'none', border: 'none' }}
+            className={`cursor-pointer px-1 transition-all ${i18n.language === 'si' ? 'text-[#6A2301] font-extrabold' : 'text-inherit font-semibold'}`}
+          >
+            සිංහල
+          </button> 
+          <span className="opacity-40">||</span>
+          <button 
+            onClick={() => changeLanguage('ta')} 
+            style={{ background: 'none', border: 'none' }}
+            className={`cursor-pointer px-1 transition-all ${i18n.language === 'ta' ? 'text-[#6A2301] font-extrabold' : 'text-inherit font-semibold'}`}
+          >
+            தமிழ்
+          </button> 
+          <span className="opacity-40">||</span>
+          <button 
+            onClick={() => changeLanguage('en')} 
+            style={{ background: 'none', border: 'none' }}
+            className={`cursor-pointer px-1 transition-all ${i18n.language === 'en' ? 'text-[#6A2301] font-extrabold' : 'text-inherit font-semibold'}`}
+          >
+            English
+          </button>
         </div>
       </nav>
 
-      {/* Mobile Hamburger Header (visible only on mobile) */}
-      <nav 
-        style={{ backgroundColor: 'var(--bg-topbar)' }} 
-        className="lg:hidden flex justify-between items-center py-3 px-4 shadow-sm"
-      >
-        <div className="font-bold text-xl flex items-center gap-2">
-          <img src="/logo2.png" alt="Logo" className="h-10 w-auto" />
-        </div>
-        
-        <button 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="text-2xl p-2"
-        >
-          ☰
-        </button>
-      </nav>
-
-      {/* Mobile Menu Dropdown (when hamburger clicked) */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed top-14 left-0 right-0 bg-white shadow-lg z-50 py-4 px-4 flex flex-col space-y-3" 
-             style={{ backgroundColor: 'var(--bg-topbar)' }}>
-          {navItems.map((item) => (
-            <Link 
-              key={item.path} 
-              to={item.path}
-              onClick={() => setMobileMenuOpen(false)}
-              className={`py-2 px-3 rounded-lg ${
-                location.pathname === item.path ? 'bg-yellow-100 text-yellow-700' : ''
-              }`}
-            >
-              {item.icon} {item.label}
-            </Link>
-          ))}
-          <div className="pt-3 mt-2 border-t border-gray-200">
-            <div className="flex justify-around text-sm">
-              <a href="#" className="py-1 px-2">සිංහල</a>
-              <a href="#" className="py-1 px-2">தமிழ்</a>
-              <a href="#" className="py-1 px-2">English</a>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 2. Hero Section - Responsive padding and text sizes */}
+      {/* 2. Hero Section - Using the overlay image style with reactive key hooks */}
       <main 
         className="flex-grow flex items-center px-4 sm:px-6 md:px-8 lg:px-12" 
         style={{ 

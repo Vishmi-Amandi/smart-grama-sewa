@@ -33,8 +33,9 @@ import Announcements from './modules/user/pages/announcements';
 import Settings from './modules/user/pages/settings';
 import ContactGN from './modules/user/pages/contactGN';
 
-// ===== SHARED IMPORTS =====
-import Home from './modules/home/Home.jsx';
+// New module import
+import Home from './modules/home/Home';
+import Forms from './modules/forms/Forms';
 
 // ===== GN PROTECTED ROUTE =====
 const GNProtectedRoute = ({ children }) => {
