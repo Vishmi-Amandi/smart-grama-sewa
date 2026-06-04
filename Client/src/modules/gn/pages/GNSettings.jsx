@@ -176,15 +176,15 @@ const handleSaveHours = async () => {
     <GNLayout gnStatus={gnStatus} theme={theme}>
 
       {/* Page Title */}
-      <h1 className="text-2xl font-bold text-[#8B4513] mb-4">Settings</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-[#8B4513] mb-4 text-center sm:text-left">Settings</h1>
 
-      {/* Tabs */}
-      <div className={`flex gap-6 border-b ${t.border} mb-6`}>
+      {/* Tabs - Responsive */}
+      <div className={`flex flex-wrap gap-2 sm:gap-6 border-b ${t.border} mb-6`}>
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`pb-3 text-sm font-semibold border-b-2 transition flex items-center gap-2
+            className={`pb-3 text-xs sm:text-sm font-semibold border-b-2 transition flex items-center gap-1 sm:gap-2 whitespace-nowrap
               ${activeTab === tab.key
                 ? "border-[#8B4513] text-[#8B4513]"
                 : `border-transparent ${t.subtext} hover:text-gray-600`
@@ -197,16 +197,16 @@ const handleSaveHours = async () => {
 
       {/* Notification Tab */}
       {activeTab === "notification" && (
-        <div className="space-y-6">
-          <h2 className={`text-xl font-bold ${t.text}`}>Notification Settings</h2>
+        <div className="space-y-4 sm:space-y-6">
+          <h2 className={`text-lg sm:text-xl font-bold text-left ${t.text}`}>Notification Settings</h2>
 
           {/* Notification Channels */}
-          <div className={`${t.card} rounded-2xl shadow p-6`}>
-            <p className={`text-sm font-semibold flex items-center gap-2 mb-1 ${t.text}`}>
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold flex items-center gap-2 mb-1 text-left ${t.text}`}>
               🔔 Notification Channels
             </p>
-            <p className={`text-xs mb-4 ${t.subtext}`}>Select where you want to receive notifications.</p>
-            <div className="grid grid-cols-3 gap-4">
+            <p className={`text-[10px] sm:text-xs mb-4 text-left ${t.subtext}`}>Select where you want to receive notifications.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               {[
                 { key: "email", label: "Email", sub: "Detailed logs and updates", icon: "📧" },
                 { key: "sms", label: "SMS Text", sub: "Urgent mobile alerts", icon: "💬" },
@@ -215,42 +215,42 @@ const handleSaveHours = async () => {
                 <div
                   key={ch.key}
                   onClick={() => setChannels({ ...channels, [ch.key]: !channels[ch.key] })}
-                  className={`border-2 rounded-xl p-4 cursor-pointer transition relative
+                  className={`border-2 rounded-xl p-3 sm:p-4 cursor-pointer transition relative
                     ${channels[ch.key] ? `border-[#E5A800] ${theme === "dark" ? "bg-yellow-900" : "bg-yellow-50"}` : t.border}`}
                 >
                   {channels[ch.key] && (
                     <span className="absolute top-2 right-2 w-5 h-5 bg-[#E5A800] rounded-full flex items-center justify-center text-xs">✓</span>
                   )}
-                  <span className="text-xl">{ch.icon}</span>
-                  <p className={`text-sm font-semibold mt-2 ${t.text}`}>{ch.label}</p>
-                  <p className={`text-xs ${t.subtext}`}>{ch.sub}</p>
+                  <span className="text-lg sm:text-xl">{ch.icon}</span>
+                  <p className={`text-xs sm:text-sm font-semibold mt-2 text-left ${t.text}`}>{ch.label}</p>
+                  <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>{ch.sub}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Notification Types */}
-          <div className={`${t.card} rounded-2xl shadow p-6`}>
-            <p className={`text-sm font-semibold flex items-center gap-2 mb-1 ${t.text}`}>
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold flex items-center gap-2 mb-1 text-left ${t.text}`}>
               🔔 Notification Types
             </p>
-            <p className={`text-xs mb-4 ${t.subtext}`}>Configure alerts for specific activity categories.</p>
-            <div className="space-y-4">
+            <p className={`text-[10px] sm:text-xs mb-4 text-left ${t.subtext}`}>Configure alerts for specific activity categories.</p>
+            <div className="space-y-3 sm:space-y-4">
               {[
                 { key: "appointments", icon: "📅", label: "Appointments", sub: "New bookings, rescheduling, and cancellations." },
                 { key: "system", icon: "⚙️", label: "System Updates", sub: "Maintenance windows and feature releases." },
                 { key: "citizen", icon: "👤", label: "Citizen Activity", sub: "Profile updates and document submissions." },
               ].map((item) => (
-                <div key={item.key} className={`flex items-center justify-between border ${t.border} rounded-xl px-4 py-3`}>
+                <div key={item.key} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border ${t.border} rounded-xl px-3 sm:px-4 py-3`}>
                   <div className="flex items-center gap-3">
-                    <span className="text-lg">{item.icon}</span>
+                    <span className="text-base sm:text-lg">{item.icon}</span>
                     <div>
-                      <p className={`text-sm font-semibold ${t.text}`}>{item.label}</p>
-                      <p className={`text-xs ${t.subtext}`}>{item.sub}</p>
+                      <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>{item.label}</p>
+                      <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>{item.sub}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs uppercase ${t.subtext}`}>Status:</span>
+                  <div className="flex items-center justify-between sm:justify-end gap-2">
+                    <span className={`text-[10px] sm:text-xs uppercase ${t.subtext}`}>Status:</span>
                     <Toggle value={types[item.key]} onChange={(v) => setTypes({ ...types, [item.key]: v })} />
                   </div>
                 </div>
@@ -259,31 +259,31 @@ const handleSaveHours = async () => {
           </div>
 
           {/* Quiet Hours */}
-          <div className={`${t.card} rounded-2xl shadow p-6`}>
-            <p className={`text-sm font-semibold flex items-center gap-2 mb-1 ${t.text}`}>
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold flex items-center gap-2 mb-1 text-left ${t.text}`}>
               🌙 Quiet Hours
             </p>
-            <p className={`text-xs mb-4 ${t.subtext}`}>Set times when you do not want to be disturbed.</p>
-            <div className="grid grid-cols-2 gap-6">
+            <p className={`text-[10px] sm:text-xs mb-4 text-left ${t.subtext}`}>Set times when you do not want to be disturbed.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
 
               {/* Time Range */}
               <div>
-                <p className={`text-xs mb-2 ${t.subtext}`}>Time Range</p>
-                <div className="flex items-center gap-2">
+                <p className={`text-[10px] sm:text-xs mb-2 text-left ${t.subtext}`}>Time Range</p>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                   <input type="time" defaultValue="22:00"
-                    className={`border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
-                  <span className={`text-xs ${t.subtext}`}>to</span>
+                    className={`w-full sm:w-auto border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
+                  <span className={`text-[10px] sm:text-xs ${t.subtext}`}>to</span>
                   <input type="time" defaultValue="07:00"
-                    className={`border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
+                    className={`w-full sm:w-auto border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
                 </div>
-                <p className={`text-xs mt-3 ${t.subtext}`}>
+                <p className={`text-[10px] sm:text-xs mt-3 text-left ${t.subtext}`}>
                   ⓘ Critical alerts will bypass quiet hours automatically.
                 </p>
               </div>
 
               {/* Delivery Preference */}
               <div>
-                <p className={`text-xs mb-2 ${t.subtext}`}>Delivery Preference</p>
+                <p className={`text-[10px] sm:text-xs mb-2 text-left ${t.subtext}`}>Delivery Preference</p>
                 <div className="space-y-3">
                   {[
                     { key: "hold", label: "Hold for later", sub: "Send a summary digest at 07:00 AM" },
@@ -292,14 +292,14 @@ const handleSaveHours = async () => {
                     <div
                       key={item.key}
                       onClick={() => setDelivery(item.key)}
-                      className={`flex items-start gap-3 border-2 rounded-xl px-4 py-3 cursor-pointer transition
+                      className={`flex items-start gap-3 border-2 rounded-xl px-3 sm:px-4 py-3 cursor-pointer transition
                         ${delivery === item.key ? `border-[#E5A800] ${theme === "dark" ? "bg-yellow-900" : "bg-yellow-50"}` : t.border}`}
                     >
                       <div className={`w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0
                         ${delivery === item.key ? "border-[#E5A800] bg-[#E5A800]" : "border-gray-300"}`} />
                       <div>
-                        <p className={`text-sm font-semibold ${t.text}`}>{item.label}</p>
-                        <p className={`text-xs ${t.subtext}`}>{item.sub}</p>
+                        <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>{item.label}</p>
+                        <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>{item.sub}</p>
                       </div>
                     </div>
                   ))}
@@ -310,11 +310,11 @@ const handleSaveHours = async () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-4">
-            <button className={`font-semibold px-5 py-2 rounded-xl transition ${t.text} ${theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}>
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-3 sm:gap-4">
+            <button className={`w-full sm:w-auto font-semibold px-5 py-2 rounded-xl transition text-center ${t.text} ${theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}>
               Reset to Defaults
             </button>
-            <button className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-6 py-2 rounded-xl transition">
+            <button className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-6 py-2 rounded-xl transition text-center">
               Apply Changes
             </button>
           </div>
@@ -323,14 +323,14 @@ const handleSaveHours = async () => {
 
       {/* Appearance Tab */}
       {activeTab === "appearance" && (
-        <div className="space-y-6">
-          <h2 className={`text-xl font-bold ${t.text}`}>Appearance and Language Settings</h2>
+        <div className="space-y-4 sm:space-y-6">
+          <h2 className={`text-lg sm:text-xl font-bold text-left ${t.text}`}>Appearance and Language Settings</h2>
 
           {/* Theme Selection */}
-          <div className={`${t.card} rounded-2xl shadow p-6`}>
-            <p className={`text-sm font-semibold mb-1 ${t.text}`}>🌟 Theme Selection</p>
-            <p className={`text-xs mb-4 ${t.subtext}`}>Select your preferred interface color mode.</p>
-            <div className="grid grid-cols-2 gap-4">
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold mb-1 text-left ${t.text}`}>🌟 Theme Selection</p>
+            <p className={`text-[10px] sm:text-xs mb-4 text-left ${t.subtext}`}>Select your preferred interface color mode.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {[
                 { key: "light", label: "Light Mode", sub: "Classic bright theme for daytime use.", icon: "☀️" },
                 { key: "dark", label: "Night Mode", sub: "Dark theme to reduce eye strain in low light.", icon: "🌙" },
@@ -338,25 +338,25 @@ const handleSaveHours = async () => {
                 <div
                   key={item.key}
                   onClick={() => setTheme(item.key)}
-                  className={`border-2 rounded-xl p-4 cursor-pointer transition relative
+                  className={`border-2 rounded-xl p-3 sm:p-4 cursor-pointer transition relative
                     ${theme === item.key ? `border-[#E5A800] ${theme === "dark" ? "bg-yellow-900" : "bg-yellow-50"}` : t.border}`}
                 >
                   {theme === item.key && (
                     <span className="absolute top-2 right-2 w-5 h-5 bg-[#E5A800] rounded-full flex items-center justify-center text-xs">✓</span>
                   )}
-                  <span className="text-2xl">{item.icon}</span>
-                  <p className={`text-sm font-semibold mt-2 ${t.text}`}>{item.label}</p>
-                  <p className={`text-xs ${t.subtext}`}>{item.sub}</p>
+                  <span className="text-xl sm:text-2xl">{item.icon}</span>
+                  <p className={`text-xs sm:text-sm font-semibold mt-2 text-left ${t.text}`}>{item.label}</p>
+                  <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>{item.sub}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Font Size */}
-          <div className={`${t.card} rounded-2xl shadow p-6`}>
-            <p className={`text-sm font-semibold mb-1 ${t.text}`}>🔤 Font Size</p>
-            <p className={`text-xs mb-4 ${t.subtext}`}>Adjust text size for better readability.</p>
-            <div className="grid grid-cols-3 gap-4">
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold mb-1 text-left ${t.text}`}>🔤 Font Size</p>
+            <p className={`text-[10px] sm:text-xs mb-4 text-left ${t.subtext}`}>Adjust text size for better readability.</p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
               {[
                 { key: "small", label: "Small", size: "text-sm" },
                 { key: "medium", label: "Medium", size: "text-base" },
@@ -365,25 +365,25 @@ const handleSaveHours = async () => {
                 <div
                   key={f.key}
                   onClick={() => setFontSize(f.key)}
-                  className={`border-2 rounded-xl p-4 cursor-pointer transition flex flex-col items-center gap-2
+                  className={`border-2 rounded-xl p-3 sm:p-4 cursor-pointer transition flex flex-col items-center gap-2
                     ${fontSize === f.key ? `border-[#E5A800] ${theme === "dark" ? "bg-yellow-900" : "bg-yellow-50"}` : t.border}`}
                 >
                   <span className={`font-semibold ${t.text} ${f.size}`}>A</span>
-                  <span className={`text-xs ${t.subtext}`}>{f.label}</span>
+                  <span className={`text-[10px] sm:text-xs ${t.subtext}`}>{f.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Language Settings */}
-          <div className={`${t.card} rounded-2xl shadow p-6`}>
-            <p className={`text-sm font-semibold mb-1 ${t.text}`}>🌐 Language Settings</p>
-            <p className={`text-xs mb-4 ${t.subtext}`}>Choose the primary language for the portal content.</p>
-            <p className={`text-xs mb-2 ${t.subtext}`}>Select Language</p>
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold mb-1 text-left ${t.text}`}>🌐 Language Settings</p>
+            <p className={`text-[10px] sm:text-xs mb-4 text-left ${t.subtext}`}>Choose the primary language for the portal content.</p>
+            <p className={`text-[10px] sm:text-xs mb-2 text-left ${t.subtext}`}>Select Language</p>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className={`w-72 border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
+              className={`w-full sm:w-72 border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
             >
               <option value="English">English</option>
               <option value="සිංහල">සිංහල</option>
@@ -392,40 +392,40 @@ const handleSaveHours = async () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-4">
-            <button className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-6 py-2 rounded-xl transition">
+          <div className="flex justify-end">
+            <button className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-6 py-2 rounded-xl transition text-center">
               Apply Changes
             </button>
           </div>
         </div>
       )}
 
-{/* Security Tab */}
+{/* Security Tab - Responsive */}
 {activeTab === "security" && (
-  <div className="space-y-6">
-    <h2 className={`text-xl font-bold ${t.text}`}>Security Settings</h2>
+  <div className="space-y-4 sm:space-y-6">
+    <h2 className={`text-lg sm:text-xl font-bold text-left ${t.text}`}>Security Settings</h2>
 
     {/* Password Management */}
-    <div className={`${t.card} rounded-2xl shadow p-6`}>
-      <p className={`text-sm font-semibold mb-4 flex items-center gap-2 ${t.text}`}>
+    <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+      <p className={`text-sm font-semibold mb-4 flex items-center gap-2 text-left ${t.text}`}>
         🔒 Password Management
       </p>
 
       {/* Error/Success */}
       {passwordError && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-xs sm:text-sm text-red-600 text-left">
           ⚠️ {passwordError}
         </div>
       )}
       {passwordSuccess && (
-        <div className="mb-4 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-600">
+        <div className="mb-4 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-xs sm:text-sm text-green-600 text-left">
           ✅ {passwordSuccess}
         </div>
       )}
 
       <div className="space-y-4">
         <div>
-          <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>Current Password</label>
+          <label className={`text-[10px] sm:text-xs font-semibold mb-1 block text-left ${t.subtext}`}>Current Password</label>
           <input
             type="password"
             value={currentPassword}
@@ -435,7 +435,7 @@ const handleSaveHours = async () => {
           />
         </div>
         <div>
-          <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>New Password</label>
+          <label className={`text-[10px] sm:text-xs font-semibold mb-1 block text-left ${t.subtext}`}>New Password</label>
           <input
             type="password"
             value={newPassword}
@@ -443,10 +443,10 @@ const handleSaveHours = async () => {
             placeholder="••••••••"
             className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
           />
-          <p className={`text-xs mt-1 ${t.subtext}`}>Must be at least 8 characters.</p>
+          <p className={`text-[10px] sm:text-xs mt-1 text-left ${t.subtext}`}>Must be at least 8 characters.</p>
         </div>
         <div>
-          <label className={`text-xs font-semibold mb-1 block ${t.subtext}`}>Confirm New Password</label>
+          <label className={`text-[10px] sm:text-xs font-semibold mb-1 block text-left ${t.subtext}`}>Confirm New Password</label>
           <input
             type="password"
             value={confirmPassword}
@@ -458,26 +458,26 @@ const handleSaveHours = async () => {
         <button
           onClick={handleChangePassword}
           disabled={passwordLoading}
-          className="bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-black font-semibold px-6 py-2 rounded-xl transition">
+          className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-black font-semibold px-6 py-2 rounded-xl transition">
           {passwordLoading ? "Changing..." : "Change Password"}
         </button>
       </div>
     </div>
 
     {/* Login Sessions */}
-    <div className={`${t.card} rounded-2xl shadow p-6`}>
-      <p className={`text-sm font-semibold mb-4 flex items-center gap-2 ${t.text}`}>
+    <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+      <p className={`text-sm font-semibold mb-4 flex items-center gap-2 text-left ${t.text}`}>
         💻 Current Session
       </p>
-      <div className={`flex items-center justify-between border ${t.border} rounded-xl px-4 py-3`}>
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border ${t.border} rounded-xl px-3 sm:px-4 py-3`}>
         <div className="flex items-center gap-3">
-          <span className="text-lg">💻</span>
+          <span className="text-base sm:text-lg">💻</span>
           <div>
-            <p className={`text-sm font-semibold ${t.text}`}>{navigator.userAgent.includes("Chrome") ? "Chrome" : "Browser"}</p>
-            <p className={`text-xs ${t.subtext}`}>Current session • Active now</p>
+            <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>{navigator.userAgent.includes("Chrome") ? "Chrome" : "Browser"}</p>
+            <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>Current session • Active now</p>
           </div>
         </div>
-        <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">
+        <span className="text-[10px] sm:text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full self-start sm:self-center">
           CURRENT SESSION
         </span>
       </div>
@@ -486,26 +486,26 @@ const handleSaveHours = async () => {
   </div>
 )}
 
-      {/* Weekly Hours Tab */}
+      {/* Weekly Hours Tab - Responsive */}
 {activeTab === "hours" && (
-  <div className="space-y-6">
-    <h2 className={`text-xl font-bold ${t.text}`}>Weekly Hours Settings</h2>
+  <div className="space-y-4 sm:space-y-6">
+    <h2 className={`text-lg sm:text-xl font-bold text-left ${t.text}`}>Weekly Hours Settings</h2>
 
     {hoursSuccess && (
-      <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-600">
+      <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-xs sm:text-sm text-green-600 text-left">
         ✅ {hoursSuccess}
       </div>
     )}
     {hoursError && (
-      <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
+      <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-xs sm:text-sm text-red-600 text-left">
         ⚠️ {hoursError}
       </div>
     )}
 
     {/* Regular Working Hours */}
-    <div className={`${t.card} rounded-2xl shadow p-6`}>
-      <div className="flex items-center justify-between mb-4">
-        <p className={`text-sm font-semibold ${t.text}`}>Regular Working Hours</p>
+    <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <p className={`text-sm font-semibold text-left ${t.text}`}>Regular Working Hours</p>
         <button
           onClick={() => {
             const updated = { ...workingHours };
@@ -516,26 +516,28 @@ const handleSaveHours = async () => {
             });
             setWorkingHours(updated);
           }}
-          className="text-xs text-[#E5A800] font-semibold hover:underline">
+          className="text-[10px] sm:text-xs text-[#E5A800] font-semibold hover:underline text-left sm:text-right">
           Apply to all days
         </button>
       </div>
 
       <div className="space-y-3">
         {Object.entries(workingHours).map(([day, hours]) => (
-          <div key={day} className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              checked={hours.enabled}
-              onChange={(e) => setWorkingHours({
-                ...workingHours,
-                [day]: { ...hours, enabled: e.target.checked }
-              })}
-              className="accent-[#E5A800]"
-            />
-            <span className={`text-xs font-semibold w-24 ${t.text}`}>{day}</span>
+          <div key={day} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={hours.enabled}
+                onChange={(e) => setWorkingHours({
+                  ...workingHours,
+                  [day]: { ...hours, enabled: e.target.checked }
+                })}
+                className="accent-[#E5A800]"
+              />
+              <span className={`text-[10px] sm:text-xs font-semibold w-24 text-left ${t.text}`}>{day}</span>
+            </div>
             {hours.enabled ? (
-              <>
+              <div className="flex flex-wrap items-center gap-2">
                 <input
                   type="time"
                   value={hours.start}
@@ -545,7 +547,7 @@ const handleSaveHours = async () => {
                   })}
                   className={`border ${t.border} rounded-lg px-2 py-1 text-xs outline-none focus:border-[#E5A800] ${t.input}`}
                 />
-                <span className={`text-xs ${t.subtext}`}>to</span>
+                <span className={`text-[10px] sm:text-xs ${t.subtext}`}>to</span>
                 <input
                   type="time"
                   value={hours.end}
@@ -555,7 +557,7 @@ const handleSaveHours = async () => {
                   })}
                   className={`border ${t.border} rounded-lg px-2 py-1 text-xs outline-none focus:border-[#E5A800] ${t.input}`}
                 />
-                <span className={`text-xs ${t.subtext}`}>Lunch</span>
+                <span className={`text-[10px] sm:text-xs ${t.subtext}`}>Lunch</span>
                 <select
                   value={hours.lunch}
                   onChange={(e) => setWorkingHours({
@@ -569,9 +571,9 @@ const handleSaveHours = async () => {
                   <option value="13:00">01:00 PM</option>
                   <option value="13:30">01:30 PM</option>
                 </select>
-              </>
+              </div>
             ) : (
-              <span className={`text-xs ${t.subtext}`}>Closed</span>
+              <span className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>Closed</span>
             )}
           </div>
         ))}
@@ -579,11 +581,11 @@ const handleSaveHours = async () => {
     </div>
 
     {/* Appointment Slot Settings */}
-    <div className={`${t.card} rounded-2xl shadow p-6`}>
-      <p className={`text-sm font-semibold mb-4 ${t.text}`}>Appointment Slot Settings</p>
-      <div className="grid grid-cols-3 gap-4 mb-4">
+    <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+      <p className={`text-sm font-semibold mb-4 text-left ${t.text}`}>Appointment Slot Settings</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
         <div>
-          <p className={`text-xs mb-1 ${t.subtext}`}>Slot Duration</p>
+          <p className={`text-[10px] sm:text-xs mb-1 text-left ${t.subtext}`}>Slot Duration</p>
           <select
             value={slotDuration}
             onChange={(e) => setSlotDuration(e.target.value)}
@@ -594,7 +596,7 @@ const handleSaveHours = async () => {
           </select>
         </div>
         <div>
-          <p className={`text-xs mb-1 ${t.subtext}`}>Break Between Slots</p>
+          <p className={`text-[10px] sm:text-xs mb-1 text-left ${t.subtext}`}>Break Between Slots</p>
           <select
             value={breakBetweenSlots}
             onChange={(e) => setBreakBetweenSlots(e.target.value)}
@@ -605,7 +607,7 @@ const handleSaveHours = async () => {
           </select>
         </div>
         <div>
-          <p className={`text-xs mb-1 ${t.subtext}`}>Max Appointments/Day</p>
+          <p className={`text-[10px] sm:text-xs mb-1 text-left ${t.subtext}`}>Max Appointments/Day</p>
           <input
             type="number"
             value={maxAppointments}
@@ -614,17 +616,17 @@ const handleSaveHours = async () => {
           />
         </div>
       </div>
-      <p className={`text-xs ${t.subtext}`}>
+      <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>
         ⓘ Based on your hours and duration you can host up to {Math.floor((8 * 60) / (parseInt(slotDuration) + parseInt(breakBetweenSlots)))} slots per day.
       </p>
     </div>
 
     {/* Action Buttons */}
-    <div className="flex items-center justify-end gap-4">
+    <div className="flex justify-end">
       <button
         onClick={handleSaveHours}
         disabled={hoursLoading}
-        className="bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-black font-semibold px-6 py-2 rounded-xl transition">
+        className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-black font-semibold px-6 py-2 rounded-xl transition text-center">
         {hoursLoading ? "Saving..." : "Apply Changes"}
       </button>
     </div>
