@@ -149,37 +149,37 @@ const handleSaveEdit = async () => {
   return (
     <GNLayout gnStatus={gnStatus} theme={theme}>
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-[#8B4513]">Announcement List</h1>
-        <Link to="/create-announcement"
-          className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition">
+      {/* Header - Responsive */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-[#8B4513] text-center sm:text-left">Announcement List</h1>
+        <Link to="/gn-create-announcement"
+          className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition text-sm sm:text-base">
           ＋ Create New Announcement
         </Link>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-6 mb-6">
+      {/* Stats Row - Responsive */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
         {[
           { label: "Active Notices", value: activeCount,    icon: <Megaphone size={24} className="text-gray-300" /> },
           { label: "Scheduled",      value: scheduledCount, icon: <Clock     size={24} className="text-gray-300" /> },
           { label: "Drafts",         value: draftCount,     icon: <Eye       size={24} className="text-gray-300" /> },
         ].map(({ label, value, icon }) => (
-          <div key={label} className={`${t.card} rounded-2xl shadow p-5 flex items-center justify-between`}>
+          <div key={label} className={`${t.card} rounded-2xl shadow p-4 sm:p-5 flex items-center justify-between`}>
             <div>
-              <p className={`text-xs font-semibold uppercase tracking-wide ${t.subtext}`}>{label}</p>
-              <h2 className={`text-3xl font-bold mt-1 ${t.text}`}>{loading ? "—" : value}</h2>
+              <p className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-left ${t.subtext}`}>{label}</p>
+              <h2 className={`text-2xl sm:text-3xl font-bold mt-1 text-left ${t.text}`}>{loading ? "—" : value}</h2>
             </div>
             {icon}
           </div>
         ))}
       </div>
 
-      {/* Filter Tabs */}
-      <div className={`flex gap-2 mb-4`}>
+      {/* Filter Tabs - Responsive */}
+      <div className={`flex flex-wrap gap-2 mb-4`}>
         {["All", "Active", "Scheduled", "Draft", "Expired"].map((s) => (
           <button key={s} onClick={() => { setFilterStatus(s); setCurrentPage(1); }}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold transition
+            className={`px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold transition whitespace-nowrap
               ${filterStatus === s
                 ? "bg-[#8B4513] text-white"
                 : `border ${t.border} ${t.subtext} hover:border-[#8B4513]`}`}>
@@ -188,30 +188,31 @@ const handleSaveEdit = async () => {
         ))}
       </div>
 
-      {/* Table */}
-      <div className={`${t.card} rounded-2xl shadow overflow-hidden`}>
+      {/* Table - Mobile responsive with horizontal scroll */}
+      <div className={`${t.card} rounded-2xl shadow overflow-x-auto`}>
+        <div className="min-w-[700px] md:min-w-full">
         <table className="w-full text-sm">
           <thead className={`${t.tableHead} uppercase text-xs`}>
             <tr>
-              <th className="px-6 py-3 text-left">Title</th>
-              <th className="px-6 py-3 text-left">Category</th>
-              <th className="px-6 py-3 text-left">Published</th>
-              <th className="px-6 py-3 text-left">Expires</th>
-              <th className="px-6 py-3 text-left">Status</th>
-              <th className="px-6 py-3 text-left">Actions</th>
+              <th className="px-3 sm:px-6 py-3 text-left">Title</th>
+              <th className="px-3 sm:px-6 py-3 text-left">Category</th>
+              <th className="px-3 sm:px-6 py-3 text-left">Published</th>
+              <th className="px-3 sm:px-6 py-3 text-left">Expires</th>
+              <th className="px-3 sm:px-6 py-3 text-left">Status</th>
+              <th className="px-3 sm:px-6 py-3 text-left">Actions</th>
             </tr>
           </thead>
           <tbody className={t.divider}>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
+                <td colSpan={6} className="px-3 sm:px-6 py-8 sm:py-12 text-center">
                   <Loader2 size={24} className="animate-spin text-[#E5A800] mx-auto mb-2" />
                   <p className={`text-xs ${t.subtext}`}>Loading announcements...</p>
                 </td>
               </tr>
             ) : paginated.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
+                <td colSpan={6} className="px-3 sm:px-6 py-8 sm:py-12 text-center">
                   <Megaphone size={32} className="text-gray-300 mx-auto mb-2" />
                   <p className={`text-sm font-semibold ${t.subtext}`}>No announcements found.</p>
                   <Link to="/create-announcement" className="text-xs text-[#E5A800] font-semibold hover:underline mt-1 inline-block">
@@ -224,24 +225,24 @@ const handleSaveEdit = async () => {
                 const status = getStatus(item);
                 return (
                   <tr key={item.id} className={t.tableRow}>
-                    <td className="px-6 py-4">
-                      <p className={`font-semibold ${t.text}`}>{item.title}</p>
-                      <p className={`text-xs ${t.subtext} mt-0.5`}>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <p className={`font-semibold text-left text-sm sm:text-base ${t.text}`}>{item.title}</p>
+                      <p className={`text-[10px] sm:text-xs text-left ${t.subtext} mt-0.5`}>
                         Priority: <span className={`font-bold ${item.priority === "Urgent" ? "text-red-500" : item.priority === "High" ? "text-orange-500" : "text-gray-500"}`}>
                           {item.priority || "Normal"}
                         </span>
                       </p>
                     </td>
-                    <td className={`px-6 py-4 ${t.subtext}`}>{item.category || "General"}</td>
-                    <td className={`px-6 py-4 ${t.subtext}`}>{formatDate(item.publishedAt || item.createdAt)}</td>
-                    <td className={`px-6 py-4 ${t.subtext}`}>{item.expiresAt ? formatDate(item.expiresAt) : "—"}</td>
-                    <td className="px-6 py-4">
-                      <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusStyle[status] || "bg-gray-100 text-gray-500"}`}>
+                    <td className={`px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm ${t.subtext}`}>{item.category || "General"}</td>
+                    <td className={`px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm ${t.subtext}`}>{formatDate(item.publishedAt || item.createdAt)}</td>
+                    <td className={`px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm ${t.subtext}`}>{item.expiresAt ? formatDate(item.expiresAt) : "—"}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-left">
+                      <span className={`text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-1 rounded-full whitespace-nowrap ${statusStyle[status] || "bg-gray-100 text-gray-500"}`}>
                         {status}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <div className="flex items-center gap-2 sm:gap-3">
                         <button
   onClick={() => navigate("/create-announcement", { 
   state: { 
@@ -255,12 +256,12 @@ const handleSaveEdit = async () => {
 })}
   className="text-gray-400 hover:text-blue-500 transition"
 >
-  <Pencil size={16} />
+  <Pencil size={14} className="sm:w-4 sm:h-4" />
 </button>
                         <button
                           onClick={() => setConfirmDelete(item.id)}
                           className="text-gray-400 hover:text-red-500 transition">
-                          <Trash2 size={16} />
+                          <Trash2 size={14} className="sm:w-4 sm:h-4" />
                         </button>
                       </div>
                     </td>
@@ -270,52 +271,53 @@ const handleSaveEdit = async () => {
             )}
           </tbody>
         </table>
+        </div>
 
-        {/* Pagination */}
+        {/* Pagination - Responsive */}
         {!loading && filtered.length > 0 && (
-          <div className={`px-6 py-4 flex items-center justify-between border-t ${t.border}`}>
-            <p className={`text-xs ${t.subtext}`}>
+          <div className={`px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t ${t.border}`}>
+            <p className={`text-[10px] sm:text-xs text-center sm:text-left ${t.subtext}`}>
               Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length} announcements
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}
-                className={`w-7 h-7 rounded-full ${t.tableRow} ${t.subtext} text-xs disabled:opacity-40`}>‹</button>
+                className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full ${t.tableRow} ${t.subtext} text-[10px] sm:text-xs disabled:opacity-40`}>‹</button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <button key={page} onClick={() => setCurrentPage(page)}
-                  className={`w-7 h-7 rounded-full text-xs font-bold transition
+                  className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full text-[10px] sm:text-xs font-bold transition
                     ${currentPage === page ? "bg-[#E5A800] text-black" : `${t.tableRow} ${t.subtext}`}`}>
                   {page}
                 </button>
               ))}
               <button onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-                className={`w-7 h-7 rounded-full ${t.tableRow} ${t.subtext} text-xs disabled:opacity-40`}>›</button>
+                className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full ${t.tableRow} ${t.subtext} text-[10px] sm:text-xs disabled:opacity-40`}>›</button>
             </div>
           </div>
         )}
       </div>
 
-      {/* ── Edit Modal ── */}
+      {/* ── Edit Modal - Responsive ── */}
       {editingItem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className={`${t.card} rounded-2xl shadow-2xl w-full max-w-lg`}>
-            <div className={`flex items-center justify-between p-5 border-b ${t.border}`}>
-              <h2 className={`text-base font-bold ${t.text}`}>Edit Announcement</h2>
+          <div className={`${t.card} rounded-2xl shadow-2xl w-full max-w-[90%] sm:max-w-lg`}>
+            <div className={`flex items-center justify-between p-4 sm:p-5 border-b ${t.border}`}>
+              <h2 className={`text-sm sm:text-base font-bold text-left ${t.text}`}>Edit Announcement</h2>
               <button onClick={() => setEditingItem(null)} className={`${t.subtext} hover:text-gray-600`}>
                 <X size={18} />
               </button>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-4 sm:p-5 space-y-4">
               {/* Title */}
               <div>
-                <label className={`text-xs font-bold uppercase tracking-wide mb-1 block ${t.subtext}`}>Title</label>
+                <label className={`text-[10px] sm:text-xs font-bold uppercase tracking-wide mb-1 block text-left ${t.subtext}`}>Title</label>
                 <input type="text" value={editForm.title}
                   onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                   className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
               </div>
               {/* Category + Priority */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className={`text-xs font-bold uppercase tracking-wide mb-1 block ${t.subtext}`}>Category</label>
+                  <label className={`text-[10px] sm:text-xs font-bold uppercase tracking-wide mb-1 block text-left ${t.subtext}`}>Category</label>
                   <select value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
                     className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
                     {["General","Emergency","Event","Health","Education","Infrastructure","Other"].map((c) => (
@@ -324,7 +326,7 @@ const handleSaveEdit = async () => {
                   </select>
                 </div>
                 <div>
-                  <label className={`text-xs font-bold uppercase tracking-wide mb-1 block ${t.subtext}`}>Priority</label>
+                  <label className={`text-[10px] sm:text-xs font-bold uppercase tracking-wide mb-1 block text-left ${t.subtext}`}>Priority</label>
                   <select value={editForm.priority} onChange={(e) => setEditForm({ ...editForm, priority: e.target.value })}
                     className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
                     {["Normal","High","Urgent"].map((p) => (
@@ -335,26 +337,26 @@ const handleSaveEdit = async () => {
               </div>
               {/* Description */}
               <div>
-                <label className={`text-xs font-bold uppercase tracking-wide mb-1 block ${t.subtext}`}>Description</label>
+                <label className={`text-[10px] sm:text-xs font-bold uppercase tracking-wide mb-1 block text-left ${t.subtext}`}>Description</label>
                 <textarea value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                   rows={4} className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] resize-none ${t.input}`} />
               </div>
               {/* Expiry Date */}
               <div>
-                <label className={`text-xs font-bold uppercase tracking-wide mb-1 block ${t.subtext}`}>Expiry Date</label>
+                <label className={`text-[10px] sm:text-xs font-bold uppercase tracking-wide mb-1 block text-left ${t.subtext}`}>Expiry Date</label>
                 <input type="date" value={editForm.expiryDate}
                   onChange={(e) => setEditForm({ ...editForm, expiryDate: e.target.value })}
                   className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
               </div>
             </div>
-            <div className={`flex justify-end gap-3 px-5 pb-5`}>
+            <div className={`flex justify-end gap-3 px-4 sm:px-5 pb-4 sm:pb-5`}>
               <button onClick={() => setEditingItem(null)}
-                className={`text-sm font-semibold px-4 py-2 rounded-xl border ${t.border} ${t.subtext} hover:bg-gray-100 transition`}>
+                className={`text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-xl border ${t.border} ${t.subtext} hover:bg-gray-100 transition`}>
                 Cancel
               </button>
               <button onClick={handleSaveEdit} disabled={saving}
-                className="text-sm font-semibold px-4 py-2 rounded-xl bg-[#E5A800] hover:bg-[#cc9600] text-black disabled:opacity-60 flex items-center gap-2 transition">
+                className="text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-xl bg-[#E5A800] hover:bg-[#cc9600] text-black disabled:opacity-60 flex items-center gap-2 transition">
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                 {saving ? "Saving..." : "Save Changes"}
               </button>
@@ -363,22 +365,22 @@ const handleSaveEdit = async () => {
         </div>
       )}
 
-      {/* ── Delete Confirm Modal ── */}
+      {/* ── Delete Confirm Modal - Responsive ── */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className={`${t.card} rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center`}>
-            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-              <Trash2 size={22} className="text-red-500" />
+          <div className={`${t.card} rounded-2xl shadow-2xl w-full max-w-[90%] sm:max-w-sm p-5 sm:p-6 text-center`}>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <Trash2 size={18} className="sm:w-[22px] sm:h-[22px] text-red-500" />
             </div>
-            <h2 className={`text-base font-bold mb-2 ${t.text}`}>Delete Announcement?</h2>
-            <p className={`text-xs ${t.subtext} mb-5`}>This action cannot be undone. The announcement will be permanently removed.</p>
+            <h2 className={`text-sm sm:text-base font-bold mb-2 text-center ${t.text}`}>Delete Announcement?</h2>
+            <p className={`text-[10px] sm:text-xs text-center ${t.subtext} mb-4 sm:mb-5`}>This action cannot be undone. The announcement will be permanently removed.</p>
             <div className="flex gap-3 justify-center">
               <button onClick={() => setConfirmDelete(null)}
-                className={`px-5 py-2 rounded-xl border ${t.border} text-sm font-semibold ${t.subtext} hover:bg-gray-100 transition`}>
+                className={`px-4 sm:px-5 py-2 rounded-xl border ${t.border} text-xs sm:text-sm font-semibold ${t.subtext} hover:bg-gray-100 transition`}>
                 Cancel
               </button>
               <button onClick={() => handleDelete(confirmDelete)} disabled={!!deletingId}
-                className="px-5 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold disabled:opacity-60 flex items-center gap-2 transition">
+                className="px-4 sm:px-5 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm font-semibold disabled:opacity-60 flex items-center gap-2 transition">
                 {deletingId ? <Loader2 size={14} className="animate-spin" /> : null}
                 {deletingId ? "Deleting..." : "Delete"}
               </button>
