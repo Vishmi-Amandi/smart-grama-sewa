@@ -73,7 +73,7 @@ const Home = () => {
             {t('hero_desc')}
           </p>
           {/* CLEANED UP: Single link structure */}
-          <Link to="/login" className="bg-[#FFCB05] text-black px-10 py-3 rounded-full font-bold hover:bg-yellow-500 transition inline-block">
+          <Link to="/gn-login" className="bg-[#FFCB05] text-black px-10 py-3 rounded-full font-bold hover:bg-yellow-500 transition inline-block">
             {t('btn_get_started')}
           </Link>
         </div>

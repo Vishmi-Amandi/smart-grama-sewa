@@ -211,17 +211,17 @@ useEffect(() => {
   return (
     <GNLayout gnStatus={gnStatus} theme={theme}>
 
-      <h1 className="text-2xl font-bold text-[#8B4513] mb-4">Profile</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-[#8B4513] mb-4 text-center sm:text-left">Profile</h1>
 
-      {/* Tabs */}
-      <div className={`flex gap-6 border-b ${t.border} mb-6`}>
+      {/* Tabs - Responsive */}
+      <div className={`flex flex-wrap gap-3 sm:gap-6 border-b ${t.border} mb-6`}>
         {[
           { key: "personal", label: "Personal Info" },
           { key: "office",   label: "Office Details" },
           { key: "activity", label: "Activity Log" },
         ].map((tab) => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-            className={`pb-3 text-sm font-semibold border-b-2 transition
+            className={`pb-3 text-xs sm:text-sm font-semibold border-b-2 transition
               ${activeTab === tab.key ? "border-[#8B4513] text-[#8B4513]" : `border-transparent ${t.subtext} hover:text-gray-600`}`}>
             {tab.label}
           </button>
@@ -231,9 +231,10 @@ useEffect(() => {
       {/* ── Personal Info ── */}
       {activeTab === "personal" && (
         <div>
-          <h2 className={`text-xl font-bold mb-4 ${t.text}`}>Personal Information</h2>
+          <h2 className={`text-lg sm:text-xl font-bold mb-4 text-left ${t.text}`}>Personal Information</h2>
 
-          <div className={`${t.card} rounded-2xl shadow p-6 flex items-center gap-4 mb-6`}>
+          {/* Avatar Card */}
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6 flex flex-col sm:flex-row items-center gap-4 mb-6`}>
             <div className="w-16 h-16 rounded-full bg-gray-300 overflow-hidden flex-shrink-0">
               {userData?.photoURL ? (
                 <img src={userData.photoURL} alt="avatar" className="w-full h-full object-cover" />
@@ -243,18 +244,19 @@ useEffect(() => {
                 </div>
               )}
             </div>
-            <div>
-              <h3 className={`text-lg font-bold ${t.text}`}>{safeStr(userData?.fullName)}</h3>
-              <p className={`text-sm ${t.subtext}`}>Grama Niladhari Officer</p>
-              <p className={`text-xs ${t.subtext}`}>📍 GN Division: {safeStr(userData?.gnDivisionName)}</p>
+            <div className="text-center sm:text-left">
+              <h3 className={`text-base sm:text-lg font-bold ${t.text}`}>{safeStr(userData?.fullName)}</h3>
+              <p className={`text-xs sm:text-sm ${t.subtext}`}>Grama Niladhari Officer</p>
+              <p className={`text-[10px] sm:text-xs ${t.subtext}`}>📍 GN Division: {safeStr(userData?.gnDivisionName)}</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6 mb-6">
+          {/* Personal Info Grids */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
             {/* Basic Identification */}
-            <div className={`${t.card} rounded-2xl shadow p-6`}>
-              <p className={`text-xs font-semibold uppercase tracking-wide mb-4 ${t.subtext}`}>👤 Basic Identification</p>
-              <div className="grid grid-cols-2 gap-4">
+            <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+              <p className={`text-xs font-semibold uppercase tracking-wide mb-4 text-left ${t.subtext}`}>👤 Basic Identification</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {[
                   { label: "Full Name",          value: safeStr(userData?.fullName) },
                   { label: "Name with Initials", value: generateInitials(userData?.fullName) },
@@ -263,28 +265,28 @@ useEffect(() => {
                   { label: "Gender",             value: safeStr(userData?.gender) },
                 ].map((item) => (
                   <div key={item.label}>
-                    <p className={`text-xs ${t.subtext}`}>{item.label}</p>
-                    <p className={`text-sm font-semibold ${t.text}`}>{item.value}</p>
+                    <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>{item.label}</p>
+                    <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>{item.value}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Contact Details */}
-            <div className={`${t.card} rounded-2xl shadow p-6`}>
-              <p className={`text-xs font-semibold uppercase tracking-wide mb-4 ${t.subtext}`}>📞 Contact Details</p>
-              <div className="space-y-4">
+            <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+              <p className={`text-xs font-semibold uppercase tracking-wide mb-4 text-left ${t.subtext}`}>📞 Contact Details</p>
+              <div className="space-y-3 sm:space-y-4">
                 {[
                   { icon: "📱", label: "Mobile Number",  value: safeStr(userData?.mobile) },
                   { icon: "📞", label: "Office Number",  value: safeStr(userData?.officeMobile) },
                   { icon: "📧", label: "Personal Email", value: safeStr(userData?.email) },
                   { icon: "🏢", label: "Office Email",   value: safeStr(userData?.officialEmail) },
                 ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-3">
-                    <span className="text-lg">{item.icon}</span>
+                  <div key={item.label} className="flex items-center gap-2 sm:gap-3">
+                    <span className="text-base sm:text-lg">{item.icon}</span>
                     <div>
-                      <p className={`text-xs ${t.subtext}`}>{item.label}</p>
-                      <p className={`text-sm font-semibold ${t.text}`}>{item.value}</p>
+                      <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>{item.label}</p>
+                      <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>{item.value}</p>
                     </div>
                   </div>
                 ))}
@@ -292,39 +294,40 @@ useEffect(() => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          {/* Bottom Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Residential Address */}
-            <div className={`${t.card} rounded-2xl shadow p-6`}>
-              <p className={`text-xs font-semibold uppercase tracking-wide mb-4 ${t.subtext}`}>🏠 Residential Addresses</p>
-              <p className={`text-xs mb-1 ${t.subtext}`}>Permanent Address</p>
-              <p className={`text-sm font-semibold ${t.text}`}>{safeStr(userData?.address)}</p>
+            <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+              <p className={`text-xs font-semibold uppercase tracking-wide mb-4 text-left ${t.subtext}`}>🏠 Residential Addresses</p>
+              <p className={`text-[10px] sm:text-xs mb-1 text-left ${t.subtext}`}>Permanent Address</p>
+              <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>{safeStr(userData?.address)}</p>
             </div>
 
             {/* System & Status */}
-            <div className={`${t.card} rounded-2xl shadow p-6`}>
-              <p className={`text-xs font-semibold uppercase tracking-wide mb-4 ${t.subtext}`}>⚙️ System & Status</p>
+            <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+              <p className={`text-xs font-semibold uppercase tracking-wide mb-4 text-left ${t.subtext}`}>⚙️ System & Status</p>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className={`text-xs ${t.subtext}`}>Current Status</p>
+                  <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>Current Status</p>
                   <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full
                       ${gnStatus === "Available"  ? "bg-green-400"  : ""}
                       ${gnStatus === "In Meeting" ? "bg-orange-400" : ""}
                       ${gnStatus === "On Field"   ? "bg-red-400"    : ""}`} />
-                    <span className="text-sm font-semibold">{gnStatus}</span>
+                    <span className="text-xs sm:text-sm font-semibold text-right">{gnStatus}</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <p className={`text-xs ${t.subtext}`}>Member Since</p>
-                  <p className={`text-sm font-semibold ${t.text}`}>
+                  <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>Member Since</p>
+                  <p className={`text-xs sm:text-sm font-semibold text-right ${t.text}`}>
                     {userData?.createdAt?.seconds
                       ? new Date(userData.createdAt.seconds * 1000).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
                       : "N/A"}
                   </p>
                 </div>
                 <div className="flex items-center justify-between">
-                  <p className={`text-xs ${t.subtext}`}>Last Login</p>
-                  <p className={`text-sm font-semibold ${t.text}`}>
+                  <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>Last Login</p>
+                  <p className={`text-xs sm:text-sm font-semibold text-right ${t.text}`}>
                     {userData?.lastLogin?.seconds
                       ? new Date(userData.lastLogin.seconds * 1000).toLocaleString("en-US", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })
                       : "N/A"}
@@ -339,12 +342,12 @@ useEffect(() => {
       {/* ── Office Details ── */}
       {activeTab === "office" && (
         <div>
-          <h2 className={`text-xl font-bold mb-4 ${t.text}`}>Office Details</h2>
+          <h2 className={`text-lg sm:text-xl font-bold mb-4 text-left ${t.text}`}>Office Details</h2>
 
           {/* GN Division Information */}
-          <div className={`${t.card} rounded-2xl shadow p-6 mb-6`}>
-            <p className={`text-sm font-semibold mb-4 ${t.text}`}>🏢 GN Division Information</p>
-            <div className="grid grid-cols-2 gap-4">
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6 mb-4 sm:mb-6`}>
+            <p className={`text-xs sm:text-sm font-semibold mb-4 text-left ${t.text}`}>🏢 GN Division Information</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {[
                 { label: "GN Division Name", value: safeStr(userData?.gnDivisionName) },
                 { label: "GN Code",          value: safeStr(userData?.gnCode) },
@@ -353,19 +356,19 @@ useEffect(() => {
                 { label: "Province",         value: safeStr(userData?.province) },
               ].map((item) => (
                 <div key={item.label}>
-                  <p className={`text-xs ${t.subtext}`}>{item.label}</p>
-                  <p className={`text-sm font-semibold ${t.text}`}>{item.value}</p>
+                  <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>{item.label}</p>
+                  <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>{item.value}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
 
             {/* Jurisdiction Details */}
-            <div className={`${t.card} rounded-2xl shadow p-6`}>
+            <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
               <div className="flex items-center justify-between mb-4">
-                <p className={`text-sm font-semibold ${t.text}`}>📍 Jurisdiction Details</p>
+                <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>📍 Jurisdiction Details</p>
                 <button
                   onClick={() => {
                     setJurisdictionForm({
@@ -376,21 +379,21 @@ useEffect(() => {
                     });
                     setEditingJurisdiction(true);
                   }}
-                  className="flex items-center gap-1 text-xs text-[#8B4513] border border-[#8B4513] px-2 py-1 rounded-lg hover:bg-[#8B4513] hover:text-white transition">
+                  className="flex items-center gap-1 text-[10px] sm:text-xs text-[#8B4513] border border-[#8B4513] px-1.5 sm:px-2 py-1 rounded-lg hover:bg-[#8B4513] hover:text-white transition">
                   <Pencil size={10} /> Edit
                 </button>
               </div>
 
               {editingJurisdiction ? (
-                <div className={`p-4 border ${t.border} rounded-xl space-y-3`}>
-                  <div className="grid grid-cols-3 gap-3">
+                <div className={`p-3 sm:p-4 border ${t.border} rounded-xl space-y-3`}>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {[
                       { key: "totalVillages", label: "Total Villages", placeholder: "e.g. 12" },
                       { key: "population",    label: "Population",     placeholder: "e.g. 5000" },
                       { key: "totalFamilies", label: "Total Families", placeholder: "e.g. 1200" },
                     ].map(({ key, label, placeholder }) => (
                       <div key={key}>
-                        <p className={`text-xs font-semibold mb-1 ${t.subtext}`}>{label}</p>
+                        <p className={`text-[10px] sm:text-xs font-semibold mb-1 text-left ${t.subtext}`}>{label}</p>
                         <input type="number" value={jurisdictionForm[key]}
                           onChange={(e) => setJurisdictionForm({ ...jurisdictionForm, [key]: e.target.value })}
                           placeholder={placeholder}
@@ -400,8 +403,8 @@ useEffect(() => {
                   </div>
 
                   <div>
-                    <p className={`text-xs font-semibold mb-1 ${t.subtext}`}>Villages</p>
-                    <div className="flex gap-2 mb-2">
+                    <p className={`text-[10px] sm:text-xs font-semibold mb-1 text-left ${t.subtext}`}>Villages</p>
+                    <div className="flex flex-col sm:flex-row gap-2 mb-2">
                       <input type="text" value={villageInput}
                         onChange={(e) => setVillageInput(e.target.value)}
                         onKeyDown={(e) => {
@@ -425,7 +428,7 @@ useEffect(() => {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {jurisdictionForm.villages.map((v, i) => (
-                        <span key={i} className="flex items-center gap-1 bg-[#E5A800] text-black text-xs font-semibold px-3 py-1 rounded-full">
+                        <span key={i} className="flex items-center gap-1 bg-[#E5A800] text-black text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-1 rounded-full">
                           {v}
                           <button onClick={() => setJurisdictionForm((p) => ({ ...p, villages: p.villages.filter((_, idx) => idx !== i) }))}
                             className="ml-1 hover:text-red-700 font-bold">✕</button>
@@ -436,38 +439,38 @@ useEffect(() => {
 
                   <div className="flex gap-2 justify-end">
                     <button onClick={() => setEditingJurisdiction(false)}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg border ${t.border} ${t.subtext} hover:bg-gray-100 transition`}>
+                      className={`text-[10px] sm:text-xs font-semibold px-3 py-1.5 rounded-lg border ${t.border} ${t.subtext} hover:bg-gray-100 transition`}>
                       Cancel
                     </button>
                     <button onClick={handleSaveJurisdiction} disabled={savingJurisdiction}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#E5A800] text-black hover:bg-[#cc9600] disabled:opacity-60 transition">
+                      className="text-[10px] sm:text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#E5A800] text-black hover:bg-[#cc9600] disabled:opacity-60 transition">
                       {savingJurisdiction ? "Saving..." : "Save"}
                     </button>
                   </div>
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-4">
                     {[
                       { label: "Total Villages", value: safeStr(userData?.totalVillages) },
                       { label: "Population",     value: safeStr(userData?.population) },
                       { label: "Total Families", value: safeStr(userData?.totalFamilies) },
                     ].map((item) => (
                       <div key={item.label} className={`${theme === "dark" ? "bg-gray-700" : "bg-gray-50"} rounded-xl p-3 text-center`}>
-                        <p className={`text-xs ${t.subtext}`}>{item.label}</p>
-                        <p className={`text-2xl font-bold ${t.text}`}>{item.value}</p>
+                        <p className={`text-[10px] sm:text-xs text-center ${t.subtext}`}>{item.label}</p>
+                        <p className={`text-base sm:text-2xl font-bold text-center ${t.text}`}>{item.value}</p>
                       </div>
                     ))}
                   </div>
-                  <p className={`text-xs mb-2 ${t.subtext}`}>Villages under Division:</p>
+                  <p className={`text-[10px] sm:text-xs mb-2 text-left ${t.subtext}`}>Villages under Division:</p>
                   <div className="flex flex-wrap gap-2">
                     {Array.isArray(userData?.villages) && userData.villages.length > 0
                       ? userData.villages.map((v, i) => (
-                          <span key={i} className="bg-[#E5A800] text-black text-xs font-semibold px-3 py-1 rounded-full">
+                          <span key={i} className="bg-[#E5A800] text-black text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-1 rounded-full">
                             {safeStr(v)}
                           </span>
                         ))
-                      : <span className={`text-xs ${t.subtext}`}>No villages added yet</span>
+                      : <span className={`text-[10px] sm:text-xs ${t.subtext}`}>No villages added yet</span>
                     }
                   </div>
                 </>
@@ -475,33 +478,33 @@ useEffect(() => {
             </div>
 
             {/* Right Column */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4 sm:gap-6">
 
               {/* Office Address */}
-              <div className={`${t.card} rounded-2xl shadow p-6`}>
+              <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
                 <div className="flex items-center justify-between mb-3">
-                  <p className={`text-sm font-semibold ${t.text}`}>🏢 Office Details</p>
+                  <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>🏢 Office Details</p>
                   <button
                     onClick={() => {
                       setLocationForm({ officeAddress: typeof userData?.officeAddress === "string" ? userData.officeAddress : "" });
                       setEditingLocation(true);
                     }}
-                    className="flex items-center gap-1 text-xs text-[#8B4513] border border-[#8B4513] px-2 py-1 rounded-lg hover:bg-[#8B4513] hover:text-white transition">
+                    className="flex items-center gap-1 text-[10px] sm:text-xs text-[#8B4513] border border-[#8B4513] px-1.5 sm:px-2 py-1 rounded-lg hover:bg-[#8B4513] hover:text-white transition">
                     <Pencil size={10} /> Edit Address
                   </button>
                 </div>
 
                 {!editingLocation && (
                   <>
-                    <p className={`text-xs ${t.subtext}`}>Office Address</p>
-                    <p className={`text-sm font-semibold ${t.text}`}>{safeStr(userData?.officeAddress, "No address set. Click Edit Address to add.")}</p>
+                    <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>Office Address</p>
+                    <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>{safeStr(userData?.officeAddress, "No address set. Click Edit Address to add.")}</p>
                   </>
                 )}
 
                 {editingLocation && (
-                  <div className={`p-4 border ${t.border} rounded-xl space-y-3`}>
+                  <div className={`p-3 sm:p-4 border ${t.border} rounded-xl space-y-3`}>
                     <div>
-                      <p className={`text-xs font-semibold mb-1 ${t.subtext}`}>Office Address</p>
+                      <p className={`text-[10px] sm:text-xs font-semibold mb-1 text-left ${t.subtext}`}>Office Address</p>
                       <textarea
                         value={locationForm.officeAddress}
                         onChange={(e) => setLocationForm({ ...locationForm, officeAddress: e.target.value })}
@@ -511,11 +514,11 @@ useEffect(() => {
                     </div>
                     <div className="flex gap-2 justify-end">
                       <button onClick={() => setEditingLocation(false)}
-                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg border ${t.border} ${t.subtext} hover:bg-gray-100 transition`}>
+                        className={`text-[10px] sm:text-xs font-semibold px-3 py-1.5 rounded-lg border ${t.border} ${t.subtext} hover:bg-gray-100 transition`}>
                         Cancel
                       </button>
                       <button onClick={handleSaveLocation} disabled={savingLocation}
-                        className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#E5A800] text-black hover:bg-[#cc9600] disabled:opacity-60 transition">
+                        className="text-[10px] sm:text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#E5A800] text-black hover:bg-[#cc9600] disabled:opacity-60 transition">
                         {savingLocation ? "Saving..." : "Save"}
                       </button>
                     </div>
@@ -524,33 +527,33 @@ useEffect(() => {
               </div>
 
               {/* Working Hours */}
-              <div className={`${t.card} rounded-2xl shadow p-6`}>
+              <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
                 <div className="flex items-center justify-between mb-3">
-                  <p className={`text-sm font-semibold ${t.text}`}>⏰ Working Hours</p>
+                  <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>⏰ Working Hours</p>
                   <button
   onClick={() => navigate("/settings?tab=hours")}
-  className="flex items-center gap-1 text-xs text-[#8B4513] border border-[#8B4513] px-2 py-1 rounded-lg hover:bg-[#8B4513] hover:text-white transition">
+  className="flex items-center gap-1 text-[10px] sm:text-xs text-[#8B4513] border border-[#8B4513] px-1.5 sm:px-2 py-1 rounded-lg hover:bg-[#8B4513] hover:text-white transition">
   <Pencil size={10} /> Edit
 </button>
                 </div>
 
                 {editingHours ? (
-                  <div className={`p-4 border ${t.border} rounded-xl space-y-3`}>
+                  <div className={`p-3 sm:p-4 border ${t.border} rounded-xl space-y-3`}>
                     {[
                       { label: "Mon - Fri", key: "monFri" },
                       { label: "Saturday",  key: "saturday" },
                       { label: "Sunday",    key: "sunday" },
                     ].map(({ label, key }) => (
-                      <div key={key} className="flex items-center gap-3">
-                        <p className={`text-xs font-semibold w-20 ${t.subtext}`}>{label}</p>
+                      <div key={key} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                        <p className={`text-[10px] sm:text-xs font-semibold w-20 text-left ${t.subtext}`}>{label}</p>
                         <input type="text" value={hoursForm[key]}
                           onChange={(e) => setHoursForm({ ...hoursForm, [key]: e.target.value })}
                           placeholder='e.g. 08:30 - 16:30 or "Closed"'
-                          className={`flex-1 border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
+                          className={`flex-1 w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
                       </div>
                     ))}
                     <div>
-                      <p className={`text-xs font-semibold mb-1 ${t.subtext}`}>Special Notes</p>
+                      <p className={`text-[10px] sm:text-xs font-semibold mb-1 text-left ${t.subtext}`}>Special Notes</p>
                       <textarea value={hoursForm.notes}
                         onChange={(e) => setHoursForm({ ...hoursForm, notes: e.target.value })}
                         placeholder="e.g. Office closed on public holidays..."
@@ -559,11 +562,11 @@ useEffect(() => {
                     </div>
                     <div className="flex gap-2 justify-end">
                       <button onClick={() => setEditingHours(false)}
-                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg border ${t.border} ${t.subtext} hover:bg-gray-100 transition`}>
+                        className={`text-[10px] sm:text-xs font-semibold px-3 py-1.5 rounded-lg border ${t.border} ${t.subtext} hover:bg-gray-100 transition`}>
                         Cancel
                       </button>
                       <button onClick={handleSaveHours} disabled={savingHours}
-                        className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#E5A800] text-black hover:bg-[#cc9600] disabled:opacity-60 transition">
+                        className="text-[10px] sm:text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#E5A800] text-black hover:bg-[#cc9600] disabled:opacity-60 transition">
                         {savingHours ? "Saving..." : "Save"}
                       </button>
                     </div>
@@ -572,7 +575,7 @@ useEffect(() => {
                   <>
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className={`text-xs uppercase ${t.subtext}`}>
+                        <tr className={`text-[10px] sm:text-xs uppercase ${t.subtext}`}>
                           <th className="text-left pb-2">Day</th>
                           <th className="text-left pb-2">Hours</th>
                         </tr>
@@ -586,8 +589,8 @@ useEffect(() => {
                           const display = safeHours(value, day === "Sunday" ? "Closed" : day === "Saturday" ? "09:00 - 13:00" : "08:30 - 16:30");
                           return (
                             <tr key={day}>
-                              <td className={`py-2 ${t.subtext}`}>{day}</td>
-                              <td className={`py-2 font-semibold ${display === "Closed" ? "text-red-500" : t.text}`}>{display}</td>
+                              <td className={`py-2 text-left text-[10px] sm:text-xs ${t.subtext}`}>{day}</td>
+                              <td className={`py-2 font-semibold text-left text-[10px] sm:text-xs ${display === "Closed" ? "text-red-500" : t.text}`}>{display}</td>
                             </tr>
                           );
                         })}
@@ -596,8 +599,8 @@ useEffect(() => {
 
                     {userData?.workingHours?.notes && typeof userData.workingHours.notes === "string" && userData.workingHours.notes.trim() && (
                       <div className={`mt-3 p-3 rounded-xl ${theme === "dark" ? "bg-gray-700" : "bg-amber-50"} border border-[#E5A800]/30`}>
-                        <p className="text-xs font-bold text-[#8B4513] mb-1">📝 Special Notes</p>
-                        <p className={`text-xs ${t.subtext}`}>{userData.workingHours.notes}</p>
+                        <p className="text-[10px] sm:text-xs font-bold text-[#8B4513] mb-1 text-left">📝 Special Notes</p>
+                        <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>{userData.workingHours.notes}</p>
                       </div>
                     )}
                   </>
@@ -612,29 +615,29 @@ useEffect(() => {
       {/* ── Activity Log ── */}
 {activeTab === "activity" && (
   <div>
-    <h2 className={`text-xl font-bold mb-4 ${t.text}`}>Activity Log</h2>
+    <h2 className={`text-lg sm:text-xl font-bold mb-4 text-left ${t.text}`}>Activity Log</h2>
 
-    {/* Stats */}
-    <div className="grid grid-cols-3 gap-4 mb-6">
+    {/* Stats - Responsive */}
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
       {[
         { label: "Total Activities", value: activities.length },
         { label: "Announcements",    value: activities.filter((a) => a.type === "announcement").length },
         { label: "Change GN Division",        value: activities.filter((a) => a.type === "change").length },
       ].map((item) => (
-        <div key={item.label} className={`${t.card} rounded-2xl shadow p-5`}>
-          <p className={`text-xs ${t.subtext} mb-1`}>{item.label}</p>
-          <p className={`text-3xl font-bold text-[#8B4513]`}>
+        <div key={item.label} className={`${t.card} rounded-2xl shadow p-4 sm:p-5 text-center sm:text-left`}>
+          <p className={`text-[10px] sm:text-xs text-center sm:text-left ${t.subtext} mb-1`}>{item.label}</p>
+          <p className={`text-2xl sm:text-3xl font-bold text-[#8B4513] text-center sm:text-left`}>
             {activityLoading ? "—" : item.value}
           </p>
         </div>
       ))}
     </div>
 
-    {/* Filter Tabs */}
-    <div className="flex gap-2 mb-4">
+    {/* Filter Tabs - Responsive */}
+    <div className="flex flex-wrap gap-2 mb-4">
       {["All", "announcement", "change"].map((f) => (
         <button key={f} onClick={() => setActivityFilter(f)}
-          className={`px-4 py-1.5 rounded-full text-xs font-bold capitalize transition
+          className={`px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold capitalize transition
             ${activityFilter === f
               ? "bg-[#8B4513] text-white"
               : `border ${t.border} ${t.subtext} hover:border-[#8B4513]`}`}>
@@ -644,7 +647,7 @@ useEffect(() => {
     </div>
 
     {/* Activity Feed */}
-    <div className={`${t.card} rounded-2xl shadow p-5`}>
+    <div className={`${t.card} rounded-2xl shadow p-4 sm:p-5`}>
       {activityLoading ? (
         <div className="flex items-center justify-center py-12 gap-2">
           <Loader2 size={20} className="animate-spin text-[#E5A800]" />
@@ -652,9 +655,9 @@ useEffect(() => {
         </div>
       ) : (activityFilter === "All" ? activities : activities.filter((a) => a.type === activityFilter)).length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-4xl mb-3">📋</p>
-          <p className={`text-sm font-semibold ${t.subtext}`}>No activities recorded yet.</p>
-          <p className={`text-xs mt-1 ${t.subtext}`}>
+          <p className="text-3xl sm:text-4xl mb-3">📋</p>
+          <p className={`text-xs sm:text-sm font-semibold ${t.subtext}`}>No activities recorded yet.</p>
+          <p className={`text-[10px] sm:text-xs mt-1 ${t.subtext}`}>
             Activities will appear here when you publish announcements or submit change Gn division requests.
           </p>
         </div>
@@ -664,8 +667,8 @@ useEffect(() => {
             ? activities
             : activities.filter((a) => a.type === activityFilter)
           ).map((item) => (
-            <div key={item.id} className={`flex items-center gap-4 border ${t.border} rounded-xl px-4 py-3`}>
-              <p className={`text-xs w-24 flex-shrink-0 ${t.subtext}`}>
+            <div key={item.id} className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 border ${t.border} rounded-xl px-3 sm:px-4 py-3`}>
+              <p className={`text-[10px] sm:text-xs w-full sm:w-24 flex-shrink-0 text-left sm:text-left ${t.subtext}`}>
                 {item.createdAt?.toDate?.()?.toLocaleString("en-US", {
                   month: "short", day: "numeric",
                   hour: "2-digit", minute: "2-digit"
@@ -676,10 +679,10 @@ useEffect(() => {
                 item.type === "change"     ? "bg-orange-400" : "bg-gray-300"
               }`} />
               <div className="flex-1">
-                <p className={`text-sm font-semibold ${t.text}`}>{item.title}</p>
-                <p className={`text-xs ${t.subtext}`}>{item.description}</p>
+                <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>{item.title}</p>
+                <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>{item.description}</p>
               </div>
-              <span className={`text-xs font-semibold px-3 py-1 rounded-full flex-shrink-0 ${
+              <span className={`text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-1 rounded-full flex-shrink-0 self-start sm:self-center ${
                 item.type === "announcement" ? "bg-blue-100 text-blue-600"     :
                 item.type === "change"     ? "bg-orange-100 text-orange-600" :
                                                "bg-gray-100 text-gray-600"
