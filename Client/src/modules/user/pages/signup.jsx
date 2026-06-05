@@ -293,7 +293,7 @@ const Step1 = ({ data, onChange, onNext }) => {
     if (!data.nic.trim())       e.nic = 'NIC number is required.';
     else if (!/^(\d{9}[VvXx]|\d{12})$/.test(data.nic.trim()))
       e.nic = 'Enter a valid NIC (9 digits+V/X or 12 digits).';
-    else if (!nicAvailable)     e.nic = 'This NIC is already registered.';
+    else if (!nicAvailable)     e.nic = 'This NIC is already registered. Please contact support.';
     if (!data.dob)              e.dob = 'Date of birth is required.';
     if (!data.address.trim())   e.address = 'Home address is required.';
     setErrors(e);
