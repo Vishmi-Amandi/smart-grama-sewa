@@ -12,7 +12,7 @@ import {
 
 import {
   LayoutDashboard, ArrowLeftRight, BarChart2, UserCheck,
-  Activity, Megaphone, Bell, Search, ChevronDown, User,
+  Activity, Megaphone, Calendar, Bell, Search, ChevronDown, User,
   TrendingUp, Clock, CheckCircle, XCircle, RefreshCw,
   Loader2, AlertCircle, LogOut,
 } from 'lucide-react';
@@ -64,7 +64,7 @@ function fmtNumber(n) {
 function Skeleton({ className = '' }) {
   return (
     <div className={`animate-pulse rounded-lg ${className}`}
-      style={{ background: 'rgba(255,255,255,0.18)' }} />
+      style={{ background: 'rgba(255,255,255,0.18)', animation: 'pulse 1.5s ease-in-out infinite' }} />
   );
 }
 
@@ -131,7 +131,7 @@ function NavItem({ icon: Icon, label, active, bold, onClick }) {
   return (
     <li onClick={onClick}
       className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer transition-all ${
-        active ? 'bg-amber-700 text-white font-bold'
+        active  ? 'bg-amber-700 text-white font-bold'
         : bold  ? 'text-amber-900 font-bold hover:bg-amber-100'
                 : 'text-amber-800 hover:bg-amber-100'
       }`}
@@ -156,29 +156,33 @@ function Sidebar({ onLogout }) {
 
       {/* Nav links */}
       <ul className="flex flex-col gap-1 flex-1">
-        <NavItem icon={LayoutDashboard} label="Dashboard" active />
+        <NavItem icon={LayoutDashboard} label="Dashboard" active 
+        onClick={() => navigate('/admin/dashboard')} />
 
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
           GN management
         </li>
         <NavItem icon={UserCheck}      label="Registration Requests"
-          onClick={() => navigate('/admin/gn-management/registrations')} />
+          onClick={() => navigate('/admin/registrationrequestapproval')} />
         <NavItem icon={ArrowLeftRight} label="Transfer Request"
-          onClick={() => navigate('/admin/gn-management/transfers')} />
-
+          onClick={() => navigate('/admin/transferrequestapproval')} />
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
           Reports
         </li>
         <NavItem icon={BarChart2} label="System reports"
           onClick={() => navigate('/admin/reports/system')} />
         <NavItem icon={User}      label="Individual user access"
-          onClick={() => navigate('/admin/reports/user-access')} />
+          onClick={() => navigate('/admin/reports/useraccess')} />
         <NavItem icon={Activity}  label="GN activity reports"
-          onClick={() => navigate('/admin/reports/gn-activity')} />
+          onClick={() => navigate('/admin/reports/gnactivity')} />
 
         <li className="pt-4">
           <NavItem icon={Megaphone} label="Announcements" bold
             onClick={() => navigate('/admin/announcements')} />
+        </li>
+        <li className="pt-4">
+          <NavItem icon={Calendar} label="Appointment Calendar"bold
+            onClick={() => navigate("/admin/calendar")} />
         </li>
         {/* <li className="px-4 pt-1">
           <NavItem icon={Bell} label="Notifications" bold
@@ -494,11 +498,17 @@ export default function AdminDashboard() {
               </div>
             ))}
           </div>
+          <button
+              onClick={() => navigate('/admin/calendar')}
+              className="flex-1 py-5 rounded-2xl text-sm font-bold tracking-wider uppercase transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{ background: '#6a2a0070', color: COLORS.cardBrown }}>
+              Statical changes
+            </button>
 
           {/* Approval Buttons */}
           <div className="flex gap-4">
             <button
-              onClick={() => navigate('/admin/gn-management/registrations')}
+              onClick={() => navigate('/admin/registrationrequestapproval')}
               className="flex-1 py-5 rounded-2xl text-sm font-bold tracking-wider uppercase transition-all hover:opacity-90 active:scale-[0.98]"
               style={{ background: COLORS.cardBrown, color: COLORS.white }}>
               registration approval
@@ -506,7 +516,7 @@ export default function AdminDashboard() {
             <button
               onClick={() => navigate('/admin/gn-management/transfers')}
               className="flex-1 py-5 rounded-2xl text-sm font-bold tracking-wider uppercase transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ background: COLORS.cardDark, color: COLORS.white }}>
+              style={{ background: COLORS.cardBrown, color: COLORS.white }}>
               transfer approval
             </button>
           </div>

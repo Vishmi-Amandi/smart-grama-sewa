@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, UserCheck, ArrowLeftRight, BarChart2,
-  User, Activity, Megaphone, Calendar, Bell, LogOut, Search,
+  User, Activity, Megaphone, Bell, LogOut, Search,
   ChevronDown, CheckCircle, XCircle
 } from 'lucide-react';
 import { db } from '../../firebase';
@@ -54,9 +54,9 @@ function Sidebar({ onLogout }) {
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
           GN management
         </li>
-        <NavItem icon={UserCheck} label="Registration Requests" active
+        <NavItem icon={UserCheck} label="Registration Requests" 
           onClick={() => navigate('/admin/registrationrequestapproval')} />
-        <NavItem icon={ArrowLeftRight} label="Transfer Request"
+        <NavItem icon={ArrowLeftRight} label="Transfer Request" active
           onClick={() => navigate('/admin/transferrequestapproval')} />
 
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
@@ -67,15 +67,11 @@ function Sidebar({ onLogout }) {
         <NavItem icon={User} label="Individual user access"
           onClick={() => navigate('/admin/reports/user-access')} />
         <NavItem icon={Activity} label="GN activity reports"
-          onClick={() => navigate('/admin/reports/gnactivity')} />
+          onClick={() => navigate('/admin/reports/gn-activity')} />
 
         <li className="pt-4">
           <NavItem icon={Megaphone} label="Announcements" bold
             onClick={() => navigate('/admin/announcements')} />
-        </li>
-        <li className="pt-4">
-          <NavItem icon={Calendar} label="Appointment Calendar"bold
-            onClick={() => navigate("/admin/calendar")} />
         </li>
       </ul>
 
@@ -145,8 +141,8 @@ function StatusBadge({ status }) {
   const s = (status || 'pending').toLowerCase();
   const styles = {
     pending:  { bg: '#FEF3C7', color: '#92400E', label: 'Pending'  },
-    approved: { bg: '#D1FAE5', color: '#02561d', label: 'Approved' },
-    rejected: { bg: '#FEE2E2', color: '#811010', label: 'Rejected' },
+    approved: { bg: '#D1FAE5', color: '#065F46', label: 'Approved' },
+    rejected: { bg: '#FEE2E2', color: '#991B1B', label: 'Rejected' },
   };
   const st = styles[s] || styles.pending;
   return (
@@ -196,7 +192,7 @@ function ConfirmModal({ modal, onConfirm, onCancel }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────
-export default function RegistrationRequestApproval() {
+export default function TransferRequestApproval() {
   const [officers,      setOfficers]      = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState(null);
@@ -293,7 +289,7 @@ export default function RegistrationRequestApproval() {
           {/* Title */}
           <h1 className="text-2xl font-bold text-center mb-1"
             style={{ color: COLORS.cardBrown }}>
-            Registration Request Approval
+            Transfer Request Approval
           </h1>
           <hr className="mb-6" style={{ borderColor: COLORS.border }} />
 
@@ -409,13 +405,16 @@ export default function RegistrationRequestApproval() {
               </div>
             )}
           </div>
-          
+          <footer className="text-center text-xs py-4"
+          style={{ background: COLORS.cardDark, color: '#C8A882' }}>
+          © 2026 Smart Grama Sewa. All rights reserved.
+        </footer>
 
         </main>
 
         {/* Footer */}
-        <footer className="text-center text-xs py-4"
-          style={{ background: COLORS.cardDark, color: '#C8A882' }}>
+        <footer className="py-4 text-center text-xs border-t"
+          style={{ borderColor: COLORS.border, color: COLORS.textMuted, background: COLORS.bg }}>
           © 2026 Smart Grama Sewa. All rights reserved.
         </footer>
       </div>

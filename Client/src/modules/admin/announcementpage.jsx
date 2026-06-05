@@ -10,227 +10,125 @@ import {
 
 import {
   LayoutDashboard, ArrowLeftRight, BarChart2, UserCheck,
-  Activity, Megaphone, Bell, Search, ChevronDown, User,
+  Activity, Megaphone, Calendar, Bell, Search, ChevronDown, User,
   TrendingUp, Clock, CheckCircle, XCircle, RefreshCw,
   Loader2, AlertCircle, LogOut,
 } from 'lucide-react';
 
 // ─── Design tokens (matches your existing COLORS object) ──────────────────────
 const COLORS = {
-  bg:        "#FFF9F0",
-  primary:   "#92400e",   // amber-800
-  accent:    "#f59e0b",   // amber-400
-  text:      "#1c1917",
+  bg: "#FFF9F0",
+  primary: "#92400e",   // amber-800
+  accent: "#f59e0b",   // amber-400
+  text: "#1c1917",
   textMuted: "#a78b72",
+  cardBrown: '#6B2400',
+  cardDark: '#3D1500',
 };
 
 // ─── Data constants ───────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { value: "all_users",   label: "All Users" },
-  { value: "residents",   label: "Citizens" },
+  { value: "all_users", label: "All Users" },
+  { value: "residents", label: "Citizens" },
   { value: "gn_officers", label: "GN Officers" },
   // { value: "ds_officers", label: "DS Officers" },
 ];
 
 const PRIORITIES = [
-  { value: "low",    label: "Low" },
+  { value: "low", label: "Low" },
   { value: "normal", label: "Normal" },
-  { value: "high",   label: "High" },
+  { value: "high", label: "High" },
   { value: "urgent", label: "Urgent" },
 ];
 
 const PRIORITY_COLOR = {
   urgent: "bg-red-500",
-  high:   "bg-orange-400",
+  high: "bg-orange-400",
   normal: "bg-amber-400",
-  low:    "bg-gray-300",
+  low: "bg-gray-300",
 };
 
 const STATUS_BADGE = {
   published: "bg-green-100 text-green-700 border-green-200",
-  draft:     "bg-gray-100 text-gray-500 border-gray-200",
-  expired:   "bg-red-100 text-red-500 border-red-200",
+  draft: "bg-gray-100 text-gray-500 border-gray-200",
+  expired: "bg-red-100 text-red-500 border-red-200",
   scheduled: "bg-blue-100 text-blue-700 border-blue-200",
 };
 
-// ─── Lucide-style inline SVG icons ───────────────────────────────────────────
-const Icon = {
-  LayoutDashboard: ({ size = 16, className = "", color }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"
-      className={className} style={color ? { color } : {}}>
-      <rect x="3" y="3" width="7" height="7" rx="1" />
-      <rect x="14" y="3" width="7" height="7" rx="1" />
-      <rect x="3" y="14" width="7" height="7" rx="1" />
-      <rect x="14" y="14" width="7" height="7" rx="1" />
-    </svg>
-  ),
-  UserCheck: ({ size = 16, className = "", color }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" className={className} style={color ? { color } : {}}>
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <polyline points="16 11 18 13 22 9" />
-    </svg>
-  ),
-  ArrowLeftRight: ({ size = 16, className = "", color }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" className={className} style={color ? { color } : {}}>
-      <path d="M8 3 4 7l4 4" /><path d="M4 7h16" />
-      <path d="m16 21 4-4-4-4" /><path d="M20 17H4" />
-    </svg>
-  ),
-  BarChart2: ({ size = 16, className = "", color }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" className={className} style={color ? { color } : {}}>
-      <line x1="18" y1="20" x2="18" y2="10" />
-      <line x1="12" y1="20" x2="12" y2="4" />
-      <line x1="6"  y1="20" x2="6"  y2="14" />
-    </svg>
-  ),
-  User: ({ size = 16, className = "", color }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" className={className} style={color ? { color } : {}}>
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-  ),
-  Activity: ({ size = 16, className = "", color }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" className={className} style={color ? { color } : {}}>
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-    </svg>
-  ),
-  Megaphone: ({ size = 16, className = "", color }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" className={className} style={color ? { color } : {}}>
-      <path d="M3 11l18-5v12L3 14v-3z" />
-      <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
-    </svg>
-  ),
-  Bell: ({ size = 16, className = "", color }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" className={className} style={color ? { color } : {}}>
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-    </svg>
-  ),
-  Search: ({ size = 16, className = "", color }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" className={className} style={color ? { color } : {}}>
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  ),
-  ChevronDown: ({ size = 14, className = "", color }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2.5" className={className} style={color ? { color } : {}}>
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  ),
-};
-
-// ─── NavItem — exactly your shared component ──────────────────────────────────
+// ─── Nav Item ─────────────────────────────────────────────────────────────
 function NavItem({ icon: Icon, label, active, bold, onClick }) {
   return (
-    <li
-      onClick={onClick}
+    <li onClick={onClick}
       className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer transition-all ${
-        active ? "bg-amber-700 text-white font-bold"
-        : bold  ? "text-amber-900 font-bold hover:bg-amber-100"
-                : "text-amber-800 hover:bg-amber-100"
-      }`}
-      style={{ fontSize: bold && !Icon ? "0.85rem" : "0.82rem" }}
-    >
-      {Icon && (
-        <Icon size={16} color={active ? "#fff" : COLORS.primary} />
-      )}
+          active ? 'bg-amber-700 text-white font-bold'
+          : bold ? 'text-amber-900 font-bold hover:bg-amber-100'
+                 : 'text-amber-800 hover:bg-amber-100'
+        }`}
+      style={{ fontSize: bold && !Icon ? '0.85rem' : '0.82rem' }}>
+      {Icon && <Icon size={16} className={active ? 'text-white' : 'text-amber-700'} />}
       <span>{label}</span>
     </li>
   );
 }
 
-// ─── Sidebar — your shared code, with active-state wiring added ───────────────
-function Sidebar({ active, setActive }) {
-  const nav = (id) => () => setActive(id);
+// ─── Sidebar ──────────────────────────────────────────────────────────────
+function Sidebar({ onLogout }) {
+  const navigate = useNavigate();
   return (
-    <aside
-      className="w-64 flex-shrink-0 flex flex-col py-6 px-3 gap-2 border-r"
-      style={{ borderColor: "#DDD0BC", background: COLORS.bg }}
-    >
+    <aside className="w-64 flex-shrink-0 flex flex-col py-6 px-3 gap-2 border-r"
+      style={{ borderColor: '#DDD0BC', background: COLORS.bg }}>
+
       {/* Logo */}
       <div className="flex items-center gap-2 px-3 mb-6">
         <img src="/logo2.png"></img>
-        {/* <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center"
-          style={{ background: COLORS.primary }}
-        >
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-            <rect x="4" y="6" width="12" height="18" rx="2" fill="#fff" opacity="0.9" />
-            <circle cx="10" cy="21" r="1" fill={COLORS.accent} />
-            <path
-              d="M18 10 Q24 10 24 16 Q24 22 18 22"
-              stroke={COLORS.accent} strokeWidth="2" fill="none" strokeLinecap="round"
-            />
-            <path
-              d="M10 6 Q10 2 14 2 Q18 2 18 6"
-              stroke="#fff" strokeWidth="1.5" fill="none"
-            />
-          </svg>
-        </div>
-        <div>
-          <p className="text-xs font-black" style={{ color: COLORS.primary }}>Smart</p>
-          <p className="text-xs font-black" style={{ color: COLORS.accent }}>Grama Sewa</p>
-        </div> */}
       </div>
 
-      {/* Nav */}
-      <ul className="flex flex-col gap-1">
-        <NavItem
-          icon={LayoutDashboard} label="Dashboard"
-          active={active === "dashboard"} onClick={nav("dashboard")}
-        />
+      {/* Nav links */}
+      <ul className="flex flex-col gap-1 flex-1">
+        <NavItem icon={LayoutDashboard} label="Dashboard" bold
+          onClick={() => navigate('/admin/dashboard')} />
 
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
           GN management
         </li>
-        <NavItem
-          icon={UserCheck} label="Registration Requests"
-          active={active === "registration"} onClick={nav("registration")}
-        />
-        <NavItem
-          icon={ArrowLeftRight} label="Transfer Request"
-          active={active === "transfer"} onClick={nav("transfer")}
-        />
+        <NavItem icon={UserCheck} label="Registration Requests"
+          onClick={() => navigate('/admin/registrationrequestapproval')} />
+        <NavItem icon={ArrowLeftRight} label="Transfer Request"
+          onClick={() => navigate('/admin/transferrequestapproval')} />
 
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
           Reports
         </li>
-        <NavItem
-          icon={BarChart2} label="System reports"
-          active={active === "system-reports"} onClick={nav("system-reports")}
-        />
-        <NavItem
-          icon={User} label="Individual user access"
-          active={active === "user-access"} onClick={nav("user-access")}
-        />
-        <NavItem
-          icon={Activity} label="Gn activity reports"
-          active={active === "gn-activity"} onClick={nav("gn-activity")}
-        />
+        <NavItem icon={BarChart2} label="System reports"
+          onClick={() => navigate('/admin/reports/system')} />
+        <NavItem icon={User} label="Individual user access"
+          onClick={() => navigate('/admin/reports/user-access')} />
+        <NavItem icon={Activity} label="GN activity reports"
+          onClick={() => navigate('/admin/reports/gn-activity')} />
 
-        <li className="px-4 pt-4">
-          <NavItem
-            icon={Megaphone} label="Announcements" bold
-            active={active === "announcements"} onClick={nav("announcements")}
-          />
+        <li className="pt-4">
+          <NavItem icon={Megaphone} label="Announcements" bold active
+            onClick={() => navigate('/admin/announcements')} />
         </li>
-        <li className="px-4 pt-1">
-          <NavItem
-            icon={Bell} label="Notifications" bold
-            active={active === "notifications"} onClick={nav("notifications")}
-          />
+        <li className="pt-4">
+          <NavItem icon={Calendar} label="Appointment Calendar"bold
+            onClick={() => navigate("/admin/calendar")} />
         </li>
+        {/* <li className="px-4 pt-1">
+          <NavItem icon={Bell} label="Notifications" bold
+            onClick={() => navigate('/admin/notifications')} />
+        </li> */}
       </ul>
+
+      {/* Logout */}
+      <div className="px-3 pt-4 border-t" style={{ borderColor: '#DDD0BC' }}>
+        <button onClick={onLogout}
+          className="flex items-center gap-3 w-full px-4 py-2 rounded-lg text-sm font-bold transition-all hover:bg-red-50"
+          style={{ color: '#991B1B' }}>
+          <LogOut size={16} />
+          <span>Logout</span>
+        </button>
+      </div>
     </aside>
   );
 }
@@ -272,7 +170,7 @@ function Topbar() {
         className="relative w-10 h-10 rounded-full flex items-center justify-center border"
         style={{ borderColor: "#C8B89A", background: "#FFF9F0" }}
       >
-        <Icon.Bell size={18} color={COLORS.primary} />
+        <Bell size={18} color={COLORS.primary} />
         <span
           className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
           style={{ background: COLORS.accent }}
@@ -284,7 +182,7 @@ function Topbar() {
         className="w-10 h-10 rounded-full flex items-center justify-center"
         style={{ background: COLORS.primary }}
       >
-        <Icon.User size={18} color="#fff" />
+        <User size={18} color="#fff" />
       </button>
     </header>
   );
@@ -367,7 +265,7 @@ function AnnouncementForm({ initial, onSubmit, onCancel, submitting }) {
             ))}
           </select>
           <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-            <Icon.ChevronDown size={12} color={COLORS.textMuted} />
+            <ChevronDown size={12} color={COLORS.textMuted} />
           </div>
         </div>
       </div>
@@ -418,7 +316,7 @@ function AnnouncementForm({ initial, onSubmit, onCancel, submitting }) {
               ))}
             </select>
             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-              <Icon.ChevronDown size={12} color={COLORS.textMuted} />
+              <ChevronDown size={12} color={COLORS.textMuted} />
             </div>
           </div>
         </div>
@@ -504,14 +402,14 @@ function AnnouncementCard({ ann, onEdit, onDelete, fmtDate }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AdminAnnouncementPage() {
-  const [activeNav, setActiveNav]   = useState("announcements");
-  const [view, setView]             = useState("form"); // "form" | "list"
+  const [activeNav, setActiveNav] = useState("announcements");
+  const [view, setView] = useState("form"); // "form" | "list"
   const [announcements, setAnnouncements] = useState([]);
-  const [loading, setLoading]       = useState(true);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
-  const [confirmId, setConfirmId]   = useState(null);
-  const [toast, setToast]           = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
+  const [toast, setToast] = useState(null);
 
   const showToast = (msg, type = "success") => setToast({ msg, type });
 
@@ -535,14 +433,14 @@ export default function AdminAnnouncementPage() {
     try {
       const user = auth.currentUser;
       const base = {
-        category:    form.category,
-        title:       form.title.trim(),
+        category: form.category,
+        title: form.title.trim(),
         description: form.description.trim(),
-        priority:    form.priority,
-        status:      form.status || "published",
-        expiryDate:  form.expiryDate || null,
-        expiresAt:   form.expiryDate ? new Date(form.expiryDate) : null,
-        updatedAt:   serverTimestamp(),
+        priority: form.priority,
+        status: form.status || "published",
+        expiryDate: form.expiryDate || null,
+        expiresAt: form.expiryDate ? new Date(form.expiryDate) : null,
+        updatedAt: serverTimestamp(),
       };
       if (editTarget) {
         await updateDoc(doc(db, "announcements", editTarget.id), base);
@@ -550,12 +448,12 @@ export default function AdminAnnouncementPage() {
       } else {
         await addDoc(collection(db, "announcements"), {
           ...base,
-          createdAt:    serverTimestamp(),
-          publishedAt:  serverTimestamp(),
-          createdBy:    user?.displayName || user?.email || "Admin",
+          createdAt: serverTimestamp(),
+          publishedAt: serverTimestamp(),
+          createdBy: user?.displayName || user?.email || "Admin",
           createdByUid: user?.uid || "",
-          attachments:  [],
-          gnDivision:   "",
+          attachments: [],
+          gnDivision: "",
         });
         await addDoc(collection(db, "activity_logs"), {
           action: "create_announcement", title: form.title.trim(),
@@ -706,8 +604,9 @@ export default function AdminAnnouncementPage() {
         </main>
 
         {/* Footer */}
-        <footer className="py-3 text-center" style={{ background: COLORS.primary }}>
-          <p className="text-xs text-amber-200">© 2026 Smart Grama Sewa. All rights reserved.</p>
+        <footer className="text-center text-xs py-4"
+          style={{ background: COLORS.cardDark, color: '#C8A882' }}>
+          © 2026 Smart Grama Sewa. All rights reserved.
         </footer>
       </div>
 

@@ -21,6 +21,12 @@ import Settings from './modules/user/pages/settings';
 import AdminRoute from "./modules/admin/components/AdminRoute";
 import AdminDashboard from './modules/admin/dashboard';
 import AdminAnnouncementPage from "./modules/admin/announcementpage";
+import AdminRegistrationRequestApproval from "./modules/admin/registrationrequestapproval";
+import AdminTransferRequestApproval from "./modules/admin/transferrequestapproval";
+import AdminCalendar from './modules/admin/calendar';
+import AdminSystemPerformanceReports from './modules/admin/reports/system';
+import AdminGNActivityReports from './modules/admin/reports/gnactivity';
+import AdminIndividualGNUserAccessReports from './modules/admin/reports/useraccess';
 
 // ─── Spinner (shared loading UI) ──────────────────────────────────────────
 const Spinner = () => (
@@ -142,6 +148,24 @@ const App = () => {
         } />
         <Route path="/admin/announcements" element={
           <AdminRoute><AdminAnnouncementPage /></AdminRoute>
+        } />
+        <Route path="/admin/registrationrequestapproval" element={
+          <AdminRoute><AdminRegistrationRequestApproval /></AdminRoute>
+        } />
+        <Route path="/admin/transferrequestapproval" element={
+          <AdminRoute><AdminTransferRequestApproval /></AdminRoute>
+        } />
+        <Route path="/admin/calendar" element={
+          <AdminRoute><AdminCalendar /></AdminRoute>
+        } />
+        <Route path="/admin/reports/system" element={
+          <AdminRoute><AdminSystemPerformanceReports /></AdminRoute>
+        } />
+        <Route path="/admin/reports/gnactivity" element={
+          <AdminRoute><AdminGNActivityReports /></AdminRoute>
+        } />
+        <Route path="/admin/reports/useraccess" element={
+          <AdminRoute><AdminIndividualGNUserAccessReports /></AdminRoute>
         } />
 
         {/* ── 404 fallback ── */}
