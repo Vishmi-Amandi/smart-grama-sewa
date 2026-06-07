@@ -2173,20 +2173,20 @@ const Forms = () => {
           />
 
           {/* Mobile Search Bar */}
-          <div className="md:hidden pt-3 px-3.5 relative">
-            <div className="flex items-center gap-2.5 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-full px-4 py-2.5 transition-colors hover:border-yellow-500">
-              <Icon d={IC.search} size={16} color="#aaa" />
-              <input
-                type="text"
-                placeholder="Search for a page..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowSearchResults(true);
-                }}
-                onFocus={() => setShowSearchResults(true)}
-                className="flex-1 border-none outline-none text-sm font-medium text-gray-700 dark:text-white bg-transparent"
-              />
+          <div className="pt-3 px-3.5 relative">
+              <div className="flex items-center gap-2.5 bg-white border border-user-border rounded-3xl px-4 py-2.5">
+                <Icon d={IC.search} size={16} color="#aaa" />
+                <input
+                  type="text"
+                  placeholder="Search for a page..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSearchResults(true);
+                  }}
+                  onFocus={() => setShowSearchResults(true)}
+                  className="flex-1 border-none outline-none text-sm font-medium text-user-text bg-transparent"
+                />
               {searchQuery && (
                 <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="bg-none border-none cursor-pointer p-1">
                   <Icon d={IC.close} size={14} color="#aaa" />
