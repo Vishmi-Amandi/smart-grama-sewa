@@ -1892,4 +1892,280 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
   );
 };
 
+// MAIN FORMS COMPONENT
+const Forms = () => {
+  const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState('en');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [tab, setTab] = useState('All');
+  const [selectedForm, setSelectedForm] = useState(null);
+  const [formInputs, setFormInputs] = useState({});
+  const [toast, setToast] = useState(null);
+
+  const tabs = ['All', 'Certificates', 'Applications', 'Recommendations'];
+
+  const formList = [
+    { id: 1, title: "Residence Certificate", cat: "Certificates", imgSrc: "/icons/residence.png", desc: "Proof of residence for official use" },
+    { id: 2, title: "Character Certificate", cat: "Certificates", imgSrc: "/icons/character.png", desc: "Proof of character for various purposes" },
+    { id: 3, title: "Income Certificate", cat: "Certificates", imgSrc: "/icons/income.png", desc: "Proof of income for various purposes" },
+    { id: 4, title: "Valuation Certificate", cat: "Certificates", imgSrc: "/icons/valuation.png", desc: "Property valuation for legal needs" },
+    { id: 5, title: "Identity Card Application", cat: "Applications", imgSrc: "/icons/id-card.png", desc: "New or replacement NIC application" },
+    { id: 6, title: "Living Funds for Disabled Persons", cat: "Recommendations", imgSrc: "/icons/disabled.png", desc: "Financial assistance application for persons with disabilities" },
+    { id: 7, title: "Voter Registration Form", cat: "Applications", imgSrc: "/icons/voter.png", desc: "Register or revise names on the local voting list" },
+    { id: 8, title: "Permit for Felling Trees", cat: "Recommendations", imgSrc: "/icons/tree.png", desc: "Approval to cut down Jack or protected trees" },
+    { id: 9, title: "Permit for Timber Transportation", cat: "Recommendations", imgSrc: "/icons/timber.png", desc: "Legal permit to move timber between areas" },
+    { id: 10, title: "Business Registration Recommendation", cat: "Recommendations", imgSrc: "/icons/business.png", desc: "GN approval for new business starts" },
+    { id: 11, title: "Assessments for Ownership of Lands", cat: "Certificates", imgSrc: "/icons/land.png", desc: "Verify land ownership and boundaries" },
+  ];
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Read theme from localStorage on mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('userSettings');
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        if (parsed.theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch(e) {}
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setCurrentUser(user);
+        try {
+          const snap = await getDoc(doc(db, 'users', user.uid));
+          if (snap.exists()) setUserData(snap.data());
+        } catch (e) { console.warn(e); }
+      } else {
+        navigate('/login');
+      }
+      setAuthLoading(false);
+    });
+    return () => unsub();
+  }, [navigate]);
+
+  const handleLogout = async () => { await signOut(auth); navigate('/login'); };
+  const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
+
+  const handleLanguageChange = (langCode) => {
+    setCurrentLanguage(langCode);
+    i18n.changeLanguage(langCode);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowSearchResults(false);
+      setShowProfileMenu(false);
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  if (authLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-user-background dark:bg-user-background">
+      <div className="w-11 h-11 rounded-full border-4 border-user-primary border-t-transparent animate-spin" />
+    </div>
+  );
+
+  return (
+    <div className="user-module min-h-screen flex flex-col font-sans bg-user-background dark:bg-user-background">
+      <div className="flex-1 flex">
+        {/* Desktop Sidebar */}
+        {!isMobile && <DesktopSidebar activePage="forms" navigate={navigate} onLogout={handleLogout} />}
+
+        {/* Mobile Sidebar Overlay */}
+        <MobileSidebar
+          isOpen={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          activePage="forms"
+          navigate={navigate}
+          onLogout={handleLogout}
+        />
+
+        {/* Main Column */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Desktop Topbar */}
+          {!isMobile && (
+            <DesktopTopbar 
+              chipName={chipName}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              showResults={showSearchResults}
+              setShowResults={setShowSearchResults}
+              navigate={navigate}
+              currentLanguage={currentLanguage}
+              onLanguageChange={handleLanguageChange}
+              showProfileMenu={showProfileMenu}
+              setShowProfileMenu={setShowProfileMenu}
+              handleLogout={handleLogout}
+            />
+          )}
+
+          {/* Mobile Topbar */}
+          <MobileTopbar 
+            chipName={chipName}
+            onMenuClick={() => setMobileMenuOpen(true)}
+            navigate={navigate}
+            currentLanguage={currentLanguage}
+            onLanguageChange={handleLanguageChange}
+          />
+
+          {/* Mobile Search Bar */}
+          <div className="pt-3 px-3.5 relative">
+              <div className="flex items-center gap-2.5 bg-white border border-user-border rounded-3xl px-4 py-2.5">
+                <Icon d={IC.search} size={16} color="#aaa" />
+                <input
+                  type="text"
+                  placeholder="Search for a page..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSearchResults(true);
+                  }}
+                  onFocus={() => setShowSearchResults(true)}
+                  className="flex-1 border-none outline-none text-sm font-medium text-user-text bg-transparent"
+                />
+              {searchQuery && (
+                <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="bg-none border-none cursor-pointer p-1">
+                  <Icon d={IC.close} size={14} color="#aaa" />
+                </button>
+              )}
+            </div>
+            <SearchResultsDropdown 
+              searchQuery={searchQuery}
+              showResults={showSearchResults}
+              setShowResults={setShowSearchResults}
+              navigate={navigate}
+            />
+          </div>
+
+          {/* Content Area */}
+          <div className="flex-1 p-4 md:p-6 overflow-y-auto">
+            <div className="flex justify-between items-center mb-5">
+              <h1 className="text-2xl md:text-3xl font-black text-user-text dark:text-user-text tracking-tight">Forms</h1>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex flex-wrap gap-2 mb-5 border-b-2 border-user-border dark:border-user-border">
+              {tabs.map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`py-2.5 px-5 border-none bg-transparent text-sm font-semibold cursor-pointer transition-all ${
+                    tab === t ? 'text-user-primary font-extrabold border-b-2 border-user-primary' : 'text-user-text-lighter hover:text-user-text'
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+              <button className="ml-auto py-2.5 px-5 bg-user-primary hover:bg-user-primary-dark text-white rounded-full text-sm font-bold cursor-pointer transition-all">
+                My Forms
+              </button>
+            </div>
+
+            {/* Form Cards */}
+            <div className="grid grid-cols-1 gap-3 pb-5">
+              {formList.filter(f => tab === 'All' || f.cat === tab).map(form => (
+                <div key={form.id} className="bg-user-surface dark:bg-user-surface border border-user-border dark:border-user-border rounded-xl p-5 flex items-center justify-between shadow-sm">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-user-secondary-light dark:bg-user-secondary-light rounded-xl flex items-center justify-center flex-shrink-0">
+                      <img src={form.imgSrc} alt={form.title} className="w-10 h-10 object-contain" />
+                    </div>
+                    <div>
+                      <div className="text-base font-extrabold text-user-text dark:text-user-text">{form.title}</div>
+                      <div className="text-xs font-semibold text-user-text-lighter dark:text-user-text-lighter">{form.desc}</div>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => { setSelectedForm(form); setFormInputs({}); }}
+                    className="py-2 px-5 rounded-lg border border-user-border dark:border-user-border bg-user-surface dark:bg-user-surface text-sm font-extrabold text-user-text dark:text-user-text cursor-pointer transition-all hover:border-user-primary"
+                  >
+                    View Form
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="bg-[#6A2301] text-white text-center py-3 px-4 text-sm font-semibold">
+        © 2026 Smart Grama Sewa. All rights reserved.
+      </footer>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[1100] animate-slide-up">
+          <div className={`flex items-center gap-4 py-3 px-6 rounded-xl shadow-lg ${toast.type === 'success' ? 'bg-user-success' : 'bg-user-error'} text-white`}>
+            <Icon d={toast.type === 'success' ? IC.check : IC.alertTriangle} size={18} color="#fff" sw={2.5} />
+            <span className="text-sm font-semibold">{toast.message}</span>
+            <button onClick={() => setToast(null)} className="bg-none border-none cursor-pointer text-white text-xl leading-5 p-0">×</button>
+          </div>
+        </div>
+      )}
+
+      {/* Form Modal */}
+      <DynamicFormModal 
+        form={selectedForm} 
+        onClose={() => setSelectedForm(null)} 
+        inputs={formInputs} 
+        setInputs={setFormInputs} 
+        currentUser={currentUser} 
+        userData={userData} 
+        db={db}
+        onSuccess={showToast}
+      />
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes slide-up {
+          from { transform: translate(-50%, 20px); opacity: 0; }
+          to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        .animate-slide-up { animation: slide-up 0.3s ease; }
+        .rounded-full { border-radius: 999px; }
+
+        @media (min-width: 769px) {
+          .desktop-sidebar { display: flex !important; }
+          .desktop-topbar { display: flex !important; }
+          .mobile-topbar { display: none !important; }
+        }
+
+        @media (max-width: 768px) {
+          .desktop-sidebar { display: none !important; }
+          .desktop-topbar { display: none !important; }
+          .mobile-topbar { display: flex !important; }
+        }
+      `}</style>
+    </div>
+  );
+};
+
 export default Forms;
