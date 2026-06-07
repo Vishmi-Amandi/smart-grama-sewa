@@ -51,15 +51,15 @@ const DISTRICT_DS_MAP = {
 const STEPS = ["Personal Info", "Official Details", "Document Upload", "Account Setup"];
 
 const StepTabs = ({ current }) => (
-  <div className="flex border-b border-gray-200 mb-6">
+  <div className="flex border-b border-gray-200 mb-6 overflow-x-auto pb-1">
     {STEPS.map((label, i) => {
       const idx = i + 1;
       const isActive = current === idx;
       const isDone = current > idx;
       return (
-        <div key={idx} className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold border-b-2 transition whitespace-nowrap
+        <div key={idx} className={`flex items-center gap-1.5 px-2 sm:px-4 py-2.5 text-[10px] sm:text-xs font-bold border-b-2 transition whitespace-nowrap
           ${isActive ? "border-[#8B4513] text-[#8B4513]" : "border-transparent text-gray-400"}`}>
-          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-black
+          <span className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center text-[9px] sm:text-xs font-black
             ${isActive ? "bg-[#8B4513] text-white" : isDone ? "bg-[#8B4513] text-white" : "bg-gray-200 text-gray-500"}`}>
             {isDone ? "✓" : idx}
           </span>
@@ -77,7 +77,7 @@ const Section = ({ icon: Icon, title, children }) => (
       <Icon size={15} className="text-[#8B4513]" />
       <h3 className="text-sm font-bold text-gray-700">{title}</h3>
     </div>
-    <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+    <div className="bg-gray-50 rounded-2xl p-4 sm:p-5 border border-gray-100">
       {children}
     </div>
   </div>
@@ -114,7 +114,7 @@ const Step1 = ({ form, update, onNext }) => {
             placeholder="Enter your full legal name" className={inputClass} />
           <FieldError msg={errors.fullName} />
         </div>
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label className={labelClass}>Permanent Address</label>
             <input type="text" value={form.address} onChange={(e) => update("address", e.target.value)}
@@ -128,7 +128,7 @@ const Step1 = ({ form, update, onNext }) => {
             <FieldError msg={errors.nic} />
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className={labelClass}>Date of Birth</label>
             <input type="date" value={form.dob} onChange={(e) => update("dob", e.target.value)} className={inputClass} />
@@ -148,11 +148,11 @@ const Step1 = ({ form, update, onNext }) => {
       </Section>
 
       <Section icon={Phone} title="Contact Details">
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label className={labelClass}>Mobile Number</label>
             <input type="tel" value={form.mobile} onChange={(e) => update("mobile", e.target.value)}
-              placeholder="e.g. 071 123 4567" className={inputClass} />
+              placeholder="e.g. 0711234567" className={inputClass} />
             <FieldError msg={errors.mobile} />
           </div>
         </div>
@@ -166,7 +166,7 @@ const Step1 = ({ form, update, onNext }) => {
 
       <div className="flex justify-end mt-2">
         <button onClick={() => { if (validate()) onNext(); }}
-          className="bg-[#E5A800] hover:bg-[#cc9600] text-[#3d2a00] font-black px-6 py-2.5 rounded-xl flex items-center gap-2 transition shadow text-sm">
+          className="bg-[#E5A800] hover:bg-[#cc9600] text-[#3d2a00] font-black px-4 sm:px-6 py-2.5 rounded-xl flex items-center gap-2 transition shadow text-sm">
           Next Step <ArrowRight size={15} />
         </button>
       </div>
@@ -203,7 +203,7 @@ const Step2 = ({ form, update, onNext, onBack }) => {
       <h2 className="text-lg font-black text-gray-800 mb-6">Official Details</h2>
 
       <Section icon={Building2} title="Grama Niladhari (GN) Division Details">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>GN Division Name</label>
             <input type="text" value={form.gnDivisionName} onChange={(e) => update("gnDivisionName", e.target.value)}
@@ -220,7 +220,7 @@ const Step2 = ({ form, update, onNext, onBack }) => {
       </Section>
 
       <Section icon={MapPin} title="Administrative Area">
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label className={labelClass}>Province</label>
             <select value={form.province} onChange={(e) => update("province", e.target.value)} className={selectClass}>
@@ -240,7 +240,7 @@ const Step2 = ({ form, update, onNext, onBack }) => {
             <FieldError msg={errors.district} />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Divisional Secretariat</label>
             <select value={form.divisionalSecretariat} onChange={(e) => handleDsChange(e.target.value)}
@@ -260,13 +260,13 @@ const Step2 = ({ form, update, onNext, onBack }) => {
             placeholder="Enter full office address..." rows={3} className={`${inputClass} resize-none`} />
           <FieldError msg={errors.officeAddress} />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Office Mobile No.</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">📞</span>
               <input type="tel" value={form.officeMobile} onChange={(e) => update("officeMobile", e.target.value)}
-                placeholder="+94 11 234 5678" className={`${inputClass} pl-9`} />
+                placeholder="0112345678" className={`${inputClass} pl-9`} />
             </div>
             <FieldError msg={errors.officeMobile} />
           </div>
@@ -288,11 +288,11 @@ const Step2 = ({ form, update, onNext, onBack }) => {
 
       <div className="flex justify-between mt-2">
         <button onClick={onBack}
-          className="border-2 border-[#3B1F0A] text-[#3B1F0A] hover:bg-[#3B1F0A] hover:text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition text-sm">
+          className="border-2 border-[#3B1F0A] text-[#3B1F0A] hover:bg-[#3B1F0A] hover:text-white font-bold px-4 sm:px-5 py-2.5 rounded-xl flex items-center gap-2 transition text-sm">
           <ArrowLeft size={15} /> Previous Step
         </button>
         <button onClick={() => { if (validate()) onNext(); }}
-          className="bg-[#E5A800] hover:bg-[#cc9600] text-[#3d2a00] font-black px-6 py-2.5 rounded-xl flex items-center gap-2 transition shadow text-sm">
+          className="bg-[#E5A800] hover:bg-[#cc9600] text-[#3d2a00] font-black px-4 sm:px-6 py-2.5 rounded-xl flex items-center gap-2 transition shadow text-sm">
           Save & Continue <ArrowRight size={15} />
         </button>
       </div>
@@ -375,7 +375,7 @@ const Step3 = ({ form, update, onNext, onBack }) => {
       <div className="flex flex-col gap-2">
         <label className={labelClass}>{label}</label>
         <label
-          className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition
+          className={`border-2 border-dashed rounded-xl p-4 sm:p-6 flex flex-col items-center justify-center cursor-pointer transition
             ${
               errors[fieldName]
                 ? "border-red-400 bg-red-50"
@@ -396,7 +396,7 @@ const Step3 = ({ form, update, onNext, onBack }) => {
 
           {status === "done" && (
             <>
-              <span className="text-3xl mb-2">✅</span>
+              <span className="text-2xl sm:text-3xl mb-2">✅</span>
               <p className="text-xs font-semibold text-green-600">Uploaded successfully!</p>
               <p className="text-xs text-gray-400 mt-1">Click to replace</p>
             </>
@@ -404,21 +404,21 @@ const Step3 = ({ form, update, onNext, onBack }) => {
 
           {status === "uploading" && (
             <>
-              <span className="text-3xl mb-2">⏳</span>
+              <span className="text-2xl sm:text-3xl mb-2">⏳</span>
               <p className="text-xs font-semibold text-yellow-600">Uploading...</p>
             </>
           )}
 
           {status === "error" && (
             <>
-              <span className="text-3xl mb-2">❌</span>
+              <span className="text-2xl sm:text-3xl mb-2">❌</span>
               <p className="text-xs font-semibold text-red-500">Upload failed. Click to retry</p>
             </>
           )}
 
           {!status && (
             <>
-              <span className="text-3xl mb-2">{errors[fieldName] ? "⚠️" : "📄"}</span>
+              <span className="text-2xl sm:text-3xl mb-2">{errors[fieldName] ? "⚠️" : "📄"}</span>
               <p className={`text-xs font-semibold text-center ${errors[fieldName] ? "text-red-500" : "text-gray-600"}`}>
                 {errors[fieldName] ? "This document is required" : "Click to upload or drag and drop"}
               </p>
@@ -459,12 +459,12 @@ const Step3 = ({ form, update, onNext, onBack }) => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <DocumentBox label="Appointment Letter" fieldName="appointmentLetter" />
         <DocumentBox label="Recent Photograph" fieldName="photograph" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <DocumentBox label="NIC Front Side" fieldName="nicFront" />
         <DocumentBox label="NIC Back Side" fieldName="nicBack" />
       </div>
@@ -476,14 +476,14 @@ const Step3 = ({ form, update, onNext, onBack }) => {
       <div className="flex justify-between mt-2">
         <button
           onClick={onBack}
-          className="border-2 border-[#3B1F0A] text-[#3B1F0A] hover:bg-[#3B1F0A] hover:text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition text-sm"
+          className="border-2 border-[#3B1F0A] text-[#3B1F0A] hover:bg-[#3B1F0A] hover:text-white font-bold px-4 sm:px-5 py-2.5 rounded-xl flex items-center gap-2 transition text-sm"
         >
           <ArrowLeft size={15} /> Previous Step
         </button>
         <button
           onClick={handleNext}
           disabled={isAnyUploading}
-          className="bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-[#3d2a00] font-black px-6 py-2.5 rounded-xl flex items-center gap-2 transition shadow text-sm"
+          className="bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-[#3d2a00] font-black px-4 sm:px-6 py-2.5 rounded-xl flex items-center gap-2 transition shadow text-sm"
         >
           Save & Continue <ArrowRight size={15} />
         </button>
@@ -511,6 +511,7 @@ const Step4 = ({ form, update, onBack, onSubmit }) => {
   const validate = () => {
     const e = {};
     if (!form.username?.trim()) e.username = "Username is required.";
+    else if (form.username.includes(" ")) {e.username = "Username must not contain spaces.";}
     if (!pw)                    e.password = "Password is required.";
     else if (pw.length < 8)     e.password = "Password must be at least 8 characters.";
     if (!form.confirm)          e.confirm  = "Please confirm your password.";
@@ -519,11 +520,40 @@ const Step4 = ({ form, update, onBack, onSubmit }) => {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (!validate()) return;
-    setLoading(true);
-    try {
-      const credential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+const handleSubmit = async () => {
+  if (!validate()) return;
+  setLoading(true);
+  try {
+    // Check if NIC already exists
+    const { getDocs, collection, query, where } = await import("firebase/firestore");
+    const { db } = await import("../../firebase");
+
+    const nicQuery = query(
+      collection(db, "gn_officers"),
+      where("nic", "==", form.nic.trim())
+    );
+    const nicSnap = await getDocs(nicQuery);
+
+    if (!nicSnap.empty) {
+      setErrors((p) => ({ ...p, firebase: "An account with this NIC already exists. Please contact your divisional office." }));
+      setLoading(false);
+      return;
+    }
+
+    // Check if email already exists
+    const emailQuery = query(
+      collection(db, "gn_officers"),
+      where("email", "==", form.email.trim())
+    );
+    const emailSnap = await getDocs(emailQuery);
+
+    if (!emailSnap.empty) {
+      setErrors((p) => ({ ...p, firebase: "An account with this email already exists." }));
+      setLoading(false);
+      return;
+    }
+
+    const credential = await createUserWithEmailAndPassword(auth, form.email, form.password);
       await updateProfile(credential.user, { displayName: form.username });
       await setDoc(doc(db, "gn_officers", credential.user.uid), {
   uid: credential.user.uid,
@@ -532,7 +562,6 @@ const Step4 = ({ form, update, onBack, onSubmit }) => {
   nic: form.nic || "",
   address: form.address || "",
   dob: form.dob || "",
-  tribeType: form.tribeType || "",
   gender: form.gender || "",
   mobile: form.mobile || "",
   altMobile: form.altMobile || "",
@@ -542,7 +571,6 @@ const Step4 = ({ form, update, onBack, onSubmit }) => {
   province: form.province || "",
   district: form.district || "",
   divisionalSecretariat: form.divisionalSecretariat || "",
-  gnDivision: form.gnDivision || "",
   officeAddress: form.officeAddress || "",
   officeMobile: form.officeMobile || "",
   officialEmail: form.officialEmail || "",
@@ -553,6 +581,7 @@ const Step4 = ({ form, update, onBack, onSubmit }) => {
   nicBack: form.nicBack || "",
   signature: form.signature || "",
   role: "gn_officer",
+  status: "Pending",
   createdAt: serverTimestamp(),
 });
 await setDoc(doc(db, "users", credential.user.uid), {
@@ -586,7 +615,7 @@ await setDoc(doc(db, "users", credential.user.uid), {
       )}
 
       <Section icon={Lock} title="Account Credentials">
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
           {/* Left — input fields */}
           <div className="space-y-4">
@@ -660,11 +689,11 @@ await setDoc(doc(db, "users", credential.user.uid), {
 
       <div className="flex justify-between mt-2">
         <button onClick={onBack}
-          className="border-2 border-[#3B1F0A] text-[#3B1F0A] hover:bg-[#3B1F0A] hover:text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition text-sm">
+          className="border-2 border-[#3B1F0A] text-[#3B1F0A] hover:bg-[#3B1F0A] hover:text-white font-bold px-4 sm:px-5 py-2.5 rounded-xl flex items-center gap-1 transition text-sm">
           <ArrowLeft size={15} /> Previous Step
         </button>
         <button onClick={handleSubmit} disabled={loading}
-          className="bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 disabled:cursor-not-allowed text-[#3d2a00] font-black px-6 py-2.5 rounded-xl flex items-center gap-2 transition shadow text-sm">
+          className="bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 disabled:cursor-not-allowed text-[#3d2a00] font-black px-4 sm:px-4 py-2.5 rounded-xl flex items-center gap-1 transition shadow text-sm">
           {loading
             ? <><Loader2 size={15} className="animate-spin" /> Submitting…</>
             : <>Submit and Continue <ArrowRight size={15} /></>}
@@ -694,38 +723,38 @@ const GNSignUp = () => {
   return (
     <div className="min-h-screen flex flex-col bg-[#F5F0DC]">
 
-      <header className="bg-[#8B4513] text-white px-6 py-3 flex items-center justify-between shadow">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="logo" className="h-10 w-auto" />
+      <header className="bg-[#8B4513] text-white px-4 sm:px-6 py-3 flex items-center justify-between shadow">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <img src="/logo.png" alt="logo" className="h-8 sm:h-10 w-auto" />
           <div>
-            <p className="text-white font-bold text-sm leading-tight">Grama Niladhari</p>
-            <p className="text-[#E5A800] font-semibold text-xs">Portal</p>
+            <p className="text-white font-bold text-xs sm:text-sm leading-tight">Grama Niladhari</p>
+            <p className="text-[#E5A800] font-semibold text-[10px] sm:text-xs">Portal</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-gray-300 text-xs cursor-pointer">🌐 English ▾</span>
-          <button onClick={() => navigate("/login")}
-            className="bg-[#E5A800] text-[#3d2a00] font-bold px-4 py-1.5 rounded-lg text-xs hover:bg-[#cc9600] transition">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="text-gray-300 text-[10px] sm:text-xs cursor-pointer">🌐 English ▾</span>
+          <button onClick={() => navigate("/gn-login")}
+            className="bg-[#E5A800] text-[#3d2a00] font-bold px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs hover:bg-[#cc9600] transition">
             Sign In
           </button>
         </div>
       </header>
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-8">
-        <h1 className="text-2xl font-black text-[#8B4513] mb-1">Sign Up</h1>
-        <p className="text-xs text-gray-500 mb-5">Register as a Grama Niladhari Officer</p>
+      <main className="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-4 py-6 sm:py-8">
+        <h1 className="text-xl sm:text-2xl font-black text-[#8B4513] mb-1">Sign Up</h1>
+        <p className="text-[10px] sm:text-xs text-gray-500 mb-4 sm:mb-5">Register as a Grama Niladhari Officer</p>
 
         <StepTabs current={step} />
 
-        <div className="bg-white rounded-2xl shadow p-6">
+        <div className="bg-white rounded-2xl shadow p-4 sm:p-6">
           {step === 1 && <Step1 form={form} update={update} onNext={() => setStep(2)} />}
           {step === 2 && <Step2 form={form} update={update} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
           {step === 3 && <Step3 form={form} update={update} onNext={() => setStep(4)} onBack={() => setStep(2)} />}
-          {step === 4 && <Step4 form={form} update={update} onBack={() => setStep(3)} onSubmit={() => navigate("/login")} />}
+          {step === 4 && <Step4 form={form} update={update} onBack={() => setStep(3)} onSubmit={() => navigate("/gn-login")} />}
         </div>
       </main>
 
-      <footer className="bg-[#6A2301] text-white text-center py-3.5 text-xs font-semibold">
+      <footer className="bg-[#6A2301] text-white text-center py-3 sm:py-3.5 text-[10px] sm:text-xs font-semibold">
         © 2026 Smart Grama Sewa. All rights reserved.
       </footer>
 

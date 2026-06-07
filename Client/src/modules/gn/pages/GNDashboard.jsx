@@ -1,16 +1,39 @@
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
-import { CalendarCheck, ClipboardList, Megaphone, TrendingUp, AlertCircle, Clock, ArrowLeftRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { CalendarCheck, ClipboardList, Megaphone, TrendingUp, AlertCircle, Clock, ArrowLeftRight, ArrowRightLeft} from "lucide-react";
+import { Link, useNavigate} from "react-router-dom";
 import { useEffect, useState } from "react";
 import { collection, query, where, getDocs, doc, getDoc, orderBy, limit } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
 const GNDashboard = ({ gnStatus, theme }) => {
   const t = getThemeClasses(theme);
+  const navigate = useNavigate();
 
   const [appointmentStats, setAppointmentStats] = useState({ today: 0, pending: 0 });
   const [announcements, setAnnouncements] = useState([]);
   const [announcementStats, setAnnouncementStats] = useState({ total: 0, active: 0 });
+  const [divisionRequest, setDivisionRequest] = useState(null);
+  const [showDivisionModal, setShowDivisionModal] = useState(false);
+
+  useEffect(() => {
+  const fetchRequest = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const q = query(
+        collection(db, "gn_change_gn_division"),
+        where("uid", "==", user.uid),
+        orderBy("createdAt", "desc"),
+        limit(1)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) setDivisionRequest(snap.docs[0].data());
+    } catch (err) {
+      console.error("Fetch division request error:", err);
+    }
+  };
+  fetchRequest();
+}, []);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -72,60 +95,60 @@ const GNDashboard = ({ gnStatus, theme }) => {
   return (
     <GNLayout gnStatus={gnStatus} theme={theme}>
 
-      {/* Page Title */}
-      <h1 className="text-2xl font-bold text-[#8B4513] mb-6">Dashboard</h1>
+      {/* Page Title - Responsive */}
+      <h1 className="text-xl sm:text-2xl font-bold text-[#8B4513] mb-4 sm:mb-6 px-1">Dashboard</h1>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-6 mb-6">
+      {/* Stats Row - Stack on mobile, 3 columns on tablet/desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
 
         {/* Card 1 */}
-        <div className={`${t.card} rounded-2xl shadow p-5`}>
+        <div className={`${t.card} rounded-2xl shadow p-4 sm:p-5`}>
           <div className="flex items-center justify-between">
-            <p className={`text-xs font-semibold uppercase tracking-wide ${t.subtext}`}>Today's Appointments</p>
-            <CalendarCheck size={20} className="text-gray-400" />
+            <p className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wide ${t.subtext}`}>Today's Appointments</p>
+            <CalendarCheck size={18} className="text-gray-400 sm:w-5 sm:h-5" />
           </div>
-          <h2 className={`text-4xl font-bold mt-2 ${t.text}`}>{appointmentStats.today}</h2>
-          <p className="text-xs text-green-500 mt-2 flex items-center gap-1">
-            <TrendingUp size={12} /> Appointments today
+          <h2 className={`text-3xl sm:text-4xl font-bold mt-2 ${t.text}`}>{appointmentStats.today}</h2>
+          <p className="text-[10px] sm:text-xs text-green-500 mt-2 flex items-center gap-1">
+            <TrendingUp size={10} className="sm:w-3 sm:h-3" /> Appointments today
           </p>
         </div>
 
         {/* Card 2 */}
-        <div className={`${t.card} rounded-2xl shadow p-5`}>
+        <div className={`${t.card} rounded-2xl shadow p-4 sm:p-5`}>
           <div className="flex items-center justify-between">
-            <p className={`text-xs font-semibold uppercase tracking-wide ${t.subtext}`}>Pending Requests</p>
-            <ClipboardList size={20} className="text-gray-400" />
+            <p className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wide ${t.subtext}`}>Pending Requests</p>
+            <ClipboardList size={18} className="text-gray-400 sm:w-5 sm:h-5" />
           </div>
-          <h2 className={`text-4xl font-bold mt-2 ${t.text}`}>{appointmentStats.pending}</h2>
-          <p className="text-xs text-orange-500 mt-2 flex items-center gap-1">
-            <AlertCircle size={12} /> Requires attention
+          <h2 className={`text-3xl sm:text-4xl font-bold mt-2 ${t.text}`}>{appointmentStats.pending}</h2>
+          <p className="text-[10px] sm:text-xs text-orange-500 mt-2 flex items-center gap-1">
+            <AlertCircle size={10} className="sm:w-3 sm:h-3" /> Requires attention
           </p>
         </div>
 
         {/* Card 3 */}
-        <div className={`${t.card} rounded-2xl shadow p-5`}>
+        <div className={`${t.card} rounded-2xl shadow p-4 sm:p-5`}>
           <div className="flex items-center justify-between">
-            <p className={`text-xs font-semibold uppercase tracking-wide ${t.subtext}`}>Total Announcements</p>
-            <Megaphone size={20} className="text-gray-400" />
+            <p className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wide ${t.subtext}`}>Total Announcements</p>
+            <Megaphone size={18} className="text-gray-400 sm:w-5 sm:h-5" />
           </div>
-          <h2 className={`text-4xl font-bold mt-2 ${t.text}`}>{announcementStats.total}</h2>
-          <p className={`text-xs mt-2 ${t.subtext}`}>{announcementStats.active} Active this month</p>
+          <h2 className={`text-3xl sm:text-4xl font-bold mt-2 ${t.text}`}>{announcementStats.total}</h2>
+          <p className={`text-[10px] sm:text-xs mt-2 ${t.subtext}`}>{announcementStats.active} Active this month</p>
         </div>
 
       </div>
 
-      {/* Calendar + Quick Actions Row */}
-      <div className="grid grid-cols-3 gap-6 mb-6">
+      {/* Calendar + Quick Actions Row - Stack on mobile */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
 
-        {/* Calendar */}
-        <div className={`${t.card} rounded-2xl shadow p-5 col-span-1`}>
+        {/* Calendar - Full width on mobile, 1 col on desktop */}
+        <div className={`${t.card} rounded-2xl shadow p-4 sm:p-5 col-span-1`}>
           <p className={`text-sm font-semibold mb-3 ${t.text}`}>October 2023</p>
-          <div className="grid grid-cols-7 text-center text-xs text-gray-400 mb-2">
+          <div className="grid grid-cols-7 text-center text-[10px] sm:text-xs text-gray-400 mb-2">
             {["SU","MO","TU","WE","TH","FR","SA"].map(d => (
               <span key={d}>{d}</span>
             ))}
           </div>
-          <div className="grid grid-cols-7 text-center text-sm">
+          <div className="grid grid-cols-7 text-center text-xs sm:text-sm">
             {["26","27","28","29","30","1","2",
               "3","4","5","6","7","8","9",
               "10","11","12","13","14","15","16"].map((d, i) => (
@@ -142,35 +165,44 @@ const GNDashboard = ({ gnStatus, theme }) => {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="col-span-2">
+        {/* Quick Actions - 2 cols on desktop, full width on mobile */}
+        <div className="col-span-1 lg:col-span-2">
           <p className={`text-sm font-semibold mb-3 flex items-center gap-2 ${t.text}`}>
             ⚡ Quick Actions
           </p>
-          <div className="grid grid-cols-2 gap-4">
-            <Link to="/gn-appointments" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
-              <CalendarCheck size={22} />
-              View Appointments
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <Link to="/gn-appointments" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-3 transition justify-center sm:justify-start">
+              <CalendarCheck size={18} className="sm:w-[22px] sm:h-[22px]" />
+              <span className="text-sm sm:text-base">View Appointments</span>
             </Link>
-            <Link to="/gn-schedule" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
-              <Clock size={22} />
-              Update Schedule
+            <Link to="/gn-schedule" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-3 transition justify-center sm:justify-start">
+              <Clock size={18} className="sm:w-[22px] sm:h-[22px]" />
+              <span className="text-sm sm:text-base">Update Schedule</span>
             </Link>
-            <Link to="/gn-create-announcement" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
-              <Megaphone size={22} />
-              Create Announcement
+            <Link to="/gn-create-announcement" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-3 transition justify-center sm:justify-start">
+              <Megaphone size={18} className="sm:w-[22px] sm:h-[22px]" />
+              <span className="text-sm sm:text-base">Create Announcement</span>
             </Link>
-            <Link to="/gn-change-gn-division" className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-6 py-5 flex items-center gap-3 transition">
-              <ArrowLeftRight size={22} />
-              Change GN Division
-            </Link>
+            {/* Change GN Division Button / Status */}
+<button
+  onClick={() => {
+    if (divisionRequest) {
+      setShowDivisionModal(true);
+    } else {
+      navigate("/gn-change-gn-division");
+    }
+  }}
+  className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold rounded-2xl px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-3 transition justify-center sm:justify-start">
+  <ArrowRightLeft size={18} className="sm:w-[22px] sm:h-[22px]" />
+  <span className="text-sm sm:text-base">Change GN Division</span>
+</button>
           </div>
         </div>
 
       </div>
 
-      {/* Recent Announcements */}
-      <div className={`${t.card} rounded-2xl shadow p-5`}>
+      {/* Recent Announcements - Responsive padding */}
+      <div className={`${t.card} rounded-2xl shadow p-4 sm:p-5`}>
         <div className="flex items-center justify-between mb-4">
           <p className={`text-sm font-semibold flex items-center gap-2 ${t.text}`}>
             <Megaphone size={16} className="text-[#8B4513]" />
@@ -196,14 +228,14 @@ const GNDashboard = ({ gnStatus, theme }) => {
                 `${Math.floor(timeAgo / 24)} days ago`;
 
               return (
-                <div key={item.id} className={`flex items-center gap-4 ${!isLast ? `border-b pb-4 ${t.border}` : ""}`}>
+                <div key={item.id} className={`flex items-center gap-3 sm:gap-4 ${!isLast ? `border-b pb-4 ${t.border}` : ""}`}>
                   <div className="flex-1">
                     <p className={`text-sm font-semibold ${t.text}`}>{item.title}</p>
                     <p className={`text-xs ${t.subtext}`}>
                       {timeLabel} • {item.status || "Draft"}
                     </p>
                   </div>
-                  <span className={`text-xs font-semibold px-2 py-1 rounded-full
+                  <span className={`text-[10px] sm:text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap
                     ${item.status === "Active" ? "bg-green-100 text-green-700" :
                       item.status === "Draft" ? "bg-yellow-100 text-yellow-700" :
                       "bg-gray-100 text-gray-500"}`}>
@@ -215,6 +247,85 @@ const GNDashboard = ({ gnStatus, theme }) => {
           )}
         </div>
       </div>
+      
+      {/* Division Request Status Modal - Responsive */}
+      {showDivisionModal && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-3 sm:px-4">
+    <div className={`${t.card} rounded-2xl shadow-2xl w-full max-w-[90%] sm:max-w-md p-5 sm:p-6`}>
+
+      <div className="flex items-center justify-between mb-4">
+        <h2 className={`text-sm sm:text-base font-bold ${t.text}`}>GN Division Change Request</h2>
+        <button onClick={() => setShowDivisionModal(false)}
+          className={`${t.subtext} hover:text-gray-600 text-xl`}>✕</button>
+      </div>
+
+      {/* Status Badge */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+        <div>
+          <p className={`text-xs ${t.subtext}`}>Requested Division</p>
+          <p className={`text-sm font-bold ${t.text}`}>{divisionRequest?.toDivision}</p>
+          <p className={`text-xs ${t.subtext}`}>{divisionRequest?.toDistrict}</p>
+        </div>
+        <span className={`text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-center ${
+          divisionRequest?.status === "Pending"  ? "bg-yellow-100 text-yellow-700" :
+          divisionRequest?.status === "Approved" ? "bg-green-100 text-green-700"  :
+          divisionRequest?.status === "Rejected" ? "bg-red-100 text-red-600"      :
+          "bg-gray-100 text-gray-500"
+        }`}>
+          {divisionRequest?.status === "Pending"  ? "⏳ Pending"  :
+           divisionRequest?.status === "Approved" ? "✅ Approved" :
+           divisionRequest?.status === "Rejected" ? "❌ Rejected" :
+           divisionRequest?.status}
+        </span>
+      </div>
+
+      {/* Submitted date */}
+      <p className={`text-xs ${t.subtext} mb-4`}>
+        Submitted: {divisionRequest?.createdAt?.toDate?.()?.toLocaleDateString("en-US", {
+          year: "numeric", month: "short", day: "numeric"
+        }) || "—"}
+      </p>
+
+      {/* Status messages */}
+      {divisionRequest?.status === "Pending" && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-3 sm:px-4 py-3 mb-4">
+          <p className="text-xs text-yellow-700 font-semibold">
+            Your request is currently under review by the admin.
+          </p>
+        </div>
+      )}
+      {divisionRequest?.status === "Approved" && (
+        <div className="bg-green-50 border border-green-200 rounded-xl px-3 sm:px-4 py-3 mb-4">
+          <p className="text-xs text-green-700 font-semibold">
+            Your division change has been approved!
+          </p>
+        </div>
+      )}
+      {divisionRequest?.status === "Rejected" && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-3 sm:px-4 py-3 mb-4">
+          <p className="text-xs text-red-600 font-semibold">
+            Your request was rejected. You can submit a new request.
+          </p>
+        </div>
+      )}
+
+      {/* Buttons */}
+      <div className="flex gap-3">
+        <button onClick={() => setShowDivisionModal(false)}
+          className={`flex-1 border ${t.border} ${t.subtext} font-semibold py-2 rounded-xl hover:bg-gray-50 transition text-sm`}>
+          Close
+        </button>
+        {divisionRequest?.status === "Rejected" && (
+          <button onClick={() => { setShowDivisionModal(false); navigate("/gn-change-gn-division"); }}
+            className="flex-1 bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold py-2 rounded-xl transition text-sm">
+            New Request
+          </button>
+        )}
+      </div>
+
+    </div>
+  </div>
+)}
 
     </GNLayout>
   );

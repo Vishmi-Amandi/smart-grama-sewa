@@ -19,6 +19,9 @@ import GNLogin from './modules/gn/pages/GNLogin.jsx';
 import GNSignUp from './modules/gn/pages/GNSignUp.jsx';
 import GNForgotPassword from './modules/gn/pages/GNForgotPassword.jsx';
 import SignUpSelect from './modules/gn/pages/SignUpSelect.jsx';
+import ChangeGNRequestStatus from './modules/gn/pages/ChangeGNRequestStatus.jsx';
+import GNAccountPending from './modules/gn/pages/GNAccountPending.jsx';
+import GNAccountRejected from './modules/gn/pages/GNAccountRejected.jsx';
 
 // ===== USER MODULE IMPORTS =====
 import Login from './modules/user/pages/login';
@@ -30,8 +33,9 @@ import Announcements from './modules/user/pages/announcements';
 import Settings from './modules/user/pages/settings';
 import ContactGN from './modules/user/pages/contactGN';
 
-// ===== SHARED IMPORTS =====
-import Home from './modules/home/Home.jsx';
+// New module import
+import Home from './modules/home/Home';
+import Forms from './modules/forms/Forms';
 
 // ===== GN PROTECTED ROUTE =====
 const GNProtectedRoute = ({ children }) => {
@@ -125,6 +129,8 @@ function App() {
             <Route path="/gn-signup" element={<GNSignUp />} />
             <Route path="/gn-forgot-password" element={<GNForgotPassword />} />
             <Route path="/signup-select" element={<SignUpSelect />} />
+            <Route path="/gn-account-pending" element={<GNAccountPending />} />
+            <Route path="/gn-account-rejected" element={<GNAccountRejected />} />
 
             <Route path="/gn-dashboard" element={
               <GNProtectedRoute>
@@ -177,6 +183,10 @@ function App() {
               </GNProtectedRoute>
             } />
 
+            <Route path="/change-gn-request-status" element={
+              <GNProtectedRoute><ChangeGNRequestStatus gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>} />
+
             {/* ===== USER MODULE ROUTES ===== */}
             <Route path="/login" element={<Login />} />
             <Route path="/user-signup" element={<SignUp />} />
@@ -209,6 +219,13 @@ function App() {
             <Route path="/contact-gn" element={
               <UserProtectedRoute>
                 <ContactGN />
+              </UserProtectedRoute>
+            } />
+
+            {/* ===== FORMS ROUTE ===== */}
+            <Route path="/forms" element={
+              <UserProtectedRoute>
+                <Forms />
               </UserProtectedRoute>
             } />
 
