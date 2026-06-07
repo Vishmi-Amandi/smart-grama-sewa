@@ -1,0 +1,95 @@
+{
+  "type": "service_account",
+  "project_id": "graphite-post-476714-i0",
+  "private_key_id": "8fdf924bc18715e2a62738d63cb2c1a930f17d0e",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCjpB9bbL69hLQr\nNx1wtv9DEle9JgmKcE7hrXFiD4IpdSXcv8PrsZNj60mZQYWQq6fOi62msOTrlz1R\nNGY0qmjAsKyxW8P4tq91OBA+RNZQLdQqIBEOf4jIQrbMknRaardXsojiiJ13aDJM\nz5l21F4hXMpJOHqMJp4fBEzA6o3Vmii2nidqs4SL7bqzVBlkFA/zSKlEpVY0BmsQ\nWp16Al4hSc9Kna23qseMrTNICIkLqLG4/ZKVKRGfz5TF+9ILxoUGPh9QWJCLFQUS\nzfc1BnNOJ1LeBT9+WsEFYxZ7gWOTKPZ3rr6hIHfgqHF+QjQC+tf1Eqp5v6/tI2QM\njrnuKVSpAgMBAAECggEAAmRCgxBj+fAdE/6dDbSBpuYh5c/5rA4ie6uQcH71Mjbr\nQ+ks615v3tzQTrma7Uzc9H4Cc+EPpMkpP8JqIKiW7wNbWseSZdRXByRidGPcKqrT\neCl6JldDKq4dmYAlzDEqwdDdraCShe1owspL82UnhQmj+ThRQ4gdn9VtFmq3LPaA\nWG8P0Qh9y37srMS8bQzynTl8JKHzpoVgHvpm+hVqvMY61ib7maLzr+F/avzPmQxP\nWqywLRMzZ7JyhvYSOlmvwBDukCBFbaHb8TmddamOorvAaDUJK05YIab03DxbBszR\nUjmWPHUFiZsIBwQX6mLVt6KSC9chkpaWwzLKtNS4CwKBgQDPUN6v/0t2Frw8RCYG\nCjniShlSdVtXXGkx4emGt6yjELrt/zqvXXrGVOwy+Vys+wXLXplJj0JIG8sjhcBZ\nL0uNYQ3og27IGQj8g3bryTKxoxWGFseo/Jp0crkkkv4ujJrANNt2pXD8LLmhutfK\ncF+QU4YZ/e4Kk6aULl7eB8D1bwKBgQDKEav6Wz5RuWCqe3QjLUvm92yI5DMoRr83\nwCRk+97uuvORDlG7UyKwPDQdWsVcb88dU2MIimlDxkApbJ4LTTO2isTe5dBJ60Qj\n41YmHlvlOf/9KkeCjGTSB9aTYIDo5rP0JRgGRH3+w8XABrxCgyCH33qQdoPkxHxo\nC73wOWo7ZwKBgHVbVyQUBbiseBQ5k7i5kzjZL2pxSqqygk4dj5+WXCDW+Kp/X84j\nwbuCGU9lv6OgWhBc1bNBaIj/SsgqD8+sqT04IrJrrIuTOHYRSYGCHLNYGXgVbyLn\nE9w1kT72AvOA3p1NjqqkTshB3TeDWGKdqEtALNqL13OfT530ffl8NCv7AoGBALnu\nXs+Dy6kJKUBVTjzb/h5tBmpDiCsERgi3fQWKmMwUK/AKO/xg9+cvzkhAcJ+opev3\nAYYnTcq2De3P6vC9Pds2fwYWcnzBxTY8hdWXU7ltj/XURG6EXnTAD5oWTyd+uJDq\n3NtPhJu6aihSSkHtRC6h3LY2xw/mGA7o1wHG4s/7AoGAdoogYiyw114Ga116WjJs\nBPFDUFOfsub5ff7dr4IWHcTmzcs+sYDitWl0r4A2FlyhwHNGlkAEWLnx9tUBJOwP\ne26Dwr/tIZ36wHvnmpSqXGSwqPFndqJfpWD/uquz8mnUw7Dn/DuFBko+OobCd+dv\nhStZvr0F2xXKcZVNjboxwkk=\n-----END PRIVATE KEY-----\n",
+  "client_email": "dialogflow-nodejs@graphite-post-476714-i0.iam.gserviceaccount.com",
+  "client_id": "109796004439168736325",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/dialogflow-nodejs%40graphite-post-476714-i0.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com",
+  "faq_data": [
+    {
+      "question": "How do I get a residence certificate?",
+      "answer": "To get a residence certificate, you need to submit a completed application form along with proof of identity and a copy of your deed or lease agreement.",
+      "form": "residence_certificate_form.pdf"
+    },
+    {
+      "question": "What documents do I need for a character certificate?",
+      "answer": "For a character certificate, you need your National Identity Card (NIC), a letter from your Grama Niladhari, and a completed application form.",
+      "form": "character_certificate_form.pdf"
+    },
+    {
+      "question": "I need a GN certificate for a new job.",
+      "answer": "You can apply for a Grama Niladhari (GN) certificate by filling out the GN certificate application and submitting it to our office with your NIC.",
+      "form": "gn_certificate_application.pdf"
+    },
+    {
+      "question": "When is the GN in the office today?",
+      "answer": "The Grama Niladhari is typically in the office on Tuesdays and Thursdays from 8:30 AM to 12:30 PM, and on Saturdays from 8:30 AM to 12:00 PM.",
+      "form": null
+    },
+    {
+      "question": "How can I book a time to meet?",
+      "answer": "You can book an appointment by using the 'Book Appointment' feature on our system, or by contacting the office during working hours.",
+      "form": null
+    },
+    {
+      "question": "Are you available tomorrow morning?",
+      "answer": "Please check the scheduling system to see the GN's specific availability and to book an appointment for tomorrow morning.",
+      "form": null
+    },
+    {
+      "question": "What are the office hours?",
+      "answer": "The office is open on Tuesdays and Thursdays from 8:30 AM to 12:30 PM, and Saturdays from 8:30 AM to 12:00 PM.",
+      "form": null
+    },
+    {
+      "question": "Where can I find the application for a new NIC?",
+      "answer": "You can download the application for a new National Identity Card (NIC) from our forms section.",
+      "form": "nic_application_form.pdf"
+    },
+    {
+      "question": "How do I download a voter registration form?",
+      "answer": "The voter registration form can be downloaded directly from our forms section. Please fill it out and return it to the office.",
+      "form": "voter_registration_form.pdf"
+    },
+    {
+      "question": "I need a blank form for timber transport.",
+      "answer": "You can download the timber transport application form here. Please ensure all details are correctly filled out before submission.",
+      "form": "timber_transport_form.pdf"
+    },
+    {
+      "question": "How do I apply for Samurdhi?",
+      "answer": "To apply for Samurdhi, complete the Samurdhi application form and submit it along with your income details and NIC.",
+      "form": "samurdhi_application.pdf"
+    },
+    {
+      "question": "When is the Aswesuma payment date?",
+      "answer": "Aswesuma payment dates are generally announced at the beginning of each month. Please check the notice board or your profile for updates.",
+      "form": null
+    },
+    {
+      "question": "How to apply Mahapola and Bursery?",
+      "answer": "You can apply for Mahapola and Bursary through the university grants commission, but you will need a GN certificate to verify your income. Download the income verification form here.",
+      "form": "income_verification_form.pdf"
+    },
+    {
+      "question": "How do I use this system?",
+      "answer": "You can use this system to request certificates, book appointments, and check the status of your requests. Navigate through the menu to access different features.",
+      "form": null
+    },
+    {
+      "question": "Where is my profile?",
+      "answer": "You can access your profile by clicking on the user icon or 'Profile' link at the top right corner of the page.",
+      "form": null
+    },
+    {
+      "question": "How do I check my request status?",
+      "answer": "To check your request status, go to the 'My Requests' section in your profile, where you will see the current status of all your applications.",
+      "form": null
+    }
+  ]
+}
