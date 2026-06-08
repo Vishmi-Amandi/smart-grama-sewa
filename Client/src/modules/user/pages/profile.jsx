@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
@@ -14,7 +14,7 @@ const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
   </svg>
 );
 
-const Icons = {
+const IC = {
   dashboard:    'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10',
   announcement: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
   appointments: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
@@ -39,13 +39,13 @@ const Icons = {
 
 // List of all pages/functions for search
 const PAGE_ACTIONS = [
-  { name: 'Dashboard', path: '/dashboard', icon: Icons.dashboard },
-  { name: 'Announcements', path: '/announcements', icon: Icons.announcement },
-  { name: 'Appointments', path: '/appointments', icon: Icons.appointments },
-  { name: 'Forms', path: '/forms', icon: Icons.forms },
-  { name: 'AI Assistant', path: '/ai', icon: Icons.ai },
-  { name: 'Profile', path: '/profile', icon: Icons.profile },
-  { name: 'Settings', path: '/settings', icon: Icons.settings },
+  { name: 'Dashboard', path: '/dashboard', icon: IC.dashboard },
+  { name: 'Announcements', path: '/announcements', icon: IC.announcement },
+  { name: 'Appointments', path: '/appointments', icon: IC.appointments },
+  { name: 'Forms', path: '/forms', icon: IC.forms },
+  { name: 'AI Assistant', path: '/ai', icon: IC.ai },
+  { name: 'Profile', path: '/profile', icon: IC.profile },
+  { name: 'Settings', path: '/settings', icon: IC.settings },
 ];
 
 // Search Results Dropdown Component
@@ -92,8 +92,8 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
-      ? 'bg-white/90 dark:bg-user-primary text-user-text font-extrabold shadow-md' 
-      : 'bg-transparent text-user-text font-semibold hover:bg-white/40 dark:hover:bg-white/10'
+      ? 'bg-yellow-100 text-user-primary font-extrabold shadow-md' 
+      : 'bg-transparent text-gray-700 font-semibold hover:bg-yellow-50'
   }`}
     style={{ color: active ? '#B46A02' : '#5a3a00' }}
   >
@@ -106,8 +106,8 @@ const NavItem = ({ iconPath, label, active, onClick }) => (
 const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser }) => (
   <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
     <div className="flex-1 max-w-[400px] relative">
-      <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-3xl px-4 py-2 transition-colors hover:border-user-primary">
-        <Icon d={Icons.search} size={16} color="#aaa" />
+      <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-round px-4 py-2 transition-colors hover:border-user-primary">
+        <Icon d={IC.search} size={16} color="#aaa" />
         <input
           type="text"
           placeholder="Search for a page or function..."
@@ -121,7 +121,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
         />
         {searchQuery && (
           <button onClick={() => { setSearchQuery(''); setShowResults(false); }} className="bg-none border-none cursor-pointer p-1">
-            <Icon d={Icons.close} size={14} color="#aaa" />
+            <Icon d={IC.close} size={14} color="#aaa" />
           </button>
         )}
       </div>
@@ -140,7 +140,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
     />
     
     <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
-      <Icon d={Icons.bell} size={18} color="#5a3a00" />
+      <Icon d={IC.bell} size={18} color="#5a3a00" />
       <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
     </div>
     
@@ -151,24 +151,29 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
           e.stopPropagation();
           setShowProfileMenu(!showProfileMenu);
         }}
-        className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-3xl cursor-pointer transition-colors hover:border-user-primary"
+        className="profile-button flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-round cursor-pointer transition-all hover:border-user-primary"
       >
         <span className="text-sm font-bold text-user-text max-w-[100px] truncate">{chipName}</span>
         <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0">
-          <Icon d={Icons.profile} size={16} color="#3d2a00" />
+          <Icon d={IC.profile} size={16} color="#3d2a00" />
         </div>
       </button>
+      
       {showProfileMenu && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden">
-          <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
-            <Icon d={Icons.profile} size={14} /> My Profile
+        <div className="profile-menu absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden animate-fade-in">
+          <div className="p-3 border-b border-user-border-light">
+            <p className="text-sm font-bold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</p>
+            <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
+          </div>
+          <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+            <Icon d={IC.profile} size={16} color="#B46A02" /> My Profile
           </button>
-          <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
-            <Icon d={Icons.settings} size={14} /> Settings
+          <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+            <Icon d={IC.settings} size={16} color="#B46A02" /> Settings
           </button>
-          <hr className="my-1" />
-          <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 flex items-center gap-2">
-            <Icon d={Icons.logout} size={14} /> Logout
+          <div className="border-t border-user-border-light my-1"></div>
+          <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
+            <Icon d={IC.logout} size={16} color="#ef4444" /> Sign Out
           </button>
         </div>
       )}
@@ -191,28 +196,28 @@ const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLang
     </div>
     <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={onLanguageChange} />
     <div className="w-9 h-9 flex items-center justify-center relative">
-      <Icon d={Icons.bell} size={22} color="#1e1200" />
+      <Icon d={IC.bell} size={22} color="#1e1200" />
       <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
     </div>
     <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
-      <Icon d={Icons.profile} size={20} color="#3d2a00" />
+      <Icon d={IC.profile} size={20} color="#3d2a00" />
     </div>
   </div>
 );
 
 // Mobile Sidebar Overlay
-const MobileSidebar = ({ isOpen, onClose, navigate, onLogout }) => {
+const MobileSidebar = ({ isOpen, onClose, navigate, onLogout, currentPath }) => {
   const navItems = [
-    { key: 'dashboard', icon: Icons.dashboard, label: 'Dashboard', path: '/dashboard' },
-    { key: 'announcements', icon: Icons.announcement, label: 'Announcements', path: '/announcements' },
-    { key: 'appointments', icon: Icons.appointments, label: 'Appointments', path: '/appointments' },
-    { key: 'forms', icon: Icons.forms, label: 'Forms', path: '/forms' },
-    { key: 'ai', icon: Icons.ai, label: 'AI assistant', path: '/ai' },
+    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard', path: '/dashboard' },
+    { key: 'announcements', icon: IC.announcement, label: 'Announcements', path: '/announcements' },
+    { key: 'appointments', icon: IC.appointments, label: 'Appointments', path: '/appointments' },
+    { key: 'forms', icon: IC.forms, label: 'Forms', path: '/forms' },
+    { key: 'ai', icon: IC.ai, label: 'AI assistant', path: '/ai' },
   ];
   const bottomNav = [
-    { key: 'profile', icon: Icons.profile, label: 'Profile', path: '/profile' },
-    { key: 'settings', icon: Icons.settings, label: 'Settings', path: '/settings' },
-    { key: 'logout', icon: Icons.logout, label: 'Sign out', action: 'logout' },
+    { key: 'profile', icon: IC.profile, label: 'Profile', path: '/profile' },
+    { key: 'settings', icon: IC.settings, label: 'Settings', path: '/settings' },
+    { key: 'logout', icon: IC.logout, label: 'Sign out', action: 'logout' },
   ];
 
   if (!isOpen) return null;
@@ -228,11 +233,23 @@ const MobileSidebar = ({ isOpen, onClose, navigate, onLogout }) => {
           <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
         </div>
         {navItems.map((item) => (
-          <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => { navigate(item.path); onClose(); }} />
+          <NavItem 
+            key={item.key} 
+            iconPath={item.icon} 
+            label={item.label} 
+            active={currentPath === item.path}
+            onClick={() => { navigate(item.path); onClose(); }} 
+          />
         ))}
         <div className="border-t border-white/20 my-3 pt-3">
           {bottomNav.map((item) => (
-            <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => { if (item.action === 'logout') onLogout(); else navigate(item.path); onClose(); }} />
+            <NavItem 
+              key={item.key} 
+              iconPath={item.icon} 
+              label={item.label} 
+              active={currentPath === item.path}
+              onClick={() => { if (item.action === 'logout') onLogout(); else navigate(item.path); onClose(); }} 
+            />
           ))}
         </div>
       </div>
@@ -241,18 +258,18 @@ const MobileSidebar = ({ isOpen, onClose, navigate, onLogout }) => {
 };
 
 // Desktop Sidebar
-const DesktopSidebar = ({ navigate, onLogout }) => {
+const DesktopSidebar = ({ navigate, onLogout, currentPath }) => {
   const navItems = [
-    { key: 'dashboard', icon: Icons.dashboard, label: 'Dashboard', path: '/dashboard' },
-    { key: 'announcements', icon: Icons.announcement, label: 'Announcements', path: '/announcements' },
-    { key: 'appointments', icon: Icons.appointments, label: 'Appointments', path: '/appointments' },
-    { key: 'forms', icon: Icons.forms, label: 'Forms', path: '/forms' },
-    { key: 'ai', icon: Icons.ai, label: 'AI assistant', path: '/ai' },
+    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard', path: '/dashboard' },
+    { key: 'announcements', icon: IC.announcement, label: 'Announcements', path: '/announcements' },
+    { key: 'appointments', icon: IC.appointments, label: 'Appointments', path: '/appointments' },
+    { key: 'forms', icon: IC.forms, label: 'Forms', path: '/forms' },
+    { key: 'ai', icon: IC.ai, label: 'AI assistant', path: '/ai' },
   ];
   const bottomNav = [
-    { key: 'profile', icon: Icons.profile, label: 'Profile', path: '/profile' },
-    { key: 'settings', icon: Icons.settings, label: 'Settings', path: '/settings' },
-    { key: 'logout', icon: Icons.logout, label: 'Sign out', action: 'logout' },
+    { key: 'profile', icon: IC.profile, label: 'Profile', path: '/profile' },
+    { key: 'settings', icon: IC.settings, label: 'Settings', path: '/settings' },
+    { key: 'logout', icon: IC.logout, label: 'Sign out', action: 'logout' },
   ];
 
   return (
@@ -262,12 +279,24 @@ const DesktopSidebar = ({ navigate, onLogout }) => {
       </div>
       <div className="flex-1 p-3">
         {navItems.map((item) => (
-          <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => navigate(item.path)} />
+          <NavItem 
+            key={item.key} 
+            iconPath={item.icon} 
+            label={item.label} 
+            active={currentPath === item.path}
+            onClick={() => navigate(item.path)} 
+          />
         ))}
       </div>
       <div className="p-3 pt-2 border-t border-black/10">
         {bottomNav.map((item) => (
-          <NavItem key={item.key} iconPath={item.icon} label={item.label} onClick={() => item.action === 'logout' ? onLogout() : navigate(item.path)} />
+          <NavItem 
+            key={item.key} 
+            iconPath={item.icon} 
+            label={item.label} 
+            active={currentPath === item.path}
+            onClick={() => item.action === 'logout' ? onLogout() : navigate(item.path)} 
+          />
         ))}
       </div>
     </div>
@@ -318,6 +347,8 @@ const GenderSelect = ({ value, onChange }) => (
 // MAIN PROFILE COMPONENT
 const Profile = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname;
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -350,11 +381,21 @@ const Profile = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Click outside to close search results
+  // Click outside to close search results and profile menu
   useEffect(() => {
-    const handleClickOutside = () => {
+    const handleClickOutside = (event) => {
+      const profileButton = document.querySelector('.profile-button');
+      const profileMenu = document.querySelector('.profile-menu');
+      
+      // Don't close if clicking on profile button or menu
+      if (profileButton?.contains(event.target) || profileMenu?.contains(event.target)) {
+        return;
+      }
+      
       setShowSearchResults(false);
+      setShowProfileMenu(false);
     };
+    
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
@@ -422,7 +463,7 @@ const Profile = () => {
 
   const update = (key) => (val) => setForm(f => ({ ...f, [key]: val }));
 
-  const chipName = userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
+  const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
   const nicMasked = userData?.nic ? userData.nic.slice(0, 3) + 'XXXXX' : 'XXXXXXXXXXXX';
 
   if (authLoading) return <PageLoadingSkeleton />;
@@ -431,10 +472,10 @@ const Profile = () => {
     <div className="user-module min-h-screen flex flex-col font-sans bg-user-background">
       <div className="flex-1 flex">
         {/* Desktop Sidebar */}
-        {!isMobile && <DesktopSidebar navigate={navigate} onLogout={handleLogout} />}
+        {!isMobile && <DesktopSidebar navigate={navigate} onLogout={handleLogout} currentPath={currentPath} />}
 
         {/* Mobile Sidebar Overlay */}
-        <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} navigate={navigate} onLogout={handleLogout} />
+        <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} navigate={navigate} onLogout={handleLogout} currentPath={currentPath} />
 
         {/* MAIN COLUMN */}
         <div className="flex-1 flex flex-col min-w-0">
@@ -466,10 +507,10 @@ const Profile = () => {
             onLanguageChange={handleLanguageChange}
           />
 
-          {/* Mobile Search Bar - NOT STICKY */}
+          {/* Mobile Search Bar */}
           <div className="md:hidden pt-3 px-3.5 relative">
             <div className="flex items-center gap-2.5 bg-white border border-user-border rounded-round px-4 py-2.5">
-              <Icon d={Icons.search} size={16} color="#aaa" />
+              <Icon d={IC.search} size={16} color="#aaa" />
               <input
                 type="text"
                 placeholder="Search for a page..."
@@ -483,7 +524,7 @@ const Profile = () => {
               />
               {searchQuery && (
                 <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="bg-none border-none cursor-pointer p-1">
-                  <Icon d={Icons.close} size={14} color="#aaa" />
+                  <Icon d={IC.close} size={14} color="#aaa" />
                 </button>
               )}
             </div>
@@ -507,7 +548,7 @@ const Profile = () => {
 
                 {saveSuccess && (
                   <div className="flex items-center gap-2 bg-user-success-light border border-user-success rounded-xl p-3 mb-4">
-                    <Icon d={Icons.tick} size={14} color="#1a7a3a" strokeWidth={2.5} />
+                    <Icon d={IC.tick} size={14} color="#1a7a3a" strokeWidth={2.5} />
                     <span className="text-sm font-semibold text-user-success">Profile updated successfully!</span>
                   </div>
                 )}
@@ -516,7 +557,7 @@ const Profile = () => {
                 <div className="bg-user-surface border border-user-border rounded-xl p-5 flex flex-col md:flex-row items-center md:items-start gap-5 mb-5">
                   <div className="relative">
                     <div className="w-20 h-20 rounded-full border-3 border-user-text bg-user-secondary-light flex items-center justify-center">
-                      <Icon d={Icons.profile} size={36} color="#5a4030" />
+                      <Icon d={IC.profile} size={36} color="#5a4030" />
                     </div>
                   </div>
                   <div className="flex-1 text-center md:text-left">
@@ -533,7 +574,7 @@ const Profile = () => {
                     onClick={() => setIsEditing(true)} 
                     className="flex items-center justify-center gap-2 py-2.5 px-6 bg-user-primary rounded-round text-sm font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark"
                   >
-                    <Icon d={Icons.edit} size={15} /> Edit Profile
+                    <Icon d={IC.edit} size={15} /> Edit Profile
                   </button>
                 </div>
 

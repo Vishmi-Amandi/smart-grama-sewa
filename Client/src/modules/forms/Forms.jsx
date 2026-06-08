@@ -46,8 +46,8 @@ const IC = {
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
-      ? 'bg-white/90 dark:bg-user-primary text-user-text font-extrabold shadow-md' 
-      : 'bg-transparent text-user-text font-semibold hover:bg-white/40 dark:hover:bg-white/10'
+      ? 'bg-user-background text-white font-extrabold shadow-md' 
+      : 'bg-transparent text-gray-700 font-semibold hover:bg-yellow-100'
   }`}
     style={{ color: active ? '#B46A02' : '#5a3a00' }}
   >
@@ -95,10 +95,10 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
 };
 
 // Desktop Topbar
-const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout }) => (
-  <div className="desktop-topbar h-16 bg-user-surface dark:bg-user-surface border-b border-user-border dark:border-user-border flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
+const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser }) => (
+  <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
     <div className="flex-1 max-w-[400px] relative">
-      <div className="flex items-center gap-2.5 bg-user-secondary-light dark:bg-user-secondary-light border border-user-border dark:border-user-border rounded-3xl px-4 py-2 transition-colors hover:border-user-primary">
+      <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-3xl px-4 py-2 transition-colors hover:border-user-primary">
         <Icon d={IC.search} size={16} color="#aaa" />
         <input
           type="text"
@@ -109,7 +109,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
             setShowResults(true);
           }}
           onFocus={() => setShowResults(true)}
-          className="flex-1 border-none outline-none text-sm font-medium text-user-text dark:text-user-text bg-transparent"
+          className="flex-1 border-none outline-none text-sm font-medium text-user-text bg-transparent"
         />
         {searchQuery && (
           <button onClick={() => { setSearchQuery(''); setShowResults(false); }} className="bg-none border-none cursor-pointer p-1">
@@ -131,7 +131,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
       onLanguageChange={onLanguageChange}
     />
     
-    <div className="w-9 h-9 rounded-full bg-user-secondary-light dark:bg-user-secondary-light border border-user-border dark:border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
+    <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
       <Icon d={IC.bell} size={18} color="#5a3a00" />
       <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
     </div>
@@ -142,24 +142,29 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
           e.stopPropagation();
           setShowProfileMenu(!showProfileMenu);
         }}
-        className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light dark:bg-user-secondary-light border border-user-border dark:border-user-border rounded-lg cursor-pointer transition-colors hover:border-user-primary"
+        className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-3xl cursor-pointer transition-all hover:border-user-primary"
       >
+        <span className="text-sm font-bold text-user-text max-w-[100px] truncate">{chipName}</span>
         <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0">
           <Icon d={IC.profile} size={16} color="#3d2a00" />
         </div>
-        <span className="text-sm font-bold text-user-text dark:text-user-text max-w-[100px] truncate">{chipName}</span>
       </button>
+      
       {showProfileMenu && (
-        <div className="absolute right-0 mt-2 w-48 bg-user-surface dark:bg-user-surface rounded-xl shadow-lg border border-user-border dark:border-user-border z-50 overflow-hidden">
-          <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
-            <Icon d={IC.profile} size={14} /> My Profile
+        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden animate-fade-in">
+          <div className="p-3 border-b border-user-border-light">
+            <p className="text-sm font-bold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</p>
+            <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
+          </div>
+          <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+            <Icon d={IC.profile} size={16} color="#B46A02" /> My Profile
           </button>
-          <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
-            <Icon d={IC.settings} size={14} /> Settings
+          <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+            <Icon d={IC.settings} size={16} color="#B46A02" /> Settings
           </button>
-          <hr className="my-1 dark:border-gray-700" />
-          <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2">
-            <Icon d={IC.logout} size={14} /> Logout
+          <div className="border-t border-user-border-light my-1"></div>
+          <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
+            <Icon d={IC.logout} size={16} color="#ef4444" /> Sign Out
           </button>
         </div>
       )}
@@ -1965,7 +1970,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
             </>
           )}
 
-          {/* Form 11: Assessments for Ownership of Lands - Simplified */}
+          {/* Form 11: Assessments for Ownership of Lands */}
           {form.id === 11 && (
             <div className="space-y-4">
               <h4 className="text-sm font-black text-user-secondary border-b border-user-border pb-2">Land Ownership Assessment</h4>
@@ -2160,6 +2165,8 @@ const Forms = () => {
               showProfileMenu={showProfileMenu}
               setShowProfileMenu={setShowProfileMenu}
               handleLogout={handleLogout}
+              userData={userData}      
+              currentUser={currentUser} 
             />
           )}
 
@@ -2251,11 +2258,6 @@ const Forms = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-[#6A2301] text-white text-center py-3 px-4 text-sm font-semibold">
-        © 2026 Smart Grama Sewa. All rights reserved.
-      </footer>
-
       {/* Toast Notification */}
       {toast && (
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[1100] animate-slide-up">
@@ -2300,6 +2302,11 @@ const Forms = () => {
           .mobile-topbar { display: flex !important; }
         }
       `}</style>
+
+      {/* Footer */}
+      <footer className="bg-[#6A2301] text-white text-center py-3 px-4 text-sm font-semibold">
+        © 2026 Smart Grama Sewa. All rights reserved.
+      </footer>
     </div>
   );
 };

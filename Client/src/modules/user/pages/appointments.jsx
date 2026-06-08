@@ -118,8 +118,8 @@ const SERVICE_CATS = [
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
-      ? 'bg-white/90 dark:bg-user-primary text-user-text font-extrabold shadow-md' 
-      : 'bg-transparent text-user-text font-semibold hover:bg-white/40 dark:hover:bg-white/10'
+      ? 'bg-user-background text-white font-extrabold shadow-md' 
+      : 'bg-transparent text-gray-700 font-semibold hover:bg-yellow-100'
   }`}
     style={{ color: active ? '#B46A02' : '#5a3a00' }}
   >
@@ -210,7 +210,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
 const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser }) => (
   <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
     <div className="flex-1 max-w-[400px] relative">
-      <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-3xl px-4 py-2 transition-colors hover:border-user-primary">
+      <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-round px-4 py-2 transition-colors hover:border-user-primary">
         <Icon d={IC.search} size={16} color="#aaa" />
         <input
           type="text"
@@ -255,24 +255,29 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
           e.stopPropagation();
           setShowProfileMenu(!showProfileMenu);
         }}
-        className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-3xl cursor-pointer transition-colors hover:border-user-primary"
+        className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-round cursor-pointer transition-all hover:border-user-primary"
       >
         <span className="text-sm font-bold text-user-text max-w-[100px] truncate">{chipName}</span>
         <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0">
           <Icon d={IC.profile} size={16} color="#3d2a00" />
         </div>
       </button>
+      
       {showProfileMenu && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden">
-          <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
-            <Icon d={IC.profile} size={14} /> My Profile
+        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden animate-fade-in">
+          <div className="p-3 border-b border-user-border-light">
+            <p className="text-sm font-bold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</p>
+            <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
+          </div>
+          <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+            <Icon d={IC.profile} size={16} color="#B46A02" /> My Profile
           </button>
-          <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
-            <Icon d={IC.settings} size={14} /> Settings
+          <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+            <Icon d={IC.settings} size={16} color="#B46A02" /> Settings
           </button>
-          <hr className="my-1" />
-          <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 flex items-center gap-2">
-            <Icon d={IC.logout} size={14} /> Logout
+          <div className="border-t border-user-border-light my-1"></div>
+          <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
+            <Icon d={IC.logout} size={16} color="#ef4444" /> Sign Out
           </button>
         </div>
       )}

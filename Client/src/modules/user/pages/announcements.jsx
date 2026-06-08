@@ -6,7 +6,7 @@ import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton, AnnouncementsListSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
 
-// Icons (same as before)
+// Icons
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -62,8 +62,8 @@ const PAGE_ACTIONS = [
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
-      ? 'bg-white/90 dark:bg-user-primary text-user-text font-extrabold shadow-md' 
-      : 'bg-transparent text-user-text font-semibold hover:bg-white/40 dark:hover:bg-white/10'
+      ? 'bg-user-background text-white font-extrabold shadow-md' 
+      : 'bg-transparent text-gray-700 font-semibold hover:bg-yellow-100'
   }`}
     style={{ color: active ? '#B46A02' : '#5a3a00' }}
   >
@@ -219,9 +219,6 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
           <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
             <Icon d={IC.settings} size={16} color="#B46A02" /> Settings
           </button>
-          <button onClick={() => { navigate('/help'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
-            <Icon d={IC.help} size={16} color="#B46A02" /> Help & Support
-          </button>
           <div className="border-t border-user-border-light my-1"></div>
           <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
             <Icon d={IC.logout} size={16} color="#ef4444" /> Sign Out
@@ -327,136 +324,85 @@ const AnnouncementCard = ({ ann, onClick }) => {
   );
 };
 
-// Enhanced Filter Tabs Component
+// Filter Tabs Component
 const FilterTabs = ({ tabs, activeTab, onTabChange, counts }) => {
-  const [isScrolling, setIsScrolling] = useState(false);
   const scrollContainerRef = useRef(null);
+  const [showLeftShadow, setShowLeftShadow] = useState(false);
+  const [showRightShadow, setShowRightShadow] = useState(false);
 
-  const getTabIcon = (tab) => {
-    switch(tab) {
-      case 'All': return <Icon d={IC.inbox} size={14} color="currentColor" />;
-      case 'Urgent': return <Icon d={IC.alertTriangle} size={14} color="currentColor" />;
-      case 'Important': return <Icon d={IC.star} size={14} color="currentColor" />;
-      case 'Information': return <Icon d={IC.info} size={14} color="currentColor" />;
-      case 'Unread': return <Icon d={IC.unread} size={14} color="currentColor" />;
-      default: return null;
+  const checkScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setShowLeftShadow(scrollLeft > 5);
+      setShowRightShadow(scrollLeft + clientWidth < scrollWidth - 5);
     }
-  };
-
-  const getTabColor = (tab) => {
-    switch(tab) {
-      case 'Urgent': return { bg: '#e05050', light: '#fde8e8' };
-      case 'Important': return { bg: '#f59e0b', light: '#fff3dc' };
-      case 'Information': return { bg: '#3b82f6', light: '#e8f0fb' };
-      case 'Unread': return { bg: '#8b5cf6', light: '#ede9fe' };
-      default: return { bg: '#F5C400', light: '#fff8e0' };
-    }
-  };
-
-  const scrollTabIntoView = (tabIndex) => {
-    if (scrollContainerRef.current && window.innerWidth <= 768) {
-      const tabs = scrollContainerRef.current.children;
-      if (tabs[tabIndex]) {
-        tabs[tabIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-      }
-    }
-  };
-
-  const handleTabClick = (tab, index) => {
-    onTabChange(tab);
-    scrollTabIntoView(index);
   };
 
   useEffect(() => {
-    const checkOverflow = () => {
-      if (scrollContainerRef.current && window.innerWidth <= 768) {
-        const hasOverflow = scrollContainerRef.current.scrollWidth > scrollContainerRef.current.clientWidth;
-        setIsScrolling(hasOverflow);
-      }
-    };
-    checkOverflow();
-    window.addEventListener('resize', checkOverflow);
-    return () => window.removeEventListener('resize', checkOverflow);
-  }, [tabs]);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        const currentIndex = tabs.indexOf(activeTab);
-        let newIndex;
-        if (e.key === 'ArrowLeft') {
-          newIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1;
-        } else {
-          newIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0;
-        }
-        onTabChange(tabs[newIndex]);
-        scrollTabIntoView(newIndex);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, tabs]);
+    const container = scrollContainerRef.current;
+    if (container) {
+      checkScroll();
+      container.addEventListener('scroll', checkScroll);
+      window.addEventListener('resize', checkScroll);
+      return () => {
+        container.removeEventListener('scroll', checkScroll);
+        window.removeEventListener('resize', checkScroll);
+      };
+    }
+  }, []);
 
   return (
-    <div className="mb-6">
-      {isScrolling && (
-        <div className="md:hidden flex items-center justify-center gap-1 mb-2 text-[10px] text-user-text-lighter animate-pulse">
-          <Icon d={IC.chevLeft} size={10} />
-          <span>scroll for more</span>
-          <Icon d={IC.chevRight} size={10} />
-        </div>
+    <div className="relative mb-6 border-b border-user-border">
+      {/* Left shadow indicator */}
+      {showLeftShadow && (
+        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none z-10" />
+      )}
+      
+      {/* Right shadow indicator */}
+      {showRightShadow && (
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10" />
       )}
 
+      {/* Horizontal scrollable tabs */}
       <div 
         ref={scrollContainerRef}
-        className="flex gap-2 overflow-x-auto pb-2 md:pb-0 md:flex-wrap md:overflow-visible scrollbar-hide"
+        className="flex gap-4 overflow-x-auto scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {tabs.map((tab, index) => {
+        {tabs.map((tab) => {
           const isActive = activeTab === tab;
-          const tabColor = getTabColor(tab);
           const count = counts[tab] || 0;
           
           return (
             <button
               key={tab}
-              onClick={() => handleTabClick(tab, index)}
-              className={`relative flex items-center gap-2 px-4 py-2.5 rounded-round text-sm font-bold transition-all duration-200 whitespace-nowrap ${isActive ? 'shadow-md transform scale-105' : 'hover:shadow-sm hover:-translate-y-0.5'}`}
-              style={{
-                backgroundColor: isActive ? tabColor.bg : '#fff',
-                color: isActive ? '#fff' : '#555',
-                border: `1.5px solid ${isActive ? 'transparent' : '#e8d5ac'}`,
-              }}
+              onClick={() => onTabChange(tab)}
+              className={`relative py-2.5 text-sm font-semibold whitespace-nowrap transition-all duration-200 flex-shrink-0
+                ${isActive 
+                  ? 'text-user-primary border-b-2 border-user-primary' 
+                  : 'text-user-text-lighter hover:text-user-text'
+                }`}
             >
-              {getTabIcon(tab)}
               {tab}
               {count > 0 && (
-                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs font-bold min-w-[20px] text-center ${isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs font-bold
+                  ${isActive 
+                    ? 'bg-user-primary/10 text-user-primary' 
+                    : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
                   {count > 99 ? '99+' : count}
                 </span>
-              )}
-              {isActive && (
-                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full bg-current" />
               )}
             </button>
           );
         })}
       </div>
-      
-      <div className="hidden md:block relative mt-2 h-0.5 bg-gray-200 rounded-full overflow-hidden">
-        <div 
-          className="absolute h-0.5 rounded-full transition-all duration-300 ease-out"
-          style={{ 
-            width: `${100 / tabs.length}%`,
-            left: `${tabs.indexOf(activeTab) * (100 / tabs.length)}%`,
-            backgroundColor: getTabColor(activeTab).bg,
-          }}
-        />
-      </div>
 
-      {activeTab !== 'All' && counts[activeTab] === 0 && (
-        <div className="mt-3 text-center text-sm text-user-text-lighter bg-user-secondary-light py-2 px-4 rounded-lg">
-          No {activeTab.toLowerCase()} announcements at the moment
+      {/* Scroll hint for mobile */}
+      {showRightShadow && (
+        <div className="md:hidden flex items-center justify-center gap-1 mt-2 text-[10px] text-user-text-lighter/50">
+          <span>← swipe to see more →</span>
         </div>
       )}
     </div>
