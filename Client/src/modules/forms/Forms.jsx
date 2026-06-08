@@ -5,6 +5,7 @@ import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/fires
 import { auth, db } from '../../firebase';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../user/components/languageSwitcher';
+import { PageLoadingSkeleton } from '../user/components/skeleton';
 
 // --- Icons & Styles (Consistent with teammate) ---
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
@@ -2128,11 +2129,7 @@ const Forms = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
-  if (authLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-user-background dark:bg-user-background">
-      <div className="w-11 h-11 rounded-full border-4 border-user-primary border-t-transparent animate-spin" />
-    </div>
-  );
+  if (authLoading) return <PageLoadingSkeleton />;
 
   return (
     <div className="user-module min-h-screen flex flex-col font-sans bg-user-background dark:bg-user-background">
@@ -2210,24 +2207,25 @@ const Forms = () => {
 
           {/* Content Area */}
           <div className="flex-1 p-4 md:p-6 overflow-y-auto">
-            <div className="flex justify-between items-center mb-5">
-              <h1 className="text-2xl md:text-3xl font-black text-user-text dark:text-user-text tracking-tight">Forms</h1>
-            </div>
+            <div>
+            <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-1">Forms</h1>
+            <p className="text-sm pb-9 font-semibold text-user-text-lighter">Apply for certificates, permits, and official documents through your Grama Niladhari</p>
+          </div>
 
             {/* Tabs */}
-            <div className="flex flex-wrap gap-2 mb-5 border-b-2 border-user-border dark:border-user-border">
+            <div className="flex gap-2 mb-5 border-b-2 border-user-border dark:border-user-border overflow-x-auto whitespace-nowrap scrollbar-hide md:flex-wrap">              
               {tabs.map(t => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className={`py-2.5 px-5 border-none bg-transparent text-sm font-semibold cursor-pointer transition-all ${
+                  className={`py-2.5 px-5 border-none bg-transparent text-sm font-semibold cursor-pointer transition-all flex-shrink-0 ${
                     tab === t ? 'text-user-primary font-extrabold border-b-2 border-user-primary' : 'text-user-text-lighter hover:text-user-text'
                   }`}
                 >
                   {t}
                 </button>
               ))}
-              <button className="ml-auto py-2.5 px-5 bg-user-primary hover:bg-user-primary-dark text-white rounded-full text-sm font-bold cursor-pointer transition-all">
+              <button className="ml-auto py-2.5 px-5 bg-user-primary hover:bg-user-primary-dark text-white rounded-full text-sm font-bold cursor-pointer transition-all flex-shrink-0">
                 My Forms
               </button>
             </div>
@@ -2301,6 +2299,14 @@ const Forms = () => {
           .desktop-topbar { display: none !important; }
           .mobile-topbar { display: flex !important; }
         }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+          .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
       `}</style>
 
       {/* Footer */}
