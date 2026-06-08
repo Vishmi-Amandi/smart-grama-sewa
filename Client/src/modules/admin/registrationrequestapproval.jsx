@@ -65,7 +65,7 @@ function Sidebar({ onLogout }) {
         <NavItem icon={BarChart2} label="System reports"
           onClick={() => navigate('/admin/reports/system')} />
         <NavItem icon={User} label="Individual user access"
-          onClick={() => navigate('/admin/reports/user-access')} />
+          onClick={() => navigate('/admin/reports/useraccess')} />
         <NavItem icon={Activity} label="GN activity reports"
           onClick={() => navigate('/admin/reports/gnactivity')} />
 

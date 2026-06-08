@@ -42,7 +42,12 @@ const ACTIVITY_META = {
   rejected:    { icon: XCircle,        color: '#ef4444' },
   report:      { icon: Activity,       color: '#60a5fa' },
   transferred: { icon: ArrowLeftRight, color: '#a78bfa' },
+  login:       { icon: UserCheck,      color: '#34d399' },
+  appointment: { icon: Calendar,       color: '#f472b6' },
 };
+
+// Default fallback for unknown types
+const DEFAULT_ACTIVITY_META = { icon: Activity, color: '#60a5fa' };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 function timeAgo(timestamp) {
@@ -60,6 +65,12 @@ function fmtNumber(n) {
   return Number(n).toLocaleString();
 }
 
+// Get today's date as a "YYYY-MM-DD" string for comparing appointment.date field
+function todayDateString() {
+  const d = new Date();
+  return d.toISOString().split('T')[0];
+}
+
 // ─── Skeleton ─────────────────────────────────────────────────────────────
 function Skeleton({ className = '' }) {
   return (
@@ -75,6 +86,30 @@ function ErrorBanner({ message }) {
       style={{ background: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5' }}>
       <AlertCircle size={14} />
       <span>{message}</span>
+    </div>
+  );
+}
+
+// ─── Simple Number Card (no donut) ────────────────────────────────────────
+function SimpleStatCard({ label, value, sub, icon: Icon, loading }) {
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl p-5 flex-1 min-w-[180px]"
+      style={{ background: COLORS.cardBrown, color: COLORS.white }}>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold opacity-80 leading-tight">{label}</p>
+        {Icon && <Icon size={16} style={{ color: COLORS.accent }} />}
+      </div>
+      {loading ? (
+        <>
+          <Skeleton className="h-9 w-28" />
+          <Skeleton className="h-3 w-40" />
+        </>
+      ) : (
+        <>
+          <p className="text-3xl font-bold" style={{ fontFamily: 'Georgia, serif' }}>{value}</p>
+          <p className="text-xs opacity-70 leading-snug">{sub}</p>
+        </>
+      )}
     </div>
   );
 }
@@ -103,7 +138,7 @@ function DonutChart({ pct }) {
   );
 }
 
-// ─── Stat Card ────────────────────────────────────────────────────────────
+// ─── Stat Card (with donut) ────────────────────────────────────────────────
 function StatCard({ label, value, pct, sub, loading }) {
   return (
     <div className="flex flex-col gap-3 rounded-2xl p-5 flex-1 min-w-[180px]"
@@ -184,10 +219,6 @@ function Sidebar({ onLogout }) {
           <NavItem icon={Calendar} label="Appointment Calendar"bold
             onClick={() => navigate("/admin/calendar")} />
         </li>
-        {/* <li className="px-4 pt-1">
-          <NavItem icon={Bell} label="Notifications" bold
-            onClick={() => navigate('/admin/notifications')} />
-        </li> */}
       </ul>
 
       {/* Logout */}
@@ -254,27 +285,28 @@ export default function AdminDashboard() {
   // Loading states
   const [usersLoading,        setUsersLoading]        = useState(true);
   const [gnOfficersLoading,   setGnOfficersLoading]   = useState(true);
-  const [appointmentsLoading, setAppointmentsLoading] = useState(true);
+  const [loginsLoading,       setLoginsLoading]        = useState(true);
+  const [appointmentsDoneLoading, setAppointmentsDoneLoading] = useState(true);
   const [chartLoading,        setChartLoading]        = useState(true);
   const [activityLoading,     setActivityLoading]     = useState(true);
 
   // Error states
-  const [usersError,        setUsersError]        = useState(null);
-  const [gnOfficersError,   setGnOfficersError]   = useState(null);
-  const [appointmentsError, setAppointmentsError] = useState(null);
-  const [chartError,        setChartError]        = useState(null);
-  const [activityError,     setActivityError]     = useState(null);
+  const [usersError,              setUsersError]              = useState(null);
+  const [gnOfficersError,         setGnOfficersError]         = useState(null);
+  const [loginsError,             setLoginsError]             = useState(null);
+  const [appointmentsDoneError,   setAppointmentsDoneError]   = useState(null);
+  const [chartError,              setChartError]              = useState(null);
+  const [activityError,           setActivityError]           = useState(null);
 
   // Data states
-  const [totalUsers,         setTotalUsers]         = useState(0);
-  const [totalGnOfficers,    setTotalGnOfficers]    = useState(0);
-  const [appointmentsPerDay, setAppointmentsPerDay] = useState(0);
-  const [systemUsagePerDay,  setSystemUsagePerDay]  = useState(0);
-  const [chartData,          setChartData]          = useState([]);
-  const [activityLogs,       setActivityLogs]       = useState([]);
+  const [totalUsers,          setTotalUsers]          = useState(0);
+  const [totalGnOfficers,     setTotalGnOfficers]     = useState(0);
+  const [loginsToday,         setLoginsToday]         = useState(0);   // Card 3
+  const [appointmentsDone,    setAppointmentsDone]    = useState(0);   // Card 4
+  const [chartData,           setChartData]           = useState([]);
+  const [activityLogs,        setActivityLogs]        = useState([]);
 
   // ── Get logged-in admin's fullName from gn_officers ───────────────────
-  // gn_officers fields: uid, fullName, role
   useEffect(() => {
     const unsubAuth = auth.onAuthStateChanged(async (user) => {
       if (!user) { navigate('/login'); return; }
@@ -290,7 +322,6 @@ export default function AdminDashboard() {
   }, [navigate]);
 
   // ── 1. Count `users` → Total registered Citizens ─────────────────────
-  // users fields: uid, fullName, role, email, gnDiv, district, createdAt
   useEffect(() => {
     (async () => {
       try {
@@ -305,7 +336,6 @@ export default function AdminDashboard() {
   }, []);
 
   // ── 2. Count `gn_officers` → Total registered GN Officers ────────────
-  // gn_officers fields: uid, fullName, role, gnDiv, gnDivision, district
   useEffect(() => {
     (async () => {
       try {
@@ -319,45 +349,58 @@ export default function AdminDashboard() {
     })();
   }, []);
 
-  // ── 3. Count today's `appointments` → Appointments per day ───────────
-  // appointments fields: uid, fullName, gnDiv, district,
-  //                      service, slot, status, createdAt, date
+  // ── 3. Count today's logins → gn_officers where lastLogin is today ───
+  // gn_officers.lastLogin is a Firestore Timestamp set when an officer logs in.
+  // We count how many officers have a lastLogin timestamp within today's date range.
   useEffect(() => {
     (async () => {
       try {
         const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
         const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999);
         const q = query(
-          collection(db, 'appointments'),
-          where('createdAt', '>=', todayStart),
-          where('createdAt', '<=', todayEnd)
+          collection(db, 'gn_officers'),
+          where('lastLogin', '>=', todayStart),
+          where('lastLogin', '<=', todayEnd)
         );
         const snap = await getDocs(q);
-        setAppointmentsPerDay(snap.size);
+        setLoginsToday(snap.size);
       } catch (err) {
-        setAppointmentsError(`Appointments fetch failed: ${err.message}`);
+        setLoginsError(`Login count failed: ${err.message}`);
       } finally {
-        setAppointmentsLoading(false);
+        setLoginsLoading(false);
       }
     })();
   }, []);
 
-  // ── 4. Count today's `activity_logs` → System usage per day ──────────
-  // activity_logs fields: uid, action, type, title, description, createdAt
+  // ── 4. Count today's completed appointments ───────────────────────────
+  // appointments.date is a "YYYY-MM-DD" string; appointments.status === 'done'
   useEffect(() => {
     (async () => {
       try {
-        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-        const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999);
+        const today = todayDateString();
         const q = query(
-          collection(db, 'activity_logs'),
-          where('createdAt', '>=', todayStart),
-          where('createdAt', '<=', todayEnd)
+          collection(db, 'appointments'),
+          where('date', '==', today),
+          where('status', '==', 'done')
         );
         const snap = await getDocs(q);
-        setSystemUsagePerDay(snap.size);
+        setAppointmentsDone(snap.size);
       } catch (err) {
-        console.error('System usage fetch failed:', err.message);
+        // Fallback: try querying all today's appointments if 'done' filter fails
+        try {
+          const today = todayDateString();
+          const q2 = query(
+            collection(db, 'appointments'),
+            where('date', '==', today)
+          );
+          const snap2 = await getDocs(q2);
+          const done = snap2.docs.filter(d => d.data().status === 'done').length;
+          setAppointmentsDone(done);
+        } catch (err2) {
+          setAppointmentsDoneError(`Appointments fetch failed: ${err2.message}`);
+        }
+      } finally {
+        setAppointmentsDoneLoading(false);
       }
     })();
   }, []);
@@ -387,7 +430,6 @@ export default function AdminDashboard() {
           buckets[key] = { day: key, appointments: 0 };
         }
 
-        // appointments.createdAt (Timestamp) → bucket by day label
         snap.docs.forEach((docSnap) => {
           const data      = docSnap.data();
           const createdAt = data.createdAt?.toDate
@@ -407,7 +449,8 @@ export default function AdminDashboard() {
   }, []);
 
   // ── 6. Real-time listener on `activity_logs` → Recent activities ──────
-  // activity_logs fields: type, title, description, action, uid, createdAt
+  // Uses only orderBy + limit (no 'where') to avoid needing a composite index.
+  // type/title/description/action fields may be missing — all handled gracefully.
   useEffect(() => {
     const q = query(
       collection(db, 'activity_logs'),
@@ -438,44 +481,9 @@ export default function AdminDashboard() {
     }
   };
 
-  // ── Donut % (relative to totalGnOfficers) ─────────────────────────────
+  // ── Donut % for cards 1 & 2 ───────────────────────────────────────────
   const gnTotal = totalGnOfficers || 1;
   const pct     = (value) => Math.min(100, Math.round((value / gnTotal) * 100));
-
-  const statCards = [
-    {
-      label:   'Total registered Citizen',
-      value:   fmtNumber(totalUsers),
-      pct:     pct(totalUsers),
-      sub:     `${pct(totalUsers)}% of total Grama Niladhari officers in country`,
-      loading: usersLoading,
-      error:   usersError,
-    },
-    {
-      label:   'Total registered Grama Niladhari',
-      value:   fmtNumber(totalGnOfficers),
-      pct:     100,
-      sub:     `${totalGnOfficers} GN officers registered in the system`,
-      loading: gnOfficersLoading,
-      error:   gnOfficersError,
-    },
-    {
-      label:   'System usage per day',
-      value:   fmtNumber(systemUsagePerDay),
-      pct:     pct(systemUsagePerDay),
-      sub:     `${pct(systemUsagePerDay)}% of total Grama Niladhari officers in country`,
-      loading: false,
-      error:   null,
-    },
-    {
-      label:   'Appointment per day',
-      value:   fmtNumber(appointmentsPerDay),
-      pct:     pct(appointmentsPerDay),
-      sub:     `${pct(appointmentsPerDay)}% of total Grama Niladhari officers in country`,
-      loading: appointmentsLoading,
-      error:   appointmentsError,
-    },
-  ];
 
   return (
     <div className="flex min-h-screen"
@@ -490,20 +498,63 @@ export default function AdminDashboard() {
 
           {/* Stat Cards */}
           <div className="flex gap-4 flex-wrap">
-            {statCards.map((s) => (
-              <div key={s.label} className="flex-1 min-w-[180px] flex flex-col gap-1">
-                {s.error && <ErrorBanner message={s.error} />}
-                <StatCard label={s.label} value={s.value}
-                  pct={s.pct} sub={s.sub} loading={s.loading} />
-              </div>
-            ))}
+
+            {/* Card 1 — Total registered Citizens (donut) */}
+            <div className="flex-1 min-w-[180px] flex flex-col gap-1">
+              {usersError && <ErrorBanner message={usersError} />}
+              <StatCard
+                label="Total registered Citizen"
+                value={fmtNumber(totalUsers)}
+                pct={pct(totalUsers)}
+                sub={`${pct(totalUsers)}% of total Grama Niladhari officers in country`}
+                loading={usersLoading}
+              />
+            </div>
+
+            {/* Card 2 — Total registered GN Officers (donut) */}
+            <div className="flex-1 min-w-[180px] flex flex-col gap-1">
+              {gnOfficersError && <ErrorBanner message={gnOfficersError} />}
+              <StatCard
+                label="Total registered Grama Niladhari"
+                value={fmtNumber(totalGnOfficers)}
+                pct={100}
+                sub={`${totalGnOfficers} GN officers registered in the system`}
+                loading={gnOfficersLoading}
+              />
+            </div>
+
+            {/* Card 3 — System logins today (no donut) */}
+            <div className="flex-1 min-w-[180px] flex flex-col gap-1">
+              {loginsError && <ErrorBanner message={loginsError} />}
+              <SimpleStatCard
+                label="System logins today"
+                value={fmtNumber(loginsToday)}
+                sub="GN officers who logged in today"
+                icon={UserCheck}
+                loading={loginsLoading}
+              />
+            </div>
+
+            {/* Card 4 — Appointments completed today (no donut) */}
+            <div className="flex-1 min-w-[180px] flex flex-col gap-1">
+              {appointmentsDoneError && <ErrorBanner message={appointmentsDoneError} />}
+              <SimpleStatCard
+                label="Appointments done today"
+                value={fmtNumber(appointmentsDone)}
+                sub="Appointments marked as done for today"
+                icon={CheckCircle}
+                loading={appointmentsDoneLoading}
+              />
+            </div>
+
           </div>
+
           <button
-              onClick={() => navigate('/admin/calendar')}
-              className="flex-1 py-5 rounded-2xl text-sm font-bold tracking-wider uppercase transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ background: '#6a2a0070', color: COLORS.cardBrown }}>
-              Statical changes
-            </button>
+            onClick={() => navigate('/admin/calendar')}
+            className="flex-1 py-5 rounded-2xl text-sm font-bold tracking-wider uppercase transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: '#6a2a0070', color: COLORS.cardBrown }}>
+            Statical changes
+          </button>
 
           {/* Approval Buttons */}
           <div className="flex gap-4">
@@ -590,23 +641,29 @@ export default function AdminDashboard() {
                 </p>
               ) : (
                 activityLogs.map((log) => {
-                  // activity_logs fields: type, title, description, action, createdAt
-                  const meta = ACTIVITY_META[log.type] ?? ACTIVITY_META.report;
+                  // Safely resolve meta — fall back to default for unknown/missing types
+                  const rawType = (log.type || '').toLowerCase().trim();
+                  const meta = ACTIVITY_META[rawType] ?? DEFAULT_ACTIVITY_META;
                   const Icon = meta.icon;
+
+                  // Derive a display label from available fields
+                  const displayTitle = log.title || log.action || log.type || 'Activity';
+                  const displayDesc  = log.description || null;
+
                   return (
                     <div key={log.id}
                       className="flex items-start gap-3 pb-3 border-b last:border-0"
                       style={{ borderColor: '#F0E8DC' }}>
                       <Icon size={15} color={meta.color} className="mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-xs font-semibold leading-snug"
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold leading-snug truncate"
                           style={{ color: COLORS.text }}>
-                          {log.title || log.action || 'Activity'}
+                          {displayTitle}
                         </p>
-                        {log.description && (
-                          <p className="text-xs leading-snug opacity-75"
+                        {displayDesc && (
+                          <p className="text-xs leading-snug opacity-75 truncate"
                             style={{ color: COLORS.text }}>
-                            {log.description}
+                            {displayDesc}
                           </p>
                         )}
                         <p className="text-xs mt-0.5" style={{ color: COLORS.textMuted }}>
@@ -629,4 +686,4 @@ export default function AdminDashboard() {
       </main>
     </div>
   );
-}
+} 0

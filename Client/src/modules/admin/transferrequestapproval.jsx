@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, UserCheck, ArrowLeftRight, BarChart2,
-  User, Activity, Megaphone, Bell, LogOut, Search,
-  ChevronDown, CheckCircle, XCircle
+  User, Activity, Megaphone, Calendar, Bell, LogOut, Search,
+  ChevronDown, CheckCircle, XCircle, Download, FileText
 } from 'lucide-react';
 import { db } from '../../firebase';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import {
+  collection, getDocs, doc, updateDoc, addDoc, Timestamp, query, where
+} from 'firebase/firestore';
 
 // ─── Colors ───────────────────────────────────────────────────────────────
 const COLORS = {
@@ -54,7 +56,7 @@ function Sidebar({ onLogout }) {
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
           GN management
         </li>
-        <NavItem icon={UserCheck} label="Registration Requests" 
+        <NavItem icon={UserCheck} label="Registration Requests"
           onClick={() => navigate('/admin/registrationrequestapproval')} />
         <NavItem icon={ArrowLeftRight} label="Transfer Request" active
           onClick={() => navigate('/admin/transferrequestapproval')} />
@@ -65,13 +67,17 @@ function Sidebar({ onLogout }) {
         <NavItem icon={BarChart2} label="System reports"
           onClick={() => navigate('/admin/reports/system')} />
         <NavItem icon={User} label="Individual user access"
-          onClick={() => navigate('/admin/reports/user-access')} />
+          onClick={() => navigate('/admin/reports/useraccess')} />
         <NavItem icon={Activity} label="GN activity reports"
-          onClick={() => navigate('/admin/reports/gn-activity')} />
+          onClick={() => navigate('/admin/reports/gnactivity')} />
 
         <li className="pt-4">
           <NavItem icon={Megaphone} label="Announcements" bold
             onClick={() => navigate('/admin/announcements')} />
+        </li>
+        <li className="pt-1">
+          <NavItem icon={Calendar} label="Appointment Calendar" bold
+            onClick={() => navigate('/admin/calendar')} />
         </li>
       </ul>
 
@@ -134,6 +140,7 @@ function formatDate(val) {
   if (!val) return '—';
   if (val?.toDate) return val.toDate().toLocaleDateString('en-GB');
   if (val instanceof Date) return val.toLocaleDateString('en-GB');
+  if (typeof val === 'string') return val;
   return String(val);
 }
 
@@ -141,8 +148,8 @@ function StatusBadge({ status }) {
   const s = (status || 'pending').toLowerCase();
   const styles = {
     pending:  { bg: '#FEF3C7', color: '#92400E', label: 'Pending'  },
-    approved: { bg: '#D1FAE5', color: '#065F46', label: 'Approved' },
-    rejected: { bg: '#FEE2E2', color: '#991B1B', label: 'Rejected' },
+    approved: { bg: '#D1FAE5', color: '#02561d', label: 'Approved' },
+    rejected: { bg: '#FEE2E2', color: '#811010', label: 'Rejected' },
   };
   const st = styles[s] || styles.pending;
   return (
@@ -167,13 +174,21 @@ function ConfirmModal({ modal, onConfirm, onCancel }) {
             : <XCircle    size={48} style={{ color: '#991B1B' }} />}
         </div>
         <h3 className="text-lg font-bold mb-2" style={{ color: COLORS.primary }}>
-          {isApprove ? 'Approve' : 'Reject'} Registration?
+          {isApprove ? 'Approve' : 'Reject'} Transfer Request?
         </h3>
-        <p className="text-sm mb-6" style={{ color: COLORS.textMuted }}>
+        <p className="text-sm mb-2" style={{ color: COLORS.textMuted }}>
           Are you sure you want to{' '}
-          <strong>{isApprove ? 'approve' : 'reject'}</strong> the registration of{' '}
-          <strong>{modal.name}</strong>?
+          <strong>{isApprove ? 'approve' : 'reject'}</strong> the transfer request for officer{' '}
+          <strong>{modal.uid}</strong>?
         </p>
+        {isApprove && (
+          <p className="text-xs mb-6 px-2 py-2 rounded-lg"
+            style={{ background: '#FEF3C7', color: '#92400E' }}>
+            This will update the officer's GN division and all related fields in Firestore,
+            and send a notification to the officer.
+          </p>
+        )}
+        {!isApprove && <div className="mb-6" />}
         <div className="flex gap-3 justify-center">
           <button onClick={onCancel}
             className="px-5 py-2 rounded-lg text-sm font-semibold border hover:bg-gray-50 transition-all"
@@ -191,23 +206,66 @@ function ConfirmModal({ modal, onConfirm, onCancel }) {
   );
 }
 
+// ─── Reason Modal ────────────────────────────────────────────────────────
+function ReasonModal({ text, onClose }) {
+  if (!text) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(44,26,14,0.45)' }}>
+      <div className="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl">
+        <h3 className="text-base font-bold mb-3" style={{ color: COLORS.primary }}>
+          Transfer Reason
+        </h3>
+        <p className="text-sm leading-relaxed" style={{ color: COLORS.text }}>
+          {text}
+        </p>
+        <div className="flex justify-end mt-6">
+          <button onClick={onClose}
+            className="px-5 py-2 rounded-lg text-sm font-semibold border hover:bg-gray-50 transition-all"
+            style={{ borderColor: COLORS.border, color: COLORS.textMuted }}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────
 export default function TransferRequestApproval() {
-  const [officers,      setOfficers]      = useState([]);
+  const [requests,      setRequests]      = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState(null);
   const [actionLoading, setActionLoading] = useState({});
   const [confirmModal,  setConfirmModal]  = useState(null);
+  const [reasonModal,   setReasonModal]   = useState(null);
   const [toast,         setToast]         = useState(null);
 
-  // ── Fetch ──
+  // ── Fetch transfer requests + officer fullNames ──
   useEffect(() => {
     (async () => {
       try {
-        const snap = await getDocs(collection(db, 'gn_officers'));
-        setOfficers(snap.docs.map(d => ({ _docId: d.id, ...d.data() })));
+        const [transferSnap, officerSnap] = await Promise.all([
+          getDocs(collection(db, 'gn_change_gn_division')),
+          getDocs(collection(db, 'gn_officers')),
+        ]);
+
+        // Build uid → fullName lookup from gn_officers
+        const nameMap = {};
+        officerSnap.docs.forEach(d => {
+          const data = d.data();
+          if (data.uid) nameMap[data.uid] = data.fullName || '';
+        });
+
+        setRequests(
+          transferSnap.docs.map(d => ({
+            _docId: d.id,
+            ...d.data(),
+            _fullName: nameMap[d.data().uid] || '',
+          }))
+        );
       } catch (e) {
-        setError(e.message || 'Failed to load data.');
+        setError(e.message || 'Failed to load transfer requests.');
       } finally {
         setLoading(false);
       }
@@ -217,40 +275,190 @@ export default function TransferRequestApproval() {
   // ── Toast ──
   function showToast(msg, type = 'success') {
     setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 4000);
   }
 
-  // ── Update status ──
-  async function handleStatusUpdate(docId, newStatus) {
-    setActionLoading(p => ({ ...p, [docId]: newStatus }));
+  // ── Approve: update transfer request + gn_officer fields + send notification ──
+  async function handleApprove(request) {
+    const docId = request._docId;
+    setActionLoading(p => ({ ...p, [docId]: 'approved' }));
     try {
-      await updateDoc(doc(db, 'gn_officers', docId), { status: newStatus });
-      setOfficers(prev =>
-        prev.map(o => o._docId === docId ? { ...o, status: newStatus } : o)
+      // 1. Find the gn_officer document by uid
+      const officerQuery = query(
+        collection(db, 'gn_officers'),
+        where('uid', '==', request.uid)
       );
-      showToast(
-        `Officer ${newStatus === 'approved' ? 'approved' : 'rejected'} successfully.`,
-        newStatus === 'approved' ? 'success' : 'error'
+      const officerSnap = await getDocs(officerQuery);
+
+      if (!officerSnap.empty) {
+        const officerDoc = officerSnap.docs[0];
+
+        // 2. Update gn_officers with new division/district details
+        //    We map fromDivision→toDivision and fromDistrict→toDistrict
+        //    and clear/flag officeAddress & officeMobile for the officer to update
+        await updateDoc(doc(db, 'gn_officers', officerDoc.id), {
+          gnDivision:             request.toDivision   || '',
+          gnDivisionName:         request.toDivision   || '',
+          gnDiv:                  request.toDivision   || '',
+          district:               request.toDistrict   || '',
+          divisionalSecretariat:  request.toDistrict   || '',
+          dsDiv:                  request.toDistrict   || '',
+          gnCode:                 '',   // reset; officer updates after transfer
+          province:               '',   // reset; officer updates after transfer
+        });
+
+        // 3. Send notification to the GN officer
+        await addDoc(collection(db, 'notifications'), {
+          uid:       request.uid,
+          email:     request.email || '',
+          title:     'Transfer Request Approved',
+          message:   'Your transfer request has been approved. Please update your office address (officeAddress) and office mobile number (officeMobile) in your profile to reflect your new posting.',
+          type:      'transfer_approved',
+          read:      false,
+          createdAt: Timestamp.now(),
+        });
+      }
+
+      // 4. Update the transfer request status
+      await updateDoc(doc(db, 'gn_change_gn_division', docId), { status: 'approved' });
+
+      setRequests(prev =>
+        prev.map(r => r._docId === docId ? { ...r, status: 'approved' } : r)
       );
+      showToast('Transfer request approved. Officer notified.', 'success');
+
     } catch (e) {
-      showToast('Update failed: ' + (e.message || 'Unknown error'), 'error');
+      showToast('Approval failed: ' + (e.message || 'Unknown error'), 'error');
     } finally {
       setActionLoading(p => { const n = { ...p }; delete n[docId]; return n; });
     }
   }
 
+  // ── Reject: just update status ──
+  async function handleReject(request) {
+    const docId = request._docId;
+    setActionLoading(p => ({ ...p, [docId]: 'rejected' }));
+    try {
+      await updateDoc(doc(db, 'gn_change_gn_division', docId), { status: 'rejected' });
+      setRequests(prev =>
+        prev.map(r => r._docId === docId ? { ...r, status: 'rejected' } : r)
+      );
+      showToast('Transfer request rejected.', 'error');
+    } catch (e) {
+      showToast('Rejection failed: ' + (e.message || 'Unknown error'), 'error');
+    } finally {
+      setActionLoading(p => { const n = { ...p }; delete n[docId]; return n; });
+    }
+  }
+
+  // ── Handle confirm ──
+  function handleConfirm() {
+    const { request, action } = confirmModal;
+    setConfirmModal(null);
+    if (action === 'approved') handleApprove(request);
+    else                       handleReject(request);
+  }
+
   const TABLE_COLS = [
-    { label: 'User id',        key: 'uid',                   render: o => o.uid || o._docId || '—' },
-    { label: 'user name',      key: 'fullName',              render: o => o.fullName || '—' },
-    { label: 'gender',         key: 'gender',                render: o => o.gender || '—' },
-    { label: 'gn division',    key: 'gnDivision',            render: o => o.gnDivision || o.gnDivisionName || '—' },
-    { label: 'ds division',    key: 'divisionalSecretariat', render: o => o.divisionalSecretariat || o.dsDiv || '—' },
-    { label: 'district',       key: 'district',              render: o => o.district || '—' },
-    { label: 'province',       key: 'province',              render: o => o.province || '—' },
-    { label: 'contact number', key: 'mobile',                render: o => o.mobile || '—' },
-    { label: 'email',          key: 'email',                 render: o => o.email || '—' },
-    { label: 'requested date', key: 'createdAt',             render: o => formatDate(o.createdAt) },
-    { label: 'status',         key: 'status',                render: o => <StatusBadge status={o.status} /> },
+    {
+      label: 'User ID',
+      key: 'uid',
+      render: r => (
+        <span className="font-semibold" style={{ color: COLORS.primary }}>
+          {r.uid || '—'}
+        </span>
+      ),
+    },
+    {
+      label: 'User Name',
+      key: '_fullName',
+      render: r => r._fullName || '—',
+    },
+    {
+      label: 'Requested Date',
+      key: 'createdAt',
+      render: r => formatDate(r.createdAt),
+    },
+    {
+      label: 'Current District',
+      key: 'fromDistrict',
+      render: r => r.fromDistrict || '—',
+    },
+    {
+      label: 'Current Division',
+      key: 'fromDivision',
+      render: r => r.fromDivision || '—',
+    },
+    {
+      label: 'New District',
+      key: 'toDistrict',
+      render: r => (
+        <span className="font-medium" style={{ color: '#065F46' }}>
+          {r.toDistrict || '—'}
+        </span>
+      ),
+    },
+    {
+      label: 'New Division',
+      key: 'toDivision',
+      render: r => (
+        <span className="font-medium" style={{ color: '#065F46' }}>
+          {r.toDivision || '—'}
+        </span>
+      ),
+    },
+    {
+      label: 'Effective Date',
+      key: 'effectiveDate',
+      render: r => formatDate(r.effectiveDate),
+    },
+    {
+      label: 'Reason',
+      key: 'reason',
+      render: r => r.reason ? (
+        <button
+          onClick={() => setReasonModal(r.reason)}
+          className="px-2 py-0.5 rounded text-xs font-semibold underline underline-offset-2 transition-all hover:opacity-70"
+          style={{ color: COLORS.primary }}>
+          View
+        </button>
+      ) : '—',
+    },
+    {
+      label: 'Email',
+      key: 'email',
+      render: r => (
+        <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>
+          {r.email || '—'}
+        </span>
+      ),
+    },
+    {
+      label: 'Transfer Letter',
+      key: 'transferLetter',
+      render: r => r.transferLetter ? (
+        <a
+          href={r.transferLetter}
+          target="_blank"
+          rel="noopener noreferrer"
+          download
+          className="flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold transition-all hover:opacity-80"
+          style={{ background: '#EFF6FF', color: '#1D4ED8', width: 'fit-content' }}>
+          <Download size={12} />
+          Download
+        </a>
+      ) : (
+        <span className="flex items-center gap-1 text-xs" style={{ color: COLORS.textMuted }}>
+          <FileText size={12} />
+          N/A
+        </span>
+      ),
+    },
+    {
+      label: 'Status',
+      key: 'status',
+      render: r => <StatusBadge status={r.status} />,
+    },
   ];
 
   return (
@@ -262,6 +470,7 @@ export default function TransferRequestApproval() {
           style={{
             background: toast.type === 'success' ? '#065F46' : '#991B1B',
             animation: 'fadeSlideIn 0.3s ease',
+            maxWidth: 360,
           }}>
           {toast.msg}
         </div>
@@ -271,10 +480,13 @@ export default function TransferRequestApproval() {
       <ConfirmModal
         modal={confirmModal}
         onCancel={() => setConfirmModal(null)}
-        onConfirm={() => {
-          handleStatusUpdate(confirmModal.docId, confirmModal.action);
-          setConfirmModal(null);
-        }}
+        onConfirm={handleConfirm}
+      />
+
+      {/* Reason Modal */}
+      <ReasonModal
+        text={reasonModal}
+        onClose={() => setReasonModal(null)}
       />
 
       {/* Sidebar */}
@@ -303,7 +515,7 @@ export default function TransferRequestApproval() {
             {loading ? (
               <div className="py-20 text-center text-sm" style={{ color: COLORS.textMuted }}>
                 <div className="text-4xl mb-3">⏳</div>
-                Loading registration requests…
+                Loading transfer requests…
               </div>
             ) : error ? (
               <div className="py-20 text-center text-sm" style={{ color: '#991B1B' }}>
@@ -324,25 +536,25 @@ export default function TransferRequestApproval() {
                       ))}
                       <th className="px-4 py-3 text-left font-semibold text-white"
                         style={{ fontSize: 12 }}>
-                        action
+                        Action
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {officers.length === 0 ? (
+                    {requests.length === 0 ? (
                       <tr>
                         <td colSpan={TABLE_COLS.length + 1}
                           className="py-16 text-center text-sm italic"
                           style={{ color: COLORS.textMuted }}>
-                          No registration requests found.
+                          No transfer requests found.
                         </td>
                       </tr>
                     ) : (
-                      officers.map((o, i) => {
-                        const statusLower = (o.status || 'pending').toLowerCase();
-                        const busy = !!actionLoading[o._docId];
+                      requests.map((r, i) => {
+                        const statusLower = (r.status || 'pending').toLowerCase();
+                        const busy = !!actionLoading[r._docId];
                         return (
-                          <tr key={o._docId}
+                          <tr key={r._docId}
                             style={{
                               background: i % 2 === 0 ? '#fff' : '#FDFAF4',
                               borderBottom: `1px solid ${COLORS.border}`,
@@ -350,13 +562,8 @@ export default function TransferRequestApproval() {
                             {TABLE_COLS.map(c => (
                               <td key={c.key}
                                 className="px-4 py-3 whitespace-nowrap"
-                                style={{
-                                  color: COLORS.text,
-                                  maxWidth: (c.key === 'email' || c.key === 'uid') ? 140 : 'none',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                }}>
-                                {c.render(o)}
+                                style={{ color: COLORS.text }}>
+                                {c.render(r)}
                               </td>
                             ))}
                             {/* Action buttons */}
@@ -365,8 +572,8 @@ export default function TransferRequestApproval() {
                                 <button
                                   disabled={busy || statusLower === 'approved'}
                                   onClick={() => setConfirmModal({
-                                    docId: o._docId,
-                                    name: o.fullName || o.uid || o._docId,
+                                    request: r,
+                                    uid: r.uid || r._docId,
                                     action: 'approved',
                                   })}
                                   className="px-3 py-1 rounded text-xs font-bold text-white transition-all hover:opacity-80"
@@ -376,23 +583,23 @@ export default function TransferRequestApproval() {
                                     opacity: busy || statusLower === 'approved' ? 0.65 : 1,
                                     minWidth: 62,
                                   }}>
-                                  {actionLoading[o._docId] === 'approved' ? '…' : 'Approve'}
+                                  {actionLoading[r._docId] === 'approved' ? '…' : 'Approve'}
                                 </button>
                                 <button
-                                  disabled={busy || statusLower === 'rejected'}
+                                  disabled={busy || statusLower === 'rejected' || statusLower === 'approved'}
                                   onClick={() => setConfirmModal({
-                                    docId: o._docId,
-                                    name: o.fullName || o.uid || o._docId,
+                                    request: r,
+                                    uid: r.uid || r._docId,
                                     action: 'rejected',
                                   })}
                                   className="px-3 py-1 rounded text-xs font-bold text-white transition-all hover:opacity-80"
                                   style={{
                                     background: statusLower === 'rejected' ? '#FCA5A5' : '#991B1B',
-                                    cursor: busy || statusLower === 'rejected' ? 'not-allowed' : 'pointer',
-                                    opacity: busy || statusLower === 'rejected' ? 0.65 : 1,
+                                    cursor: busy || statusLower === 'rejected' || statusLower === 'approved' ? 'not-allowed' : 'pointer',
+                                    opacity: busy || statusLower === 'rejected' || statusLower === 'approved' ? 0.65 : 1,
                                     minWidth: 56,
                                   }}>
-                                  {actionLoading[o._docId] === 'rejected' ? '…' : 'Reject'}
+                                  {actionLoading[r._docId] === 'rejected' ? '…' : 'Reject'}
                                 </button>
                               </div>
                             </td>
@@ -405,16 +612,12 @@ export default function TransferRequestApproval() {
               </div>
             )}
           </div>
-          <footer className="text-center text-xs py-4"
-          style={{ background: COLORS.cardDark, color: '#C8A882' }}>
-          © 2026 Smart Grama Sewa. All rights reserved.
-        </footer>
 
         </main>
 
         {/* Footer */}
-        <footer className="py-4 text-center text-xs border-t"
-          style={{ borderColor: COLORS.border, color: COLORS.textMuted, background: COLORS.bg }}>
+        <footer className="text-center text-xs py-4"
+          style={{ background: COLORS.cardDark, color: '#C8A882' }}>
           © 2026 Smart Grama Sewa. All rights reserved.
         </footer>
       </div>

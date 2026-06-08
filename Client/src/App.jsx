@@ -73,7 +73,7 @@ const ProtectedRoute = ({ children }) => {
 //         setChecking(false);
 //         return;
 //       }
-//       try {
+//        try {
 //         // 1. Check gn_officers collection (uid is the document ID)
 //         // gn_officers fields: uid, role, fullName, email ...
 //         const gnSnap = await getDoc(doc(db, 'gn_officers', user.uid));

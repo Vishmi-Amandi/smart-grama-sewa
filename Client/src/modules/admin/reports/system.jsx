@@ -178,8 +178,8 @@ function Sidebar({ onLogout }) {
         <NavItem icon={ArrowLeftRight} label="Transfer Request" onClick={() => navigate('/admin/transferrequestapproval')} />
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>Reports</li>
         <NavItem icon={BarChart2} label="System reports" active onClick={() => navigate('/admin/reports/system')} />
-        <NavItem icon={User} label="Individual user access" onClick={() => navigate('/admin/reports/user-access')} />
-        <NavItem icon={Activity} label="GN activity reports" onClick={() => navigate('/admin/reports/gn-activity')} />
+        <NavItem icon={User} label="Individual user access" onClick={() => navigate('/admin/reports/useraccess')} />
+        <NavItem icon={Activity} label="GN activity reports" onClick={() => navigate('/admin/reports/gnactivity')} />
         <li className="pt-4">
           <NavItem icon={Megaphone} label="Announcements" bold onClick={() => navigate('/admin/announcements')} />
         </li>

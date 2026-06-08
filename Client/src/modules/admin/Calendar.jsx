@@ -1,34 +1,23 @@
 /**
- * AppointmentCalendarPage.jsx
+ * AppointmentCalendarPage.jsx  — Fixed version
  *
- * Full integrated page: Sidebar + Topbar + AppointmentCalendar + Footer
- * for the Smart Grama Sewa admin dashboard.
- *
- * Setup:
- *   npm install react-router-dom lucide-react firebase
- *
- * Usage:
- *   // In your router (e.g. App.jsx):
- *   import AppointmentCalendarPage from './AppointmentCalendarPage';
- *   <Route path="/admin/calendar" element={<AppointmentCalendarPage />} />
- *
- * Pass `db` from your Firebase config via props or context as needed.
+ * Fixes applied:
+ *   1. slot format:   "03:30 PM" → normalized to "3:30–3:45" matching grid labels
+ *   2. status case:   "Pending" → "pending" (Firestore stores Title Case)
+ *   3. uid filter:    appointments don't carry gnOfficerUid; filter by gnDiv instead
+ *   4. slot duration: grid uses 15-min slots, convertSlot now correctly +15 min
  */
 
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { signOut } from 'firebase/auth';
-import { auth, db } from '../../firebase';
-
+import { signOut } from "firebase/auth";
+import { auth, db } from "../../firebase";
 import {
   LayoutDashboard, UserCheck, ArrowLeftRight, BarChart2,
   User, Activity, Megaphone, LogOut, Search, ChevronDown,
-  Bell,
-  Calendar,
+  Bell, Calendar,
 } from "lucide-react";
-import {
-  collection, query, where, getDocs,
-} from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 // ─── Color tokens ─────────────────────────────────────────────────────────────
 const COLORS = {
@@ -45,30 +34,95 @@ const COLORS = {
   textMuted: "#7A5C44",
 };
 
-// ─── Calendar constants ───────────────────────────────────────────────────────
+// ─── 15-min slot grid (matches Firestore slot duration) ───────────────────────
 const AM_SLOTS = [
-  "8:30–9:00","9:00–9:30","9:30–10:00","10:00–10:30",
-  "10:30–11:00","11:00–11:30","11:30–12:00","12:00–12:30",
+  "8:30–8:45",  "8:45–9:00",
+  "9:00–9:15",  "9:15–9:30",
+  "9:30–9:45",  "9:45–10:00",
+  "10:00–10:15","10:15–10:30",
+  "10:30–10:45","10:45–11:00",
+  "11:00–11:15","11:15–11:30",
+  "11:30–11:45","11:45–12:00",
+  "12:00–12:15","12:15–12:30",
 ];
 const PM_SLOTS = [
-  "1:00–1:30","1:30–2:00","2:00–2:30","2:30–3:00",
-  "3:00–3:30","3:30–4:00",
+  "1:00–1:15",  "1:15–1:30",
+  "1:30–1:45",  "1:45–2:00",
+  "2:00–2:15",  "2:15–2:30",
+  "2:30–2:45",  "2:45–3:00",
+  "3:00–3:15",  "3:15–3:30",
+  "3:30–3:45",  "3:45–4:00",
 ];
 const ALL_SLOTS = [...AM_SLOTS, null, ...PM_SLOTS];
+
 const DAY_NAMES = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-const MONTHS = [
+const MONTHS    = [
   "January","February","March","April","May","June",
   "July","August","September","October","November","December",
 ];
 
+// ─── FIX 2: status keys match Firestore Title Case ────────────────────────────
+// Firestore stores: "Pending", "Booked", "Completed", "Cancelled", "Confirmed"
+// We normalise to lowercase on read (see normaliseStatus below).
 const STATUS_CONFIG = {
-  booked:    { bg: COLORS.primary,  text: COLORS.white,   label: "Booked"    },
-  confirmed: { bg: COLORS.dark,     text: COLORS.white,   label: "Confirmed" },
-  completed: { bg: COLORS.darker,   text: COLORS.white,   label: "Completed" },
-  pending:   { bg: COLORS.accent,   text: COLORS.darkest, label: "Pending"   },
-  cancelled: { bg: COLORS.muted,    text: COLORS.white,   label: "Cancelled" },
-  "on-field":{ bg: "#E8D5C0",       text: COLORS.darker,  label: "On Field"  },
+  booked:    { bg: COLORS.primary, text: COLORS.white,   label: "Booked"    },
+  confirmed: { bg: COLORS.dark,    text: COLORS.white,   label: "Confirmed" },
+  completed: { bg: COLORS.darker,  text: COLORS.white,   label: "Completed" },
+  pending:   { bg: COLORS.accent,  text: COLORS.darkest, label: "Pending"   },
+  cancelled: { bg: COLORS.muted,   text: COLORS.white,   label: "Cancelled" },
+  "on-field":{ bg: "#E8D5C0",      text: COLORS.darker,  label: "On Field"  },
 };
+
+/** Lowercase the status from Firestore ("Pending" → "pending") */
+function normaliseStatus(raw) {
+  return (raw ?? "booked").toLowerCase();
+}
+
+// ─── FIX 1: slot converter ────────────────────────────────────────────────────
+/**
+ * Converts Firestore slot string to the grid label format.
+ *
+ * Firestore stores:  "03:30 PM"   (h:mm AM/PM, zero-padded hour)
+ * Grid labels use:   "3:30–3:45"  (no leading zero, 15-min range, no AM/PM)
+ *
+ * Steps:
+ *   1. Parse hour + minute + meridiem
+ *   2. Convert to 24-hour
+ *   3. Add 15 minutes for the end time
+ *   4. Format both as "H:MM" (no leading zero, no meridiem)
+ *   5. Join with "–"
+ */
+function convertSlot(slotStr) {
+  if (!slotStr || typeof slotStr !== "string") return null;
+
+  const trimmed = slotStr.trim();                        // "03:30 PM"
+  const parts   = trimmed.split(" ");                    // ["03:30", "PM"]
+  if (parts.length !== 2) return null;
+
+  const [timePart, meridiem] = parts;
+  const [hStr, mStr]         = timePart.split(":");
+  let hours   = parseInt(hStr, 10);
+  const mins  = parseInt(mStr, 10);
+
+  // Convert to 24-hour
+  if (meridiem === "PM" && hours !== 12) hours += 12;
+  if (meridiem === "AM" && hours === 12) hours  = 0;
+
+  // Build start Date object (date doesn't matter, only time)
+  const start = new Date(2000, 0, 1, hours, mins, 0);
+  const end   = new Date(start.getTime() + 15 * 60 * 1000); // +15 min
+
+  // Format as "H:MM" — no leading zero, no meridiem
+  const fmt = (d) => {
+    const h = d.getHours();          // 24-hour raw
+    const m = d.getMinutes().toString().padStart(2, "0");
+    // Convert back to 12-hour WITHOUT leading zero or AM/PM suffix
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${m}`;
+  };
+
+  return `${fmt(start)}–${fmt(end)}`;  // e.g. "3:30–3:45"
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function toDateStr(date) {
@@ -88,83 +142,81 @@ function getWeekDates(anchor) {
   });
 }
 function formatMonthYear(dates) {
-  const s  = dates[0], e = dates[6];
+  const s = dates[0], e = dates[6];
   const sm = MONTHS[s.getMonth()], em = MONTHS[e.getMonth()];
   if (s.getFullYear() !== e.getFullYear()) return `${sm} ${s.getFullYear()} – ${em} ${e.getFullYear()}`;
   if (sm !== em) return `${sm} – ${em} ${s.getFullYear()}`;
   return `${sm} ${s.getFullYear()}`;
 }
 
-// ─── Nav Item ─────────────────────────────────────────────────────────────
+// ─── Nav Item ─────────────────────────────────────────────────────────────────
 function NavItem({ icon: Icon, label, active, bold, onClick }) {
   return (
-    <li onClick={onClick}
+    <li
+      onClick={onClick}
       className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer transition-all ${
-          active ? 'bg-amber-700 text-white font-bold'
-          : bold ? 'text-amber-900 font-bold hover:bg-amber-100'
-                 : 'text-amber-800 hover:bg-amber-100'
-        }`}
-      style={{ fontSize: bold && !Icon ? '0.85rem' : '0.82rem' }}>
-      {Icon && <Icon size={16} className={active ? 'text-white' : 'text-amber-700'} />}
+        active ? "bg-amber-700 text-white font-bold"
+        : bold  ? "text-amber-900 font-bold hover:bg-amber-100"
+                : "text-amber-800 hover:bg-amber-100"
+      }`}
+      style={{ fontSize: bold && !Icon ? "0.85rem" : "0.82rem" }}
+    >
+      {Icon && <Icon size={16} className={active ? "text-white" : "text-amber-700"} />}
       <span>{label}</span>
     </li>
   );
 }
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
 function Sidebar({ onLogout }) {
   const navigate = useNavigate();
   return (
-    <aside className="w-64 flex-shrink-0 flex flex-col py-6 px-3 gap-2 border-r"
-      style={{ borderColor: '#DDD0BC', background: COLORS.bg }}>
-
-      {/* Logo */}
+    <aside
+      className="w-64 flex-shrink-0 flex flex-col py-6 px-3 gap-2 border-r"
+      style={{ borderColor: "#DDD0BC", background: COLORS.bg }}
+    >
       <div className="flex items-center gap-2 px-3 mb-6">
-        <img src="/logo2.png"></img>
+        <img src="/logo2.png" alt="Smart Grama Sewa logo" />
       </div>
 
-      {/* Nav links */}
       <ul className="flex flex-col gap-1 flex-1">
         <NavItem icon={LayoutDashboard} label="Dashboard" bold
-          onClick={() => navigate('/admin/dashboard')} />
+          onClick={() => navigate("/admin/dashboard")} />
 
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
           GN management
         </li>
-        <NavItem icon={UserCheck} label="Registration Requests"
-          onClick={() => navigate('/admin/registrationrequestapproval')} />
+        <NavItem icon={UserCheck}      label="Registration Requests"
+          onClick={() => navigate("/admin/registrationrequestapproval")} />
         <NavItem icon={ArrowLeftRight} label="Transfer Request"
-          onClick={() => navigate('/admin/transferrequestapproval')} />
+          onClick={() => navigate("/admin/transferrequestapproval")} />
 
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
           Reports
         </li>
         <NavItem icon={BarChart2} label="System reports"
-          onClick={() => navigate('/admin/reports/system')} />
-        <NavItem icon={User} label="Individual user access"
-          onClick={() => navigate('/admin/reports/user-access')} />
-        <NavItem icon={Activity} label="GN activity reports"
-          onClick={() => navigate('/admin/reports/gn-activity')} />
+          onClick={() => navigate("/admin/reports/system")} />
+        <NavItem icon={User}      label="Individual user access"
+          onClick={() => navigate("/admin/reports/user-access")} />
+        <NavItem icon={Activity}  label="GN activity reports"
+          onClick={() => navigate("/admin/reports/gn-activity")} />
 
         <li className="pt-4">
-          <NavItem icon={Megaphone} label="Announcements" bold 
-            onClick={() => navigate('/admin/announcements')} />
+          <NavItem icon={Megaphone} label="Announcements" bold
+            onClick={() => navigate("/admin/announcements")} />
         </li>
-        <li className="pt-4">
-          <NavItem icon={Calendar} label="Appointment Calendar"bold active
+        <li className="pt-1">
+          <NavItem icon={Calendar} label="Appointment Calendar" bold active
             onClick={() => navigate("/admin/calendar")} />
         </li>
-        {/* <li className="px-4 pt-1">
-          <NavItem icon={Bell} label="Notifications" bold
-            onClick={() => navigate('/admin/notifications')} />
-        </li> */}
       </ul>
 
-      {/* Logout */}
-      <div className="px-3 pt-4 border-t" style={{ borderColor: '#DDD0BC' }}>
-        <button onClick={onLogout}
+      <div className="px-3 pt-4 border-t" style={{ borderColor: "#DDD0BC" }}>
+        <button
+          onClick={onLogout}
           className="flex items-center gap-3 w-full px-4 py-2 rounded-lg text-sm font-bold transition-all hover:bg-red-50"
-          style={{ color: '#991B1B' }}>
+          style={{ color: "#991B1B" }}
+        >
           <LogOut size={16} />
           <span>Logout</span>
         </button>
@@ -173,9 +225,7 @@ function Sidebar({ onLogout }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// TOPBAR
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── Topbar ───────────────────────────────────────────────────────────────────
 function Topbar() {
   const [searchVal, setSearchVal] = useState("");
   return (
@@ -183,13 +233,8 @@ function Topbar() {
       className="flex items-center gap-4 px-6 py-4 border-b sticky top-0 z-20"
       style={{ borderColor: "#DDD0BC", background: COLORS.bg }}
     >
-      {/* Search */}
       <div className="flex-1 relative">
-        <Search
-          size={16}
-          className="absolute left-4 top-1/2 -translate-y-1/2"
-          color={COLORS.textMuted}
-        />
+        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2" color={COLORS.textMuted} />
         <input
           className="w-full pl-10 pr-4 py-2.5 rounded-full border text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
           style={{ borderColor: "#C8B89A", background: "#FFF9F0", color: COLORS.text }}
@@ -198,28 +243,19 @@ function Topbar() {
           onChange={(e) => setSearchVal(e.target.value)}
         />
       </div>
-
-      {/* Language */}
       <button
         className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
         style={{ borderColor: "#C8B89A", color: COLORS.text, background: "#FFF9F0" }}
       >
         English <ChevronDown size={14} />
       </button>
-
-      {/* Bell */}
       <button
         className="relative w-10 h-10 rounded-full flex items-center justify-center border"
         style={{ borderColor: "#C8B89A", background: "#FFF9F0" }}
       >
         <Bell size={18} color={COLORS.primary} />
-        <span
-          className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-          style={{ background: COLORS.accent }}
-        />
+        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full" style={{ background: COLORS.accent }} />
       </button>
-
-      {/* Avatar */}
       <button
         className="w-10 h-10 rounded-full flex items-center justify-center"
         style={{ background: COLORS.primary }}
@@ -230,24 +266,23 @@ function Topbar() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// CALENDAR — LEGEND
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── Legend ───────────────────────────────────────────────────────────────────
 function CalendarLegend({ count }) {
   const items = [
-    { key: "booked",    color: COLORS.primary, label: "Booked"    },
-    { key: "pending",   color: COLORS.accent,  label: "Pending"   },
-    { key: "completed", color: COLORS.darker,  label: "Completed" },
-    { key: "on-field",  color: "#E8D5C0",      label: "On Field", border: true },
-    { key: "cancelled", color: COLORS.muted,   label: "Cancelled" },
+    { color: COLORS.primary, label: "Booked"    },
+    { color: COLORS.accent,  label: "Pending"   },
+    { color: COLORS.darker,  label: "Completed" },
+    { color: "#E8D5C0",      label: "On Field", border: true },
+    { color: COLORS.muted,   label: "Cancelled" },
   ];
   return (
-    <div className="flex items-center justify-between flex-wrap gap-3 px-4 py-3"
-      style={{ background: COLORS.white, borderTop: `1px solid ${COLORS.muted}33` }}>
+    <div
+      className="flex items-center justify-between flex-wrap gap-3 px-4 py-3"
+      style={{ background: COLORS.white, borderTop: `1px solid ${COLORS.muted}33` }}
+    >
       <div className="flex gap-4 flex-wrap">
-        {items.map(({ key, color, label, border }) => (
-          <span key={key} className="flex items-center gap-1.5"
-            style={{ fontSize: 11, color: COLORS.muted }}>
+        {items.map(({ color, label, border }) => (
+          <span key={label} className="flex items-center gap-1.5" style={{ fontSize: 11, color: COLORS.muted }}>
             <span style={{
               width: 9, height: 9, borderRadius: 3, background: color, flexShrink: 0,
               border: border ? `1px solid ${COLORS.muted}` : "none",
@@ -263,35 +298,31 @@ function CalendarLegend({ count }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// CALENDAR — APPOINTMENT CELL
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── Appointment cell ─────────────────────────────────────────────────────────
 function ApptCell({ appts, isBreak }) {
   const [hov, setHov] = useState(false);
 
   if (isBreak) {
     return (
       <td style={{
-        height: 8,
-        background: `${COLORS.bg}`,
-        borderBottom: `1px dashed ${COLORS.muted}33`,
-        padding: 0,
+        height: 8, background: COLORS.bg,
+        borderBottom: `1px dashed ${COLORS.muted}33`, padding: 0,
       }} />
     );
   }
-
   if (!appts || appts.length === 0) {
     return (
       <td style={{
         height: 34,
         borderBottom: `1px solid ${COLORS.muted}18`,
-        borderRight: `1px solid ${COLORS.muted}18`,
+        borderRight:  `1px solid ${COLORS.muted}18`,
       }} />
     );
   }
 
   const a   = appts[0];
-  const cfg = STATUS_CONFIG[a.status] ?? STATUS_CONFIG.booked;
+  // FIX 2: normalise status before lookup
+  const cfg = STATUS_CONFIG[normaliseStatus(a.status)] ?? STATUS_CONFIG.booked;
 
   return (
     <td
@@ -302,7 +333,7 @@ function ApptCell({ appts, isBreak }) {
         height: 34,
         background: cfg.bg,
         borderBottom: `1px solid ${COLORS.muted}18`,
-        borderRight: `1px solid ${COLORS.muted}18`,
+        borderRight:  `1px solid ${COLORS.muted}18`,
         padding: "2px 4px",
         verticalAlign: "middle",
         cursor: "pointer",
@@ -311,25 +342,16 @@ function ApptCell({ appts, isBreak }) {
         transition: "filter 0.12s",
       }}
     >
-      <div style={{
-        fontSize: 9.5, fontWeight: 600, color: cfg.text,
-        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-      }}>
+      <div style={{ fontSize: 9.5, fontWeight: 600, color: cfg.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
         {a.fullName}
       </div>
       {a.service && (
-        <div style={{
-          fontSize: 8.5, color: cfg.text, opacity: 0.75,
-          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-        }}>
+        <div style={{ fontSize: 8.5, color: cfg.text, opacity: 0.75, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {a.service}
         </div>
       )}
       {appts.length > 1 && (
-        <span style={{
-          position: "absolute", top: 2, right: 3,
-          fontSize: 8, color: cfg.text, fontWeight: 700,
-        }}>
+        <span style={{ position: "absolute", top: 2, right: 3, fontSize: 8, color: cfg.text, fontWeight: 700 }}>
           +{appts.length - 1}
         </span>
       )}
@@ -337,60 +359,86 @@ function ApptCell({ appts, isBreak }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// CALENDAR COMPONENT
-// ═══════════════════════════════════════════════════════════════════════════════
-function AppointmentCalendar({ gnOfficerUid, db }) {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState(null);
-  const [view, setView]                 = useState("week");
+// ─── Calendar ─────────────────────────────────────────────────────────────────
+/**
+ * Props:
+ *   gnDiv        {string}  gnDiv of the logged-in GN officer  ← used to filter appointments
+ *   gnOfficerUid {string}  uid of the officer (kept for future use / other queries)
+ *   db           {object}  Firestore instance
+ */
+function AppointmentCalendar({ gnDiv, gnOfficerUid, db }) {
+  const [currentDate,   setCurrentDate]   = useState(new Date());
+  const [appointments,  setAppointments]  = useState([]);
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState(null);
+  const [view,          setView]          = useState("week");
 
   const weekDates = getWeekDates(currentDate);
 
+  // ── FIX 3: filter by gnDiv, not uid ────────────────────────────────────────
   const fetchAppointments = useCallback(async () => {
     if (!db) return;
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     try {
       const startStr = toDateStr(weekDates[0]);
       const endStr   = toDateStr(weekDates[6]);
       const ref = collection(db, "appointments");
-      const q   = gnOfficerUid
-        ? query(ref, where("date",">=",startStr), where("date","<=",endStr), where("uid","==",gnOfficerUid))
-        : query(ref, where("date",">=",startStr), where("date","<=",endStr));
+
+      // Build the query.  gnDiv is the reliable link between officer and appointment.
+      // If gnDiv is not available yet, fall back to fetching the whole week
+      // (admin overview) or scope by uid as a secondary option.
+      let q;
+      if (gnDiv) {
+        q = query(
+          ref,
+          where("date",  ">=", startStr),
+          where("date",  "<=", endStr),
+          where("gnDiv", "==", gnDiv),   // ← Firestore field that matches the officer
+        );
+      } else {
+        // Admin view — all appointments this week
+        q = query(
+          ref,
+          where("date", ">=", startStr),
+          where("date", "<=", endStr),
+        );
+      }
+
       const snap = await getDocs(q);
       setAppointments(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (err) {
-      setError("Failed to load appointments.");
+      console.error("Firestore error:", err);
+      setError("Failed to load appointments. Check Firestore indexes.");
     } finally {
       setLoading(false);
     }
-  }, [db, gnOfficerUid, currentDate]);
+  }, [db, gnDiv, currentDate]); // gnDiv replaces gnOfficerUid in deps
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
-  // Build lookup map: "YYYY-MM-DD__slot" → [appts]
+  // ── FIX 1 + 2: build lookup with corrected slot key and normalised status ──
   const apptMap = {};
   appointments.forEach(a => {
-    const k = `${a.date}__${a.slot}`;
+    const gridSlot = convertSlot(a.slot);   // "03:30 PM" → "3:30–3:45"
+    if (!gridSlot) return;                  // skip if slot is malformed
+    const k = `${a.date}__${gridSlot}`;
     if (!apptMap[k]) apptMap[k] = [];
-    apptMap[k].push(a);
+    apptMap[k].push({ ...a, status: normaliseStatus(a.status) }); // normalise here
   });
+
   const getAppts = (date, slot) => apptMap[`${toDateStr(date)}__${slot}`] ?? [];
 
   const prevWeek = () => { const d = new Date(currentDate); d.setDate(d.getDate() - 7); setCurrentDate(d); };
   const nextWeek = () => { const d = new Date(currentDate); d.setDate(d.getDate() + 7); setCurrentDate(d); };
 
-  // ── Page-level summary stats ──
   const totalThisWeek  = appointments.length;
-  const pendingCount   = appointments.filter(a => a.status === "pending").length;
-  const completedCount = appointments.filter(a => a.status === "completed").length;
+  const pendingCount   = appointments.filter(a => normaliseStatus(a.status) === "pending").length;
+  const completedCount = appointments.filter(a => normaliseStatus(a.status) === "completed").length;
 
   return (
     <div className="flex flex-col gap-5">
-
-      {/* ── Page title row ── */}
+      {/* Page title */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold" style={{ color: COLORS.darkest, fontFamily: "Georgia, serif" }}>
@@ -398,6 +446,7 @@ function AppointmentCalendar({ gnOfficerUid, db }) {
           </h1>
           <p className="text-xs mt-0.5" style={{ color: COLORS.muted }}>
             Weekly schedule view — {formatMonthYear(weekDates)}
+            {gnDiv && <span className="ml-2 opacity-60">· {gnDiv}</span>}
           </p>
         </div>
         <button
@@ -409,7 +458,7 @@ function AppointmentCalendar({ gnOfficerUid, db }) {
         </button>
       </div>
 
-      {/* ── Summary stat cards ── */}
+      {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4">
         {[
           { label: "Total This Week", value: totalThisWeek,   bg: COLORS.darkest, text: COLORS.white,   sub: COLORS.accent },
@@ -428,7 +477,7 @@ function AppointmentCalendar({ gnOfficerUid, db }) {
         ))}
       </div>
 
-      {/* ── Calendar card ── */}
+      {/* Calendar card */}
       <div className="rounded-2xl overflow-hidden"
         style={{ border: `1.5px solid ${COLORS.muted}33`, boxShadow: `0 2px 16px ${COLORS.darkest}10` }}>
 
@@ -444,9 +493,8 @@ function AppointmentCalendar({ gnOfficerUid, db }) {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {/* View toggle */}
-            <div className="flex rounded-lg overflow-hidden" style={{ border: `1px solid ${COLORS.muted}66` }}>
-              {["week","month"].map(v => (
+            {/* <div className="flex rounded-lg overflow-hidden" style={{ border: `1px solid ${COLORS.muted}66` }}>
+              {["week", "month"].map(v => (
                 <button key={v} onClick={() => setView(v)}
                   style={{
                     padding: "5px 14px", fontSize: 12, fontWeight: 600,
@@ -458,23 +506,24 @@ function AppointmentCalendar({ gnOfficerUid, db }) {
                   {v}
                 </button>
               ))}
-            </div>
-            {/* Today */}
-            <button onClick={() => setCurrentDate(new Date())}
+            </div> */}
+            <button
+              onClick={() => setCurrentDate(new Date())}
               style={{
                 background: "transparent", border: `1px solid ${COLORS.muted}88`,
-                borderRadius: 8, padding: "5px 12px", fontSize: 12, color: COLORS.white,
-                cursor: "pointer", fontWeight: 500,
-              }}>
+                borderRadius: 8, padding: "5px 12px", fontSize: 12,
+                color: COLORS.white, cursor: "pointer", fontWeight: 500,
+              }}
+            >
               Today
             </button>
-            {/* Prev / Next */}
             {[{ label: "‹", fn: prevWeek }, { label: "›", fn: nextWeek }].map(({ label, fn }) => (
               <button key={label} onClick={fn}
                 style={{
                   background: "transparent", border: `1px solid ${COLORS.muted}88`,
-                  borderRadius: 8, width: 32, height: 32, fontSize: 16, color: COLORS.white,
-                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                  borderRadius: 8, width: 32, height: 32, fontSize: 16,
+                  color: COLORS.white, cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
                 {label}
               </button>
@@ -482,7 +531,6 @@ function AppointmentCalendar({ gnOfficerUid, db }) {
           </div>
         </div>
 
-        {/* Loading / Error */}
         {loading && (
           <div className="text-center py-8 text-sm" style={{ color: COLORS.muted, background: COLORS.bg }}>
             Loading appointments…
@@ -554,7 +602,6 @@ function AppointmentCalendar({ gnOfficerUid, db }) {
                     ))}
                   </tr>
                 ))}
-                {/* Trailing empty row */}
                 <tr>
                   <td style={{ height: 6, background: COLORS.white, borderRight: `2px solid ${COLORS.muted}33` }} />
                   {weekDates.map((_, i) => <td key={i} style={{ height: 6, background: COLORS.white }} />)}
@@ -564,44 +611,56 @@ function AppointmentCalendar({ gnOfficerUid, db }) {
           </div>
         )}
 
-        {/* Legend footer */}
         <CalendarLegend count={appointments.length} />
       </div>
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PAGE — full layout assembly
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── Page ─────────────────────────────────────────────────────────────────────
 /**
- * Props:
- *   db           {object}  Firestore instance from your firebaseConfig
- *   gnOfficerUid {string}  UID of the currently-logged-in GN officer
- *   onLogout     {fn}      Callback to handle logout (e.g. signOut + navigate)
+ * How to use:
+ *
+ *   import AdminCalendar from './AppointmentCalendarPage';
+ *
+ *   // In your protected route, pull the GN officer profile from context/auth:
+ *   const { user, gnOfficerProfile } = useAuth();
+ *
+ *   <AdminCalendar
+ *     gnDiv={gnOfficerProfile?.gnDiv}          // "GN Division 02"
+ *     gnOfficerUid={user?.uid}                 // kept for future use
+ *     onLogout={handleLogout}
+ *   />
+ *
+ *   Note: db is imported directly from '../../firebase' inside this file.
  */
-export default function AdminCalendar({ db, gnOfficerUid, onLogout }) {
-  const handleLogout = onLogout ?? (() => console.warn("No onLogout handler provided"));
+export default function AdminCalendar({ gnDiv, gnOfficerUid, onLogout }) {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    if (onLogout) { onLogout(); return; }
+    try {
+      await signOut(auth);
+      navigate("/login");
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
 
   return (
-    <div className="flex h-screen overflow-hidden"
-      style={{ background: COLORS.bg, fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
+    <div
+      className="flex h-screen overflow-hidden"
+      style={{ background: COLORS.bg, fontFamily: "'DM Sans','Segoe UI',sans-serif" }}
+    >
+      <Sidebar onLogout={handleLogout} />
 
-      {/* Sidebar */}
-      <Sidebar onLogout={handleLogout} activePage="calendar" />
-
-      {/* Main column */}
       <div className="flex flex-col flex-1 overflow-hidden">
-
-        {/* Topbar */}
         <Topbar />
 
-        {/* Scrollable content */}
         <main className="flex-1 overflow-y-auto px-8 py-6">
-          <AppointmentCalendar gnOfficerUid={gnOfficerUid} db={db} />
+          <AppointmentCalendar gnDiv={gnDiv} gnOfficerUid={gnOfficerUid} db={db} />
         </main>
 
-        {/* Footer */}
         <footer className="text-center text-xs py-4"
           style={{ background: COLORS.cardDark, color: "#C8A882" }}>
           © 2026 Smart Grama Sewa. All rights reserved.
