@@ -588,7 +588,7 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
     <>
       {selAppt && <DetailsModal appt={selAppt} onClose={() => setSelAppt(null)} onCancel={handleCancel} cancelling={cancelling} />}
 
-      <div className="p-7 flex-1">
+      <div className="p-4 md:p-6 flex-1">
         <div className="flex items-start justify-between flex-wrap gap-3 mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-1">My Appointments</h1>
@@ -706,7 +706,7 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
   };
 
   return (
-    <div className="p-7 flex-1">
+    <div className="p-4 md:p-6 flex-1">
       <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">Book an appointment</h1>
       <StepBar step={1} />
 

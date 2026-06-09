@@ -518,55 +518,75 @@ const Announcements = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const SAMPLE_DATA = [
-    { id: 's1', tag: 'Urgent', title: 'Water Supply Interruption — Ward 7', body: 'There will be a temporary water supply interruption in Ward 7 on 3 April 2026 from 9 AM to 5 PM.', dateLabel: '28 Mar 2026' },
-    { id: 's2', tag: 'Important', title: 'Gram Sabha Meeting — April 2026', body: 'Monthly Gram Sabha meeting is scheduled for 5 April 2026 at 10 AM in the Panchayat Hall.', dateLabel: '26 Mar 2026' },
-    { id: 's3', tag: 'Information', title: 'Income Certificate Service Resumed', body: 'Income Certificate applications are now open again.', dateLabel: '25 Mar 2026' },
-    { id: 's4', tag: 'Urgent', title: 'Road Repair — Main Street Closure', body: 'Road repair work on Main Street will begin on 7 April 2026.', dateLabel: '24 Mar 2026' },
-    { id: 's5', tag: 'Important', title: 'New GN Office Hours from April 2026', body: 'Starting from April 2026, the Grama Niladhari Office will operate Monday to Friday from 8:30 AM to 4:30 PM.', dateLabel: '22 Mar 2026' },
-    { id: 's6', tag: 'Information', title: 'Digital Certificates Now Available', body: 'Download your digitally signed certificates directly from the portal.', dateLabel: '20 Mar 2026' },
-  ];
-
+  // Fetch announcements from Firestore - NO SAMPLE DATA FIRST
   useEffect(() => {
-    const fetchData = async () => {
-      setAnnouncements(SAMPLE_DATA);
-      setLoading(false);
+    const fetchAnnouncements = async () => {
+      setLoading(true);
       try {
-        const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
         const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'));
-        const snap = await Promise.race([getDocs(q), timeout]);
-        if (snap.docs.length > 0) {
-          const list = snap.docs.map(d => {
-            const data = d.data();
-            const ts = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+        const snapshot = await getDocs(q);
+        
+        if (!snapshot.empty) {
+          const fetchedAnnouncements = snapshot.docs.map(doc => {
+            const data = doc.data();
+            let dateLabel = 'Recent';
+            
+            if (data.createdAt?.toDate) {
+              const date = data.createdAt.toDate();
+              dateLabel = date.toLocaleDateString('en-GB', { 
+                day: '2-digit', 
+                month: 'short', 
+                year: 'numeric' 
+              });
+            } else if (data.date) {
+              dateLabel = data.date;
+            }
+            
             return {
-              id: d.id,
+              id: doc.id,
               title: data.title || 'Announcement',
-              body: data.body || data.description || '',
+              body: data.body || data.description || 'No description available',
               tag: data.tag || 'Information',
-              dateLabel: ts.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+              dateLabel: dateLabel,
             };
           });
-          setAnnouncements(list);
+          setAnnouncements(fetchedAnnouncements);
+        } else {
+          // No announcements in database
+          setAnnouncements([]);
         }
-      } catch (e) {
-        console.warn('Firestore announcements not available, showing sample data.');
+      } catch (error) {
+        console.error('Error fetching announcements:', error);
+        setAnnouncements([]);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchData();
+
+    fetchAnnouncements();
   }, []);
 
   const markAsRead = async (annId) => {
+    // Only mark if not already read
+    if (readIds.has(annId)) return;
+    
     setReadIds(prev => new Set([...prev, annId]));
-    if (!currentUser) return;
-    try {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        readAnnouncements: arrayUnion(annId),
-      });
-    } catch (e) { console.warn('Mark read error:', e.message); }
+    
+    if (currentUser) {
+      try {
+        await updateDoc(doc(db, 'users', currentUser.uid), {
+          readAnnouncements: arrayUnion(annId),
+        });
+      } catch (e) { 
+        console.warn('Mark read error:', e.message); 
+      }
+    }
   };
 
-  const handleLogout = async () => { await signOut(auth); navigate('/login'); };
+  const handleLogout = async () => { 
+    await signOut(auth); 
+    navigate('/login'); 
+  };
 
   const filtered = announcements.filter(a => {
     if (activeTab === 'All') return true;
@@ -574,17 +594,29 @@ const Announcements = () => {
     return a.tag === activeTab;
   });
 
-  const handleTabChange = (t) => { setActiveTab(t); setCurrentPage(1); };
+  const handleTabChange = (t) => { 
+    setActiveTab(t); 
+    setCurrentPage(1); 
+  };
+  
   const paginated = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
   const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
 
   const markAllAsRead = async () => {
-    const allIds = announcements.map(a => a.id);
+    const unreadIds = announcements.filter(a => !readIds.has(a.id)).map(a => a.id);
+    if (unreadIds.length === 0) return;
+    
+    const allIds = [...readIds, ...unreadIds];
     setReadIds(new Set(allIds));
+    
     if (currentUser) {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        readAnnouncements: allIds,
-      });
+      try {
+        await updateDoc(doc(db, 'users', currentUser.uid), {
+          readAnnouncements: allIds,
+        });
+      } catch (e) {
+        console.warn('Mark all read error:', e.message);
+      }
     }
   };
 
@@ -625,7 +657,7 @@ const Announcements = () => {
             currentUser={currentUser}
           />
 
-          {/* Mobile Topbar - Only sticky bar (logo, bell, profile) */}
+          {/* Mobile Topbar */}
           <div className="mobile-topbar hidden h-16 bg-user-primary items-center px-4 gap-3 sticky top-0 z-40 shadow-md">
             <button onClick={() => setMobileMenuOpen(true)} className="bg-none border-none cursor-pointer p-1.5 flex-shrink-0">
               <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
@@ -647,7 +679,7 @@ const Announcements = () => {
             </div>
           </div>
 
-          {/* Mobile Content ) */}
+          {/* Mobile Content */}
           <div className="mobile-content hidden flex-1 bg-user-secondary-light overflow-y-auto">
             {/* Search Bar */}
             <div className="pt-3 px-3.5 relative">
@@ -731,16 +763,22 @@ const Announcements = () => {
                             <Icon d={IC.check} size={32} color="#30a050" sw={2.5} />
                             <span>All caught up! No unread announcements.</span>
                           </div>
-                        ) : `No ${activeTab} announcements found.`}
+                        ) : (
+                          <div className="flex flex-col items-center gap-3">
+                            <span>No {activeTab.toLowerCase()} announcements found.</span>
+                            {activeTab !== 'All' && (
+                              <button onClick={() => handleTabChange('All')} className="px-4 py-2 bg-user-primary rounded-round text-sm font-bold text-user-text hover:bg-user-primary-dark transition-colors">
+                                View all announcements
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      {activeTab !== 'Unread' && activeTab !== 'All' && (
-                        <button onClick={() => handleTabChange('All')} className="mt-4 px-4 py-2 bg-user-primary rounded-round text-sm font-bold text-user-text hover:bg-user-primary-dark transition-colors">
-                          View all announcements
-                        </button>
-                      )}
                     </div>
                   )}
-                  <Pagination total={filtered.length} perPage={PER_PAGE} current={currentPage} onChange={setCurrentPage} />
+                  {paginated.length > 0 && (
+                    <Pagination total={filtered.length} perPage={PER_PAGE} current={currentPage} onChange={setCurrentPage} />
+                  )}
                 </>
               )}
             </div>
@@ -784,16 +822,22 @@ const Announcements = () => {
                           <Icon d={IC.check} size={32} color="#30a050" sw={2.5} />
                           <span>All caught up! No unread announcements.</span>
                         </div>
-                      ) : `No ${activeTab} announcements found.`}
+                      ) : (
+                        <div className="flex flex-col items-center gap-3">
+                          <span>No {activeTab.toLowerCase()} announcements found.</span>
+                          {activeTab !== 'All' && (
+                            <button onClick={() => handleTabChange('All')} className="px-4 py-2 bg-user-primary rounded-round text-sm font-bold text-user-text hover:bg-user-primary-dark transition-colors">
+                              View all announcements
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    {activeTab !== 'Unread' && activeTab !== 'All' && (
-                      <button onClick={() => handleTabChange('All')} className="mt-4 px-4 py-2 bg-user-primary rounded-round text-sm font-bold text-user-text hover:bg-user-primary-dark transition-colors">
-                        View all announcements
-                      </button>
-                    )}
                   </div>
                 )}
-                <Pagination total={filtered.length} perPage={PER_PAGE} current={currentPage} onChange={setCurrentPage} />
+                {paginated.length > 0 && (
+                  <Pagination total={filtered.length} perPage={PER_PAGE} current={currentPage} onChange={setCurrentPage} />
+                )}
               </>
             )}
           </div>

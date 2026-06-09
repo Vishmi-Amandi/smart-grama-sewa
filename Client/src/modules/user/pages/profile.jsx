@@ -544,8 +544,8 @@ const Profile = () => {
             
             {!isEditing && userData && (
               <>
-                <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-6">My Profile</h1>
-
+                <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight">My Profile</h1>
+                <p className="text-sm font-semibold text-user-text-lighter mb-6">View and manage personal information.</p>
                 {saveSuccess && (
                   <div className="flex items-center gap-2 bg-user-success-light border border-user-success rounded-xl p-3 mb-4">
                     <Icon d={IC.tick} size={14} color="#1a7a3a" strokeWidth={2.5} />
