@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, query, orderBy, getDocs, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, doc, updateDoc, arrayUnion, getDoc, where } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton, AnnouncementsListSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
@@ -518,41 +518,76 @@ const Announcements = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Fetch announcements from Firestore - NO SAMPLE DATA FIRST
+  // Fetch announcements from Firestore
   useEffect(() => {
     const fetchAnnouncements = async () => {
       setLoading(true);
       try {
-        const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'));
+        // Wait for userData to be loaded
+        if (!userData) {
+          setLoading(false);
+          return;
+        }
+        
+        // Fetch ALL active announcements
+        const q = query(
+          collection(db, 'announcements'), 
+          // where('status', 'in', ['Active', 'published']),
+          orderBy('createdAt', 'desc')
+        );
+        
         const snapshot = await getDocs(q);
         
         if (!snapshot.empty) {
-          const fetchedAnnouncements = snapshot.docs.map(doc => {
-            const data = doc.data();
-            let dateLabel = 'Recent';
-            
-            if (data.createdAt?.toDate) {
-              const date = data.createdAt.toDate();
-              dateLabel = date.toLocaleDateString('en-GB', { 
-                day: '2-digit', 
-                month: 'short', 
-                year: 'numeric' 
-              });
-            } else if (data.date) {
-              dateLabel = data.date;
-            }
-            
-            return {
-              id: doc.id,
-              title: data.title || 'Announcement',
-              body: data.body || data.description || 'No description available',
-              tag: data.tag || 'Information',
-              dateLabel: dateLabel,
-            };
-          });
+          const fetchedAnnouncements = snapshot.docs
+            .filter(doc => {
+              const data = doc.data();
+              const announcementGnDiv = data.gnDiv || "";
+              
+              return announcementGnDiv === "" || announcementGnDiv === userData.gnDiv;
+            })
+            .map(doc => {
+              const data = doc.data();
+              let dateLabel = 'Recent';
+              
+              if (data.createdAt?.toDate) {
+                const date = data.createdAt.toDate();
+                dateLabel = date.toLocaleDateString('en-GB', { 
+                  day: '2-digit', 
+                  month: 'short', 
+                  year: 'numeric' 
+                });
+              } else if (data.date) {
+                dateLabel = data.date;
+              }
+              
+              // Map GN priority to User display tags
+              let mappedTag = 'Information';
+
+              const priorityValue = data.priority ? data.priority.charAt(0).toUpperCase() + data.priority.slice(1).toLowerCase() : '';
+
+              if (priorityValue === 'Urgent') {
+                mappedTag = 'Urgent';
+              } else if (priorityValue === 'High') {
+                mappedTag = 'Important';
+              } else if (priorityValue === 'Normal') {
+                mappedTag = 'Information';
+              }
+
+              // Use mappedTag first, then fallback to data.tag
+              const finalTag = mappedTag || data.tag || 'Information';
+
+              return {
+                id: doc.id,
+                title: data.title || 'Announcement',
+                body: data.body || data.description || 'No description available',
+                tag: finalTag,
+                dateLabel: dateLabel,
+              };
+            });
+          
           setAnnouncements(fetchedAnnouncements);
         } else {
-          // No announcements in database
           setAnnouncements([]);
         }
       } catch (error) {
@@ -563,8 +598,12 @@ const Announcements = () => {
       }
     };
 
-    fetchAnnouncements();
-  }, []);
+    if (currentUser && userData) {
+      fetchAnnouncements();
+    } else if (!currentUser) {
+      setLoading(false);
+    }
+  }, [currentUser, userData]);
 
   const markAsRead = async (annId) => {
     // Only mark if not already read
