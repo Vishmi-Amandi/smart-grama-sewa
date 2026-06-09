@@ -84,13 +84,15 @@ const GNAnnouncementList = ({ gnStatus, theme }) => {
   const paginated   = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   // ─── Delete ──────────────────────────────────────────────────────────────────
+  // FIX: look up the item from state so we can log its title
   const handleDelete = async (id) => {
     setDeletingId(id);
+    const item = announcements.find((a) => a.id === id); // FIX: was undefined
     try {
       await deleteDoc(doc(db, "announcements", id));
       await logActivity("announcement", "Deleted", item?.title || "Announcement", "Announcement deleted");
       setAnnouncements((prev) => prev.filter((a) => a.id !== id));
-      setConfirmDelete(null);
+      setConfirmDelete(null); // FIX: moved inside try so it only clears on success
     } catch (err) {
       console.error("Delete error:", err);
     } finally {
@@ -98,45 +100,62 @@ const GNAnnouncementList = ({ gnStatus, theme }) => {
     }
   };
 
+  // ─── Open Edit Modal (was missing — pencil button was navigating away instead) ──
+  // FIX: populate editForm from the clicked item so priority/fields are pre-filled
+  const handleOpenEdit = (item) => {
+    setEditingItem(item);
+    setEditForm({
+      title:       item.title       || "",
+      description: item.description || "",
+      category:    item.category    || "General",
+      priority:    item.priority    || "Normal", // FIX: was never set, showed blank/undefined
+      expiryDate:  item.expiresAt
+        ? new Date(
+            item.expiresAt?.seconds
+              ? item.expiresAt.seconds * 1000
+              : item.expiresAt
+          ).toISOString().split("T")[0]
+        : "",
+    });
+  };
+
   // ─── Edit Save ───────────────────────────────────────────────────────────────
-const handleSaveEdit = async () => {
-  setSaving(true);
-  try {
-    const updates = {
-      title:       editForm.title,
-      description: editForm.description,
-      category:    editForm.category,
-      priority:    editForm.priority,
-      expiresAt:   editForm.expiryDate
-        ? Timestamp.fromDate(new Date(editForm.expiryDate))
-        : null,
-    };
-
-    // ✅ Actually save to Firestore
-    await updateDoc(doc(db, "announcements", editingItem.id), updates);
-    await logActivity("announcement", "Edited", editForm.title, "Announcement updated");
-
-    // ✅ Update local state
-    setAnnouncements((prev) =>
-      prev.map((a) => a.id === editingItem.id ? {
-        ...a,
+  const handleSaveEdit = async () => {
+    setSaving(true);
+    try {
+      const updates = {
         title:       editForm.title,
         description: editForm.description,
         category:    editForm.category,
         priority:    editForm.priority,
         expiresAt:   editForm.expiryDate
-          ? { toDate: () => new Date(editForm.expiryDate), seconds: new Date(editForm.expiryDate).getTime() / 1000 }
+          ? Timestamp.fromDate(new Date(editForm.expiryDate))
           : null,
-      } : a)
-    );
+      };
 
-    setEditingItem(null);
-  } catch (err) {
-    console.error("Edit error:", err);
-  } finally {
-    setSaving(false);
-  }
-};
+      await updateDoc(doc(db, "announcements", editingItem.id), updates);
+      await logActivity("announcement", "Edited", editForm.title, "Announcement updated");
+
+      setAnnouncements((prev) =>
+        prev.map((a) => a.id === editingItem.id ? {
+          ...a,
+          title:       editForm.title,
+          description: editForm.description,
+          category:    editForm.category,
+          priority:    editForm.priority,
+          expiresAt:   editForm.expiryDate
+            ? { toDate: () => new Date(editForm.expiryDate), seconds: new Date(editForm.expiryDate).getTime() / 1000 }
+            : null,
+        } : a)
+      );
+
+      setEditingItem(null);
+    } catch (err) {
+      console.error("Edit error:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const formatDate = (ts) => {
     if (!ts) return "N/A";
@@ -215,7 +234,7 @@ const handleSaveEdit = async () => {
                 <td colSpan={6} className="px-3 sm:px-6 py-8 sm:py-12 text-center">
                   <Megaphone size={32} className="text-gray-300 mx-auto mb-2" />
                   <p className={`text-sm font-semibold ${t.subtext}`}>No announcements found.</p>
-                  <Link to="/create-announcement" className="text-xs text-[#E5A800] font-semibold hover:underline mt-1 inline-block">
+                  <Link to="/gn-create-announcement" className="text-xs text-[#E5A800] font-semibold hover:underline mt-1 inline-block">
                     Create your first announcement →
                   </Link>
                 </td>
@@ -243,21 +262,12 @@ const handleSaveEdit = async () => {
                     </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4">
                       <div className="flex items-center gap-2 sm:gap-3">
+                        {/* FIX: now opens the edit modal with pre-filled fields instead of navigating away */}
                         <button
-  onClick={() => navigate("/create-announcement", { 
-  state: { 
-    draft: {
-      ...item,
-      expiryDate: item.expiresAt 
-        ? new Date(item.expiresAt.seconds * 1000).toISOString().split("T")[0]
-        : "",
-    } 
-  } 
-})}
-  className="text-gray-400 hover:text-blue-500 transition"
->
-  <Pencil size={14} className="sm:w-4 sm:h-4" />
-</button>
+                          onClick={() => handleOpenEdit(item)}
+                          className="text-gray-400 hover:text-blue-500 transition">
+                          <Pencil size={14} className="sm:w-4 sm:h-4" />
+                        </button>
                         <button
                           onClick={() => setConfirmDelete(item.id)}
                           className="text-gray-400 hover:text-red-500 transition">

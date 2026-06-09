@@ -733,7 +733,7 @@ const GNSignUp = () => {
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="text-gray-300 text-[10px] sm:text-xs cursor-pointer">🌐 English ▾</span>
-          <button onClick={() => navigate("/gn-login")}
+          <button onClick={() => navigate("/login")}
             className="bg-[#E5A800] text-[#3d2a00] font-bold px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs hover:bg-[#cc9600] transition">
             Sign In
           </button>
@@ -750,7 +750,7 @@ const GNSignUp = () => {
           {step === 1 && <Step1 form={form} update={update} onNext={() => setStep(2)} />}
           {step === 2 && <Step2 form={form} update={update} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
           {step === 3 && <Step3 form={form} update={update} onNext={() => setStep(4)} onBack={() => setStep(2)} />}
-          {step === 4 && <Step4 form={form} update={update} onBack={() => setStep(3)} onSubmit={() => navigate("/gn-login")} />}
+          {step === 4 && <Step4 form={form} update={update} onBack={() => setStep(3)} onSubmit={() => navigate("/login")} />}
         </div>
       </main>
 
