@@ -29,7 +29,6 @@ const GNCreateAnnouncement = ({ gnStatus, theme }) => {
   const [errors,         setErrors]         = useState({});
    const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
-
   // ─── Loading States ──────────────────────────────────────────────────────────
   const [savingDraft,    setSavingDraft]    = useState(false);
   const [publishing,     setPublishing]     = useState(false);
@@ -121,7 +120,7 @@ const GNCreateAnnouncement = ({ gnStatus, theme }) => {
 
   // ─── Save as Draft ────────────────────────────────────────────────────────────
 const handleSaveDraft = async () => {
-  if (!title.trim()) { setError("Please enter a title."); return; }
+  if (!title.trim()) { setErrors("Please enter a title."); return; }
   setLoading(true);
   try {
     const user = auth.currentUser;
@@ -137,20 +136,22 @@ if (draft?.id) {
 }else {
       // Create new draft
       await addDoc(collection(db, "announcements"), {
-        title,
-        description,
-        expiryDate,
-        status: "Draft",
-        createdBy: user.displayName || "Officer",
-        createdByUid: user.uid,
-        createdAt: serverTimestamp(),
-      });
+          title,
+          description,
+          expiryDate,
+          category,      
+          priority,      
+          status: "Draft",
+          createdBy: user.displayName || "Officer",
+          createdByUid: user.uid,
+          createdAt: serverTimestamp(),
+       });
     }
     await logActivity("announcement", "Draft Saved", title, `Draft saved — Category: ${category}`);
-    setSuccess("Draft saved successfully!");
+    setSuccessMsg("Draft saved successfully!");
     setTimeout(() => navigate("/gn-announcement-list"), 1500);
   } catch (err) {
-    setError("Failed to save draft. Please try again.");
+    setErrors("Failed to save draft. Please try again.");
     console.error(err);
   } finally {
     setLoading(false);
@@ -158,8 +159,8 @@ if (draft?.id) {
 };
 
 const handlePublish = async () => {
-  if (!title.trim()) { setError("Please enter a title."); return; }
-  if (!description.trim()) { setError("Please enter a description."); return; }
+  if (!title.trim()) { setErrors("Please enter a title."); return; }
+  if (!description.trim()) { setErrors("Please enter a description."); return; }
   setLoading(true);
   try {
     const user = auth.currentUser;
@@ -178,23 +179,25 @@ const handlePublish = async () => {
   });
 } else {
       // Create new and publish
-      await addDoc(collection(db, "announcements"), {
+     await addDoc(collection(db, "announcements"), {
         title,
         description,
         expiresAt: expiryDate ? Timestamp.fromDate(new Date(expiryDate)) : null,
         expiryDate: expiryDate || "",
+        category,      
+        priority,      
         status: "Active",
         createdBy: user.uid,
         createdByUid: user.uid,
         createdAt: serverTimestamp(),
         publishedAt: serverTimestamp(),
-      });  
+      }); 
     }
     await logActivity("announcement", "Published", title, `Category: ${category}, Priority: ${priority}`);
-    setSuccess("Announcement published successfully!");
+    setSuccessMsg("Announcement published successfully!");
     setTimeout(() => navigate("/gn-announcement-list"), 1500);
   } catch (err) {
-    setError("Failed to publish. Please try again.");
+    setErrors("Failed to publish. Please try again.");
     console.error(err);
   } finally {
     setLoading(false);

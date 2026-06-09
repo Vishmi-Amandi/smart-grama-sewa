@@ -507,18 +507,21 @@ const handleSaveHours = async () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <p className={`text-sm font-semibold text-left ${t.text}`}>Regular Working Hours</p>
         <button
-          onClick={() => {
-            const updated = { ...workingHours };
-            Object.keys(updated).forEach((day) => {
-              if (updated[day].enabled) {
-                updated[day] = { ...updated[day], start: "08:00", end: "17:00", lunch: "12:00" };
-              }
-            });
-            setWorkingHours(updated);
-          }}
-          className="text-[10px] sm:text-xs text-[#E5A800] font-semibold hover:underline text-left sm:text-right">
-          Apply to all days
-        </button>
+  onClick={() => {
+    const updated = {};
+    Object.keys(workingHours).forEach((day) => {
+      updated[day] = {
+        ...workingHours[day],
+        start: "08:00",
+        end: "17:00",
+        lunch: "12:00",
+      };
+    });
+    setWorkingHours(updated);
+  }}
+  className="text-[10px] sm:text-xs text-[#E5A800] font-semibold hover:underline text-left sm:text-right">
+  Apply to all days
+</button>
       </div>
 
       <div className="space-y-3">
@@ -587,13 +590,14 @@ const handleSaveHours = async () => {
         <div>
           <p className={`text-[10px] sm:text-xs mb-1 text-left ${t.subtext}`}>Slot Duration</p>
           <select
-            value={slotDuration}
-            onChange={(e) => setSlotDuration(e.target.value)}
-            className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
-            <option value="30">30 minutes</option>
-            <option value="45">45 minutes</option>
-            <option value="60">60 minutes</option>
-          </select>
+  value={slotDuration}
+  onChange={(e) => setSlotDuration(e.target.value)}
+  className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
+  <option value="15">15 minutes</option>
+  <option value="30">30 minutes</option>
+  <option value="45">45 minutes</option>
+  <option value="60">60 minutes</option>
+</select>
         </div>
         <div>
           <p className={`text-[10px] sm:text-xs mb-1 text-left ${t.subtext}`}>Break Between Slots</p>
