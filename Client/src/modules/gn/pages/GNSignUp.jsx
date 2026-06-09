@@ -179,12 +179,12 @@ const Step2 = ({ form, update, onNext, onBack }) => {
   const [errors, setErrors] = useState({});
 
   const dsDivisions = form.district ? (DISTRICT_DS_MAP[form.district] || []) : [];
-  const handleDistrictChange = (val) => { update("district", val); update("divisionalSecretariat", ""); update("gnDivision", ""); };
-  const handleDsChange = (val) => { update("divisionalSecretariat", val); update("gnDivision", ""); };
+  const handleDistrictChange = (val) => { update("district", val); update("divisionalSecretariat", ""); update("gnDiv", ""); };
+  const handleDsChange = (val) => { update("divisionalSecretariat", val); update("gnDiv", ""); };
 
   const validate = () => {
     const e = {};
-    if (!form.gnDivisionName.trim())  e.gnDivisionName = "GN Division name is required.";
+    if (!form.gnDiv.trim())  e.gnDiv = "GN Division name is required.";
     if (!form.gnCode.trim())   e.gnCode = "Gn Code is required.";
     if (!form.province)               e.province = "Province is required.";
     if (!form.district)               e.district = "Please select a district.";
@@ -206,9 +206,9 @@ const Step2 = ({ form, update, onNext, onBack }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>GN Division Name</label>
-            <input type="text" value={form.gnDivisionName} onChange={(e) => update("gnDivisionName", e.target.value)}
+            <input type="text" value={form.gnDiv} onChange={(e) => update("gnDiv", e.target.value)}
               placeholder="e.g. Colombo Fort East" className={inputClass} />
-            <FieldError msg={errors.gnDivisionName} />
+            <FieldError msg={errors.gnDiv} />
           </div>
           <div>
             <label className={labelClass}>GN Code</label>
@@ -566,7 +566,7 @@ const handleSubmit = async () => {
   mobile: form.mobile || "",
   altMobile: form.altMobile || "",
   email: form.email || "",
-  gnDivisionName: form.gnDivisionName || "",
+  gnDiv: form.gnDiv || "",
   gnCode: form.gnCode || "",
   province: form.province || "",
   district: form.district || "",
@@ -711,7 +711,7 @@ const GNSignUp = () => {
   const [form, setForm] = useState({
     fullName: "", nic: "", address: "", dob: "", gender: "",
     mobile: "", email: "",
-    gnDivisionName: "", gnCode: "", province: "", district: "",
+    gnDiv: "", gnCode: "", province: "", district: "",
     divisionalSecretariat: "",
     officeAddress: "", officeMobile: "", officialEmail: "",
     appointmentLetter: "", photograph: "", nicFront: "", nicBack: "", signature: "",
