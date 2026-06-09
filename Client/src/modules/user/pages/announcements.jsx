@@ -523,36 +523,67 @@ const Announcements = () => {
     const fetchAnnouncements = async () => {
       setLoading(true);
       try {
-        const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'));
+        // Wait for userData to be loaded
+        if (!userData) {
+          setLoading(false);
+          return;
+        }
+        
+        // Fetch ALL active announcements
+        const q = query(
+          collection(db, 'announcements'), 
+          where('status', '==', 'Active'),
+          orderBy('createdAt', 'desc')
+        );
+        
         const snapshot = await getDocs(q);
         
         if (!snapshot.empty) {
-          const fetchedAnnouncements = snapshot.docs.map(doc => {
-            const data = doc.data();
-            let dateLabel = 'Recent';
-            
-            if (data.createdAt?.toDate) {
-              const date = data.createdAt.toDate();
-              dateLabel = date.toLocaleDateString('en-GB', { 
-                day: '2-digit', 
-                month: 'short', 
-                year: 'numeric' 
-              });
-            } else if (data.date) {
-              dateLabel = data.date;
-            }
-            
-            return {
-              id: doc.id,
-              title: data.title || 'Announcement',
-              body: data.body || data.description || 'No description available',
-              tag: data.tag || 'Information',
-              dateLabel: dateLabel,
-            };
-          });
+          const fetchedAnnouncements = snapshot.docs
+            .filter(doc => {
+              const data = doc.data();
+              const announcementGnDiv = data.gnDiv || "";
+              
+              return announcementGnDiv === "" || announcementGnDiv === userData.gnDiv;
+            })
+            .map(doc => {
+              const data = doc.data();
+              let dateLabel = 'Recent';
+              
+              if (data.createdAt?.toDate) {
+                const date = data.createdAt.toDate();
+                dateLabel = date.toLocaleDateString('en-GB', { 
+                  day: '2-digit', 
+                  month: 'short', 
+                  year: 'numeric' 
+                });
+              } else if (data.date) {
+                dateLabel = data.date;
+              }
+              
+              // Map GN priority to User display tags
+              let mappedTag = 'Information';
+              if (data.priority === 'Urgent') {
+                mappedTag = 'Urgent';
+              } else if (data.priority === 'High') {
+                mappedTag = 'Important';
+              } else if (data.priority === 'Normal') {
+                mappedTag = 'Information';
+              }
+              
+              const finalTag = data.tag || mappedTag;
+              
+              return {
+                id: doc.id,
+                title: data.title || 'Announcement',
+                body: data.body || data.description || 'No description available',
+                tag: finalTag,
+                dateLabel: dateLabel,
+              };
+            });
+          
           setAnnouncements(fetchedAnnouncements);
         } else {
-          // No announcements in database
           setAnnouncements([]);
         }
       } catch (error) {
@@ -563,8 +594,12 @@ const Announcements = () => {
       }
     };
 
-    fetchAnnouncements();
-  }, []);
+    if (currentUser && userData) {
+      fetchAnnouncements();
+    } else if (!currentUser) {
+      setLoading(false);
+    }
+  }, [currentUser, userData]);
 
   const markAsRead = async (annId) => {
     // Only mark if not already read
