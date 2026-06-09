@@ -532,7 +532,7 @@ const Announcements = () => {
         // Fetch ALL active announcements
         const q = query(
           collection(db, 'announcements'), 
-          where('status', '==', 'Active'),
+          // where('status', 'in', ['Active', 'published']),
           orderBy('createdAt', 'desc')
         );
         
@@ -563,16 +563,20 @@ const Announcements = () => {
               
               // Map GN priority to User display tags
               let mappedTag = 'Information';
-              if (data.priority === 'Urgent') {
+
+              const priorityValue = data.priority ? data.priority.charAt(0).toUpperCase() + data.priority.slice(1).toLowerCase() : '';
+
+              if (priorityValue === 'Urgent') {
                 mappedTag = 'Urgent';
-              } else if (data.priority === 'High') {
+              } else if (priorityValue === 'High') {
                 mappedTag = 'Important';
-              } else if (data.priority === 'Normal') {
+              } else if (priorityValue === 'Normal') {
                 mappedTag = 'Information';
               }
-              
-              const finalTag = data.tag || mappedTag;
-              
+
+              // Use mappedTag first, then fallback to data.tag
+              const finalTag = mappedTag || data.tag || 'Information';
+
               return {
                 id: doc.id,
                 title: data.title || 'Announcement',
