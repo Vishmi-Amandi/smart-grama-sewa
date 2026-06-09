@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, query, orderBy, getDocs, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, doc, updateDoc, arrayUnion, getDoc, where } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton, AnnouncementsListSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
@@ -518,7 +518,7 @@ const Announcements = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Fetch announcements from Firestore - NO SAMPLE DATA FIRST
+  // Fetch announcements from Firestore
   useEffect(() => {
     const fetchAnnouncements = async () => {
       setLoading(true);
