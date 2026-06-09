@@ -7,7 +7,7 @@ import { auth, db } from '../../firebase';
 
 import {
   collection, query, orderBy, limit,
-  onSnapshot, getDocs, where, doc, getDoc,
+  onSnapshot, getDocs, where, doc, getDoc, setDoc,
 } from 'firebase/firestore';
 
 import {
@@ -90,8 +90,10 @@ function ErrorBanner({ message }) {
   );
 }
 
-// ─── Simple Number Card (no donut) ────────────────────────────────────────
-function SimpleStatCard({ label, value, sub, icon: Icon, loading }) {
+// ─── Simple Number Card (no donut) — supports an optional secondary stat ──
+// secondaryValue / secondaryLabel show a smaller stat in the lower space.
+function SimpleStatCard({ label, value, sub, icon: Icon, loading,
+  secondaryValue, secondaryLabel, secondaryLoading }) {
   return (
     <div className="flex flex-col gap-3 rounded-2xl p-5 flex-1 min-w-[180px]"
       style={{ background: COLORS.cardBrown, color: COLORS.white }}>
@@ -109,6 +111,25 @@ function SimpleStatCard({ label, value, sub, icon: Icon, loading }) {
           <p className="text-3xl font-bold" style={{ fontFamily: 'Georgia, serif' }}>{value}</p>
           <p className="text-xs opacity-70 leading-snug">{sub}</p>
         </>
+      )}
+
+      {/* Secondary stat — divider + smaller row */}
+      {(secondaryLabel !== undefined) && (
+        <div className="mt-1 pt-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.15)' }}>
+          {secondaryLoading ? (
+            <>
+              <Skeleton className="h-6 w-20 mb-1" />
+              <Skeleton className="h-3 w-32" />
+            </>
+          ) : (
+            <>
+              <p className="text-xl font-bold" style={{ fontFamily: 'Georgia, serif' }}>
+                {secondaryValue}
+              </p>
+              <p className="text-xs opacity-70 leading-snug mt-0.5">{secondaryLabel}</p>
+            </>
+          )}
+        </div>
       )}
     </div>
   );
@@ -219,6 +240,10 @@ function Sidebar({ onLogout }) {
           <NavItem icon={Calendar} label="Appointment Calendar"bold
             onClick={() => navigate("/admin/calendar")} />
         </li>
+        <li className="pt-2">
+          <NavItem icon={TrendingUp} label="Statistical Changes" bold active
+            onClick={() => navigate('/admin/statistical-changes')} />
+        </li>
       </ul>
 
       {/* Logout */}
@@ -283,12 +308,15 @@ export default function AdminDashboard() {
   const [adminName, setAdminName] = useState('');
 
   // Loading states
-  const [usersLoading,        setUsersLoading]        = useState(true);
-  const [gnOfficersLoading,   setGnOfficersLoading]   = useState(true);
-  const [loginsLoading,       setLoginsLoading]        = useState(true);
-  const [appointmentsDoneLoading, setAppointmentsDoneLoading] = useState(true);
-  const [chartLoading,        setChartLoading]        = useState(true);
-  const [activityLoading,     setActivityLoading]     = useState(true);
+  const [usersLoading,              setUsersLoading]              = useState(true);
+  const [gnOfficersLoading,         setGnOfficersLoading]         = useState(true);
+  const [loginsLoading,             setLoginsLoading]             = useState(true);
+  const [citizenLoginsLoading,      setCitizenLoginsLoading]      = useState(true);
+  const [appointmentsDoneLoading,   setAppointmentsDoneLoading]   = useState(true);
+  const [appointmentsTodayLoading,  setAppointmentsTodayLoading]  = useState(true);
+  const [chartLoading,              setChartLoading]              = useState(true);
+  const [activityLoading,           setActivityLoading]           = useState(true);
+  const [statsConfigLoading,        setStatsConfigLoading]        = useState(true);
 
   // Error states
   const [usersError,              setUsersError]              = useState(null);
@@ -301,10 +329,18 @@ export default function AdminDashboard() {
   // Data states
   const [totalUsers,          setTotalUsers]          = useState(0);
   const [totalGnOfficers,     setTotalGnOfficers]     = useState(0);
-  const [loginsToday,         setLoginsToday]         = useState(0);   // Card 3
-  const [appointmentsDone,    setAppointmentsDone]    = useState(0);   // Card 4
+  const [loginsToday,         setLoginsToday]         = useState(0);   // Card 3 — GN logins
+  const [citizenLoginsToday,  setCitizenLoginsToday]  = useState(0);   // Card 3 — Citizen logins
+  const [appointmentsDone,    setAppointmentsDone]    = useState(0);   // Card 4 — done today
+  const [appointmentsToday,   setAppointmentsToday]   = useState(0);   // Card 4 — created today
   const [chartData,           setChartData]           = useState([]);
   const [activityLogs,        setActivityLogs]        = useState([]);
+
+  // Stats config — loaded from Firestore doc 'system_stats/config'
+  // Fields: totalPopulation (number), totalWorkingGnOfficers (number)
+  // This doc is managed by the Statistical Changes interface (to be built).
+  const [totalPopulation,          setTotalPopulation]          = useState(0);
+  const [totalWorkingGnOfficers,   setTotalWorkingGnOfficers]   = useState(0);
 
   // ── Get logged-in admin's fullName from gn_officers ───────────────────
   useEffect(() => {
@@ -321,7 +357,27 @@ export default function AdminDashboard() {
     return () => unsubAuth();
   }, [navigate]);
 
-  // ── 1. Count `users` → Total registered Citizens ─────────────────────
+  // ── 0. Load stats config from Firestore → totalPopulation, totalWorkingGnOfficers
+  // Stored in 'system_stats' collection, document ID 'config'.
+  // The Statistical Changes interface (to be built) writes to this same doc.
+  useEffect(() => {
+    (async () => {
+      try {
+        const snap = await getDoc(doc(db, 'system_stats', 'config'));
+        if (snap.exists()) {
+          const data = snap.data();
+          setTotalPopulation(Number(data.totalPopulation) || 0);
+          setTotalWorkingGnOfficers(Number(data.totalWorkingGnOfficers) || 0);
+        }
+      } catch (err) {
+        console.error('Stats config fetch failed:', err.message);
+      } finally {
+        setStatsConfigLoading(false);
+      }
+    })();
+  }, []);
+
+
   useEffect(() => {
     (async () => {
       try {
@@ -349,9 +405,7 @@ export default function AdminDashboard() {
     })();
   }, []);
 
-  // ── 3. Count today's logins → gn_officers where lastLogin is today ───
-  // gn_officers.lastLogin is a Firestore Timestamp set when an officer logs in.
-  // We count how many officers have a lastLogin timestamp within today's date range.
+  // ── 3a. Count today's GN officer logins → gn_officers.lastLogin ─────────
   useEffect(() => {
     (async () => {
       try {
@@ -365,15 +419,37 @@ export default function AdminDashboard() {
         const snap = await getDocs(q);
         setLoginsToday(snap.size);
       } catch (err) {
-        setLoginsError(`Login count failed: ${err.message}`);
+        setLoginsError(`GN login count failed: ${err.message}`);
       } finally {
         setLoginsLoading(false);
       }
     })();
   }, []);
 
-  // ── 4. Count today's completed appointments ───────────────────────────
-  // appointments.date is a "YYYY-MM-DD" string; appointments.status === 'done'
+  // ── 3b. Count today's citizen logins → users.lastLogin ───────────────
+  // users collection has the same lastLogin Timestamp field set on sign-in.
+  useEffect(() => {
+    (async () => {
+      try {
+        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+        const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999);
+        const q = query(
+          collection(db, 'users'),
+          where('lastLogin', '>=', todayStart),
+          where('lastLogin', '<=', todayEnd)
+        );
+        const snap = await getDocs(q);
+        setCitizenLoginsToday(snap.size);
+      } catch (err) {
+        // Silently fail — don't block the card, just show 0
+        console.error('Citizen login count failed:', err.message);
+      } finally {
+        setCitizenLoginsLoading(false);
+      }
+    })();
+  }, []);
+
+  // ── 4a. Count today's completed appointments (status === 'done') ────────
   useEffect(() => {
     (async () => {
       try {
@@ -386,21 +462,38 @@ export default function AdminDashboard() {
         const snap = await getDocs(q);
         setAppointmentsDone(snap.size);
       } catch (err) {
-        // Fallback: try querying all today's appointments if 'done' filter fails
         try {
           const today = todayDateString();
-          const q2 = query(
-            collection(db, 'appointments'),
-            where('date', '==', today)
-          );
+          const q2 = query(collection(db, 'appointments'), where('date', '==', today));
           const snap2 = await getDocs(q2);
-          const done = snap2.docs.filter(d => d.data().status === 'done').length;
-          setAppointmentsDone(done);
+          setAppointmentsDone(snap2.docs.filter(d => d.data().status === 'done').length);
         } catch (err2) {
           setAppointmentsDoneError(`Appointments fetch failed: ${err2.message}`);
         }
       } finally {
         setAppointmentsDoneLoading(false);
+      }
+    })();
+  }, []);
+
+  // ── 4b. Count all appointments created today (any status) ────────────
+  // Uses createdAt Timestamp field for "created within today" logic.
+  useEffect(() => {
+    (async () => {
+      try {
+        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+        const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999);
+        const q = query(
+          collection(db, 'appointments'),
+          where('createdAt', '>=', todayStart),
+          where('createdAt', '<=', todayEnd)
+        );
+        const snap = await getDocs(q);
+        setAppointmentsToday(snap.size);
+      } catch (err) {
+        console.error('Appointments today fetch failed:', err.message);
+      } finally {
+        setAppointmentsTodayLoading(false);
       }
     })();
   }, []);
@@ -481,9 +574,16 @@ export default function AdminDashboard() {
     }
   };
 
-  // ── Donut % for cards 1 & 2 ───────────────────────────────────────────
-  const gnTotal = totalGnOfficers || 1;
-  const pct     = (value) => Math.min(100, Math.round((value / gnTotal) * 100));
+  // ── Meaningful donut percentages ─────────────────────────────────────
+  // Card 1: registered citizens vs total population (from stats config)
+  const citizenPct = totalPopulation > 0
+    ? Math.min(100, Math.round((totalUsers / totalPopulation) * 100))
+    : 0;
+
+  // Card 2: registered GN officers vs total working GN officers (from stats config)
+  const gnPct = totalWorkingGnOfficers > 0
+    ? Math.min(100, Math.round((totalGnOfficers / totalWorkingGnOfficers) * 100))
+    : 0;
 
   return (
     <div className="flex min-h-screen"
@@ -499,58 +599,76 @@ export default function AdminDashboard() {
           {/* Stat Cards */}
           <div className="flex gap-4 flex-wrap">
 
-            {/* Card 1 — Total registered Citizens (donut) */}
+            {/* Card 1 — Total registered Citizens (donut vs totalPopulation) */}
             <div className="flex-1 min-w-[180px] flex flex-col gap-1">
               {usersError && <ErrorBanner message={usersError} />}
               <StatCard
-                label="Total registered Citizen"
+                label="Total registered Citizens"
                 value={fmtNumber(totalUsers)}
-                pct={pct(totalUsers)}
-                sub={`${pct(totalUsers)}% of total Grama Niladhari officers in country`}
+                pct={statsConfigLoading ? 0 : citizenPct}
+                sub={
+                  statsConfigLoading
+                    ? 'Loading target population…'
+                    : totalPopulation > 0
+                      ? `${citizenPct}% of total population (${fmtNumber(totalPopulation)})`
+                      : 'Target population not set — update in Statistical Changes'
+                }
                 loading={usersLoading}
               />
             </div>
 
-            {/* Card 2 — Total registered GN Officers (donut) */}
+            {/* Card 2 — Total registered GN Officers (donut vs totalWorkingGnOfficers) */}
             <div className="flex-1 min-w-[180px] flex flex-col gap-1">
               {gnOfficersError && <ErrorBanner message={gnOfficersError} />}
               <StatCard
                 label="Total registered Grama Niladhari"
                 value={fmtNumber(totalGnOfficers)}
-                pct={100}
-                sub={`${totalGnOfficers} GN officers registered in the system`}
+                pct={statsConfigLoading ? 0 : gnPct}
+                sub={
+                  statsConfigLoading
+                    ? 'Loading target count…'
+                    : totalWorkingGnOfficers > 0
+                      ? `${gnPct}% of ${fmtNumber(totalWorkingGnOfficers)} working GN positions`
+                      : 'Working GN count not set — update in Statistical Changes'
+                }
                 loading={gnOfficersLoading}
               />
             </div>
 
-            {/* Card 3 — System logins today (no donut) */}
+            {/* Card 3 — System logins today: GN officers (primary) + Citizens (secondary) */}
             <div className="flex-1 min-w-[180px] flex flex-col gap-1">
               {loginsError && <ErrorBanner message={loginsError} />}
               <SimpleStatCard
                 label="System logins today"
                 value={fmtNumber(loginsToday)}
-                sub="GN officers who logged in today"
+                sub="GN officers logged in today"
                 icon={UserCheck}
                 loading={loginsLoading}
+                secondaryValue={fmtNumber(citizenLoginsToday)}
+                secondaryLabel="Citizens logged in today"
+                secondaryLoading={citizenLoginsLoading}
               />
             </div>
 
-            {/* Card 4 — Appointments completed today (no donut) */}
+            {/* Card 4 — Appointments done today (primary) + created today (secondary) */}
             <div className="flex-1 min-w-[180px] flex flex-col gap-1">
               {appointmentsDoneError && <ErrorBanner message={appointmentsDoneError} />}
               <SimpleStatCard
-                label="Appointments done today"
+                label="Appointments today"
                 value={fmtNumber(appointmentsDone)}
-                sub="Appointments marked as done for today"
+                sub="Completed (status: done)"
                 icon={CheckCircle}
                 loading={appointmentsDoneLoading}
+                secondaryValue={fmtNumber(appointmentsToday)}
+                secondaryLabel="Created today (all statuses)"
+                secondaryLoading={appointmentsTodayLoading}
               />
             </div>
 
           </div>
 
           <button
-            onClick={() => navigate('/admin/calendar')}
+            onClick={() => navigate('/admin/staticalchanges')}
             className="flex-1 py-5 rounded-2xl text-sm font-bold tracking-wider uppercase transition-all hover:opacity-90 active:scale-[0.98]"
             style={{ background: '#6a2a0070', color: COLORS.cardBrown }}>
             Statical changes
@@ -601,8 +719,12 @@ export default function AdminDashboard() {
                     <XAxis dataKey="day"
                       tick={{ fontSize: 11, fill: COLORS.textMuted }}
                       axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: COLORS.textMuted }}
-                      axisLine={false} tickLine={false} />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: COLORS.textMuted }}
+                      axisLine={false} tickLine={false}
+                      allowDecimals={false}
+                      tickFormatter={(v) => Number.isInteger(v) ? v : ''}
+                    />
                     <Tooltip contentStyle={{
                       background: COLORS.cardBrown, border: 'none',
                       borderRadius: 8, color: '#fff', fontSize: 12,
@@ -686,4 +808,4 @@ export default function AdminDashboard() {
       </main>
     </div>
   );
-} 0
+}

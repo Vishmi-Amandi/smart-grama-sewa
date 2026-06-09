@@ -1,12 +1,30 @@
 // Client/src/App.jsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from './firebase';
+import { auth } from './firebase';
+import ErrorBoundary from './modules/user/components/errorBoundary';
 
-// ── User pages ────────────────────────────────────────────────────────────
+// ===== GN MODULE IMPORTS =====
+import GNDashboard from './modules/gn/pages/GNDashboard.jsx';
+import GNAppointmentList from './modules/gn/pages/GNAppointmentList.jsx';
+import GNCurrentStatus from './modules/gn/pages/GNCurrentStatus.jsx';
+import GNCreateAnnouncement from './modules/gn/pages/GNCreateAnnouncement.jsx';
+import GNAnnouncementList from './modules/gn/pages/GNAnnouncementList.jsx';
+import GNSchedule from './modules/gn/pages/GNSchedule.jsx';
+import GNCitizenSearch from './modules/gn/pages/GNCitizenSearch.jsx';
+import GNProfile from './modules/gn/pages/GNProfile.jsx';
+import GNSettings from './modules/gn/pages/GNSettings.jsx';
+import GNChangeGNDivision from './modules/gn/pages/GNChangeGNDivision.jsx';
+import GNLogin from './modules/gn/pages/GNLogin.jsx';
+import GNSignUp from './modules/gn/pages/GNSignUp.jsx';
+import GNForgotPassword from './modules/gn/pages/GNForgotPassword.jsx';
+import ChangeGNRequestStatus from './modules/gn/pages/ChangeGNRequestStatus.jsx';
+import GNAccountPending from './modules/gn/pages/GNAccountPending.jsx';
+import GNAccountRejected from './modules/gn/pages/GNAccountRejected.jsx';
+
+// ===== USER MODULE IMPORTS =====
 import Home from './modules/home/Home';
 import Login from './modules/user/pages/login';
 import SignUpSelect from './modules/user/pages/signupSelect';
@@ -16,19 +34,23 @@ import Profile from './modules/user/pages/Profile';
 import Appointments from './modules/user/pages/appointments';
 import Announcements from './modules/user/pages/announcements';
 import Settings from './modules/user/pages/settings';
+import ContactGN from './modules/user/pages/contactGN';
 
-// ── Admin pages ───────────────────────────────────────────────────────────
-import AdminRoute from "./modules/admin/components/AdminRoute";
+// ===== ADMIN MODULE IMPORTS =====
+import AdminRoute from './modules/admin/components/AdminRoute';
 import AdminDashboard from './modules/admin/dashboard';
-import AdminAnnouncementPage from "./modules/admin/announcementpage";
-import AdminRegistrationRequestApproval from "./modules/admin/registrationrequestapproval";
-import AdminTransferRequestApproval from "./modules/admin/transferrequestapproval";
+import AdminAnnouncementPage from './modules/admin/announcementpage';
+import AdminRegistrationRequestApproval from './modules/admin/registrationrequestapproval';
+import AdminTransferRequestApproval from './modules/admin/transferrequestapproval';
 import AdminCalendar from './modules/admin/calendar';
 import AdminSystemPerformanceReports from './modules/admin/reports/system';
 import AdminGNActivityReports from './modules/admin/reports/gnactivity';
 import AdminIndividualGNUserAccessReports from './modules/admin/reports/useraccess';
 
-// ─── Spinner (shared loading UI) ──────────────────────────────────────────
+// ===== OTHER MODULE IMPORTS =====
+import Forms from './modules/forms/Forms';
+
+// ===== SHARED SPINNER =====
 const Spinner = () => (
   <div style={{
     minHeight: '100vh', display: 'flex',
@@ -44,7 +66,24 @@ const Spinner = () => (
   </div>
 );
 
-// ─── ProtectedRoute — any logged-in user ─────────────────────────────────
+// ===== GN PROTECTED ROUTE =====
+const GNProtectedRoute = ({ children }) => {
+  const [checking, setChecking] = useState(true);
+  const [isAuth, setIsAuth] = useState(false);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setIsAuth(!!user);
+      setChecking(false);
+    });
+    return () => unsub();
+  }, []);
+
+  if (checking) return <Spinner />;
+  return isAuth ? children : <Navigate to="/gn-login" replace />;
+};
+
+// ===== USER PROTECTED ROUTE =====
 const ProtectedRoute = ({ children }) => {
   const [checking, setChecking] = useState(true);
   const [isAuth, setIsAuth] = useState(false);
@@ -61,118 +100,155 @@ const ProtectedRoute = ({ children }) => {
   return isAuth ? children : <Navigate to="/login" replace />;
 };
 
-// // ─── AdminRoute — logged-in AND role === "admin" ──────────────────────────
-// // Checks uid against gn_officers first, then users collection
-// const AdminRoute = ({ children }) => {
-//   const [checking, setChecking] = useState(true);
-//   const [isAdmin, setIsAdmin] = useState(false);
-
-//   useEffect(() => {
-//     const unsub = onAuthStateChanged(auth, async (user) => {
-//       if (!user) {
-//         setChecking(false);
-//         return;
-//       }
-//        try {
-//         // 1. Check gn_officers collection (uid is the document ID)
-//         // gn_officers fields: uid, role, fullName, email ...
-//         const gnSnap = await getDoc(doc(db, 'gn_officers', user.uid));
-//         if (gnSnap.exists() && gnSnap.data().role === 'admin') {
-//           setIsAdmin(true);
-//           setChecking(false);
-//           return;
-//         }
-
-//         // 2. Fallback — check users collection
-//         // users fields: uid, role, fullName, email ...
-//         const userSnap = await getDoc(doc(db, 'users', user.uid));
-//         if (userSnap.exists() && userSnap.data().role === 'admin') {
-//           setIsAdmin(true);
-//           setChecking(false);
-//           return;
-//         }
-
-//         // Not an admin
-//         setIsAdmin(false);
-//       } catch (err) {
-//         console.error('Admin role check failed:', err.message);
-//         setIsAdmin(false);
-//       } finally {
-//         setChecking(false);
-//       }
-//     });
-//     return () => unsub();
-//   }, []);
-
-//   if (checking) return <Spinner />;
-
-//   // Not logged in → login page
-//   // Logged in but not admin → their own dashboard
-//   return isAdmin
-//     ? children
-//     : <Navigate to="/login" replace />;
-// };
-
-// ─── App ──────────────────────────────────────────────────────────────────
+// ===== MAIN APP COMPONENT =====
 const App = () => {
+  const [gnStatus, setGnStatus] = useState('Available');
+  const [theme, setTheme] = useState('light');
+  const [fontSize, setFontSize] = useState('medium');
+
+  const fontSizeMap = {
+    small: '12px',
+    medium: '16px',
+    large: '18px',
+  };
+
   return (
-    <Router>
-      <Routes>
+    <ErrorBoundary>
+      <Router>
+        <div style={{ fontSize: fontSizeMap[fontSize] }}>
+          <Routes>
 
-        {/* ── Public routes ── */}
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup-select" element={<SignUpSelect />} />
-        <Route path="/signup" element={<SignUp />} />
+            {/* ===== PUBLIC ROUTES ===== */}
+            <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup-select" element={<SignUpSelect />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/user-signup" element={<SignUp />} />
 
-        {/* ── Protected user routes ── */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute><Dashboard /></ProtectedRoute>
-        } />
-        <Route path="/profile" element={
-          <ProtectedRoute><Profile /></ProtectedRoute>
-        } />
-        <Route path="/appointments" element={
-          <ProtectedRoute><Appointments /></ProtectedRoute>
-        } />
-        <Route path="/announcements" element={
-          <ProtectedRoute><Announcements /></ProtectedRoute>
-        } />
-        <Route path="/settings" element={
-          <ProtectedRoute><Settings /></ProtectedRoute>
-        } />
+            {/* ===== GN MODULE ROUTES ===== */}
+            <Route path="/gn-login" element={<GNLogin />} />
+            <Route path="/gn-signup" element={<GNSignUp />} />
+            <Route path="/gn-forgot-password" element={<GNForgotPassword />} />
+            <Route path="/gn-account-pending" element={<GNAccountPending />} />
+            <Route path="/gn-account-rejected" element={<GNAccountRejected />} />
 
-        {/* ── Protected admin routes ── */}
-        <Route path="/admin/dashboard" element={
-          <AdminRoute><AdminDashboard /></AdminRoute>
-        } />
-        <Route path="/admin/announcements" element={
-          <AdminRoute><AdminAnnouncementPage /></AdminRoute>
-        } />
-        <Route path="/admin/registrationrequestapproval" element={
-          <AdminRoute><AdminRegistrationRequestApproval /></AdminRoute>
-        } />
-        <Route path="/admin/transferrequestapproval" element={
-          <AdminRoute><AdminTransferRequestApproval /></AdminRoute>
-        } />
-        <Route path="/admin/calendar" element={
-          <AdminRoute><AdminCalendar /></AdminRoute>
-        } />
-        <Route path="/admin/reports/system" element={
-          <AdminRoute><AdminSystemPerformanceReports /></AdminRoute>
-        } />
-        <Route path="/admin/reports/gnactivity" element={
-          <AdminRoute><AdminGNActivityReports /></AdminRoute>
-        } />
-        <Route path="/admin/reports/useraccess" element={
-          <AdminRoute><AdminIndividualGNUserAccessReports /></AdminRoute>
-        } />
+            <Route path="/gn-dashboard" element={
+              <GNProtectedRoute>
+                <GNDashboard gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-appointments" element={
+              <GNProtectedRoute>
+                <GNAppointmentList gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-current-status" element={
+              <GNProtectedRoute>
+                <GNCurrentStatus gnStatus={gnStatus} setGnStatus={setGnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-create-announcement" element={
+              <GNProtectedRoute>
+                <GNCreateAnnouncement gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-announcement-list" element={
+              <GNProtectedRoute>
+                <GNAnnouncementList gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-schedule" element={
+              <GNProtectedRoute>
+                <GNSchedule gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-citizen-search" element={
+              <GNProtectedRoute>
+                <GNCitizenSearch gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-profile" element={
+              <GNProtectedRoute>
+                <GNProfile gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-settings" element={
+              <GNProtectedRoute>
+                <GNSettings
+                  gnStatus={gnStatus} theme={theme}
+                  setTheme={setTheme} fontSize={fontSize}
+                  setFontSize={setFontSize}
+                />
+              </GNProtectedRoute>
+            } />
+            <Route path="/gn-change-gn-division" element={
+              <GNProtectedRoute>
+                <GNChangeGNDivision gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
+            <Route path="/change-gn-request-status" element={
+              <GNProtectedRoute>
+                <ChangeGNRequestStatus gnStatus={gnStatus} theme={theme} />
+              </GNProtectedRoute>
+            } />
 
-        {/* ── 404 fallback ── */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+            {/* ===== USER MODULE ROUTES ===== */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute><Dashboard /></ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute><Profile /></ProtectedRoute>
+            } />
+            <Route path="/appointments" element={
+              <ProtectedRoute><Appointments /></ProtectedRoute>
+            } />
+            <Route path="/announcements" element={
+              <ProtectedRoute><Announcements /></ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute><Settings /></ProtectedRoute>
+            } />
+            <Route path="/contact-gn" element={
+              <ProtectedRoute><ContactGN /></ProtectedRoute>
+            } />
+            <Route path="/forms" element={
+              <ProtectedRoute><Forms /></ProtectedRoute>
+            } />
 
-      </Routes>
-    </Router>
+            {/* ===== ADMIN MODULE ROUTES ===== */}
+            <Route path="/admin/dashboard" element={
+              <AdminRoute><AdminDashboard /></AdminRoute>
+            } />
+            <Route path="/admin/announcements" element={
+              <AdminRoute><AdminAnnouncementPage /></AdminRoute>
+            } />
+            <Route path="/admin/registrationrequestapproval" element={
+              <AdminRoute><AdminRegistrationRequestApproval /></AdminRoute>
+            } />
+            <Route path="/admin/transferrequestapproval" element={
+              <AdminRoute><AdminTransferRequestApproval /></AdminRoute>
+            } />
+            <Route path="/admin/calendar" element={
+              <AdminRoute><AdminCalendar /></AdminRoute>
+            } />
+            <Route path="/admin/reports/system" element={
+              <AdminRoute><AdminSystemPerformanceReports /></AdminRoute>
+            } />
+            <Route path="/admin/reports/gnactivity" element={
+              <AdminRoute><AdminGNActivityReports /></AdminRoute>
+            } />
+            <Route path="/admin/reports/useraccess" element={
+              <AdminRoute><AdminIndividualGNUserAccessReports /></AdminRoute>
+            } />
+
+            {/* ===== 404 FALLBACK ===== */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+
+          </Routes>
+        </div>
+      </Router>
+    </ErrorBoundary>
   );
 };
 

@@ -1069,8 +1069,8 @@ function NavItem({ icon: Ic, label, active, bold, onClick }) {
     return (
         <li onClick={onClick}
             className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer transition-all ${active ? 'bg-amber-700 text-white font-bold'
-                    : bold ? 'text-amber-900 font-bold hover:bg-amber-100'
-                        : 'text-amber-800 hover:bg-amber-100'
+                : bold ? 'text-amber-900 font-bold hover:bg-amber-100'
+                    : 'text-amber-800 hover:bg-amber-100'
                 }`}
             style={{ fontSize: bold && !Ic ? '0.85rem' : '0.82rem' }}>
             {Ic && <Ic size={16} className={active ? 'text-white' : 'text-amber-700'} />}
@@ -1102,6 +1102,10 @@ function Sidebar({ onLogout }) {
                 <li className="pt-4">
                     <NavItem icon={Calendar} label="Appointment Calendar" bold
                         onClick={() => navigate("/admin/calendar")} />
+                </li>
+                <li className="pt-2">
+                    <NavItem icon={TrendingUp} label="Statistical Changes" bold active
+                        onClick={() => navigate('/admin/statistical-changes')} />
                 </li>
             </ul>
             <div className="px-3 pt-4 border-t" style={{ borderColor: COLORS.border }}>

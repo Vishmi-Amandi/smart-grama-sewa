@@ -186,6 +186,10 @@ function Sidebar({ onLogout }) {
         <li className="pt-4">
           <NavItem icon={Calendar} label="Appointment Calendar" bold onClick={() => navigate("/admin/calendar")} />
         </li>
+        <li className="pt-2">
+          <NavItem icon={TrendingUp} label="Statistical Changes" bold active
+            onClick={() => navigate('/admin/statistical-changes')} />
+        </li>
       </ul>
 
 

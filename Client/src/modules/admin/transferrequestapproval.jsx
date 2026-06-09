@@ -79,6 +79,10 @@ function Sidebar({ onLogout }) {
           <NavItem icon={Calendar} label="Appointment Calendar" bold
             onClick={() => navigate('/admin/calendar')} />
         </li>
+        <li className="pt-2">
+          <NavItem icon={TrendingUp} label="Statistical Changes" bold active
+            onClick={() => navigate('/admin/statistical-changes')} />
+        </li>
       </ul>
 
       <div className="px-3 pt-4 border-t" style={{ borderColor: COLORS.border }}>
