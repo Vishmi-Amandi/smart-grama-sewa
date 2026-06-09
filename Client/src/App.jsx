@@ -15,16 +15,13 @@ import GNCitizenSearch from './modules/gn/pages/GNCitizenSearch.jsx';
 import GNProfile from './modules/gn/pages/GNProfile.jsx';
 import GNSettings from './modules/gn/pages/GNSettings.jsx';
 import GNChangeGNDivision from './modules/gn/pages/GNChangeGNDivision.jsx';
-import GNLogin from './modules/gn/pages/GNLogin.jsx';
 import GNSignUp from './modules/gn/pages/GNSignUp.jsx';
 import GNForgotPassword from './modules/gn/pages/GNForgotPassword.jsx';
-import SignUpSelect from './modules/gn/pages/SignUpSelect.jsx';
 import ChangeGNRequestStatus from './modules/gn/pages/ChangeGNRequestStatus.jsx';
 import GNAccountPending from './modules/gn/pages/GNAccountPending.jsx';
 import GNAccountRejected from './modules/gn/pages/GNAccountRejected.jsx';
 
 // ===== USER MODULE IMPORTS =====
-import Login from './modules/user/pages/login';
 import SignUp from './modules/user/pages/SignUp';
 import Dashboard from './modules/user/pages/dashboard';
 import Profile from './modules/user/pages/profile';
@@ -35,6 +32,8 @@ import ContactGN from './modules/user/pages/contactGN';
 
 // New module import
 import Home from './modules/home/Home';
+import Login from './modules/home/Login';
+import SignUpSelect from './modules/home/SignUpSelect.jsx';
 import Forms from './modules/forms/Forms';
 
 // ===== GN PROTECTED ROUTE =====
@@ -125,7 +124,6 @@ function App() {
             <Route path="/home" element={<Home />} />
 
             {/* ===== GN MODULE ROUTES ===== */}
-            <Route path="/gn-login" element={<GNLogin />} />
             <Route path="/gn-signup" element={<GNSignUp />} />
             <Route path="/gn-forgot-password" element={<GNForgotPassword />} />
             <Route path="/signup-select" element={<SignUpSelect />} />

@@ -10,7 +10,7 @@ import {
 import { doc, getDoc, serverTimestamp, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
-const GNLogin = () => {
+const Login = () => {
   const [username, setUsername] = useState(
   localStorage.getItem("rememberedUsername") || ""
 );
@@ -30,19 +30,18 @@ const GNLogin = () => {
 const handleSubmit = async (e) => {
   e.preventDefault();
   setError("");
-  
-  if (!username.trim()) { 
-    setError("Please enter your username or email."); 
-    return; 
+
+  if (!username.trim()) {
+    setError("Please enter your username or email.");
+    return;
   }
-  if (!password) { 
-    setError("Please enter your password."); 
-    return; 
+  if (!password) {
+    setError("Please enter your password.");
+    return;
   }
-  
+
   setLoading(true);
-  
-  // Check internet connection first
+
   if (!navigator.onLine) {
     setError("No proper internet connection. Please check your network and try again.");
     setLoading(false);
@@ -51,47 +50,48 @@ const handleSubmit = async (e) => {
 
   try {
     let userEmail = username.trim();
-
-    // Check if input is username (not email)
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username.trim());
 
     let gnOfficerData = null;
 
     if (!isEmail) {
       try {
-        const q = query(
+        // 1️⃣ Try gn_officers first
+        const gnQuery = query(
           collection(db, "gn_officers"),
           where("username", "==", username.trim())
         );
+        const gnSnapshot = await getDocs(gnQuery);
 
-        const querySnapshot = await getDocs(q);
+        if (!gnSnapshot.empty) {
+          gnOfficerData = gnSnapshot.docs[0].data();
+          userEmail = gnOfficerData.email;
 
-        console.log("=== DIAGNOSTIC START ===");
-        console.log("Input username:", username.trim());
-        console.log("Query snapshot empty?", querySnapshot.empty);
-        console.log("Query snapshot size:", querySnapshot.size);
+          const officerStatus = gnOfficerData.status;
+          if (officerStatus === "Pending") {
+            navigate("/gn-account-pending", { replace: true });
+            return;
+          } else if (officerStatus === "Rejected") {
+            navigate("/gn-account-rejected", { replace: true });
+            return;
+          }
+        } else {
+  // 2️⃣ Try users collection for citizens
+  const citizenQuery = query(
+    collection(db, "users"),
+    where("username", "==", username.trim()),
+    where("role", "==", "citizen")
+  );
+  const citizenSnapshot = await getDocs(citizenQuery);
 
-        if (querySnapshot.empty) {
-          setError("No account found with this username or email.");
-          setLoading(false);
-          return;
-        }
-
-        gnOfficerData = querySnapshot.docs[0].data();
-        userEmail = gnOfficerData.email;
-        
-        // CHECK STATUS BEFORE PROCEEDING WITH LOGIN
-        const officerStatus = gnOfficerData.status;
-        
-        if (officerStatus === "Pending") {
-          navigate("/gn-account-pending", { replace: true });
-          return;
-        } else if (officerStatus === "Rejected") {
-          navigate("/gn-account-rejected", { replace: true });
-          return;
-        }
-        // If status is "Approved" or any other, continue with login
-        
+  if (!citizenSnapshot.empty) {
+    userEmail = citizenSnapshot.docs[0].data().email;
+  } else {
+    setError("No account found with this username.");
+    setLoading(false);
+    return;
+  }
+}
       } catch (firestoreErr) {
         if (
           firestoreErr.code === "unavailable" ||
@@ -107,11 +107,10 @@ const handleSubmit = async (e) => {
       }
     }
 
-    // Login with email + password
+    // Login with resolved email + password
     const userCredential = await signInWithEmailAndPassword(auth, userEmail, password);
     const user = userCredential.user;
 
-    // Check role
     const userRoleDoc = await getDoc(doc(db, "users", user.uid));
 
     if (userRoleDoc.exists()) {
@@ -130,10 +129,8 @@ const handleSubmit = async (e) => {
       setError("User role not found. Please contact support.");
     }
 
-    // Set session persistence after successful login
     await setPersistence(auth, browserSessionPersistence);
 
-    // Save username if remember is checked
     if (rememberUsername) {
       localStorage.setItem("rememberedUsername", username.trim());
     } else {
@@ -146,19 +143,19 @@ const handleSubmit = async (e) => {
       setError("No proper internet connection. Please check your network and try again.");
     } else {
       switch (err.code) {
-        case "auth/invalid-email":     
-          setError("Invalid email format.");                      
+        case "auth/invalid-email":
+          setError("Invalid email format.");
           break;
-        case "auth/user-not-found":    
-          setError("No account found with this email.");          
+        case "auth/user-not-found":
+          setError("No account found with this email.");
           break;
-        case "auth/wrong-password":    
-          setError("Incorrect password.");                        
+        case "auth/wrong-password":
+          setError("Incorrect password.");
           break;
-        case "auth/too-many-requests": 
-          setError("Too many failed attempts. Try again later."); 
+        case "auth/too-many-requests":
+          setError("Too many failed attempts. Try again later.");
           break;
-        default:                       
+        default:
           setError("Incorrect credentials. Please try again.");
       }
     }
@@ -312,4 +309,4 @@ const handleSubmit = async (e) => {
   );
 };
 
-export default GNLogin;
+export default Login;
