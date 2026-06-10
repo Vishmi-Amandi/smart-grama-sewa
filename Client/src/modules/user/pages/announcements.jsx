@@ -543,8 +543,19 @@ const Announcements = () => {
             .filter(doc => {
               const data = doc.data();
               const announcementGnDiv = data.gnDiv || "";
-              
-              return announcementGnDiv === "" || announcementGnDiv === userData.gnDiv;
+              const category = data.category || "";
+
+              // Check if this is an admin announcement
+              const isAdminAnnouncement = announcementGnDiv === "";
+          
+              if (isAdminAnnouncement) {
+                // ADMIN ANNOUNCEMENT - filter by category
+                const allowedCategories = ["residents", "all_users"];
+                return allowedCategories.includes(category);
+              } else {
+                // GN OFFICER ANNOUNCEMENT - show only to citizens in that GN division
+                return announcementGnDiv === userData.gnDiv;
+              }
             })
             .map(doc => {
               const data = doc.data();
