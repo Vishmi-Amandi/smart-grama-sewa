@@ -80,8 +80,14 @@ const GNCreateAnnouncement = ({ gnStatus, theme }) => {
   };
 
   // ─── Build announcement object ────────────────────────────────────────────────
-  const buildDoc = (status) => {
+  const buildDoc = async (status) => {
     const user = auth.currentUser;
+
+      // Fetch the GN officer's division
+    const officerSnap = await getDoc(doc(db, "gn_officers", user.uid));
+    const officerData = officerSnap.exists() ? officerSnap.data() : {};
+    const gnDiv = officerData.gnDiv || "";
+
     const base = {
       title:       title.trim(),
       description: description.trim(),
@@ -90,7 +96,8 @@ const GNCreateAnnouncement = ({ gnStatus, theme }) => {
       attachments,
       status,
       createdBy:   user?.uid || "",
-      gnDiv:  user?.displayName || "",
+      createdByUid: user?.uid || "",
+      gnDiv:  gnDiv,
       createdAt:   serverTimestamp(),
       expiresAt:   expiryDate
         ? Timestamp.fromDate(new Date(expiryDate))
@@ -217,7 +224,28 @@ const handlePublish = async () => {
     if (!validate()) return;
     setScheduling(true);
     try {
-      await addDoc(collection(db, "announcements"), buildDoc("Scheduled"));
+      const user = auth.currentUser;
+    
+      // Fetch GN officer's division
+      const officerSnap = await getDoc(doc(db, "gn_officers", user.uid));
+      const officerData = officerSnap.exists() ? officerSnap.data() : {};
+      const gnDiv = officerData.gnDiv || "";
+
+      await addDoc(collection(db, "announcements"), {
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        priority,
+        attachments,
+        status: "Scheduled",
+        createdBy: user?.uid || "",
+        createdByUid: user?.uid || "",
+        gnDiv: gnDiv,  // ✅ Correct division
+        createdAt: serverTimestamp(),
+        publishAt: Timestamp.fromDate(new Date(`${scheduleDate}T${scheduleTime}`)),
+        expiresAt: expiryDate ? Timestamp.fromDate(new Date(expiryDate)) : null,
+      });
+      
       await logActivity("announcement", "Scheduled", title, `Scheduled for ${scheduleDate} at ${scheduleTime}`);
       showSuccess(`🕐 Announcement scheduled for ${scheduleDate} at ${scheduleTime}.`);
       resetForm();

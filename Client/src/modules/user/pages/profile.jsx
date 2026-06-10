@@ -304,14 +304,18 @@ const DesktopSidebar = ({ navigate, onLogout, currentPath }) => {
 };
 
 // Info row (view mode)
-const InfoRow = ({ label, value }) => (
-  <div className="mb-4">
-    <div className="text-xs font-extrabold text-user-warning mb-1.5">{label}</div>
-    <div className="text-sm font-semibold text-user-text pb-2.5 border-b border-user-border-light">
-      {value || '—'}
+const InfoRow = ({ label, value }) => {
+  const isEmpty = !value || value === '—' || value === '--' || value.trim() === '';
+  
+  return (
+    <div className="mb-4">
+      <div className="text-xs font-extrabold text-user-warning mb-1.5">{label}</div>
+      <div className={`text-sm font-semibold pb-2.5 border-b border-user-border-light ${isEmpty ? 'text-user-text-lighter italic' : 'text-user-text'}`}>
+        {isEmpty ? 'Not specified' : value}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Form field (edit mode)
 const Field = ({ label, value, onChange, type = 'text', placeholder = '', disabled = false }) => (
