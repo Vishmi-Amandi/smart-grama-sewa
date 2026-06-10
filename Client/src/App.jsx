@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
@@ -19,6 +19,7 @@ import GNChangeGNDivision from './modules/gn/pages/GNChangeGNDivision.jsx';
 import GNLogin from './modules/gn/pages/GNLogin.jsx';
 import GNSignUp from './modules/gn/pages/GNSignUp.jsx';
 import GNForgotPassword from './modules/gn/pages/GNForgotPassword.jsx';
+import SignUpSelect from './modules/gn/pages/SignUpSelect.jsx';
 import ChangeGNRequestStatus from './modules/gn/pages/ChangeGNRequestStatus.jsx';
 import GNAccountPending from './modules/gn/pages/GNAccountPending.jsx';
 import GNAccountRejected from './modules/gn/pages/GNAccountRejected.jsx';
@@ -82,7 +83,7 @@ const GNProtectedRoute = ({ children }) => {
   };
 
   // ===== USER PROTECTED ROUTE =====
-  const ProtectedRoute = ({ children }) => {
+  const UserProtectedRoute = ({ children }) => {
     const [checking, setChecking] = useState(true);
     const [isAuth, setIsAuth] = useState(false);
 
@@ -131,7 +132,7 @@ const GNProtectedRoute = ({ children }) => {
 
     return (
       <ErrorBoundary>
-        <Router>
+        {/* <Router> */}
           <div style={{ fontSize: fontSizeMap[fontSize] }}>
             <Routes>
               {/* ===== LANDING PAGE ===== */}
@@ -273,7 +274,7 @@ const GNProtectedRoute = ({ children }) => {
 
             </Routes>
           </div>
-        </Router>
+        {/* </Router> */}
       </ErrorBoundary>
     );
   }
