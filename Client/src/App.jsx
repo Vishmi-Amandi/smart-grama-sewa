@@ -220,6 +220,13 @@ function App() {
               </UserProtectedRoute>
             } />
 
+            {/* ===== FORMS ROUTE ===== */}
+            <Route path="/forms" element={
+              <UserProtectedRoute>
+                <Forms />
+              </UserProtectedRoute>
+            } />
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

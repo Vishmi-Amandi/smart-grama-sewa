@@ -14,7 +14,7 @@ const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
   </svg>
 );
 
-const Icons = {
+const IC = {
   dashboard: 'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10',
   announcement: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
   appointments: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
@@ -38,8 +38,8 @@ const Icons = {
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
-      ? 'bg-white/90 dark:bg-user-primary text-user-text font-extrabold shadow-md' 
-      : 'bg-transparent text-user-text font-semibold hover:bg-white/40 dark:hover:bg-white/10'
+      ? 'bg-user-background text-white font-extrabold shadow-md' 
+      : 'bg-transparent text-gray-700 font-semibold hover:bg-yellow-100'
   }`}
     style={{ color: active ? '#B46A02' : '#5a3a00' }}
   >
@@ -50,13 +50,13 @@ const NavItem = ({ iconPath, label, active, onClick }) => (
 
 const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate }) => {
   const PAGE_ACTIONS = [
-    { name: 'Dashboard', path: '/dashboard', icon: Icons.dashboard },
-    { name: 'Announcements', path: '/announcements', icon: Icons.announcement },
-    { name: 'Appointments', path: '/appointments', icon: Icons.appointments },
-    { name: 'Forms', path: '/forms', icon: Icons.forms },
-    { name: 'AI Assistant', path: '/ai', icon: Icons.ai },
-    { name: 'Profile', path: '/profile', icon: Icons.profile },
-    { name: 'Settings', path: '/settings', icon: Icons.settings },
+    { name: 'Dashboard', path: '/dashboard', icon: IC.dashboard },
+    { name: 'Announcements', path: '/announcements', icon: IC.announcement },
+    { name: 'Appointments', path: '/appointments', icon: IC.appointments },
+    { name: 'Forms', path: '/forms', icon: IC.forms },
+    { name: 'AI Assistant', path: '/ai', icon: IC.ai },
+    { name: 'Profile', path: '/profile', icon: IC.profile },
+    { name: 'Settings', path: '/settings', icon: IC.settings },
   ];
   
   const [filteredPages, setFilteredPages] = useState([]);
@@ -209,16 +209,16 @@ const ContactGN = () => {
   };
 
   const navItems = [
-    { key: 'dashboard', icon: Icons.dashboard, label: 'Dashboard', path: '/dashboard' },
-    { key: 'announcements', icon: Icons.announcement, label: 'Announcements', path: '/announcements' },
-    { key: 'appointments', icon: Icons.appointments, label: 'Appointments', path: '/appointments' },
-    { key: 'forms', icon: Icons.forms, label: 'Forms', path: '/forms' },
-    { key: 'ai', icon: Icons.ai, label: 'AI assistant', path: '/ai' },
+    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard', path: '/dashboard' },
+    { key: 'announcements', icon: IC.announcement, label: 'Announcements', path: '/announcements' },
+    { key: 'appointments', icon: IC.appointments, label: 'Appointments', path: '/appointments' },
+    { key: 'forms', icon: IC.forms, label: 'Forms', path: '/forms' },
+    { key: 'ai', icon: IC.ai, label: 'AI assistant', path: '/ai' },
   ];
   const bottomNav = [
-    { key: 'profile', icon: Icons.profile, label: 'Profile', path: '/profile' },
-    { key: 'settings', icon: Icons.settings, label: 'Settings', path: '/settings' },
-    { key: 'logout', icon: Icons.logout, label: 'Sign out', action: 'logout' },
+    { key: 'profile', icon: IC.profile, label: 'Profile', path: '/profile' },
+    { key: 'settings', icon: IC.settings, label: 'Settings', path: '/settings' },
+    { key: 'logout', icon: IC.logout, label: 'Sign out', action: 'logout' },
   ];
 
   const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
@@ -285,8 +285,8 @@ const ContactGN = () => {
           {/* DESKTOP TOPBAR */}
           <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
             <div className="flex-1 max-w-[400px] relative">
-              <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-round px-4 py-2">
-                <Icon d={Icons.search} size={16} color="#aaa" />
+              <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-3xl px-4 py-2">
+                <Icon d={IC.search} size={16} color="#aaa" />
                 <input
                   type="text"
                   placeholder="Search for a page or function..."
@@ -300,7 +300,7 @@ const ContactGN = () => {
                 />
                 {searchQuery && (
                   <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="bg-none border-none cursor-pointer p-1">
-                    <Icon d={Icons.close} size={14} color="#aaa" />
+                    <Icon d={IC.close} size={14} color="#aaa" />
                   </button>
                 )}
               </div>
@@ -317,34 +317,42 @@ const ContactGN = () => {
               onLanguageChange={handleLanguageChange}
             />
             <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative">
-              <Icon d={Icons.bell} size={18} color="#5a3a00" />
+              <Icon d={IC.bell} size={18} color="#5a3a00" />
               <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
             </div>
             <div className="relative">
-            <button 
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-round cursor-pointer transition-colors hover:border-user-primary"
-            >
-              <span className="text-sm font-bold text-user-text max-w-[100px] truncate">{chipName}</span>
-              <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0">
-                <Icon d={Icons.profile} size={16} color="#3d2a00" />
-              </div>
-            </button>
-            {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-user-border z-50">
-                <button onClick={() => navigate('/profile')} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
-                  <Icon d={Icons.profile} size={14} /> My Profile
-                </button>
-                <button onClick={() => navigate('/settings')} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
-                  <Icon d={Icons.settings} size={14} /> Settings
-                </button>
-                <hr className="my-1" />
-                <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 flex items-center gap-2">
-                  <Icon d={Icons.logout} size={14} /> Logout
-                </button>
-              </div>
-            )}
-          </div>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProfileMenu(!showProfileMenu);
+                }}
+                className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-3xl cursor-pointer transition-all hover:border-user-primary"
+              >
+                <span className="text-sm font-bold text-user-text max-w-[100px] truncate">{chipName}</span>
+                <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0">
+                  <Icon d={IC.profile} size={16} color="#3d2a00" />
+                </div>
+              </button>
+              
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden animate-fade-in">
+                  <div className="p-3 border-b border-user-border-light">
+                    <p className="text-sm font-bold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</p>
+                    <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
+                  </div>
+                  <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+                    <Icon d={IC.profile} size={16} color="#B46A02" /> My Profile
+                  </button>
+                  <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+                    <Icon d={IC.settings} size={16} color="#B46A02" /> Settings
+                  </button>
+                  <div className="border-t border-user-border-light my-1"></div>
+                  <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                    <Icon d={IC.logout} size={16} color="#ef4444" /> Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* MOBILE TOPBAR */}
@@ -361,11 +369,11 @@ const ContactGN = () => {
             </div>
             <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={handleLanguageChange} />
             <div className="w-9 h-9 flex items-center justify-center relative">
-              <Icon d={Icons.bell} size={22} color="#1e1200" />
+              <Icon d={IC.bell} size={22} color="#1e1200" />
               <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
             </div>
             <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
-              <Icon d={Icons.profile} size={20} color="#3d2a00" />
+              <Icon d={IC.profile} size={20} color="#3d2a00" />
             </div>
           </div>
 
@@ -386,7 +394,7 @@ const ContactGN = () => {
               <div className="bg-user-surface rounded-xl border border-user-border p-6 mb-6 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-5">
                   <div className="w-[70px] h-[70px] rounded-full bg-user-primary flex items-center justify-center">
-                    <Icon d={Icons.profile} size={36} color="#3d2a00" strokeWidth={1.5} />
+                    <Icon d={IC.profile} size={36} color="#3d2a00" strokeWidth={1.5} />
                   </div>
                   <div>
                     <h2 className="text-xl font-extrabold text-user-text mb-1">
@@ -406,7 +414,7 @@ const ContactGN = () => {
                     onClick={handleCall} 
                     className="flex items-center gap-2.5 py-3 px-6 bg-user-info-light border-none rounded-round cursor-pointer transition-all hover:bg-user-info/20"
                   >
-                    <Icon d={Icons.phone} size={18} color="#3b82f6" strokeWidth={2} />
+                    <Icon d={IC.phone} size={18} color="#3b82f6" strokeWidth={2} />
                     <span className="text-sm font-bold text-user-text">Call</span>
                   </button>
 
@@ -414,7 +422,7 @@ const ContactGN = () => {
                     onClick={handleEmail} 
                     className="flex items-center gap-2.5 py-3 px-6 bg-user-warning-light border-none rounded-round cursor-pointer transition-all hover:bg-user-warning/20"
                   >
-                    <Icon d={Icons.mail} size={18} color="#d97706" strokeWidth={2} />
+                    <Icon d={IC.mail} size={18} color="#d97706" strokeWidth={2} />
                     <span className="text-sm font-bold text-user-text">Email</span>
                   </button>
                 </div>
@@ -423,7 +431,7 @@ const ContactGN = () => {
               // Mobile View
               <div className="bg-user-surface rounded-xl border border-user-border p-6 mb-6 text-center">
                 <div className="w-20 h-20 rounded-full bg-user-primary flex items-center justify-center mx-auto mb-4">
-                  <Icon d={Icons.profile} size={40} color="#3d2a00" strokeWidth={1.5} />
+                  <Icon d={IC.profile} size={40} color="#3d2a00" strokeWidth={1.5} />
                 </div>
                 <h2 className="text-xl font-extrabold text-user-text mb-1">
                   {gnOfficer?.name || 'Grama Niladhari'}
@@ -436,11 +444,11 @@ const ContactGN = () => {
                 </p>
                 <div className="flex gap-3">
                   <button onClick={handleCall} className="flex-1 flex items-center justify-center gap-2 py-3 bg-user-info-light border-none rounded-xl cursor-pointer">
-                    <Icon d={Icons.phone} size={18} color="#3b82f6" strokeWidth={2} />
+                    <Icon d={IC.phone} size={18} color="#3b82f6" strokeWidth={2} />
                     <span className="text-sm font-bold text-user-text">Call</span>
                   </button>
                   <button onClick={handleEmail} className="flex-1 flex items-center justify-center gap-2 py-3 bg-user-warning-light border-none rounded-xl cursor-pointer">
-                    <Icon d={Icons.mail} size={18} color="#d97706" strokeWidth={2} />
+                    <Icon d={IC.mail} size={18} color="#d97706" strokeWidth={2} />
                     <span className="text-sm font-bold text-user-text">Email</span>
                   </button>
                 </div>
@@ -450,7 +458,7 @@ const ContactGN = () => {
             {/* Contact Details Card */}
             <div className="bg-user-surface rounded-xl border border-user-border p-5 md:p-6 mb-5">
               <h3 className="text-base font-extrabold text-user-text mb-4 flex items-center gap-2">
-                <Icon d={Icons.phone} size={18} color="#B46A02" />
+                <Icon d={IC.phone} size={18} color="#B46A02" />
                 Contact Information
               </h3>
               
@@ -485,12 +493,12 @@ const ContactGN = () => {
             {/* Office Information Card */}
             <div className="bg-user-surface rounded-xl border border-user-border p-5 md:p-6 mb-6">
               <h3 className="text-base font-extrabold text-user-text mb-4 flex items-center gap-2">
-                <Icon d={Icons.location} size={18} color="#B46A02" />
+                <Icon d={IC.location} size={18} color="#B46A02" />
                 Office Information
               </h3>
               
               <div className="mb-4 flex gap-3">
-                <Icon d={Icons.clock} size={20} color="#d97706" />
+                <Icon d={IC.clock} size={20} color="#d97706" />
                 <div>
                   <div className="text-xs text-user-text-lighter font-semibold mb-0.5">Office Hours</div>
                   <span className="text-sm md:text-base font-semibold text-user-text">{gnOfficer?.officeHours || '9:00 AM - 4:00 PM (Mon-Fri)'}</span>
@@ -498,7 +506,7 @@ const ContactGN = () => {
               </div>
 
               <div className="flex gap-3">
-                <Icon d={Icons.location} size={20} color="#d97706" />
+                <Icon d={IC.location} size={20} color="#d97706" />
                 <div className="flex-1">
                   <div className="text-xs text-user-text-lighter font-semibold mb-0.5">Office Address</div>
                   <span className="text-sm md:text-base font-semibold text-user-text leading-relaxed">
@@ -513,7 +521,7 @@ const ContactGN = () => {
               onClick={() => navigate('/appointments')}
               className="w-full flex items-center justify-center gap-2.5 py-3.5 md:py-4 bg-user-primary border-none rounded-lg text-base md:text-lg font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark hover:-translate-y-0.5 active:translate-y-0"
             >
-              <Icon d={Icons.calendar} size={20} color="#3d2a00" />
+              <Icon d={IC.calendar} size={20} color="#3d2a00" />
               Book an Appointment
             </button>
           </div>

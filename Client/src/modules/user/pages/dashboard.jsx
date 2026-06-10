@@ -14,7 +14,7 @@ const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
   </svg>
 );
 
-const Icons = {
+const IC = {
   dashboard:    'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10',
   announcement: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
   appointments: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
@@ -52,8 +52,8 @@ const Icons = {
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
-      ? 'bg-white/90 dark:bg-user-primary text-user-text font-extrabold shadow-md' 
-      : 'bg-transparent text-user-text font-semibold hover:bg-white/40 dark:hover:bg-white/10'
+      ? 'bg-user-background text-white font-extrabold shadow-md' 
+      : 'bg-transparent text-gray-700 font-semibold hover:bg-yellow-100'
   }`}
     style={{ color: active ? '#B46A02' : '#5a3a00' }}
   >
@@ -93,7 +93,7 @@ const AppointmentRow = ({ month, day, title, time, status, last }) => (
     </div>
     {status && (
       <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 ${status === 'Confirmed' ? 'bg-user-success-light text-user-success' : 'bg-user-warning-light text-user-warning'}`}>
-        <Icon d={status === 'Confirmed' ? Icons.success : Icons.warning} size={8} color="currentColor" strokeWidth={2.5} />
+        <Icon d={status === 'Confirmed' ? IC.success : IC.warning} size={8} color="currentColor" strokeWidth={2.5} />
         {status === 'Confirmed' ? 'Confirmed' : 'Pending'}
       </div>
     )}
@@ -127,13 +127,13 @@ const AnnouncementsSkeleton = () => (
 const EmptyState = ({ type, onAction }) => {
   const config = {
     appointments: {
-      icon: Icons.calendar,
+      icon: IC.calendar,
       title: 'No Upcoming Appointments',
       description: 'Book your first appointment with your GN Officer',
       buttonText: 'Book Appointment'
     },
     announcements: {
-      icon: Icons.announcementIcon,
+      icon: IC.announcementIcon,
       title: 'No Announcements Yet',
       description: 'Check back later for updates from your GN Officer',
       buttonText: 'Refresh'
@@ -162,20 +162,20 @@ const EmptyState = ({ type, onAction }) => {
 // Time-based greeting with icon
 const getTimeBasedGreeting = () => {
   const hour = new Date().getHours();
-  if (hour < 12) return { text: 'Good Morning', icon: Icons.sun };
-  if (hour < 18) return { text: 'Good Afternoon', icon: Icons.sun };
-  return { text: 'Good Evening', icon: Icons.wave };
+  if (hour < 12) return { text: 'Good Morning', icon: IC.sun };
+  if (hour < 18) return { text: 'Good Afternoon', icon: IC.sun };
+  return { text: 'Good Evening', icon: IC.wave };
 };
 
 // List of all pages/functions for search
 const PAGE_ACTIONS = [
-  { name: 'Dashboard', path: '/dashboard', icon: Icons.dashboard, keywords: ['home', 'main', 'overview'] },
-  { name: 'Announcements', path: '/announcements', icon: Icons.announcement, keywords: ['news', 'updates', 'notices'] },
-  { name: 'Appointments', path: '/appointments', icon: Icons.appointments, keywords: ['booking', 'schedule', 'meeting'] },
-  { name: 'Forms', path: '/forms', icon: Icons.forms, keywords: ['documents', 'applications', 'certificates'] },
-  { name: 'AI Assistant', path: '/ai', icon: Icons.ai, keywords: ['chatbot', 'help', 'support'] },
-  { name: 'Profile', path: '/profile', icon: Icons.profile, keywords: ['account', 'settings', 'my profile'] },
-  { name: 'Settings', path: '/settings', icon: Icons.settings, keywords: ['preferences', 'options', 'configuration'] },
+  { name: 'Dashboard', path: '/dashboard', icon: IC.dashboard, keywords: ['home', 'main', 'overview'] },
+  { name: 'Announcements', path: '/announcements', icon: IC.announcement, keywords: ['news', 'updates', 'notices'] },
+  { name: 'Appointments', path: '/appointments', icon: IC.appointments, keywords: ['booking', 'schedule', 'meeting'] },
+  { name: 'Forms', path: '/forms', icon: IC.forms, keywords: ['documents', 'applications', 'certificates'] },
+  { name: 'AI Assistant', path: '/ai', icon: IC.ai, keywords: ['chatbot', 'help', 'support'] },
+  { name: 'Profile', path: '/profile', icon: IC.profile, keywords: ['account', 'settings', 'my profile'] },
+  { name: 'Settings', path: '/settings', icon: IC.settings, keywords: ['preferences', 'options', 'configuration'] },
 ];
 
 // Default announcements
@@ -381,9 +381,19 @@ const Dashboard = () => {
 
   // Hide search results when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => {
+    const handleClickOutside = (event) => {
+      const profileButton = document.querySelector('.profile-button');
+      const profileMenu = document.querySelector('.profile-menu');
+      
+      // Don't close if clicking on profile button or menu
+      if (profileButton?.contains(event.target) || profileMenu?.contains(event.target)) {
+        return;
+      }
+      
       setShowSearchResults(false);
+      setShowProfileMenu(false);
     };
+    
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
@@ -402,16 +412,16 @@ const Dashboard = () => {
   const next = () => setAnnouncIdx(i => i === announcements.length - 1 ? 0 : i + 1);
 
   const navItems = [
-    { key: 'dashboard', icon: Icons.dashboard, label: 'Dashboard', path: '/dashboard' },
-    { key: 'announcements', icon: Icons.announcement, label: 'Announcements', path: '/announcements' },
-    { key: 'appointments', icon: Icons.appointments, label: 'Appointments', path: '/appointments' },
-    { key: 'forms', icon: Icons.forms, label: 'Forms', path: '/forms' },
-    { key: 'ai', icon: Icons.ai, label: 'AI Assistant', path: '/ai' },
+    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard', path: '/dashboard' },
+    { key: 'announcements', icon: IC.announcement, label: 'Announcements', path: '/announcements' },
+    { key: 'appointments', icon: IC.appointments, label: 'Appointments', path: '/appointments' },
+    { key: 'forms', icon: IC.forms, label: 'Forms', path: '/forms' },
+    { key: 'ai', icon: IC.ai, label: 'AI Assistant', path: '/ai' },
   ];
   const bottomNav = [
-    { key: 'profile', icon: Icons.profile, label: 'Profile', path: '/profile' },
-    { key: 'settings', icon: Icons.settings, label: 'Settings', path: '/settings' },
-    { key: 'logout', icon: Icons.logout, label: 'Sign out', action: 'logout' },
+    { key: 'profile', icon: IC.profile, label: 'Profile', path: '/profile' },
+    { key: 'settings', icon: IC.settings, label: 'Settings', path: '/settings' },
+    { key: 'logout', icon: IC.logout, label: 'Sign out', action: 'logout' },
   ];
 
   // Shared widget components
@@ -485,7 +495,7 @@ const Dashboard = () => {
             {announcements.length > 1 && (
               <div className="flex justify-between items-center mt-3.5">
                 <button onClick={prev} className="w-[30px] h-[30px] rounded-full border border-user-border bg-white flex items-center justify-center cursor-pointer transition-all hover:border-user-primary hover:bg-user-primary-light">
-                  <Icon d={Icons.chevLeft} size={14} color="#888" />
+                  <Icon d={IC.chevLeft} size={14} color="#888" />
                 </button>
                 <div className="flex gap-1.5">
                   {announcements.map((_, i) => (
@@ -494,7 +504,7 @@ const Dashboard = () => {
                   ))}
                 </div>
                 <button onClick={next} className="w-[30px] h-[30px] rounded-full border border-user-border bg-white flex items-center justify-center cursor-pointer transition-all hover:border-user-primary hover:bg-user-primary-light">
-                  <Icon d={Icons.chevRight} size={14} color="#888" />
+                  <Icon d={IC.chevRight} size={14} color="#888" />
                 </button>
               </div>
             )}
@@ -569,7 +579,7 @@ const Dashboard = () => {
           <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
             <div className="flex-1 max-w-[400px] relative">
               <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-3xl px-4 py-2 transition-colors hover:border-user-primary">
-                <Icon d={Icons.search} size={16} color="#aaa" />
+                <Icon d={IC.search} size={16} color="#aaa" />
                 <input
                   type="text"
                   placeholder="Search for a page or function..."
@@ -583,7 +593,7 @@ const Dashboard = () => {
                 />
                 {searchQuery && (
                   <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="bg-none border-none cursor-pointer p-1">
-                    <Icon d={Icons.close} size={14} color="#aaa" />
+                    <Icon d={IC.close} size={14} color="#aaa" />
                   </button>
                 )}
               </div>
@@ -600,30 +610,38 @@ const Dashboard = () => {
               onLanguageChange={handleLanguageChange}
             />
             <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
-              <Icon d={Icons.bell} size={18} color="#5a3a00" />
+              <Icon d={IC.bell} size={18} color="#5a3a00" />
               <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
             </div>
+
             <div className="relative">
               <button 
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-3xl cursor-pointer transition-colors hover:border-user-primary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProfileMenu(!showProfileMenu);
+                }}
+                className="profile-button flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-3xl cursor-pointer transition-all hover:border-user-primary"
               >
                 <span className="text-sm font-bold text-user-text max-w-[100px] truncate">{chipName}</span>
                 <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0">
-                  <Icon d={Icons.profile} size={16} color="#3d2a00" />
+                  <Icon d={IC.profile} size={16} color="#3d2a00" />
                 </div>
               </button>
               {showProfileMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden">
-                  <button onClick={() => navigate('/profile')} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
-                    <Icon d={Icons.profile} size={14} /> My Profile
+                <div className="profile-menu absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden">
+                  <div className="p-3 border-b border-user-border-light">
+                    <p className="text-sm font-bold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</p>
+                    <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
+                  </div>
+                  <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+                    <Icon d={IC.profile} size={16} color="#B46A02" /> My Profile
                   </button>
-                  <button onClick={() => navigate('/settings')} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
-                    <Icon d={Icons.settings} size={14} /> Settings
+                  <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+                    <Icon d={IC.settings} size={16} color="#B46A02" /> Settings
                   </button>
-                  <hr className="my-1" />
-                  <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 flex items-center gap-2">
-                    <Icon d={Icons.logout} size={14} /> Logout
+                  <div className="border-t border-user-border-light my-1"></div>
+                  <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                    <Icon d={IC.logout} size={16} color="#ef4444" /> Sign Out
                   </button>
                 </div>
               )}
@@ -644,11 +662,11 @@ const Dashboard = () => {
             </div>
             <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={handleLanguageChange} />
             <div className="w-9 h-9 flex items-center justify-center relative">
-              <Icon d={Icons.bell} size={22} color="#1e1200" />
+              <Icon d={IC.bell} size={22} color="#1e1200" />
               <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
             </div>
             <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
-              <Icon d={Icons.profile} size={20} color="#3d2a00" />
+              <Icon d={IC.profile} size={20} color="#3d2a00" />
             </div>
           </div>
 
@@ -658,7 +676,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 mb-5">
               <div className="bg-user-primary-light border border-user-warning rounded-xl p-5 md:p-6 flex items-center gap-5">
                 <div className="w-[60px] h-[60px] md:w-[68px] md:h-[68px] rounded-full bg-[#e0d8c8] flex items-center justify-center flex-shrink-0 border-2 border-[#d4c090]">
-                  <Icon d={Icons.profile} size={28} color="#8a7060" strokeWidth={1.5} />
+                  <Icon d={IC.profile} size={28} color="#8a7060" strokeWidth={1.5} />
                 </div>
                 <div className="flex items-center gap-2 text-xl md:text-2xl font-black text-user-text tracking-tight">
                   <Icon d={greeting.icon} size={24} color="#B46A02" />
@@ -682,14 +700,14 @@ const Dashboard = () => {
             {/* Quick Actions */}
             <div className="mb-5">
               <div className="flex items-center gap-2 text-[15px] font-extrabold text-user-text mb-3.5">
-                <Icon d={Icons.bolt} size={16} color="#B46A02" />
+                <Icon d={IC.bolt} size={16} color="#B46A02" />
                 Quick Actions
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <QuickCard iconPath={Icons.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} tooltip="Schedule a meeting with GN officer" />
-                <QuickCard iconPath={Icons.download} label="Download Forms" onClick={() => navigate('/forms')} tooltip="Download application forms" />
-                <QuickCard iconPath={Icons.ai} label="AI Assistant" onClick={() => navigate('/ai')} tooltip="Get help from our AI assistant" />
-                <QuickCard iconPath={Icons.phone} label="Contact GN" onClick={() => navigate('/contact-gn')} tooltip="Contact your GN officer" />
+                <QuickCard iconPath={IC.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} tooltip="Schedule a meeting with GN officer" />
+                <QuickCard iconPath={IC.download} label="Download Forms" onClick={() => navigate('/forms')} tooltip="Download application forms" />
+                <QuickCard iconPath={IC.ai} label="AI Assistant" onClick={() => navigate('/ai')} tooltip="Get help from our AI assistant" />
+                <QuickCard iconPath={IC.phone} label="Contact GN" onClick={() => navigate('/contact-gn')} tooltip="Contact your GN officer" />
               </div>
             </div>
 
@@ -705,7 +723,7 @@ const Dashboard = () => {
             {/* Mobile Search Bar */}
             <div className="pt-3 px-3.5 relative">
               <div className="flex items-center gap-2.5 bg-white border border-user-border rounded-3xl px-4 py-2.5">
-                <Icon d={Icons.search} size={16} color="#aaa" />
+                <Icon d={IC.search} size={16} color="#aaa" />
                 <input
                   type="text"
                   placeholder="Search for a page..."
@@ -719,7 +737,7 @@ const Dashboard = () => {
                 />
                 {searchQuery && (
                   <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="bg-none border-none cursor-pointer p-1">
-                    <Icon d={Icons.close} size={14} color="#aaa" />
+                    <Icon d={IC.close} size={14} color="#aaa" />
                   </button>
                 )}
               </div>
@@ -750,7 +768,7 @@ const Dashboard = () => {
               {/* Welcome card */}
               <div className="bg-user-primary-light border border-user-warning rounded-xl p-4 flex items-center gap-3.5 mb-3">
                 <div className="w-12 h-12 rounded-full bg-[#e0d8c8] flex items-center justify-center flex-shrink-0 border-2 border-[#d4c090]">
-                  <Icon d={Icons.profile} size={24} color="#8a7060" strokeWidth={1.5} />
+                  <Icon d={IC.profile} size={24} color="#8a7060" strokeWidth={1.5} />
                 </div>
                 <div className="flex items-center gap-2 text-xl font-black text-user-text leading-tight">
                   <Icon d={greeting.icon} size={20} color="#B46A02" />
@@ -777,10 +795,10 @@ const Dashboard = () => {
                 <div className="text-base font-extrabold text-user-text mb-3">Quick Actions</div>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { icon: Icons.calendar, label: 'Book Appointment', action: () => navigate('/appointments') },
-                    { icon: Icons.download, label: 'Download Forms', action: () => navigate('/forms') },
-                    { icon: Icons.ai, label: 'AI Assistant', action: () => navigate('/ai') },
-                    { icon: Icons.phone, label: 'Contact GN', action: () => navigate('/contact-gn') },
+                    { icon: IC.calendar, label: 'Book Appointment', action: () => navigate('/appointments') },
+                    { icon: IC.download, label: 'Download Forms', action: () => navigate('/forms') },
+                    { icon: IC.ai, label: 'AI Assistant', action: () => navigate('/ai') },
+                    { icon: IC.phone, label: 'Contact GN', action: () => navigate('/contact-gn') },
                   ].map((item, i) => (
                     <button key={i} onClick={item.action} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white border border-user-border text-xs font-bold text-user-text cursor-pointer shadow-sm transition-all hover:border-user-primary hover:bg-user-primary-light min-h-[85px]">
                       <Icon d={item.icon} size={22} color="#B46A02" />
@@ -801,15 +819,15 @@ const Dashboard = () => {
       </div>
 
       {/* FOOTER */}
-      <footer className="desktop-footer bg-[#6A2301] text-white text-center py-3 px-4 text-sm font-semibold">
+      <footer className="bg-[#6A2301] text-white text-center py-3 px-4 text-sm font-semibold">
         © 2026 Smart Grama Sewa. All rights reserved.
       </footer>
 
       {/* TOAST NOTIFICATION */}
       {toast && (
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[1100] animate-slide-up">
-          <div className={`flex items-center gap-4 py-3 px-6 rounded-xl shadow-lg border ${toast.type === 'success' ? 'bg-user-success text-white border-user-success/30' : 'bg-user-error text-white border-user-error/30'}`}>
-            <Icon d={toast.type === 'success' ? Icons.success : Icons.error} size={18} color="#fff" strokeWidth={2.5} />
+          <div className={`flex items-center gap-4 py-3 px-6 rounded-xl shadow-lg border ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+            <Icon d={toast.type === 'success' ? IC.success : IC.error} size={18} color="#fff" strokeWidth={2.5} />
             <span className="text-sm font-semibold">{toast.message}</span>
             <button onClick={() => setToast(null)} className="bg-none border-none cursor-pointer text-white text-xl leading-5 p-0">×</button>
           </div>
@@ -851,7 +869,6 @@ const Dashboard = () => {
           .desktop-sidebar { display: flex !important; }
           .desktop-topbar { display: flex !important; }
           .desktop-content { display: block !important; }
-          .desktop-footer { display: block !important; }
           .mobile-topbar { display: none !important; }
           .mobile-content { display: none !important; }
         }
@@ -861,7 +878,6 @@ const Dashboard = () => {
           .desktop-sidebar { display: none !important; }
           .desktop-topbar { display: none !important; }
           .desktop-content { display: none !important; }
-          .desktop-footer { display: none !important; }
           .mobile-topbar { display: flex !important; }
           .mobile-content { display: block !important; }
         }
