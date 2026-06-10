@@ -204,7 +204,7 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
     { key: 'announcements', icon: IC.announce, label: 'Announcements', path: '/announcements' },
     { key: 'appointments', icon: IC.appts, label: 'Appointments', path: '/appointments' },
     { key: 'forms', icon: IC.forms, label: 'Forms', path: '/forms' },
-    { key: 'ai', icon: IC.ai, label: 'AI Assistant', path: '/ai' },
+    { key: 'ai', icon: IC.ai, label: 'AI Assistant', path: null },
   ];
   const bottomNav = [
     { key: 'profile', icon: IC.profile, label: 'Profile', path: '/profile' },
@@ -227,7 +227,7 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
         {navItems.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
-            onClick={() => { navigate(item.path); onClose(); }} />
+            onClick={() => { if (item.key === 'ai') { window.openChatbot?.(); onClose(); return; } navigate(item.path); onClose(); }} />
         ))}
         <div className="border-t border-white/20 my-3 pt-3">
           {bottomNav.map((item) => (
@@ -248,7 +248,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
     { name: 'Announcements', path: '/announcements', icon: IC.announce },
     { name: 'Appointments', path: '/appointments', icon: IC.appts },
     { name: 'Forms', path: '/forms', icon: IC.forms },
-    { name: 'AI Assistant', path: '/ai', icon: IC.ai },
+    { name: 'AI Assistant', path: null, icon: IC.ai },
     { name: 'Profile', path: '/profile', icon: IC.profile },
     { name: 'Settings', path: '/settings', icon: IC.settings },
   ];
@@ -275,6 +275,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
         <button
           key={page.path}
           onClick={() => {
+            if (page.path === null) { window.openChatbot?.(); setShowResults(false); return; }
             navigate(page.path);
             setShowResults(false);
           }}

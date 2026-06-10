@@ -53,7 +53,7 @@ const PAGE_ACTIONS = [
   { name: 'Announcements', path: '/announcements', icon: IC.announce },
   { name: 'Appointments', path: '/appointments', icon: IC.appts },
   { name: 'Forms', path: '/forms', icon: IC.forms },
-  { name: 'AI Assistant', path: '/ai', icon: IC.ai },
+  { name: 'AI Assistant', path: null, icon: IC.ai },
   { name: 'Profile', path: '/profile', icon: IC.profile },
   { name: 'Settings', path: '/settings', icon: IC.settings },
 ];
@@ -96,7 +96,7 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
         {navItems.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
-            onClick={() => navigate(`/${item.key}`)} />
+            onClick={() => item.key === 'ai' ? window.openChatbot?.() : navigate(`/${item.key}`)} />
         ))}
       </div>
       <div className="p-3 pt-2 border-t border-black/10">
@@ -134,6 +134,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
         <button
           key={page.path}
           onClick={() => {
+            if (page.path === null) { window.openChatbot?.(); setShowResults(false); return; }
             navigate(page.path);
             setShowResults(false);
           }}
@@ -259,7 +260,7 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
         {navItems.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
-            onClick={() => { navigate(`/${item.key}`); onClose(); }} />
+            onClick={() => { if (item.key === 'ai') { window.openChatbot?.(); onClose(); return; } navigate(`/${item.key}`); onClose(); }} />
         ))}
         <div className="border-t border-white/20 my-3 pt-3">
           {bottomNav.map((item) => (
@@ -757,11 +758,12 @@ const Announcements = () => {
                   {PAGE_ACTIONS.filter(page => page.name.toLowerCase().includes(searchQuery.toLowerCase())).map((page, idx) => (
                     <button
                       key={page.path}
-                      onClick={() => {
-                        navigate(page.path);
-                        setSearchQuery('');
-                        setShowSearchResults(false);
-                      }}
+                        onClick={() => {
+                          if (page.path === null) { window.openChatbot?.(); setSearchQuery(''); setShowSearchResults(false); return; }
+                          navigate(page.path);
+                          setSearchQuery('');
+                          setShowSearchResults(false);
+                        }}
                       className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background ${idx !== PAGE_ACTIONS.length - 1 ? 'border-b border-user-border-light' : ''}`}
                     >
                       <Icon d={page.icon} size={18} color="#B46A02" />

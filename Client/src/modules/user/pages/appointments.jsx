@@ -60,7 +60,7 @@ const PAGE_ACTIONS = [
   { name: 'Announcements', path: '/announcements', icon: IC.announce },
   { name: 'Appointments', path: '/appointments', icon: IC.appts },
   { name: 'Forms', path: '/forms', icon: IC.forms },
-  { name: 'AI Assistant', path: '/ai', icon: IC.ai },
+  { name: 'AI Assistant', path: null, icon: IC.ai },
   { name: 'Profile', path: '/profile', icon: IC.profile },
   { name: 'Settings', path: '/settings', icon: IC.settings },
 ];
@@ -152,7 +152,7 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
         {navItems.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
-            onClick={() => navigate(`/${item.key}`)} />
+            onClick={() => item.key === 'ai' ? window.openChatbot?.() : navigate(`/${item.key}`)} />
         ))}
       </div>
       <div className="p-3 pt-2 border-t border-black/10">
@@ -190,6 +190,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
         <button
           key={page.path}
           onClick={() => {
+            if (page.path === null) { window.openChatbot?.(); setShowResults(false); return; }
             navigate(page.path);
             setShowResults(false);
           }}

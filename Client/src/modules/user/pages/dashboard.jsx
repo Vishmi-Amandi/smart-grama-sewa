@@ -173,7 +173,7 @@ const PAGE_ACTIONS = [
   { name: 'Announcements', path: '/announcements', icon: IC.announcement, keywords: ['news', 'updates', 'notices'] },
   { name: 'Appointments', path: '/appointments', icon: IC.appointments, keywords: ['booking', 'schedule', 'meeting'] },
   { name: 'Forms', path: '/forms', icon: IC.forms, keywords: ['documents', 'applications', 'certificates'] },
-  { name: 'AI Assistant', path: '/ai', icon: IC.ai, keywords: ['chatbot', 'help', 'support'] },
+  { name: 'AI Assistant', path: null, icon: IC.ai, keywords: ['chatbot', 'help', 'support'] },
   { name: 'Profile', path: '/profile', icon: IC.profile, keywords: ['account', 'settings', 'my profile'] },
   { name: 'Settings', path: '/settings', icon: IC.settings, keywords: ['preferences', 'options', 'configuration'] },
 ];
@@ -210,6 +210,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
         <button
           key={page.path}
           onClick={() => {
+            if (page.path === null) { window.openChatbot?.(); setShowResults(false); return; }
             navigate(page.path);
             setShowResults(false);
           }}
@@ -416,7 +417,7 @@ const Dashboard = () => {
     { key: 'announcements', icon: IC.announcement, label: 'Announcements', path: '/announcements' },
     { key: 'appointments', icon: IC.appointments, label: 'Appointments', path: '/appointments' },
     { key: 'forms', icon: IC.forms, label: 'Forms', path: '/forms' },
-    { key: 'ai', icon: IC.ai, label: 'AI Assistant', path: '/ai' },
+    { key: 'ai', icon: IC.ai, label: 'AI Assistant', path: null },
   ];
   const bottomNav = [
     { key: 'profile', icon: IC.profile, label: 'Profile', path: '/profile' },
@@ -526,6 +527,7 @@ const Dashboard = () => {
             {navItems.map(item => (
               <NavItem key={item.key} iconPath={item.icon} label={item.label} active={activePage === item.key}
                 onClick={() => {
+                  if (item.path === null) { window.openChatbot?.(); return; }
                   navigate(item.path);
                   setActivePage(item.key);
                 }}
@@ -554,7 +556,10 @@ const Dashboard = () => {
               </div>
               {navItems.map(item => (
                 <NavItem key={item.key} iconPath={item.icon} label={item.label} active={activePage === item.key}
-                  onClick={() => { navigate(item.path); setActivePage(item.key); setMobileMenuOpen(false); }}
+                  onClick={() => {
+                    if (item.path === null) { window.openChatbot?.(); setMobileMenuOpen(false); return; }
+                    navigate(item.path); setActivePage(item.key); setMobileMenuOpen(false);
+                  }}
                 />
               ))}
               <div className="border-t border-white/20 my-3 pt-3">
@@ -706,7 +711,7 @@ const Dashboard = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 <QuickCard iconPath={IC.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} tooltip="Schedule a meeting with GN officer" />
                 <QuickCard iconPath={IC.download} label="Download Forms" onClick={() => navigate('/forms')} tooltip="Download application forms" />
-                <QuickCard iconPath={IC.ai} label="AI Assistant" onClick={() => navigate('/ai')} tooltip="Get help from our AI assistant" />
+                <QuickCard iconPath={IC.ai} label="AI Assistant" onClick={() => window.openChatbot?.()} tooltip="Get help from our AI assistant" />
                 <QuickCard iconPath={IC.phone} label="Contact GN" onClick={() => navigate('/contact-gn')} tooltip="Contact your GN officer" />
               </div>
             </div>
@@ -797,7 +802,7 @@ const Dashboard = () => {
                   {[
                     { icon: IC.calendar, label: 'Book Appointment', action: () => navigate('/appointments') },
                     { icon: IC.download, label: 'Download Forms', action: () => navigate('/forms') },
-                    { icon: IC.ai, label: 'AI Assistant', action: () => navigate('/ai') },
+                    { icon: IC.ai, label: 'AI Assistant', action: () => window.openChatbot?.() },
                     { icon: IC.phone, label: 'Contact GN', action: () => navigate('/contact-gn') },
                   ].map((item, i) => (
                     <button key={i} onClick={item.action} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white border border-user-border text-xs font-bold text-user-text cursor-pointer shadow-sm transition-all hover:border-user-primary hover:bg-user-primary-light min-h-[85px]">

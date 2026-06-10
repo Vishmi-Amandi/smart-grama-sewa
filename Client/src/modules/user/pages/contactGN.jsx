@@ -54,7 +54,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
     { name: 'Announcements', path: '/announcements', icon: IC.announcement },
     { name: 'Appointments', path: '/appointments', icon: IC.appointments },
     { name: 'Forms', path: '/forms', icon: IC.forms },
-    { name: 'AI Assistant', path: '/ai', icon: IC.ai },
+    { name: 'AI Assistant', path: null, icon: IC.ai },
     { name: 'Profile', path: '/profile', icon: IC.profile },
     { name: 'Settings', path: '/settings', icon: IC.settings },
   ];
@@ -81,6 +81,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
         <button
           key={page.path}
           onClick={() => {
+            if (page.path === null) { window.openChatbot?.(); setShowResults(false); return; }
             navigate(page.path);
             setShowResults(false);
           }}

@@ -50,17 +50,16 @@ import SignUpSelect from './modules/home/SignUpSelect.jsx';
 import Forms from './modules/forms/Forms';
 import ChatbotWidget from './modules/chatbot/ChatbotWidget.jsx';
 
-// ===== OPEN CHATBOT AND REDIRECT =====
-const OpenChatbotAndRedirect = () => {
-  const navigate = useNavigate();
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('open-chatbot'));
-    }, 100);
-    navigate(-1);
-    return () => clearTimeout(timer);
-  }, [navigate]);
+// ===== GLOBAL CHATBOT OPENER =====
+window.openChatbot = () => window.dispatchEvent(new CustomEvent('open-chatbot'));
 
+// ===== CHATBOT PAGE - opens widget and stays here =====
+const ChatbotPage = () => {
+  useEffect(() => {
+    // Dispatch event so the ChatbotWidget opens
+    window.dispatchEvent(new CustomEvent('open-chatbot'));
+  }, []);
+  // Render nothing – the floating ChatbotWidget handles the UI
   return null;
 };
 
@@ -299,10 +298,9 @@ const GNProtectedRoute = ({ children }) => {
                 </UserProtectedRoute>
               } />
 
-              {/* ===== CHATBOT ROUTE ===== */}
               <Route path="/ai" element={
                 <UserProtectedRoute>
-                  <OpenChatbotAndRedirect />
+                  <ChatbotPage />
                 </UserProtectedRoute>
               } />
 
