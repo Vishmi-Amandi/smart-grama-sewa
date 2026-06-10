@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 import ErrorBoundary from './modules/user/components/errorBoundary';
@@ -35,6 +35,21 @@ import Home from './modules/home/Home';
 import Login from './modules/home/Login';
 import SignUpSelect from './modules/home/SignUpSelect.jsx';
 import Forms from './modules/forms/Forms';
+import ChatbotWidget from './modules/chatbot/ChatbotWidget.jsx';
+
+// ===== OPEN CHATBOT AND REDIRECT =====
+const OpenChatbotAndRedirect = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('open-chatbot'));
+    }, 100);
+    navigate(-1);
+    return () => clearTimeout(timer);
+  }, [navigate]);
+
+  return null;
+};
 
 // ===== GN PROTECTED ROUTE =====
 const GNProtectedRoute = ({ children }) => {
@@ -227,8 +242,16 @@ function App() {
               </UserProtectedRoute>
             } />
 
+            {/* ===== CHATBOT ROUTE ===== */}
+            <Route path="/ai" element={
+              <UserProtectedRoute>
+                <OpenChatbotAndRedirect />
+              </UserProtectedRoute>
+            } />
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <ChatbotWidget />
         </div>
       </ErrorBoundary>
     
