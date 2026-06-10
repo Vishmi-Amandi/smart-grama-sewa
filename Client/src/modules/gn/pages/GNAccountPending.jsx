@@ -70,7 +70,7 @@ const GNAccountPending = () => {
                 </div>
 
                 <button
-                  onClick={() => signOut(auth).then(() => window.location.href = "/gn-login")}
+                  onClick={() => signOut(auth).then(() => window.location.href = "/login")}
                   className="w-full bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 disabled:cursor-not-allowed text-[#3B1F0A] font-black text-base py-3.5 rounded-xl flex items-center justify-center gap-2 transition shadow-l sm:py-3 md:py-3.5">
                   Sign Out
                 </button>

@@ -404,7 +404,7 @@ const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 const DAY_NAMES_SHORT = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 // Details Modal
-const DetailsModal = ({ appt, onClose, onCancel, cancelling }) => {
+const DetailsModal = ({ appt, onClose, onCancel, cancelling, setPendingCancelAppt, setShowCancelConfirm}) => {
   if (!appt) return null;
 
   const statusColor = {
@@ -473,21 +473,17 @@ const DetailsModal = ({ appt, onClose, onCancel, cancelling }) => {
             Close
           </button>
           {canCancel && (
-            <button onClick={onCancel} disabled={cancelling}
-              className={`px-6 py-2.5 rounded-round border border-red-300 bg-user-surface text-sm font-extrabold text-red-500 cursor-pointer flex items-center gap-1.5 transition-all hover:bg-red-50 ${cancelling ? 'opacity-50 cursor-not-allowed' : ''}`}>
-              {cancelling ? (
-                <>
-                  <div className="w-3.5 h-3.5 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />
-                  Cancelling...
-                </>
-              ) : (
-                <>
-                  <Icon d={IC.x} size={14} color="#ef4444" sw={2} />
-                  Cancel Appointment
-                </>
-              )}
-            </button>
-          )}
+          <button 
+            onClick={() => {
+              setPendingCancelAppt(appt);
+              setShowCancelConfirm(true);
+            }} 
+            disabled={cancelling}
+            className="px-6 py-2.5 rounded-round border border-user-border bg-user-surface text-sm font-bold text-user-text-lighter cursor-pointer transition-all hover:border-user-warning"
+          >
+            Cancel Appointment
+          </button>
+        )}
         </div>
       </div>
     </>
@@ -501,6 +497,8 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
   const [loading, setLoading] = useState(true);
   const [selAppt, setSelAppt] = useState(null);
   const [cancelling, setCancelling] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [pendingCancelAppt, setPendingCancelAppt] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -555,12 +553,14 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
   }, [currentUser, refreshKey]);
 
   const handleCancel = async () => {
-    if (!selAppt) return;
+    if (!pendingCancelAppt) return;
     setCancelling(true);
     try {
-      await updateDoc(doc(db, 'appointments', selAppt.id), { status: 'Cancelled' });
-      setAppts(prev => prev.map(a => a.id === selAppt.id ? { ...a, status: 'Cancelled' } : a));
-      setSelAppt(prev => ({ ...prev, status: 'Cancelled' }));
+      await updateDoc(doc(db, 'appointments', pendingCancelAppt.id), { status: 'Cancelled' });
+      setAppts(prev => prev.map(a => a.id === pendingCancelAppt.id ? { ...a, status: 'Cancelled' } : a));
+      setSelAppt(prev => prev?.id === pendingCancelAppt.id ? { ...prev, status: 'Cancelled' } : prev);
+      setShowCancelConfirm(false);
+      setPendingCancelAppt(null);
     } catch (e) {
       console.error('Cancel error:', e.message);
       alert('Could not cancel appointment. Please try again.');
@@ -586,13 +586,30 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
 
   return (
     <>
-      {selAppt && <DetailsModal appt={selAppt} onClose={() => setSelAppt(null)} onCancel={handleCancel} cancelling={cancelling} />}
+      {selAppt && <DetailsModal 
+        appt={selAppt} 
+        onClose={() => setSelAppt(null)} 
+        onCancel={handleCancel} 
+        cancelling={cancelling}
+        setPendingCancelAppt={setPendingCancelAppt}
+        setShowCancelConfirm={setShowCancelConfirm}
+      />}
 
-      <div className="p-7 flex-1">
+      <CancelConfirmModal 
+        isOpen={showCancelConfirm}
+        onClose={() => {
+          setShowCancelConfirm(false);
+          setPendingCancelAppt(null);
+        }}
+        onConfirm={handleCancel}
+        appointment={pendingCancelAppt}
+      />
+
+      <div className="p-4 md:p-6 flex-1">
         <div className="flex items-start justify-between flex-wrap gap-3 mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-1">My Appointments</h1>
-            <p className="text-sm font-semibold text-user-text-lighter">Manage your scheduled meetings with Grama Niladhari officers.</p>
+            <p className="text-sm font-semibold text-user-text-lighter">Manage your scheduled meetings with Grama Niladhari.</p>
           </div>
           <button onClick={onBook} className="flex items-center gap-2 py-3 px-5 bg-user-primary border-none rounded-round text-sm font-extrabold text-user-text cursor-pointer transition-all shadow-md hover:bg-user-primary-dark">
             <Icon d={IC.plus} size={16} color="#3d2a00" sw={2.5} /> Book New Appointment
@@ -706,7 +723,7 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
   };
 
   return (
-    <div className="p-7 flex-1">
+    <div className="p-4 md:p-6 flex-1">
       <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">Book an appointment</h1>
       <StepBar step={1} />
 
@@ -1458,6 +1475,38 @@ const BookSuccess = ({ onBack }) => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Cancel Confirmation Modal
+const CancelConfirmModal = ({ isOpen, onClose, onConfirm, appointment }) => {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div onClick={onClose} className="fixed inset-0 bg-black/45 z-[200]" />
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[201] w-full max-w-[400px] bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="p-6 text-center">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-black text-user-text mb-2">Cancel Appointment?</h3>
+          <p className="text-sm text-user-text-lighter mb-6">
+            Are you sure you want to cancel this appointment? This action cannot be undone.
+          </p>
+          <div className="flex gap-3">
+            <button onClick={onClose} className="flex-1 py-3 rounded-round border border-user-border bg-white text-sm font-bold cursor-pointer">
+              No, Keep
+            </button>
+            <button onClick={onConfirm} className="flex-1 py-3 rounded-round bg-red-500 text-sm font-bold text-white cursor-pointer hover:bg-red-600">
+              Yes, Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 

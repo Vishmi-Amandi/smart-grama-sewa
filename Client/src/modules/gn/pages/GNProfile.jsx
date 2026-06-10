@@ -51,11 +51,6 @@ const GNProfile = ({ gnStatus, theme }) => {
   const [savingJurisdiction,  setSavingJurisdiction]  = useState(false);
   const [villageInput,        setVillageInput]        = useState("");
 
-  // Working hours edit
-  const [editingHours,        setEditingHours]        = useState(false);
-  const [hoursForm,           setHoursForm]           = useState({ monFri: "08:30 - 16:30", saturday: "09:00 - 13:00", sunday: "Closed", notes: "" });
-  const [savingHours,         setSavingHours]         = useState(false);
-
   // Photo
   const [photoUploading,      setPhotoUploading]      = useState(false);
 
@@ -151,29 +146,7 @@ useEffect(() => {
     }
   };
 
-  // ─── Save working hours ──────────────────────────────────────────────────────
-  const handleSaveHours = async () => {
-    setSavingHours(true);
-    try {
-      const user = auth.currentUser;
-      // Save as plain strings to avoid Firestore object serialization issues
-      const hoursToSave = {
-        monFri:   String(hoursForm.monFri   || ""),
-        saturday: String(hoursForm.saturday || ""),
-        sunday:   String(hoursForm.sunday   || ""),
-        notes:    String(hoursForm.notes    || ""),
-      };
-      await updateDoc(doc(db, "gn_officers", user.uid), {
-        workingHours: hoursToSave,
-      });
-      setUserData((prev) => ({ ...prev, workingHours: hoursToSave }));
-      setEditingHours(false);
-    } catch (err) {
-      console.error("Save hours error:", err);
-    } finally {
-      setSavingHours(false);
-    }
-  };
+
 
   // ─── Upload photo ────────────────────────────────────────────────────────────
   const handlePhotoUpload = async (file) => {
@@ -247,7 +220,7 @@ useEffect(() => {
             <div className="text-center sm:text-left">
               <h3 className={`text-base sm:text-lg font-bold ${t.text}`}>{safeStr(userData?.fullName)}</h3>
               <p className={`text-xs sm:text-sm ${t.subtext}`}>Grama Niladhari Officer</p>
-              <p className={`text-[10px] sm:text-xs ${t.subtext}`}>📍 GN Division: {safeStr(userData?.gnDivisionName)}</p>
+              <p className={`text-[10px] sm:text-xs ${t.subtext}`}>📍 GN Division: {safeStr(userData?.gnDiv)}</p>
             </div>
           </div>
 
@@ -349,7 +322,7 @@ useEffect(() => {
             <p className={`text-xs sm:text-sm font-semibold mb-4 text-left ${t.text}`}>🏢 GN Division Information</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {[
-                { label: "GN Division Name", value: safeStr(userData?.gnDivisionName) },
+                { label: "GN Division Name", value: safeStr(userData?.gnDiv) },
                 { label: "GN Code",          value: safeStr(userData?.gnCode) },
                 { label: "DS Division",      value: safeStr(userData?.divisionalSecretariat) },
                 { label: "District",         value: safeStr(userData?.district) },
@@ -531,80 +504,50 @@ useEffect(() => {
                 <div className="flex items-center justify-between mb-3">
                   <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>⏰ Working Hours</p>
                   <button
-  onClick={() => navigate("/settings?tab=hours")}
+  onClick={() => navigate("/gn-settings?tab=hours")}
   className="flex items-center gap-1 text-[10px] sm:text-xs text-[#8B4513] border border-[#8B4513] px-1.5 sm:px-2 py-1 rounded-lg hover:bg-[#8B4513] hover:text-white transition">
   <Pencil size={10} /> Edit
 </button>
                 </div>
 
-                {editingHours ? (
-                  <div className={`p-3 sm:p-4 border ${t.border} rounded-xl space-y-3`}>
-                    {[
-                      { label: "Mon - Fri", key: "monFri" },
-                      { label: "Saturday",  key: "saturday" },
-                      { label: "Sunday",    key: "sunday" },
-                    ].map(({ label, key }) => (
-                      <div key={key} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-                        <p className={`text-[10px] sm:text-xs font-semibold w-20 text-left ${t.subtext}`}>{label}</p>
-                        <input type="text" value={hoursForm[key]}
-                          onChange={(e) => setHoursForm({ ...hoursForm, [key]: e.target.value })}
-                          placeholder='e.g. 08:30 - 16:30 or "Closed"'
-                          className={`flex-1 w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
-                      </div>
-                    ))}
-                    <div>
-                      <p className={`text-[10px] sm:text-xs font-semibold mb-1 text-left ${t.subtext}`}>Special Notes</p>
-                      <textarea value={hoursForm.notes}
-                        onChange={(e) => setHoursForm({ ...hoursForm, notes: e.target.value })}
-                        placeholder="e.g. Office closed on public holidays..."
-                        rows={3}
-                        className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] resize-none ${t.input}`} />
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <button onClick={() => setEditingHours(false)}
-                        className={`text-[10px] sm:text-xs font-semibold px-3 py-1.5 rounded-lg border ${t.border} ${t.subtext} hover:bg-gray-100 transition`}>
-                        Cancel
-                      </button>
-                      <button onClick={handleSaveHours} disabled={savingHours}
-                        className="text-[10px] sm:text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#E5A800] text-black hover:bg-[#cc9600] disabled:opacity-60 transition">
-                        {savingHours ? "Saving..." : "Save"}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
+
                   <>
                     <table className="w-full text-sm">
-                      <thead>
-                        <tr className={`text-[10px] sm:text-xs uppercase ${t.subtext}`}>
-                          <th className="text-left pb-2">Day</th>
-                          <th className="text-left pb-2">Hours</th>
-                        </tr>
-                      </thead>
-                      <tbody className={t.divider}>
-                        {[
-                          { day: "Mon - Fri", value: userData?.workingHours?.monFri },
-                          { day: "Saturday",  value: userData?.workingHours?.saturday },
-                          { day: "Sunday",    value: userData?.workingHours?.sunday },
-                        ].map(({ day, value }) => {
-                          const display = safeHours(value, day === "Sunday" ? "Closed" : day === "Saturday" ? "09:00 - 13:00" : "08:30 - 16:30");
-                          return (
-                            <tr key={day}>
-                              <td className={`py-2 text-left text-[10px] sm:text-xs ${t.subtext}`}>{day}</td>
-                              <td className={`py-2 font-semibold text-left text-[10px] sm:text-xs ${display === "Closed" ? "text-red-500" : t.text}`}>{display}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+  <thead>
+    <tr className={`text-[10px] sm:text-xs uppercase ${t.subtext}`}>
+      <th className="text-left pb-2">Day</th>
+      <th className="text-left pb-2">Hours</th>
+    </tr>
+  </thead>
+  <tbody className={t.divider}>
+    {[
+      { day: "Monday",    value: userData?.workingHours?.Monday },
+      { day: "Tuesday",   value: userData?.workingHours?.Tuesday },
+      { day: "Wednesday", value: userData?.workingHours?.Wednesday },
+      { day: "Thursday",  value: userData?.workingHours?.Thursday },
+      { day: "Friday",    value: userData?.workingHours?.Friday },
+      { day: "Saturday",  value: userData?.workingHours?.Saturday },
+      { day: "Sunday",    value: userData?.workingHours?.Sunday },
+    ].map(({ day, value }) => {
+      const display = !value
+        ? (day === "Sunday" || day === "Saturday" ? "Closed" : "08:00 - 17:00")
+        : value.enabled === false
+        ? "Closed"
+        : `${value.start || ""} - ${value.end || ""}`;
 
-                    {userData?.workingHours?.notes && typeof userData.workingHours.notes === "string" && userData.workingHours.notes.trim() && (
-                      <div className={`mt-3 p-3 rounded-xl ${theme === "dark" ? "bg-gray-700" : "bg-amber-50"} border border-[#E5A800]/30`}>
-                        <p className="text-[10px] sm:text-xs font-bold text-[#8B4513] mb-1 text-left">📝 Special Notes</p>
-                        <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>{userData.workingHours.notes}</p>
-                      </div>
-                    )}
-                  </>
-                )}
+      return (
+        <tr key={day}>
+          <td className={`py-2 text-left text-[10px] sm:text-xs ${t.subtext}`}>{day}</td>
+          <td className={`py-2 font-semibold text-left text-[10px] sm:text-xs ${display === "Closed" ? "text-red-500" : t.text}`}>
+            {display}
+          </td>
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
+                    </>
+      
               </div>
 
             </div>

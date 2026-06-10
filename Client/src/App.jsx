@@ -16,16 +16,14 @@ import GNCitizenSearch from './modules/gn/pages/GNCitizenSearch.jsx';
 import GNProfile from './modules/gn/pages/GNProfile.jsx';
 import GNSettings from './modules/gn/pages/GNSettings.jsx';
 import GNChangeGNDivision from './modules/gn/pages/GNChangeGNDivision.jsx';
-import GNLogin from './modules/gn/pages/GNLogin.jsx';
 import GNSignUp from './modules/gn/pages/GNSignUp.jsx';
 import GNForgotPassword from './modules/gn/pages/GNForgotPassword.jsx';
-import SignUpSelect from './modules/gn/pages/SignUpSelect.jsx';
 import ChangeGNRequestStatus from './modules/gn/pages/ChangeGNRequestStatus.jsx';
 import GNAccountPending from './modules/gn/pages/GNAccountPending.jsx';
 import GNAccountRejected from './modules/gn/pages/GNAccountRejected.jsx';
 
+
 // ===== USER MODULE IMPORTS =====
-import Login from './modules/user/pages/login';
 import SignUp from './modules/user/pages/SignUp';
 import Dashboard from './modules/user/pages/dashboard';
 import Profile from './modules/user/pages/profile';
@@ -45,25 +43,27 @@ import AdminSystemPerformanceReports from './modules/admin/reports/system';
 import AdminGNActivityReports from './modules/admin/reports/gnactivity';
 import AdminIndividualGNUserAccessReports from './modules/admin/reports/useraccess';
 
-// ===== OTHER MODULE IMPORTS =====
+// New module import
 import Home from './modules/home/Home';
+import Login from './modules/home/Login';
+import SignUpSelect from './modules/home/SignUpSelect.jsx';
 import Forms from './modules/forms/Forms';
 
-// ===== SHARED SPINNER =====
-const Spinner = () => (
-  <div style={{
-    minHeight: '100vh', display: 'flex',
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#f8f6f0',
-  }}>
-    <div style={{
-      width: '44px', height: '44px', borderRadius: '50%',
-      border: '4px solid #F5C400', borderTopColor: 'transparent',
-      animation: 'spin 0.8s linear infinite',
-    }} />
-    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-  </div>
-);
+// // ===== SHARED SPINNER =====
+// const Spinner = () => (
+//   <div style={{
+//     minHeight: '100vh', display: 'flex',
+//     alignItems: 'center', justifyContent: 'center',
+//     backgroundColor: '#f8f6f0',
+//   }}>
+//     <div style={{
+//       width: '44px', height: '44px', borderRadius: '50%',
+//       border: '4px solid #F5C400', borderTopColor: 'transparent',
+//       animation: 'spin 0.8s linear infinite',
+//     }} />
+//     <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+//   </div>
+// );
 
 // ===== GN PROTECTED ROUTE =====
 const GNProtectedRoute = ({ children }) => {
@@ -78,9 +78,25 @@ const GNProtectedRoute = ({ children }) => {
     return () => unsub();
   }, []);
 
-    if (checking) return <Spinner />;
-    return isAuth ? children : <Navigate to="/gn-login" replace />;
-  };
+    if (checking) {
+    return (
+      <div style={{
+        minHeight: "100vh", display: "flex",
+        alignItems: "center", justifyContent: "center",
+        backgroundColor: "#f8f6f0",
+      }}>
+        <div style={{
+          width: "44px", height: "44px", borderRadius: "50%",
+          border: "4px solid #E5A800", borderTopColor: "transparent",
+          animation: "spin 0.8s linear infinite",
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  return isAuth ? children : <Navigate to="/gn-login" replace />;
+};
 
   // ===== USER PROTECTED ROUTE =====
   const UserProtectedRoute = ({ children }) => {
@@ -132,20 +148,18 @@ const GNProtectedRoute = ({ children }) => {
 
     return (
       <ErrorBoundary>
-        {/* <Router> */}
           <div style={{ fontSize: fontSizeMap[fontSize] }}>
             <Routes>
               {/* ===== LANDING PAGE ===== */}
               <Route path="/" element={<Home />} />
               <Route path="/home" element={<Home />} />
 
-              {/* ===== GN MODULE ROUTES ===== */}
-              <Route path="/gn-login" element={<GNLogin />} />
-              <Route path="/gn-signup" element={<GNSignUp />} />
-              <Route path="/gn-forgot-password" element={<GNForgotPassword />} />
-              <Route path="/signup-select" element={<SignUpSelect />} />
-              <Route path="/gn-account-pending" element={<GNAccountPending />} />
-              <Route path="/gn-account-rejected" element={<GNAccountRejected />} />
+            {/* ===== GN MODULE ROUTES ===== */}
+            <Route path="/gn-signup" element={<GNSignUp />} />
+            <Route path="/gn-forgot-password" element={<GNForgotPassword />} />
+            <Route path="/signup-select" element={<SignUpSelect />} />
+            <Route path="/gn-account-pending" element={<GNAccountPending />} />
+            <Route path="/gn-account-rejected" element={<GNAccountRejected />} />
 
               <Route path="/gn-dashboard" element={
                 <GNProtectedRoute>
@@ -274,7 +288,6 @@ const GNProtectedRoute = ({ children }) => {
 
             </Routes>
           </div>
-        {/* </Router> */}
       </ErrorBoundary>
     );
   }
