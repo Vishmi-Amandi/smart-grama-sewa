@@ -220,7 +220,7 @@ useEffect(() => {
             <div className="text-center sm:text-left">
               <h3 className={`text-base sm:text-lg font-bold ${t.text}`}>{safeStr(userData?.fullName)}</h3>
               <p className={`text-xs sm:text-sm ${t.subtext}`}>Grama Niladhari Officer</p>
-              <p className={`text-[10px] sm:text-xs ${t.subtext}`}>📍 GN Division: {safeStr(userData?.gnDivisionName)}</p>
+              <p className={`text-[10px] sm:text-xs ${t.subtext}`}>📍 GN Division: {safeStr(userData?.gnDiv)}</p>
             </div>
           </div>
 
@@ -322,7 +322,7 @@ useEffect(() => {
             <p className={`text-xs sm:text-sm font-semibold mb-4 text-left ${t.text}`}>🏢 GN Division Information</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {[
-                { label: "GN Division Name", value: safeStr(userData?.gnDivisionName) },
+                { label: "GN Division Name", value: safeStr(userData?.gnDiv) },
                 { label: "GN Code",          value: safeStr(userData?.gnCode) },
                 { label: "DS Division",      value: safeStr(userData?.divisionalSecretariat) },
                 { label: "District",         value: safeStr(userData?.district) },
