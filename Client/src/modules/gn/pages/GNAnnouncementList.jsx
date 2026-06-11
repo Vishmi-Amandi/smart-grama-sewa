@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { Link } from "react-router-dom";
-import { Megaphone, Clock, Eye, Pencil, Trash2, X, Loader2, Save } from "lucide-react";
+import { Megaphone, Clock, Eye, Pencil, Trash2, X, Loader2, Save, Paperclip } from "lucide-react";
 import {
   collection, query, where, orderBy, getDocs,
-  deleteDoc, doc, updateDoc, Timestamp
+  deleteDoc, doc, updateDoc, Timestamp, getDoc
 } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +19,7 @@ const GNAnnouncementList = ({ gnStatus, theme }) => {
   const [loading, setLoading]               = useState(true);
   const [currentPage, setCurrentPage]       = useState(1);
   const [filterStatus, setFilterStatus]     = useState("All");
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
 
   // ─── Edit Modal State ────────────────────────────────────────────────────────
   const [editingItem, setEditingItem]       = useState(null);
@@ -31,24 +32,51 @@ const GNAnnouncementList = ({ gnStatus, theme }) => {
 
   // ─── Fetch from Firestore ────────────────────────────────────────────────────
   const fetchAnnouncements = async () => {
-    setLoading(true);
-    try {
-      const user = auth.currentUser;
-      const q = query(
-        collection(db, "announcements"),
-        where("createdBy", "==", user?.uid || ""),
-        orderBy("createdAt", "desc")
-      );
-      const snap = await getDocs(q);
-      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setAnnouncements(data);
-    } catch (err) {
-      console.error("Fetch error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    const user = auth.currentUser;
 
+    // ✅ correct collection: gn_officers, not users
+    const officerSnap = await getDoc(doc(db, "gn_officers", user.uid));
+    const officerData = officerSnap.exists() ? officerSnap.data() : {};
+    const gnDiv = officerData.gnDiv || "";
+
+    console.log("Officer gnDiv:", gnDiv); // should now print "Orugodawatta"
+
+    const myQ = query(
+      collection(db, "announcements"),
+      where("createdByUid", "==", user.uid)
+    );
+
+    const divQ = query(
+      collection(db, "announcements"),
+      where("gnDiv", "==", gnDiv),
+      where("status", "==", "Active")
+    );
+
+    const [mySnap, divSnap] = await Promise.all([
+      getDocs(myQ),
+      gnDiv ? getDocs(divQ) : Promise.resolve({ docs: [] })
+    ]);
+
+    const seen = new Set();
+    const merged = [];
+    for (const d of [...mySnap.docs, ...divSnap.docs]) {
+      if (!seen.has(d.id)) {
+        seen.add(d.id);
+        merged.push({ id: d.id, ...d.data() });
+      }
+    }
+
+    merged.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+
+    setAnnouncements(merged);
+  } catch (err) {
+    console.error("Fetch error:", err);
+  } finally {
+    setLoading(false);
+  }
+};
   useEffect(() => { fetchAnnouncements(); }, []);
 
   // ─── Determine live status ───────────────────────────────────────────────────
@@ -86,6 +114,7 @@ const GNAnnouncementList = ({ gnStatus, theme }) => {
   // ─── Delete ──────────────────────────────────────────────────────────────────
   const handleDelete = async (id) => {
     setDeletingId(id);
+    const item = announcements.find((a) => a.id === id);
     try {
       await deleteDoc(doc(db, "announcements", id));
       await logActivity("announcement", "Deleted", item?.title || "Announcement", "Announcement deleted");
@@ -98,45 +127,98 @@ const GNAnnouncementList = ({ gnStatus, theme }) => {
     }
   };
 
+  // ─── Open Edit Modal ─────────────────────────────────────────────────────────
+  const handleOpenEdit = (item) => {
+    setEditingItem(item);
+    setEditForm({
+      title:       item.title       || "",
+      description: item.description || "",
+      category:    item.category    || "General",
+      priority:    item.priority    || "Normal",
+      expiryDate:  item.expiresAt
+        ? new Date(
+            item.expiresAt?.seconds
+              ? item.expiresAt.seconds * 1000
+              : item.expiresAt
+          ).toISOString().split("T")[0]
+        : "",
+      attachments: Array.isArray(item.attachments) ? item.attachments : [],
+    });
+  };
+
+  // ─── Upload Attachment (in edit modal) ───────────────────────────────────────
+  const handleAttachmentUpload = async (files) => {
+    if (!files.length) return;
+    setUploadingAttachment(true);
+    const uploaded = [];
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert(`${file.name} exceeds 10MB limit.`);
+        continue;
+      }
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "gn_documents");
+        formData.append("cloud_name", "dsi9xh1fd");
+
+        const res  = await fetch("https://api.cloudinary.com/v1_1/dsi9xh1fd/auto/upload", {
+          method: "POST", body: formData,
+        });
+        const data = await res.json();
+        if (data.secure_url) {
+          uploaded.push({ name: file.name, url: data.secure_url, type: file.type });
+        }
+      } catch (err) {
+        console.error("Upload error:", err);
+      }
+    }
+    setEditForm((prev) => ({
+      ...prev,
+      attachments: [...(prev.attachments || []), ...uploaded],
+    }));
+    setUploadingAttachment(false);
+  };
+
   // ─── Edit Save ───────────────────────────────────────────────────────────────
-const handleSaveEdit = async () => {
-  setSaving(true);
-  try {
-    const updates = {
-      title:       editForm.title,
-      description: editForm.description,
-      category:    editForm.category,
-      priority:    editForm.priority,
-      expiresAt:   editForm.expiryDate
-        ? Timestamp.fromDate(new Date(editForm.expiryDate))
-        : null,
-    };
-
-    // ✅ Actually save to Firestore
-    await updateDoc(doc(db, "announcements", editingItem.id), updates);
-    await logActivity("announcement", "Edited", editForm.title, "Announcement updated");
-
-    // ✅ Update local state
-    setAnnouncements((prev) =>
-      prev.map((a) => a.id === editingItem.id ? {
-        ...a,
+  const handleSaveEdit = async () => {
+    setSaving(true);
+    try {
+      const updates = {
         title:       editForm.title,
         description: editForm.description,
         category:    editForm.category,
         priority:    editForm.priority,
+        attachments: editForm.attachments || [],
         expiresAt:   editForm.expiryDate
-          ? { toDate: () => new Date(editForm.expiryDate), seconds: new Date(editForm.expiryDate).getTime() / 1000 }
+          ? Timestamp.fromDate(new Date(editForm.expiryDate))
           : null,
-      } : a)
-    );
+      };
 
-    setEditingItem(null);
-  } catch (err) {
-    console.error("Edit error:", err);
-  } finally {
-    setSaving(false);
-  }
-};
+      await updateDoc(doc(db, "announcements", editingItem.id), updates);
+      await logActivity("announcement", "Edited", editForm.title, "Announcement updated");
+
+      setAnnouncements((prev) =>
+        prev.map((a) => a.id === editingItem.id ? {
+          ...a,
+          title:       editForm.title,
+          description: editForm.description,
+          category:    editForm.category,
+          priority:    editForm.priority,
+          attachments: editForm.attachments || [],
+          expiresAt:   editForm.expiryDate
+            ? { toDate: () => new Date(editForm.expiryDate), seconds: new Date(editForm.expiryDate).getTime() / 1000 }
+            : null,
+        } : a)
+      );
+
+      setEditingItem(null);
+    } catch (err) {
+      console.error("Edit error:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const formatDate = (ts) => {
     if (!ts) return "N/A";
@@ -149,7 +231,7 @@ const handleSaveEdit = async () => {
   return (
     <GNLayout gnStatus={gnStatus} theme={theme}>
 
-      {/* Header - Responsive */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-[#8B4513] text-center sm:text-left">Announcement List</h1>
         <Link to="/gn-create-announcement"
@@ -158,7 +240,7 @@ const handleSaveEdit = async () => {
         </Link>
       </div>
 
-      {/* Stats Row - Responsive */}
+      {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
         {[
           { label: "Active Notices", value: activeCount,    icon: <Megaphone size={24} className="text-gray-300" /> },
@@ -175,7 +257,7 @@ const handleSaveEdit = async () => {
         ))}
       </div>
 
-      {/* Filter Tabs - Responsive */}
+      {/* Filter Tabs */}
       <div className={`flex flex-wrap gap-2 mb-4`}>
         {["All", "Active", "Scheduled", "Draft", "Expired"].map((s) => (
           <button key={s} onClick={() => { setFilterStatus(s); setCurrentPage(1); }}
@@ -188,92 +270,82 @@ const handleSaveEdit = async () => {
         ))}
       </div>
 
-      {/* Table - Mobile responsive with horizontal scroll */}
+      {/* Table */}
       <div className={`${t.card} rounded-2xl shadow overflow-x-auto`}>
         <div className="min-w-[700px] md:min-w-full">
-        <table className="w-full text-sm">
-          <thead className={`${t.tableHead} uppercase text-xs`}>
-            <tr>
-              <th className="px-3 sm:px-6 py-3 text-left">Title</th>
-              <th className="px-3 sm:px-6 py-3 text-left">Category</th>
-              <th className="px-3 sm:px-6 py-3 text-left">Published</th>
-              <th className="px-3 sm:px-6 py-3 text-left">Expires</th>
-              <th className="px-3 sm:px-6 py-3 text-left">Status</th>
-              <th className="px-3 sm:px-6 py-3 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody className={t.divider}>
-            {loading ? (
+          <table className="w-full text-sm">
+            <thead className={`${t.tableHead} uppercase text-xs`}>
               <tr>
-                <td colSpan={6} className="px-3 sm:px-6 py-8 sm:py-12 text-center">
-                  <Loader2 size={24} className="animate-spin text-[#E5A800] mx-auto mb-2" />
-                  <p className={`text-xs ${t.subtext}`}>Loading announcements...</p>
-                </td>
+                <th className="px-3 sm:px-6 py-3 text-left">Title</th>
+                <th className="px-3 sm:px-6 py-3 text-left">Category</th>
+                <th className="px-3 sm:px-6 py-3 text-left">Published</th>
+                <th className="px-3 sm:px-6 py-3 text-left">Expires</th>
+                <th className="px-3 sm:px-6 py-3 text-left">Status</th>
+                <th className="px-3 sm:px-6 py-3 text-left">Actions</th>
               </tr>
-            ) : paginated.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-3 sm:px-6 py-8 sm:py-12 text-center">
-                  <Megaphone size={32} className="text-gray-300 mx-auto mb-2" />
-                  <p className={`text-sm font-semibold ${t.subtext}`}>No announcements found.</p>
-                  <Link to="/create-announcement" className="text-xs text-[#E5A800] font-semibold hover:underline mt-1 inline-block">
-                    Create your first announcement →
-                  </Link>
-                </td>
-              </tr>
-            ) : (
-              paginated.map((item) => {
-                const status = getStatus(item);
-                return (
-                  <tr key={item.id} className={t.tableRow}>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
-                      <p className={`font-semibold text-left text-sm sm:text-base ${t.text}`}>{item.title}</p>
-                      <p className={`text-[10px] sm:text-xs text-left ${t.subtext} mt-0.5`}>
-                        Priority: <span className={`font-bold ${item.priority === "Urgent" ? "text-red-500" : item.priority === "High" ? "text-orange-500" : "text-gray-500"}`}>
-                          {item.priority || "Normal"}
+            </thead>
+            <tbody className={t.divider}>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-3 sm:px-6 py-8 sm:py-12 text-center">
+                    <Loader2 size={24} className="animate-spin text-[#E5A800] mx-auto mb-2" />
+                    <p className={`text-xs ${t.subtext}`}>Loading announcements...</p>
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-3 sm:px-6 py-8 sm:py-12 text-center">
+                    <Megaphone size={32} className="text-gray-300 mx-auto mb-2" />
+                    <p className={`text-sm font-semibold ${t.subtext}`}>No announcements found.</p>
+                    <Link to="/gn-create-announcement" className="text-xs text-[#E5A800] font-semibold hover:underline mt-1 inline-block">
+                      Create your first announcement →
+                    </Link>
+                  </td>
+                </tr>
+              ) : (
+                paginated.map((item) => {
+                  const status = getStatus(item);
+                  return (
+                    <tr key={item.id} className={t.tableRow}>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4">
+                        <p className={`font-semibold text-left text-sm sm:text-base ${t.text}`}>{item.title}</p>
+                        <p className={`text-[10px] sm:text-xs text-left ${t.subtext} mt-0.5`}>
+                          Priority: <span className={`font-bold ${item.priority === "Urgent" ? "text-red-500" : item.priority === "High" ? "text-orange-500" : "text-gray-500"}`}>
+                            {item.priority || "Normal"}
+                          </span>
+                        </p>
+                      </td>
+                      <td className={`px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm ${t.subtext}`}>{item.category || "General"}</td>
+                      <td className={`px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm ${t.subtext}`}>{formatDate(item.publishedAt || item.createdAt)}</td>
+                      <td className={`px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm ${t.subtext}`}>{item.expiresAt ? formatDate(item.expiresAt) : "—"}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-left">
+                        <span className={`text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-1 rounded-full whitespace-nowrap ${statusStyle[status] || "bg-gray-100 text-gray-500"}`}>
+                          {status}
                         </span>
-                      </p>
-                    </td>
-                    <td className={`px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm ${t.subtext}`}>{item.category || "General"}</td>
-                    <td className={`px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm ${t.subtext}`}>{formatDate(item.publishedAt || item.createdAt)}</td>
-                    <td className={`px-3 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm ${t.subtext}`}>{item.expiresAt ? formatDate(item.expiresAt) : "—"}</td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-left">
-                      <span className={`text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-1 rounded-full whitespace-nowrap ${statusStyle[status] || "bg-gray-100 text-gray-500"}`}>
-                        {status}
-                      </span>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <button
-  onClick={() => navigate("/create-announcement", { 
-  state: { 
-    draft: {
-      ...item,
-      expiryDate: item.expiresAt 
-        ? new Date(item.expiresAt.seconds * 1000).toISOString().split("T")[0]
-        : "",
-    } 
-  } 
-})}
-  className="text-gray-400 hover:text-blue-500 transition"
->
-  <Pencil size={14} className="sm:w-4 sm:h-4" />
-</button>
-                        <button
-                          onClick={() => setConfirmDelete(item.id)}
-                          className="text-gray-400 hover:text-red-500 transition">
-                          <Trash2 size={14} className="sm:w-4 sm:h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                      </td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <button
+                            onClick={() => handleOpenEdit(item)}
+                            className="text-gray-400 hover:text-blue-500 transition">
+                            <Pencil size={14} className="sm:w-4 sm:h-4" />
+                          </button>
+                          <button
+                            onClick={() => setConfirmDelete(item.id)}
+                            className="text-gray-400 hover:text-red-500 transition">
+                            <Trash2 size={14} className="sm:w-4 sm:h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
 
-        {/* Pagination - Responsive */}
+        {/* Pagination */}
         {!loading && filtered.length > 0 && (
           <div className={`px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t ${t.border}`}>
             <p className={`text-[10px] sm:text-xs text-center sm:text-left ${t.subtext}`}>
@@ -296,17 +368,23 @@ const handleSaveEdit = async () => {
         )}
       </div>
 
-      {/* ── Edit Modal - Responsive ── */}
+      {/* ── Edit Modal ── */}
       {editingItem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className={`${t.card} rounded-2xl shadow-2xl w-full max-w-[90%] sm:max-w-lg`}>
-            <div className={`flex items-center justify-between p-4 sm:p-5 border-b ${t.border}`}>
+          {/* FIX: max-h + flex-col so modal scrolls internally instead of overflowing screen */}
+          <div className={`${t.card} rounded-2xl shadow-2xl w-full max-w-[90%] sm:max-w-lg flex flex-col max-h-[90vh]`}>
+
+            {/* Header — fixed */}
+            <div className={`flex items-center justify-between p-4 sm:p-5 border-b ${t.border} flex-shrink-0`}>
               <h2 className={`text-sm sm:text-base font-bold text-left ${t.text}`}>Edit Announcement</h2>
               <button onClick={() => setEditingItem(null)} className={`${t.subtext} hover:text-gray-600`}>
                 <X size={18} />
               </button>
             </div>
-            <div className="p-4 sm:p-5 space-y-4">
+
+            {/* Body — scrollable */}
+            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
+
               {/* Title */}
               <div>
                 <label className={`text-[10px] sm:text-xs font-bold uppercase tracking-wide mb-1 block text-left ${t.subtext}`}>Title</label>
@@ -314,6 +392,7 @@ const handleSaveEdit = async () => {
                   onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                   className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
               </div>
+
               {/* Category + Priority */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -335,6 +414,7 @@ const handleSaveEdit = async () => {
                   </select>
                 </div>
               </div>
+
               {/* Description */}
               <div>
                 <label className={`text-[10px] sm:text-xs font-bold uppercase tracking-wide mb-1 block text-left ${t.subtext}`}>Description</label>
@@ -342,6 +422,7 @@ const handleSaveEdit = async () => {
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                   rows={4} className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] resize-none ${t.input}`} />
               </div>
+
               {/* Expiry Date */}
               <div>
                 <label className={`text-[10px] sm:text-xs font-bold uppercase tracking-wide mb-1 block text-left ${t.subtext}`}>Expiry Date</label>
@@ -349,8 +430,60 @@ const handleSaveEdit = async () => {
                   onChange={(e) => setEditForm({ ...editForm, expiryDate: e.target.value })}
                   className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
               </div>
+
+              {/* Attachments */}
+              <div>
+                <label className={`text-[10px] sm:text-xs font-bold uppercase tracking-wide mb-2 block text-left ${t.subtext}`}>
+                  Attachments
+                </label>
+
+                {/* Existing attachments list */}
+                {(editForm.attachments || []).length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {editForm.attachments.map((file, i) => (
+                      <div key={i} className={`flex items-center justify-between px-3 py-2 rounded-xl border ${t.border} ${t.input}`}>
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <Paperclip size={13} className="text-[#8B4513] flex-shrink-0" />
+                          <a href={file.url} target="_blank" rel="noreferrer"
+                            className="text-xs font-semibold text-[#8B4513] hover:underline truncate">
+                            {file.name}
+                          </a>
+                        </div>
+                        <button
+                          onClick={() =>
+                            setEditForm((prev) => ({
+                              ...prev,
+                              attachments: prev.attachments.filter((_, idx) => idx !== i),
+                            }))
+                          }
+                          className="text-gray-400 hover:text-red-500 transition flex-shrink-0 ml-2">
+                          <X size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Upload new files */}
+                <label className={`border-2 border-dashed ${t.border} rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-[#E5A800] transition`}>
+                  <input type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.docx"
+                    className="hidden"
+                    onChange={(e) => handleAttachmentUpload(Array.from(e.target.files))} />
+                  {uploadingAttachment
+                    ? <Loader2 size={20} className="text-[#E5A800] animate-spin mb-1" />
+                    : <Paperclip size={20} className="text-gray-400 mb-1" />
+                  }
+                  <p className={`text-xs font-semibold text-center ${t.text}`}>
+                    {uploadingAttachment ? "Uploading..." : "Click to add more files"}
+                  </p>
+                  <p className={`text-[10px] mt-0.5 text-center ${t.subtext}`}>PDF, PNG, JPG or DOCX (MAX. 10MB)</p>
+                </label>
+              </div>
+
             </div>
-            <div className={`flex justify-end gap-3 px-4 sm:px-5 pb-4 sm:pb-5`}>
+
+            {/* Footer — fixed */}
+            <div className={`flex justify-end gap-3 px-4 sm:px-5 py-4 border-t ${t.border} flex-shrink-0`}>
               <button onClick={() => setEditingItem(null)}
                 className={`text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-xl border ${t.border} ${t.subtext} hover:bg-gray-100 transition`}>
                 Cancel
@@ -361,11 +494,12 @@ const handleSaveEdit = async () => {
                 {saving ? "Saving..." : "Save Changes"}
               </button>
             </div>
+
           </div>
         </div>
       )}
 
-      {/* ── Delete Confirm Modal - Responsive ── */}
+      {/* ── Delete Confirm Modal ── */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className={`${t.card} rounded-2xl shadow-2xl w-full max-w-[90%] sm:max-w-sm p-5 sm:p-6 text-center`}>

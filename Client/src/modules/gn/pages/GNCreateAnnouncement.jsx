@@ -1,7 +1,7 @@
 import { useState } from "react";
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { Paperclip, Eye, Send, Save, X, Clock, Loader2 } from "lucide-react";
-import { collection, addDoc,doc,updateDoc, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { useLocation, useNavigate } from "react-router-dom";
 import { logActivity } from "../../../logActivity";
@@ -29,7 +29,6 @@ const GNCreateAnnouncement = ({ gnStatus, theme }) => {
   const [errors,         setErrors]         = useState({});
    const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
-
   // ─── Loading States ──────────────────────────────────────────────────────────
   const [savingDraft,    setSavingDraft]    = useState(false);
   const [publishing,     setPublishing]     = useState(false);
@@ -81,8 +80,14 @@ const GNCreateAnnouncement = ({ gnStatus, theme }) => {
   };
 
   // ─── Build announcement object ────────────────────────────────────────────────
-  const buildDoc = (status) => {
+  const buildDoc = async (status) => {
     const user = auth.currentUser;
+
+      // Fetch the GN officer's division
+    const officerSnap = await getDoc(doc(db, "gn_officers", user.uid));
+    const officerData = officerSnap.exists() ? officerSnap.data() : {};
+    const gnDiv = officerData.gnDiv || "";
+
     const base = {
       title:       title.trim(),
       description: description.trim(),
@@ -91,7 +96,8 @@ const GNCreateAnnouncement = ({ gnStatus, theme }) => {
       attachments,
       status,
       createdBy:   user?.uid || "",
-      gnDivision:  user?.displayName || "",
+      createdByUid: user?.uid || "",
+      gnDiv:  gnDiv,
       createdAt:   serverTimestamp(),
       expiresAt:   expiryDate
         ? Timestamp.fromDate(new Date(expiryDate))
@@ -121,36 +127,43 @@ const GNCreateAnnouncement = ({ gnStatus, theme }) => {
 
   // ─── Save as Draft ────────────────────────────────────────────────────────────
 const handleSaveDraft = async () => {
-  if (!title.trim()) { setError("Please enter a title."); return; }
+  if (!title.trim()) { setErrors({ general: "Please enter a title." }); return; }
   setLoading(true);
   try {
     const user = auth.currentUser;
-if (draft?.id) {
-  await updateDoc(doc(db, "announcements", draft.id), {
-    title,
-    description,
-    expiresAt: expiryDate ? Timestamp.fromDate(new Date(expiryDate)) : null,
-    expiryDate: expiryDate || "",
-    status: "Draft",
-    updatedAt: serverTimestamp(),
-  });
-}else {
-      // Create new draft
-      await addDoc(collection(db, "announcements"), {
+    if (draft?.id) {
+      await updateDoc(doc(db, "announcements", draft.id), {
         title,
         description,
-        expiryDate,
+        expiresAt: expiryDate ? Timestamp.fromDate(new Date(expiryDate)) : null,
+        expiryDate: expiryDate || "",
+        attachments,
         status: "Draft",
-        createdBy: user.displayName || "Officer",
-        createdByUid: user.uid,
-        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
+    } else {
+      const officerSnap = await getDoc(doc(db, "gn_officers", user.uid));
+      const officerData = officerSnap.exists() ? officerSnap.data() : {};
+
+      await addDoc(collection(db, "announcements"), {
+  title,
+  description,
+  expiryDate,
+  category,
+  priority,
+  attachments,
+  gnDiv: officerData.gnDiv || "",   // ✅ was user.displayName before
+  status: "Draft",
+  createdBy: user.displayName || "Officer",
+  createdByUid: user.uid,
+  createdAt: serverTimestamp(),
+});
     }
     await logActivity("announcement", "Draft Saved", title, `Draft saved — Category: ${category}`);
-    setSuccess("Draft saved successfully!");
+    setSuccessMsg("Draft saved successfully!");
     setTimeout(() => navigate("/gn-announcement-list"), 1500);
   } catch (err) {
-    setError("Failed to save draft. Please try again.");
+    setErrors({ general: "Failed to save draft. Please try again." });
     console.error(err);
   } finally {
     setLoading(false);
@@ -158,43 +171,48 @@ if (draft?.id) {
 };
 
 const handlePublish = async () => {
-  if (!title.trim()) { setError("Please enter a title."); return; }
-  if (!description.trim()) { setError("Please enter a description."); return; }
+  if (!title.trim()) { setErrors({ general: "Please enter a title." }); return; }
+  if (!description.trim()) { setErrors({ general: "Please enter a description." }); return; }
   setLoading(true);
   try {
     const user = auth.currentUser;
-    console.log("Draft ID:", draft?.id);
-    console.log("Expiry Date:", expiryDate);
-    console.log("Title:", title);
     if (draft?.id) {
-  await updateDoc(doc(db, "announcements", draft.id), {
-    title,
-    description,
-    expiresAt: expiryDate ? Timestamp.fromDate(new Date(expiryDate)) : null,
-    expiryDate: expiryDate || "",
-    status: "Active",
-    publishedAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-} else {
-      // Create new and publish
+      await updateDoc(doc(db, "announcements", draft.id), {
+        title,
+        description,
+        expiresAt: expiryDate ? Timestamp.fromDate(new Date(expiryDate)) : null,
+        expiryDate: expiryDate || "",
+        attachments,
+        status: "Active",
+        publishedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    } else {
+      const officerSnap = await getDoc(doc(db, "gn_officers", user.uid)); 
+      const officerData = officerSnap.exists() ? officerSnap.data() : {};
+      const gnDiv = officerData.gnDiv || "";  
+
       await addDoc(collection(db, "announcements"), {
         title,
         description,
         expiresAt: expiryDate ? Timestamp.fromDate(new Date(expiryDate)) : null,
         expiryDate: expiryDate || "",
+        category,
+        priority,
+        attachments,
+        gnDiv,                           // ✅ now correctly defined
         status: "Active",
         createdBy: user.uid,
         createdByUid: user.uid,
         createdAt: serverTimestamp(),
         publishedAt: serverTimestamp(),
-      });  
+      });
     }
     await logActivity("announcement", "Published", title, `Category: ${category}, Priority: ${priority}`);
-    setSuccess("Announcement published successfully!");
+    setSuccessMsg("Announcement published successfully!");
     setTimeout(() => navigate("/gn-announcement-list"), 1500);
   } catch (err) {
-    setError("Failed to publish. Please try again.");
+    setErrors({ general: "Failed to publish. Please try again." });
     console.error(err);
   } finally {
     setLoading(false);
@@ -206,7 +224,28 @@ const handlePublish = async () => {
     if (!validate()) return;
     setScheduling(true);
     try {
-      await addDoc(collection(db, "announcements"), buildDoc("Scheduled"));
+      const user = auth.currentUser;
+    
+      // Fetch GN officer's division
+      const officerSnap = await getDoc(doc(db, "gn_officers", user.uid));
+      const officerData = officerSnap.exists() ? officerSnap.data() : {};
+      const gnDiv = officerData.gnDiv || "";
+
+      await addDoc(collection(db, "announcements"), {
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        priority,
+        attachments,
+        status: "Scheduled",
+        createdBy: user?.uid || "",
+        createdByUid: user?.uid || "",
+        gnDiv: gnDiv,  // ✅ Correct division
+        createdAt: serverTimestamp(),
+        publishAt: Timestamp.fromDate(new Date(`${scheduleDate}T${scheduleTime}`)),
+        expiresAt: expiryDate ? Timestamp.fromDate(new Date(expiryDate)) : null,
+      });
+      
       await logActivity("announcement", "Scheduled", title, `Scheduled for ${scheduleDate} at ${scheduleTime}`);
       showSuccess(`🕐 Announcement scheduled for ${scheduleDate} at ${scheduleTime}.`);
       resetForm();
@@ -241,12 +280,12 @@ const handlePublish = async () => {
       )}
 
       {/* Firebase Error */}
-      {errors.firebase && (
-        <div className="mb-4 bg-red-50 border border-red-300 rounded-xl px-4 py-3 text-sm font-semibold text-red-700 flex items-center justify-between">
-          <span>⚠ {errors.firebase}</span>
-          <button onClick={() => setErrors({})}><X size={14} /></button>
-        </div>
-      )}
+      {(errors.firebase || errors.general) && (
+  <div className="mb-4 bg-red-50 border border-red-300 rounded-xl px-4 py-3 text-sm font-semibold text-red-700 flex items-center justify-between">
+    <span>⚠ {errors.firebase || errors.general}</span>
+    <button onClick={() => setErrors({})}><X size={14} /></button>
+  </div>
+)}
 
       {/* Main Form Card */}
       <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6 md:p-8 mb-6`}>
