@@ -1,84 +1,151 @@
 @import "tailwindcss";
 
+/* Theme Variables - Light Mode (default) */
 
 /* Default light theme CSS variables */
 :root {
-  --bg-page:    #f5f0e8;
-  --bg-sidebar: #F5C400;
-  --bg-card:    #ffffff;
-  --bg-topbar:  #ffffff;
-  --text-main:  #1e1200;
-  --text-sub:   #888888;
-  --border:     #e8d5ac;
+  --bg-page: #e8e0d0;
+  --bg-sidebar: #e8c547;
+  --bg-card: #ffffff;
+  --bg-topbar: #ffffff;
+  --text-main: #1e1200;
+  --text-sub: #888888;
+  --border: #e8d5ac;
 }
 
-/* Dark theme — applied when Settings selects Dark Mode */
-[data-theme="dark"] {
-  --bg-page:    #1a1a2e;
+/* Dark Mode */
+:root.dark {
+  --bg-page: #1a1a2e;
   --bg-sidebar: #16213e;
-  --bg-card:    #2d2d44;
-  --bg-topbar:  #16213e;
-  --text-main:  #f0f0f0;
-  --text-sub:   #aaaacc;
-  --border:     #3a3a5c;
+  --bg-card: #2d2d44;
+  --bg-topbar: #16213e;
+  --text-main: #f0f0f0;
+  --text-sub: #aaaacc;
+  --border: #3a3a5c;
 }
 
-/* Dark mode — override page background */
-[data-theme="dark"] body,
-[data-theme="dark"] #root {
-  background-color: #1a1a2e;
-  color: #f0f0f0;
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
-/* Dark mode — white backgrounds become dark cards */
-[data-theme="dark"] .bg-white,
-[data-theme="dark"] [style*="background-color: rgb(255, 255, 255)"],
-[data-theme="dark"] [style*="backgroundColor: #fff"],
-[data-theme="dark"] [style*="backgroundColor: white"] {
-  background-color: #2d2d44 !important;
-  color: #f0f0f0 !important;
+/* Text Size Classes */
+body[data-textsize="small"] {
+  font-size: 14px;
 }
 
-/* Dark mode — borders */
-[data-theme="dark"] [style*="border-color: #e8d5ac"],
-[data-theme="dark"] [style*="borderColor: #e8d5ac"] {
-  border-color: #3a3a5c !important;
+body[data-textsize="normal"] {
+  font-size: 16px;
 }
 
-/* Dark mode — page background */
-[data-theme="dark"] [style*="background-color: #f5f0e8"],
-[data-theme="dark"] [style*="backgroundColor: #f5f0e8"] {
-  background-color: #1a1a2e !important;
+body[data-textsize="large"] {
+  font-size: 18px;
 }
 
-/* Dark mode — topbar */
-[data-theme="dark"] [style*="background-color: #fff"],
-[data-theme="dark"] [style*="backgroundColor: #fff"] {
-  background-color: #16213e !important;
+/* Apply variables to elements */
+body {
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Dark mode — text colours */
-[data-theme="dark"] [style*="color: #1e1200"],
-[data-theme="dark"] [style*="color: rgb(30, 18, 0)"] {
-  color: #f0f0f0 !important;
+/* Dark mode specific overrides for Tailwind classes */
+.dark .bg-white {
+  background-color: var(--bg-card) !important;
 }
 
-[data-theme="dark"] [style*="color: #888"],
-[data-theme="dark"] [style*="color: rgb(136, 136, 136)"] {
-  color: #aaaacc !important;
+.dark .text-user-text {
+  color: var(--text-main) !important;
 }
 
-/* Text size — Small */
-[data-textsize="small"] * {
-  font-size: 96% !important;
+.dark .border-user-border {
+  border-color: var(--border) !important;
 }
 
-/* Text size — Normal (default, no change needed) */
-[data-textsize="normal"] * {
-  font-size: 100% !important;
+@theme {
+  /* User Module Colors - Light Mode */
+  --color-user-primary: #e8c547;
+  --color-user-primary-dark: #c4a835;
+  --color-user-primary-light: #fff8e0;
+  --color-user-secondary: #8a6040;
+  --color-user-secondary-dark: #6a4020;
+  --color-user-secondary-light: #e8e0d0;
+  --color-user-text: #1e1200;
+  --color-user-text-light: #666666;
+  --color-user-text-lighter: #888888;
+  --color-user-border: #e8d5ac;
+  --color-user-border-light: #f0e8d0;
+  --color-user-background: #f8f6f0;
+  --color-user-surface: #ffffff;
+  --color-user-success: #22c55e;
+  --color-user-success-light: #e6f9ee;
+  --color-user-warning: #f59e0b;
+  --color-user-warning-light: #fff3dc;
+  --color-user-error: #ef4444;
+  --color-user-error-light: #fee2e2;
+  --color-user-info: #3b82f6;
+  --color-user-info-light: #eff6ff;
+  
+  /* Dark Mode Colors */
+  --color-dark-primary: #f0d550;
+  --color-dark-primary-dark: #d4a800;
+  --color-dark-primary-light: #2a2400;
+  --color-dark-secondary: #6a4020;
+  --color-dark-secondary-dark: #5a3520;
+  --color-dark-secondary-light: #2a2015;
+  --color-dark-text: #e8e0c8;
+  --color-dark-text-light: #c0b898;
+  --color-dark-text-lighter: #a09878;
+  --color-dark-border: #4a3a28;
+  --color-dark-border-light: #3a2a1a;
+  --color-dark-background: #1a1510;
+  --color-dark-surface: #2a2018;
 }
 
-/* Text size — Large */
-[data-textsize="large"] * {
-  font-size: 102% !important;
+/* Dark mode class styles */
+.dark {
+  --color-user-primary: var(--color-dark-primary);
+  --color-user-primary-dark: var(--color-dark-primary-dark);
+  --color-user-primary-light: var(--color-dark-primary-light);
+  --color-user-secondary: var(--color-dark-secondary);
+  --color-user-secondary-dark: var(--color-dark-secondary-dark);
+  --color-user-secondary-light: var(--color-dark-secondary-light);
+  --color-user-text: var(--color-dark-text);
+  --color-user-text-light: var(--color-dark-text-light);
+  --color-user-text-lighter: var(--color-dark-text-lighter);
+  --color-user-border: var(--color-dark-border);
+  --color-user-border-light: var(--color-dark-border-light);
+  --color-user-background: var(--color-dark-background);
+  --color-user-surface: var(--color-dark-surface);
+}
+
+/* Smooth transition for theme switching */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+
+/* Fix for active sidebar item in dark mode - makes text readable */
+.dark .bg-white\/90 {
+  background-color: #000 !important;
+}
+
+.dark .bg-white\/90 .text-user-text,
+.dark .bg-white\/90 span,
+.dark .bg-white\/90 .font-extrabold {
+  color: #1e1200 !important;
+}
+
+/* Ensure text size applies to entire page using html element */
+html[data-textsize="small"] {
+  font-size: 14px;
+}
+
+html[data-textsize="normal"] {
+  font-size: 16px;
+}
+
+html[data-textsize="large"] {
+  font-size: 18px;
 }
