@@ -590,14 +590,17 @@ const handleSaveHours = async () => {
         <div>
           <p className={`text-[10px] sm:text-xs mb-1 text-left ${t.subtext}`}>Slot Duration</p>
           <select
-  value={slotDuration}
-  onChange={(e) => setSlotDuration(e.target.value)}
-  className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}>
-  <option value="15">15 minutes</option>
-  <option value="30">30 minutes</option>
-  <option value="45">45 minutes</option>
-  <option value="60">60 minutes</option>
-</select>
+            value={slotDuration}
+            onChange={(e) => setSlotDuration(e.target.value)}
+            className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
+          >
+            {/* ✅ 10-minute option added */}
+            <option value="10">10 minutes</option>
+            <option value="15">15 minutes</option>
+            <option value="30">30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">60 minutes</option>
+          </select>
         </div>
         <div>
           <p className={`text-[10px] sm:text-xs mb-1 text-left ${t.subtext}`}>Break Between Slots</p>

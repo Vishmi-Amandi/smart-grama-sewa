@@ -300,29 +300,76 @@ const Dashboard = () => {
   };
 
   // Fetch announcements
-  const fetchAnnouncements = async (showRefresh = false) => {
-    showRefresh ? setRefreshingAnnouncements(true) : setLoadingAnnouncements(true);
-    try {
-      const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
-      const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'), limit(3));
-      const snap = await Promise.race([getDocs(q), timeout]);
-      if (snap.docs.length > 0) {
-        setAnnouncements(snap.docs.map(d => ({
-          id: d.id, title: d.data().title || 'Announcement',
-          body: d.data().body || d.data().description || '',
-          date: d.data().createdAt?.toDate?.().toISOString().split('T')[0] || '',
-        })));
-      } else {
-        setAnnouncements(defaultAnnouncements);
-      }
-    } catch (e) { 
-      console.error('Error fetching announcements:', e);
-      showToast('Failed to load announcements', 'error');
-    } finally { 
-      setLoadingAnnouncements(false); 
-      setRefreshingAnnouncements(false); 
+const fetchAnnouncements = async (showRefresh = false) => {
+  showRefresh ? setRefreshingAnnouncements(true) : setLoadingAnnouncements(true);
+  try {
+    // Get citizen's gnDiv from their user data
+    const citizenGnDiv = userData?.gnDiv || "";
+
+    const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
+
+    // Query 1: GN officer announcements for this citizen's division
+    const gnQuery = citizenGnDiv
+      ? query(
+          collection(db, 'announcements'),
+          where('gnDiv', '==', citizenGnDiv),
+          where('status', '==', 'Active')
+        )
+      : null;
+
+    // Query 2: Admin announcements for all_users
+    const adminAllQuery = query(
+      collection(db, 'announcements'),
+      where('category', '==', 'all_users'),
+      where('status', '==', 'published')
+    );
+
+    // Query 3: Admin announcements for gn_officers audience (visible to all)
+    const adminGnQuery = query(
+      collection(db, 'announcements'),
+      where('category', '==', 'gn_officers'),
+      where('status', '==', 'published')
+    );
+
+    const queries = [
+      gnQuery ? Promise.race([getDocs(gnQuery), timeout]) : Promise.resolve({ docs: [] }),
+      Promise.race([getDocs(adminAllQuery), timeout]),
+      Promise.race([getDocs(adminGnQuery), timeout]),
+    ];
+
+    const [gnSnap, adminAllSnap, adminGnSnap] = await Promise.all(queries);
+
+    const allDocs = [
+      ...gnSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      ...adminAllSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      ...adminGnSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+    ];
+
+    // Deduplicate by id
+    const seen = new Set();
+    const unique = allDocs
+      .filter(a => { if (seen.has(a.id)) return false; seen.add(a.id); return true; })
+      .sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0))
+      .slice(0, 5);
+
+    if (unique.length > 0) {
+      setAnnouncements(unique.map(d => ({
+        id: d.id,
+        title: d.title || 'Announcement',
+        body: d.description || d.body || '',
+        date: d.createdAt?.toDate?.().toISOString().split('T')[0] || '',
+      })));
+    } else {
+      setAnnouncements(defaultAnnouncements);
     }
-  };
+  } catch (e) {
+    console.error('Error fetching announcements:', e);
+    showToast('Failed to load announcements', 'error');
+  } finally {
+    setLoadingAnnouncements(false);
+    setRefreshingAnnouncements(false);
+  }
+};
 
   // Auth listener
   useEffect(() => {
@@ -354,7 +401,9 @@ const Dashboard = () => {
 
   // Load data on mount
   useEffect(() => { if (currentUser) fetchAppointments(false); }, [currentUser]);
-  useEffect(() => { fetchAnnouncements(false); }, []);
+  useEffect(() => { 
+  if (userData !== null) fetchAnnouncements(false); 
+}, [userData]);
 
   const handleLogout = async () => { 
     try { 
