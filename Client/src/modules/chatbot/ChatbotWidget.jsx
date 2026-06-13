@@ -253,24 +253,44 @@ const ChatbotWidget = () => {
 
   return (
     <>
-      {/* Floating Widget Button */}
-      <div className="chatbot-widget-btn" onClick={toggleChat}>
-        <img src="/logo.png" alt="Smart Grama Sewa Logo" className="chatbot-logo-img" />
+      {/* Floating Widget Button — Pill Badge */}
+      <div className="chatbot-widget-btn" onClick={toggleChat} role="button" aria-label="Open AI Assistant">
+        {/* Notification dot */}
+        <span className="chatbot-notif-dot" />
+        {/* Icon */}
+        <div className="chatbot-btn-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="22" height="22">
+            <path d="M12 3C8.7 3 6 5.4 6 8.4c0 1.6.7 3 1.8 4L7 15l3.2-.9c.6.2 1.2.3 1.8.3 3.3 0 6-2.4 6-5.4C18 5.7 15.3 3 12 3z"
+              fill="rgba(255,255,255,0.25)" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+            <circle cx="9.5" cy="8.5" r="0.95" fill="white"/>
+            <circle cx="12" cy="8.5" r="0.95" fill="white"/>
+            <circle cx="14.5" cy="8.5" r="0.95" fill="white"/>
+          </svg>
+        </div>
+        {/* Label */}
+        <span className="chatbot-btn-label">AI Assistant</span>
+        {/* Pulse ring */}
+        <span className="chatbot-btn-pulse" />
       </div>
 
       <div className={`chat-container ${isOpen ? '' : 'chat-hidden'}`}>
         <header className="chat-header">
           <div className="chat-avatar">
-            <img src="/logo.png" alt="Smart Grama Sewa Logo" className="chatbot-logo-img" />
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="22" height="22">
+              <path d="M12 3C8.7 3 6 5.4 6 8.4c0 1.6.7 3 1.8 4L7 15l3.2-.9c.6.2 1.2.3 1.8.3 3.3 0 6-2.4 6-5.4C18 5.7 15.3 3 12 3z" fill="rgba(255,255,255,0.3)" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="9.5" cy="8.5" r="0.9" fill="white"/>
+              <circle cx="12" cy="8.5" r="0.9" fill="white"/>
+              <circle cx="14.5" cy="8.5" r="0.9" fill="white"/>
+            </svg>
           </div>
-          <div style={{ flex: 1 }}>
+          <div className="chat-header-info">
             <h1>{language ? UI_TEXT[language].header : "Smart Grama Sewa"}</h1>
             <p className="chat-status">{language ? UI_TEXT[language].online : "Online"}</p>
           </div>
-          <button className="chat-close-btn" onClick={toggleChat}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
+          <button className="chat-close-btn" onClick={toggleChat} aria-label="Close chat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
         </header>
