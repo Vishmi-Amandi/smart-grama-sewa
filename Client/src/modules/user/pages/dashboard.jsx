@@ -17,9 +17,9 @@ const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
 const IC = {
   dashboard:    'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10',
   announcement: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
-  appointments: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
+  appointments: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2 M9 5a2 2 0 002 2h2a2 2 0 002-2 M9 5a2 2 0 012-2h2a2 2 0 012 2',
   forms:        'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
-  ai:           'M12 2a10 10 0 100 20A10 10 0 0012 2z M12 8v4l3 3',
+  ai:           'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
   profile:      'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8z',
   settings:     'M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z',
   logout:       'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4 M16 17l5-5-5-5 M21 12H9',
@@ -335,15 +335,23 @@ const Dashboard = () => {
           if (snap.exists()) {
             const data = snap.data();
             setUserData(data);
+            
             if (data.gnDiv) {
               try {
-                const gnSnap = await getDoc(doc(db, 'gnOfficers', data.gnDiv));
-                if (gnSnap.exists()) setGnOfficer(gnSnap.data());
-                else if (data.dsDiv) {
-                  const dsSnap = await getDoc(doc(db, 'gnOfficers', data.dsDiv));
-                  if (dsSnap.exists()) setGnOfficer(dsSnap.data());
+                // Query by gnDiv field (which matches your GN officer document)
+                const q = query(collection(db, 'gn_officers'), where('gnDiv', '==', data.gnDiv));
+                const querySnap = await getDocs(q);
+                
+                if (!querySnap.empty) {
+                  const gnData = querySnap.docs[0].data();
+                  console.log("✅ Found GN Officer:", gnData.fullName, "Status:", gnData.availability);
+                  setGnOfficer(gnData);
+                } else {
+                  console.log("❌ No GN officer found for division:", data.gnDiv);
                 }
-              } catch (e) { console.warn('GN officer:', e.message); }
+              } catch (e) { 
+                console.warn('GN officer fetch error:', e.message);
+              }
             }
           }
         } catch (e) { console.warn('User profile:', e.message); }
@@ -402,8 +410,7 @@ const Dashboard = () => {
   const fullName = userData?.fullName || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User';
   const firstName = fullName.split(' ')[0];
   const chipName = userData?.username || fullName;
-  const gnName = gnOfficer?.name || `GN Officer (${userData?.gnDiv || 'N/A'})`;
-  const gnAvailable = gnOfficer?.available ?? true;
+  const gnName = gnOfficer?.fullName || gnOfficer?.name || `GN Officer (${userData?.gnDiv || 'N/A'})`;  const gnAvailable = gnOfficer?.available ?? true;
   const gnDivLabel = userData?.gnDiv || userData?.dsDiv || '';
   const greeting = getTimeBasedGreeting();
 
@@ -694,11 +701,26 @@ const Dashboard = () => {
                 <div className="text-base md:text-base font-black text-user-text">{gnName}</div>
                 {gnDivLabel && <div className="text-[11px] font-semibold text-user-text-lighter">{gnDivLabel}</div>}
                 <div className="flex items-center gap-1.5 mt-1">
-                  <span className={`text-sm font-bold ${gnAvailable ? 'text-user-success' : 'text-user-error'}`}>
-                    {gnAvailable ? 'Available' : 'Unavailable'}
+                  <span className={`text-sm font-bold ${
+                    gnOfficer?.availability === 'Available' ? 'text-green-600' :
+                    gnOfficer?.availability === 'In Meeting' ? 'text-orange-500' :
+                    gnOfficer?.availability === 'On Field' ? 'text-red-600' : 'text-gray-500'
+                  }`}>
+                    {gnOfficer?.availability || 'Available'}
                   </span>
-                  <div className={`w-2 h-2 rounded-full ${gnAvailable ? 'bg-user-success' : 'bg-user-error'} animate-pulse-gn`} />
+                  <div className={`w-2 h-2 rounded-full ${
+                    gnOfficer?.availability === 'Available' ? 'bg-green-500' :
+                    gnOfficer?.availability === 'In Meeting' ? 'bg-orange-500' :
+                    gnOfficer?.availability === 'On Field' ? 'bg-red-500' : 'bg-gray-400'
+                  } animate-pulse-gn`} />
                 </div>
+                {/* Optional: Add status message */}
+                {gnOfficer?.availability === 'In Meeting' && (
+                  <div className="text-[10px] text-orange-500 mt-1">Currently in a meeting</div>
+                )}
+                {gnOfficer?.availability === 'On Field' && (
+                  <div className="text-[10px] text-red-500 mt-1">Out on field duty</div>
+                )}
               </div>
             </div>
 
@@ -782,17 +804,33 @@ const Dashboard = () => {
               </div>
 
               {/* GN Officer card */}
-              <div className="bg-user-surface border border-user-border rounded-xl p-3.5 mb-5 flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-bold text-user-text-lighter mb-0.5">GN officer</div>
-                  <div className="text-base font-black text-user-text">{gnName}</div>
+              <div className="bg-user-surface border border-user-border rounded-xl p-3.5 mb-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold text-user-text-lighter mb-0.5">GN officer</div>
+                    <div className="text-base font-black text-user-text">{gnName}</div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-sm font-bold ${
+                      gnOfficer?.availability === 'Available' ? 'text-green-600' :
+                      gnOfficer?.availability === 'In Meeting' ? 'text-orange-500' :
+                      gnOfficer?.availability === 'On Field' ? 'text-red-600' : 'text-gray-500'
+                    }`}>
+                      {gnOfficer?.availability || 'Available'}
+                    </span>
+                    <div className={`w-2 h-2 rounded-full ${
+                      gnOfficer?.availability === 'Available' ? 'bg-green-500' :
+                      gnOfficer?.availability === 'In Meeting' ? 'bg-orange-500' :
+                      gnOfficer?.availability === 'On Field' ? 'bg-red-500' : 'bg-gray-400'
+                    } flex-shrink-0`} />
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className={`text-sm font-bold ${gnAvailable ? 'text-user-success' : 'text-user-error'}`}>
-                    {gnAvailable ? 'Available' : 'Unavailable'}
-                  </span>
-                  <div className={`w-2 h-2 rounded-full ${gnAvailable ? 'bg-user-success' : 'bg-user-error'} flex-shrink-0`} />
-                </div>
+                {gnOfficer?.availability === 'In Meeting' && (
+                  <div className="text-[10px] text-orange-500 mt-2">Currently in a meeting</div>
+                )}
+                {gnOfficer?.availability === 'On Field' && (
+                  <div className="text-[10px] text-red-500 mt-2">Out on field duty</div>
+                )}
               </div>
 
               {/* Quick Actions */}
