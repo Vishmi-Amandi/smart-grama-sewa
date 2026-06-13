@@ -5,6 +5,7 @@ import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from '
 import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
+import NotificationBell from '../components/NotificationBell';
 
 // Icons 
 const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
@@ -614,10 +615,7 @@ const Dashboard = () => {
               currentLanguage={currentLanguage} 
               onLanguageChange={handleLanguageChange}
             />
-            <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
-              <Icon d={IC.bell} size={18} color="#5a3a00" />
-              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
-            </div>
+            <NotificationBell />
 
             <div className="relative">
               <button 
@@ -666,10 +664,7 @@ const Dashboard = () => {
               <img src="/logo2.png" alt="Smart Grama Sewa" className="h-10 w-auto" />
             </div>
             <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={handleLanguageChange} />
-            <div className="w-9 h-9 flex items-center justify-center relative">
-              <Icon d={IC.bell} size={22} color="#1e1200" />
-              <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
-            </div>
+            <NotificationBell />
             <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
               <Icon d={IC.profile} size={20} color="#3d2a00" />
             </div>
@@ -708,11 +703,12 @@ const Dashboard = () => {
                 <Icon d={IC.bolt} size={16} color="#B46A02" />
                 Quick Actions
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                 <QuickCard iconPath={IC.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} tooltip="Schedule a meeting with GN officer" />
                 <QuickCard iconPath={IC.download} label="Download Forms" onClick={() => navigate('/forms')} tooltip="Download application forms" />
                 <QuickCard iconPath={IC.ai} label="AI Assistant" onClick={() => window.openChatbot?.()} tooltip="Get help from our AI assistant" />
                 <QuickCard iconPath={IC.phone} label="Contact GN" onClick={() => navigate('/contact-gn')} tooltip="Contact your GN officer" />
+                <QuickCard iconPath={IC.phone} label="🚨 Hotline" onClick={() => { const num = gnOfficer?.emergencyContact?.replace(/[^0-9+]/g, '') || '+94712345678'; window.location.href = `tel:${num}`; }} tooltip="Call emergency hotline" />
               </div>
             </div>
 
@@ -804,6 +800,7 @@ const Dashboard = () => {
                     { icon: IC.download, label: 'Download Forms', action: () => navigate('/forms') },
                     { icon: IC.ai, label: 'AI Assistant', action: () => window.openChatbot?.() },
                     { icon: IC.phone, label: 'Contact GN', action: () => navigate('/contact-gn') },
+                    { icon: IC.phone, label: '🚨 Hotline', action: () => { const num = gnOfficer?.emergencyContact?.replace(/[^0-9+]/g, '') || '+94712345678'; window.location.href = `tel:${num}`; } },
                   ].map((item, i) => (
                     <button key={i} onClick={item.action} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white border border-user-border text-xs font-bold text-user-text cursor-pointer shadow-sm transition-all hover:border-user-primary hover:bg-user-primary-light min-h-[85px]">
                       <Icon d={item.icon} size={22} color="#B46A02" />
