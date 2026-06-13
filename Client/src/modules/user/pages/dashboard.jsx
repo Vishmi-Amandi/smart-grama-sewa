@@ -335,15 +335,23 @@ const Dashboard = () => {
           if (snap.exists()) {
             const data = snap.data();
             setUserData(data);
+            
             if (data.gnDiv) {
               try {
-                const gnSnap = await getDoc(doc(db, 'gnOfficers', data.gnDiv));
-                if (gnSnap.exists()) setGnOfficer(gnSnap.data());
-                else if (data.dsDiv) {
-                  const dsSnap = await getDoc(doc(db, 'gnOfficers', data.dsDiv));
-                  if (dsSnap.exists()) setGnOfficer(dsSnap.data());
+                // Query by gnDiv field (which matches your GN officer document)
+                const q = query(collection(db, 'gn_officers'), where('gnDiv', '==', data.gnDiv));
+                const querySnap = await getDocs(q);
+                
+                if (!querySnap.empty) {
+                  const gnData = querySnap.docs[0].data();
+                  console.log("✅ Found GN Officer:", gnData.fullName, "Status:", gnData.availability);
+                  setGnOfficer(gnData);
+                } else {
+                  console.log("❌ No GN officer found for division:", data.gnDiv);
                 }
-              } catch (e) { console.warn('GN officer:', e.message); }
+              } catch (e) { 
+                console.warn('GN officer fetch error:', e.message);
+              }
             }
           }
         } catch (e) { console.warn('User profile:', e.message); }
@@ -402,8 +410,7 @@ const Dashboard = () => {
   const fullName = userData?.fullName || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User';
   const firstName = fullName.split(' ')[0];
   const chipName = userData?.username || fullName;
-  const gnName = gnOfficer?.name || `GN Officer (${userData?.gnDiv || 'N/A'})`;
-  const gnAvailable = gnOfficer?.available ?? true;
+  const gnName = gnOfficer?.fullName || gnOfficer?.name || `GN Officer (${userData?.gnDiv || 'N/A'})`;  const gnAvailable = gnOfficer?.available ?? true;
   const gnDivLabel = userData?.gnDiv || userData?.dsDiv || '';
   const greeting = getTimeBasedGreeting();
 
@@ -694,11 +701,26 @@ const Dashboard = () => {
                 <div className="text-base md:text-base font-black text-user-text">{gnName}</div>
                 {gnDivLabel && <div className="text-[11px] font-semibold text-user-text-lighter">{gnDivLabel}</div>}
                 <div className="flex items-center gap-1.5 mt-1">
-                  <span className={`text-sm font-bold ${gnAvailable ? 'text-user-success' : 'text-user-error'}`}>
-                    {gnAvailable ? 'Available' : 'Unavailable'}
+                  <span className={`text-sm font-bold ${
+                    gnOfficer?.availability === 'Available' ? 'text-green-600' :
+                    gnOfficer?.availability === 'In Meeting' ? 'text-orange-500' :
+                    gnOfficer?.availability === 'On Field' ? 'text-red-600' : 'text-gray-500'
+                  }`}>
+                    {gnOfficer?.availability || 'Available'}
                   </span>
-                  <div className={`w-2 h-2 rounded-full ${gnAvailable ? 'bg-user-success' : 'bg-user-error'} animate-pulse-gn`} />
+                  <div className={`w-2 h-2 rounded-full ${
+                    gnOfficer?.availability === 'Available' ? 'bg-green-500' :
+                    gnOfficer?.availability === 'In Meeting' ? 'bg-orange-500' :
+                    gnOfficer?.availability === 'On Field' ? 'bg-red-500' : 'bg-gray-400'
+                  } animate-pulse-gn`} />
                 </div>
+                {/* Optional: Add status message */}
+                {gnOfficer?.availability === 'In Meeting' && (
+                  <div className="text-[10px] text-orange-500 mt-1">Currently in a meeting</div>
+                )}
+                {gnOfficer?.availability === 'On Field' && (
+                  <div className="text-[10px] text-red-500 mt-1">Out on field duty</div>
+                )}
               </div>
             </div>
 
@@ -782,17 +804,33 @@ const Dashboard = () => {
               </div>
 
               {/* GN Officer card */}
-              <div className="bg-user-surface border border-user-border rounded-xl p-3.5 mb-5 flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-bold text-user-text-lighter mb-0.5">GN officer</div>
-                  <div className="text-base font-black text-user-text">{gnName}</div>
+              <div className="bg-user-surface border border-user-border rounded-xl p-3.5 mb-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold text-user-text-lighter mb-0.5">GN officer</div>
+                    <div className="text-base font-black text-user-text">{gnName}</div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-sm font-bold ${
+                      gnOfficer?.availability === 'Available' ? 'text-green-600' :
+                      gnOfficer?.availability === 'In Meeting' ? 'text-orange-500' :
+                      gnOfficer?.availability === 'On Field' ? 'text-red-600' : 'text-gray-500'
+                    }`}>
+                      {gnOfficer?.availability || 'Available'}
+                    </span>
+                    <div className={`w-2 h-2 rounded-full ${
+                      gnOfficer?.availability === 'Available' ? 'bg-green-500' :
+                      gnOfficer?.availability === 'In Meeting' ? 'bg-orange-500' :
+                      gnOfficer?.availability === 'On Field' ? 'bg-red-500' : 'bg-gray-400'
+                    } flex-shrink-0`} />
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className={`text-sm font-bold ${gnAvailable ? 'text-user-success' : 'text-user-error'}`}>
-                    {gnAvailable ? 'Available' : 'Unavailable'}
-                  </span>
-                  <div className={`w-2 h-2 rounded-full ${gnAvailable ? 'bg-user-success' : 'bg-user-error'} flex-shrink-0`} />
-                </div>
+                {gnOfficer?.availability === 'In Meeting' && (
+                  <div className="text-[10px] text-orange-500 mt-2">Currently in a meeting</div>
+                )}
+                {gnOfficer?.availability === 'On Field' && (
+                  <div className="text-[10px] text-red-500 mt-2">Out on field duty</div>
+                )}
               </div>
 
               {/* Quick Actions */}

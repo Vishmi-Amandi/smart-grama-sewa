@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { UserCheck, CalendarDays, Map, RefreshCw, Clock } from "lucide-react";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { auth, db } from "../../firebase";
 
 const GNCurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
   const [selected, setSelected] = useState(gnStatus);
+  const [updating, setUpdating] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
   const t = getThemeClasses(theme);
 
   const statuses = [
@@ -12,6 +16,64 @@ const GNCurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
     { label: "On Field", icon: <Map size={24} />, color: "text-red-600", selectedBorder: "border-red-500", selectedBg: theme === "dark" ? "bg-red-900" : "bg-red-50" },
   ];
 
+  // Fetch current status from Firestore when component loads
+  useEffect(() => {
+    const fetchCurrentStatus = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+      
+      try {
+        const docRef = doc(db, "gn_officers", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const savedStatus = data.availability || "Available";
+          setSelected(savedStatus);
+          setGnStatus(savedStatus);
+          if (data.availabilityUpdatedAt) {
+            setLastUpdated(data.availabilityUpdatedAt);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching status:", err);
+      }
+    };
+    
+    fetchCurrentStatus();
+  }, []);
+
+  const updateStatus = async () => {
+    setUpdating(true);
+    const user = auth.currentUser;
+    
+    try {
+      await updateDoc(doc(db, "gn_officers", user.uid), {
+        availability: selected,
+        availabilityUpdatedAt: new Date().toISOString(),
+        // Also update boolean for backwards compatibility
+        available: selected === "Available",
+      });
+      
+      setGnStatus(selected);
+      setLastUpdated(new Date().toISOString());
+      
+      // Show success feedback (optional)
+      alert(`Status updated to: ${selected}`);
+    } catch (err) {
+      console.error("Error updating status:", err);
+      alert("Failed to update status. Please try again.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Format last updated time
+  const getLastUpdatedText = () => {
+    if (!lastUpdated) return "Not updated yet";
+    const date = new Date(lastUpdated);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  
   return (
     <GNLayout gnStatus={gnStatus} theme={theme}>
 
@@ -78,13 +140,15 @@ const GNCurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
               <p className={`text-[10px] sm:text-xs flex items-center justify-center gap-1 text-center ${t.subtext}`}>
                 <Clock size={12} />
-                Last Updated: 10:30 AM
+                Last Updated: {getLastUpdatedText()}
               </p>
               <button
-                onClick={() => setGnStatus(selected)}
+                onClick={updateStatus}
+                disabled={updating}
+         
                 className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-6 py-2 rounded-xl flex items-center justify-center gap-2 transition">
-                <RefreshCw size={16} />
-                Update Current Status
+                <RefreshCw size={16}  className={updating ? "animate-spin" : ""}/>
+                {updating ? "Updating..." : "Update Current Status"}
               </button>
             </div>
 
