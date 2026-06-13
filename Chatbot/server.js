@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const translate = require('google-translate-api-x');
 const { getChatbotResponse } = require('./utils/chatbotLogic');
-const { registerUser, saveChatInteraction, getChatHistory } = require('./utils/firebaseDB');
+const { registerUser, saveChatInteraction, getChatHistory, saveAnnouncement, subscribeToTopic, unsubscribeFromTopic, sendAnnouncementNotification } = require('./utils/firebaseDB');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -89,6 +89,70 @@ app.get('/api/chat/history/:userId', async (req, res) => {
   } catch (error) {
     console.error("Error retrieving chat history:", error);
     res.status(500).json({ error: 'Internal server error while retrieving history.' });
+  }
+});
+
+// =============================================
+// NOTIFICATION MODULE ENDPOINTS
+// =============================================
+
+// Trigger FCM push notification for a published announcement
+app.post('/api/announcements/notify', async (req, res) => {
+  const { gnDiv, title, description, priority, announcementId } = req.body;
+
+  if (!gnDiv || !title) {
+    return res.status(400).json({ error: 'gnDiv and title are required.' });
+  }
+
+  try {
+    const result = await sendAnnouncementNotification(gnDiv, {
+      id: announcementId || '',
+      title,
+      description: description || '',
+      priority: priority || 'Normal',
+    });
+    res.status(200).json({ success: true, result: result || 'No subscribers yet' });
+  } catch (error) {
+    console.error('Error sending announcement notification:', error);
+    res.status(500).json({ error: 'Failed to send notification.' });
+  }
+});
+
+// Subscribe a device token to a GN division topic
+app.post('/api/notifications/subscribe', async (req, res) => {
+  const { token, gnDiv } = req.body;
+
+  if (!token || !gnDiv) {
+    return res.status(400).json({ error: 'token and gnDiv are required.' });
+  }
+
+  const topic = `gn_division_${gnDiv.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+
+  try {
+    const result = await subscribeToTopic(token, topic);
+    res.status(200).json({ success: true, topic, result });
+  } catch (error) {
+    console.error('Error subscribing to topic:', error);
+    res.status(500).json({ error: 'Failed to subscribe to topic.' });
+  }
+});
+
+// Unsubscribe a device token from a GN division topic
+app.post('/api/notifications/unsubscribe', async (req, res) => {
+  const { token, gnDiv } = req.body;
+
+  if (!token || !gnDiv) {
+    return res.status(400).json({ error: 'token and gnDiv are required.' });
+  }
+
+  const topic = `gn_division_${gnDiv.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+
+  try {
+    const result = await unsubscribeFromTopic(token, topic);
+    res.status(200).json({ success: true, topic, result });
+  } catch (error) {
+    console.error('Error unsubscribing from topic:', error);
+    res.status(500).json({ error: 'Failed to unsubscribe from topic.' });
   }
 });
 
