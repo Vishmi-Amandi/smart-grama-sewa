@@ -5,6 +5,7 @@ import { collection, query, orderBy, getDocs, doc, updateDoc, arrayUnion, getDoc
 import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton, AnnouncementsListSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
+import NotificationBell from '../components/NotificationBell';
 
 // Icons
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
@@ -188,10 +189,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
       onLanguageChange={onLanguageChange}
     />
     
-    <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
-      <Icon d={IC.bell} size={18} color="#5a3a00" />
-      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
-    </div>
+    <NotificationBell />
     
     {/* Profile Dropdown */}
     <div className="relative">
@@ -721,10 +719,7 @@ const Announcements = () => {
               <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
             </div>
             <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={handleLanguageChange} />
-            <div className="w-9 h-9 flex items-center justify-center relative">
-              <Icon d={IC.bell} size={22} color="#1e1200" />
-              <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
-            </div>
+            <NotificationBell />
             <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
               <Icon d={IC.profile} size={20} color="#3d2a00" />
             </div>
