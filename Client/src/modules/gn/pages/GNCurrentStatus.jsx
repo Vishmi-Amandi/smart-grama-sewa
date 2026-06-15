@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
-import { UserCheck, CalendarDays, Map, RefreshCw, Clock } from "lucide-react";
+import { UserCheck, CalendarDays, Map, RefreshCw, Clock, XCircle } from "lucide-react";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
@@ -14,6 +14,7 @@ const GNCurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
     { label: "Available", icon: <UserCheck size={24} />, color: "text-green-600", selectedBorder: "border-green-500", selectedBg: theme === "dark" ? "bg-green-900" : "bg-green-50" },
     { label: "In Meeting", icon: <CalendarDays size={24} />, color: "text-orange-500", selectedBorder: "border-orange-500", selectedBg: theme === "dark" ? "bg-orange-900" : "bg-orange-50" },
     { label: "On Field", icon: <Map size={24} />, color: "text-red-600", selectedBorder: "border-red-500", selectedBg: theme === "dark" ? "bg-red-900" : "bg-red-50" },
+    { label: "Not Available", icon: <XCircle size={24} />, color: "text-gray-500", selectedBorder: "border-gray-500", selectedBg: theme === "dark" ? "bg-gray-800" : "bg-gray-100" },
   ];
 
   // Fetch current status from Firestore when component loads

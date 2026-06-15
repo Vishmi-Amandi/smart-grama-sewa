@@ -699,17 +699,19 @@ const Dashboard = () => {
                   <span className={`text-sm font-bold ${
                     gnOfficer?.availability === 'Available' ? 'text-green-600' :
                     gnOfficer?.availability === 'In Meeting' ? 'text-orange-500' :
-                    gnOfficer?.availability === 'On Field' ? 'text-red-600' : 'text-gray-500'
+                    gnOfficer?.availability === 'On Field' ? 'text-red-600' :
+                    gnOfficer?.availability === 'Not Available' ? 'text-gray-500' : 'text-gray-500'
                   }`}>
                     {gnOfficer?.availability || 'Available'}
                   </span>
                   <div className={`w-2 h-2 rounded-full ${
                     gnOfficer?.availability === 'Available' ? 'bg-green-500' :
                     gnOfficer?.availability === 'In Meeting' ? 'bg-orange-500' :
-                    gnOfficer?.availability === 'On Field' ? 'bg-red-500' : 'bg-gray-400'
+                    gnOfficer?.availability === 'On Field' ? 'bg-red-500' :
+                    gnOfficer?.availability === 'Not Available' ? 'bg-gray-400' : 'bg-gray-400'
                   } animate-pulse-gn`} />
                 </div>
-                {/* Optional: Add status message */}
+                {/* Add status message */}
                 {gnOfficer?.availability === 'In Meeting' && (
                   <div className="text-[10px] text-orange-500 mt-1">Currently in a meeting</div>
                 )}
