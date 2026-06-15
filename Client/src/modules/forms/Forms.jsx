@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
@@ -2047,6 +2047,7 @@ const Forms = () => {
   const [selectedForm, setSelectedForm] = useState(null);
   const [formInputs, setFormInputs] = useState({});
   const [toast, setToast] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const tabs = ['All', 'Certificates', 'Applications', 'Recommendations'];
 
@@ -2063,6 +2064,22 @@ const Forms = () => {
     { id: 10, title: "Business Registration Recommendation", cat: "Recommendations", imgSrc: "/icons/business.png", desc: "GN approval for new business starts" },
     { id: 11, title: "Assessments for Ownership of Lands", cat: "Certificates", imgSrc: "/icons/land.png", desc: "Verify land ownership and boundaries" },
   ];
+
+  useEffect(() => {
+    const selectId = searchParams.get('select');
+    if (selectId) {
+      const formId = parseInt(selectId, 10);
+      const matchedForm = formList.find(f => f.id === formId);
+      if (matchedForm) {
+        setSelectedForm(matchedForm);
+        setFormInputs({});
+        // Clean up URL select param
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('select');
+        setSearchParams(newParams, { replace: true });
+      }
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);

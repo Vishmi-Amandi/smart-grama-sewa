@@ -56,6 +56,7 @@ const NotificationBell = () => {
   const [emergencyContact, setEmergencyContact] = useState('+94 71 234 5678');
   const dropdownRef = useRef(null);
   const prevCountRef = useRef(0);
+  const isFirstLoadRef = useRef(true);
 
   // Auth listener
   useEffect(() => {
@@ -97,6 +98,8 @@ const NotificationBell = () => {
   useEffect(() => {
     if (!userData?.gnDiv) return;
 
+    isFirstLoadRef.current = true;
+
     const q = query(
       collection(db, 'announcements'),
       orderBy('createdAt', 'desc'),
@@ -132,13 +135,16 @@ const NotificationBell = () => {
           };
         });
 
-      // Detect new notifications (shake bell)
-      const unreadCount = items.filter(n => !readIds.has(n.id)).length;
-      if (unreadCount > prevCountRef.current && prevCountRef.current >= 0) {
-        setShaking(true);
-        setTimeout(() => setShaking(false), 700);
+      // Detect new notifications (shake bell) on additions after first load
+      if (!isFirstLoadRef.current) {
+        const hasNewAdditions = snapshot.docChanges().some(change => change.type === 'added');
+        if (hasNewAdditions) {
+          setShaking(true);
+          setTimeout(() => setShaking(false), 700);
+        }
+      } else {
+        isFirstLoadRef.current = false;
       }
-      prevCountRef.current = unreadCount;
 
       setNotifications(items);
     }, (error) => {
@@ -146,7 +152,7 @@ const NotificationBell = () => {
     });
 
     return () => unsub();
-  }, [userData?.gnDiv, readIds]);
+  }, [userData?.gnDiv]);
 
   // Initialize FCM and listen for foreground messages
   useEffect(() => {
