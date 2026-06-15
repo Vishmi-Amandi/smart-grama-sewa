@@ -23,7 +23,7 @@ const GNCurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
     try {
       const user = auth.currentUser;
       if (user) {
-        await updateDoc(doc(db, "gn_officers", user.uid), { status: selected });
+        await updateDoc(doc(db, "gn_officers", user.uid), { availability: selected });
       }
       setGnStatus(selected);
       setLastUpdated(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
