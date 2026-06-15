@@ -123,7 +123,7 @@ const GNForgotPassword = () => {
                 {loading ? "Verifying..." : "Send Reset Link"}
               </button>
 
-              <button onClick={() => navigate("/gn-login")}
+              <button onClick={() => navigate("/login")}
                 className="w-full text-center text-[#fdf0dc] text-xs sm:text-sm font-semibold hover:text-white transition">
                 ← Back to Sign In
               </button>

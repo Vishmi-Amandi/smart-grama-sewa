@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
+import NotificationBell from '../components/NotificationBell';
 
 // Icons
 const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
@@ -14,7 +15,7 @@ const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
   </svg>
 );
 
-const Icons = {
+const IC = {
   dashboard: 'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10',
   announcement: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
   appointments: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
@@ -33,13 +34,17 @@ const Icons = {
   location: 'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z M12 10a1 1 0 100-2 1 1 0 000 2z',
   clock: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0',
   mail: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6',
+  checkCircle: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+  copy: 'M8 4v12a2 2 0 002 2h8M16 4v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2z',
+  alertCircle: 'M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z',
+  refresh: 'M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15',
 };
 
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
-      ? 'bg-white/90 dark:bg-user-primary text-user-text font-extrabold shadow-md' 
-      : 'bg-transparent text-user-text font-semibold hover:bg-white/40 dark:hover:bg-white/10'
+      ? 'bg-user-background text-white font-extrabold shadow-md' 
+      : 'bg-transparent text-gray-700 font-semibold hover:bg-yellow-100'
   }`}
     style={{ color: active ? '#B46A02' : '#5a3a00' }}
   >
@@ -50,13 +55,13 @@ const NavItem = ({ iconPath, label, active, onClick }) => (
 
 const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate }) => {
   const PAGE_ACTIONS = [
-    { name: 'Dashboard', path: '/dashboard', icon: Icons.dashboard },
-    { name: 'Announcements', path: '/announcements', icon: Icons.announcement },
-    { name: 'Appointments', path: '/appointments', icon: Icons.appointments },
-    { name: 'Forms', path: '/forms', icon: Icons.forms },
-    { name: 'AI Assistant', path: '/ai', icon: Icons.ai },
-    { name: 'Profile', path: '/profile', icon: Icons.profile },
-    { name: 'Settings', path: '/settings', icon: Icons.settings },
+    { name: 'Dashboard', path: '/dashboard', icon: IC.dashboard },
+    { name: 'Announcements', path: '/announcements', icon: IC.announcement },
+    { name: 'Appointments', path: '/appointments', icon: IC.appointments },
+    { name: 'Forms', path: '/forms', icon: IC.forms },
+    { name: 'AI Assistant', path: null, icon: IC.ai },
+    { name: 'Profile', path: '/profile', icon: IC.profile },
+    { name: 'Settings', path: '/settings', icon: IC.settings },
   ];
   
   const [filteredPages, setFilteredPages] = useState([]);
@@ -81,6 +86,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
         <button
           key={page.path}
           onClick={() => {
+            if (page.path === null) { window.openChatbot?.(); setShowResults(false); return; }
             navigate(page.path);
             setShowResults(false);
           }}
@@ -110,6 +116,7 @@ const ContactGN = () => {
   const [gnOfficer, setGnOfficer] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const handle = () => setIsMobile(window.innerWidth <= 768);
@@ -128,6 +135,41 @@ const ContactGN = () => {
     console.log('Language changed to:', langCode);
   };
 
+  const fetchGNOfficer = async (gnDivision) => {
+    if (!gnDivision) {
+      console.log("No GN division provided");
+      setGnOfficer(null);
+      return;
+    }
+    
+    try {
+      console.log("Searching for GN officer in division:", gnDivision);
+      
+      const q = query(collection(db, 'gn_officers'), where('gnDiv', '==', gnDivision));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const gnData = querySnapshot.docs[0].data();
+        console.log("Found GN officer:", gnData.fullName);
+        setGnOfficer(gnData);
+      } else {
+        console.log("No GN officer found for division:", gnDivision);
+        setGnOfficer(null);
+      }
+    } catch (error) {
+      console.error('Error fetching GN officer:', error);
+      setGnOfficer(null);
+    }
+  };
+
+  const refreshGNOfficer = async () => {
+    setRefreshing(true);
+    if (userData?.gnDiv) {
+      await fetchGNOfficer(userData.gnDiv);
+    }
+    setRefreshing(false);
+  };
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -137,7 +179,7 @@ const ContactGN = () => {
           if (userSnap.exists()) {
             const data = userSnap.data();
             setUserData(data);
-            await fetchGNOfficer(data.gnDiv || data.dsDiv);
+            await fetchGNOfficer(data.gnDiv || data.divisionalSecretariat);
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -150,38 +192,19 @@ const ContactGN = () => {
     return () => unsub();
   }, [navigate]);
 
-  const fetchGNOfficer = async (gnDivision) => {
-    if (!gnDivision) {
-      setGnOfficer(null);
-      return;
-    }
-    try {
-      const gnDoc = await getDoc(doc(db, 'gnOfficers', gnDivision));
-      if (gnDoc.exists()) {
-        setGnOfficer(gnDoc.data());
-      } else {
-        const q = query(collection(db, 'users'), where('role', '==', 'gnOfficer'), where('gnDiv', '==', gnDivision));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          setGnOfficer(querySnapshot.docs[0].data());
-        } else {
-          setGnOfficer({
-            name: 'Grama Niladhari Officer',
-            designation: 'Grama Niladhari',
-            mobile: '+94 77 123 4567',
-            officePhone: '+94 11 234 5678',
-            email: 'gn@gramasewa.gov.lk',
-            officeHours: '9:00 AM - 4:00 PM (Monday - Friday)',
-            officeAddress: 'Grama Niladhari Office, Divisional Secretariat',
-            emergencyContact: '+94 71 234 5678',
-            available: true,
-          });
-        }
+  useEffect(() => {
+    if (!userData?.gnDiv) return;
+    
+    const q = query(collection(db, 'gn_officers'), where('gnDiv', '==', userData.gnDiv));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        setGnOfficer(snapshot.docs[0].data());
       }
-    } catch (error) {
-      console.error('Error fetching GN officer:', error);
-    }
-  };
+    });
+    
+    return () => unsubscribe();
+  }, [userData?.gnDiv]); 
 
   const handleLogout = async () => {
     try {
@@ -193,32 +216,37 @@ const ContactGN = () => {
   };
 
   const handleCall = () => {
-    const number = gnOfficer?.mobile?.replace(/[^0-9+]/g, '');
-    if (number) window.location.href = `tel:${number}`;
+    const number = gnOfficer?.officeMobile || gnOfficer?.mobile;
+    if (number) {
+      const cleanNumber = number.replace(/[^0-9+]/g, '');
+      window.location.href = `tel:${cleanNumber}`;
+    }
   };
 
   const handleEmail = () => {
-    if (gnOfficer?.email) window.location.href = `mailto:${gnOfficer.email}`;
+    const email = gnOfficer?.officialEmail || gnOfficer?.email;
+    if (email) window.location.href = `mailto:${email}`;
   };
 
   const handleCopyMobile = () => {
-    if (gnOfficer?.mobile) {
-      navigator.clipboard.writeText(gnOfficer.mobile);
+    const number = gnOfficer?.officeMobile || gnOfficer?.mobile;
+    if (number) {
+      navigator.clipboard.writeText(number);
       alert('Mobile number copied!');
     }
   };
 
   const navItems = [
-    { key: 'dashboard', icon: Icons.dashboard, label: 'Dashboard', path: '/dashboard' },
-    { key: 'announcements', icon: Icons.announcement, label: 'Announcements', path: '/announcements' },
-    { key: 'appointments', icon: Icons.appointments, label: 'Appointments', path: '/appointments' },
-    { key: 'forms', icon: Icons.forms, label: 'Forms', path: '/forms' },
-    { key: 'ai', icon: Icons.ai, label: 'AI assistant', path: '/ai' },
+    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard', path: '/dashboard' },
+    { key: 'announcements', icon: IC.announcement, label: 'Announcements', path: '/announcements' },
+    { key: 'appointments', icon: IC.appointments, label: 'Appointments', path: '/appointments' },
+    { key: 'forms', icon: IC.forms, label: 'Forms', path: '/forms' },
+    { key: 'ai', icon: IC.ai, label: 'AI assistant', path: '/ai' },
   ];
   const bottomNav = [
-    { key: 'profile', icon: Icons.profile, label: 'Profile', path: '/profile' },
-    { key: 'settings', icon: Icons.settings, label: 'Settings', path: '/settings' },
-    { key: 'logout', icon: Icons.logout, label: 'Sign out', action: 'logout' },
+    { key: 'profile', icon: IC.profile, label: 'Profile', path: '/profile' },
+    { key: 'settings', icon: IC.settings, label: 'Settings', path: '/settings' },
+    { key: 'logout', icon: IC.logout, label: 'Sign out', action: 'logout' },
   ];
 
   const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
@@ -285,8 +313,8 @@ const ContactGN = () => {
           {/* DESKTOP TOPBAR */}
           <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
             <div className="flex-1 max-w-[400px] relative">
-              <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-round px-4 py-2">
-                <Icon d={Icons.search} size={16} color="#aaa" />
+              <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-3xl px-4 py-2">
+                <Icon d={IC.search} size={16} color="#aaa" />
                 <input
                   type="text"
                   placeholder="Search for a page or function..."
@@ -300,7 +328,7 @@ const ContactGN = () => {
                 />
                 {searchQuery && (
                   <button onClick={() => { setSearchQuery(''); setShowSearchResults(false); }} className="bg-none border-none cursor-pointer p-1">
-                    <Icon d={Icons.close} size={14} color="#aaa" />
+                    <Icon d={IC.close} size={14} color="#aaa" />
                   </button>
                 )}
               </div>
@@ -316,35 +344,40 @@ const ContactGN = () => {
               currentLanguage={currentLanguage} 
               onLanguageChange={handleLanguageChange}
             />
-            <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative">
-              <Icon d={Icons.bell} size={18} color="#5a3a00" />
-              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
-            </div>
+            <NotificationBell />
             <div className="relative">
-            <button 
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-round cursor-pointer transition-colors hover:border-user-primary"
-            >
-              <span className="text-sm font-bold text-user-text max-w-[100px] truncate">{chipName}</span>
-              <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0">
-                <Icon d={Icons.profile} size={16} color="#3d2a00" />
-              </div>
-            </button>
-            {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-user-border z-50">
-                <button onClick={() => navigate('/profile')} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
-                  <Icon d={Icons.profile} size={14} /> My Profile
-                </button>
-                <button onClick={() => navigate('/settings')} className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
-                  <Icon d={Icons.settings} size={14} /> Settings
-                </button>
-                <hr className="my-1" />
-                <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 flex items-center gap-2">
-                  <Icon d={Icons.logout} size={14} /> Logout
-                </button>
-              </div>
-            )}
-          </div>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProfileMenu(!showProfileMenu);
+                }}
+                className="flex items-center gap-2 py-1 pl-1.5 pr-3.5 bg-user-secondary-light border border-user-border rounded-3xl cursor-pointer transition-all hover:border-user-primary"
+              >
+                <span className="text-sm font-bold text-user-text max-w-[100px] truncate">{chipName}</span>
+                <div className="w-7 h-7 rounded-full bg-user-primary flex items-center justify-center flex-shrink-0">
+                  <Icon d={IC.profile} size={16} color="#3d2a00" />
+                </div>
+              </button>
+              
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden animate-fade-in">
+                  <div className="p-3 border-b border-user-border-light">
+                    <p className="text-sm font-bold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</p>
+                    <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
+                  </div>
+                  <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+                    <Icon d={IC.profile} size={16} color="#B46A02" /> My Profile
+                  </button>
+                  <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+                    <Icon d={IC.settings} size={16} color="#B46A02" /> Settings
+                  </button>
+                  <div className="border-t border-user-border-light my-1"></div>
+                  <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                    <Icon d={IC.logout} size={16} color="#ef4444" /> Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* MOBILE TOPBAR */}
@@ -360,16 +393,13 @@ const ContactGN = () => {
               <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
             </div>
             <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={handleLanguageChange} />
-            <div className="w-9 h-9 flex items-center justify-center relative">
-              <Icon d={Icons.bell} size={22} color="#1e1200" />
-              <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
-            </div>
+            <NotificationBell />
             <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
-              <Icon d={Icons.profile} size={20} color="#3d2a00" />
+              <Icon d={IC.profile} size={20} color="#3d2a00" />
             </div>
           </div>
 
-          {/* PAGE CONTENT */}
+                    {/* PAGE CONTENT */}
           <div className={`p-4 md:p-6 xl:p-7 flex-1 animate-fade-in`}>
             {/* Page Header */}
             <div className="mb-6">
@@ -380,23 +410,103 @@ const ContactGN = () => {
                 Get in touch with your Grama Niladhari officer
               </p>
             </div>
+            
+                        {/* Status Banner with Refresh Button */}
+            {gnOfficer && (
+              <div className={`mb-5 p-3 rounded-xl flex items-center justify-between ${
+                gnOfficer?.availability === 'Available' ? 'bg-green-50 border border-green-200' :
+                gnOfficer?.availability === 'In Meeting' ? 'bg-orange-50 border border-orange-200' :
+                gnOfficer?.availability === 'On Field' ? 'bg-red-50 border border-red-200' :
+                'bg-gray-50 border border-gray-200'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    gnOfficer?.availability === 'Available' ? 'bg-green-100' :
+                    gnOfficer?.availability === 'In Meeting' ? 'bg-orange-100' :
+                    gnOfficer?.availability === 'On Field' ? 'bg-red-100' : 'bg-gray-100'
+                  }`}>
+                    <Icon 
+                      d={
+                        gnOfficer?.availability === 'Available' ? IC.checkCircle :
+                        gnOfficer?.availability === 'In Meeting' ? IC.clock :
+                        gnOfficer?.availability === 'On Field' ? IC.location : IC.checkCircle
+                      } 
+                      size={18} 
+                      color={
+                        gnOfficer?.availability === 'Available' ? '#16a34a' :
+                        gnOfficer?.availability === 'In Meeting' ? '#ea580c' :
+                        gnOfficer?.availability === 'On Field' ? '#dc2626' : '#16a34a'
+                      } 
+                      strokeWidth={2}
+                    />
+                  </div>
+                  <div>
+                    <div className={`text-sm font-bold ${
+                      gnOfficer?.availability === 'Available' ? 'text-green-700' :
+                      gnOfficer?.availability === 'In Meeting' ? 'text-orange-700' :
+                      gnOfficer?.availability === 'On Field' ? 'text-red-700' : 'text-gray-700'
+                    }`}>
+                      GN Officer is {gnOfficer?.availability || 'Available'}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {gnOfficer?.availability === 'In Meeting' && 'Currently in a meeting. May take time to respond.'}
+                      {gnOfficer?.availability === 'On Field' && 'Out on field duty. For emergencies, use emergency contact.'}
+                      {(!gnOfficer?.availability || gnOfficer?.availability === 'Available') && 'Ready to assist you during office hours.'}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Refresh Button - INSIDE the same div, on the right side */}
+                <button
+                  onClick={refreshGNOfficer}
+                  disabled={refreshing}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-all"
+                  title="Refresh status"
+                >
+                  <Icon d={IC.refresh} size={14} color="#B46A02" className={refreshing ? "animate-spin" : ""} />
+                  <span className="text-xs font-semibold text-user-text">Refresh</span>
+                </button>
+              </div>
+            )}
+
+            {/* Loading state when gnOfficer is null */}
+            {!gnOfficer && (
+              <div className="mb-5 p-3 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+                  <div>
+                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-3 w-48 bg-gray-200 rounded mt-1 animate-pulse" />
+                  </div>
+                </div>
+                <button
+                  onClick={refreshGNOfficer}
+                  disabled={refreshing}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200"
+                >
+                  <Icon d={IC.refresh} size={14} color="#B46A02" className={refreshing ? "animate-spin" : ""} />
+                  <span className="text-xs font-semibold">Refresh</span>
+                </button>
+              </div>
+            )}
 
             {/* GN Officer Card - Desktop View */}
             {!isMobile ? (
               <div className="bg-user-surface rounded-xl border border-user-border p-6 mb-6 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-5">
                   <div className="w-[70px] h-[70px] rounded-full bg-user-primary flex items-center justify-center">
-                    <Icon d={Icons.profile} size={36} color="#3d2a00" strokeWidth={1.5} />
+                    <Icon d={IC.profile} size={36} color="#3d2a00" strokeWidth={1.5} />
                   </div>
                   <div>
+                    {/* ✅ Use fullName instead of name */}
                     <h2 className="text-xl font-extrabold text-user-text mb-1">
-                      {gnOfficer?.name || 'Grama Niladhari'}
+                      {gnOfficer?.fullName || 'Grama Niladhari'}
                     </h2>
                     <p className="text-sm text-user-warning font-semibold mb-1">
-                      {gnOfficer?.designation || 'Grama Niladhari Officer'}
+                      Grama Niladhari Officer
                     </p>
                     <p className="text-xs text-user-text-lighter">
-                      {userData?.gnDiv || userData?.dsDiv || 'Your GN Division'}
+                      {gnOfficer?.gnDiv || userData?.gnDiv || 'Your GN Division'}
                     </p>
                   </div>
                 </div>
@@ -404,101 +514,174 @@ const ContactGN = () => {
                 <div className="flex gap-3">
                   <button 
                     onClick={handleCall} 
-                    className="flex items-center gap-2.5 py-3 px-6 bg-user-info-light border-none rounded-round cursor-pointer transition-all hover:bg-user-info/20"
+                    className="flex items-center gap-2.5 py-3 px-6 bg-blue-50 border border-blue-200 rounded-xl cursor-pointer transition-all hover:bg-blue-100"
                   >
-                    <Icon d={Icons.phone} size={18} color="#3b82f6" strokeWidth={2} />
+                    <Icon d={IC.phone} size={18} color="#3b82f6" strokeWidth={2} />
                     <span className="text-sm font-bold text-user-text">Call</span>
                   </button>
 
                   <button 
                     onClick={handleEmail} 
-                    className="flex items-center gap-2.5 py-3 px-6 bg-user-warning-light border-none rounded-round cursor-pointer transition-all hover:bg-user-warning/20"
+                    className="flex items-center gap-2.5 py-3 px-6 bg-amber-50 border border-amber-200 rounded-xl cursor-pointer transition-all hover:bg-amber-100"
                   >
-                    <Icon d={Icons.mail} size={18} color="#d97706" strokeWidth={2} />
+                    <Icon d={IC.mail} size={18} color="#d97706" strokeWidth={2} />
                     <span className="text-sm font-bold text-user-text">Email</span>
                   </button>
                 </div>
               </div>
             ) : (
-              // Mobile View
+              // Mobile View - FIXED field names
               <div className="bg-user-surface rounded-xl border border-user-border p-6 mb-6 text-center">
                 <div className="w-20 h-20 rounded-full bg-user-primary flex items-center justify-center mx-auto mb-4">
-                  <Icon d={Icons.profile} size={40} color="#3d2a00" strokeWidth={1.5} />
+                  <Icon d={IC.profile} size={40} color="#3d2a00" strokeWidth={1.5} />
                 </div>
                 <h2 className="text-xl font-extrabold text-user-text mb-1">
-                  {gnOfficer?.name || 'Grama Niladhari'}
+                  {gnOfficer?.fullName || 'Grama Niladhari'}
                 </h2>
                 <p className="text-sm text-user-warning font-semibold mb-2">
-                  {gnOfficer?.designation || 'Grama Niladhari Officer'}
+                  Grama Niladhari Officer
                 </p>
                 <p className="text-xs text-user-text-lighter mb-5">
-                  {userData?.gnDiv || userData?.dsDiv || 'Your GN Division'}
+                  {gnOfficer?.gnDiv || userData?.gnDiv || 'Your GN Division'}
                 </p>
                 <div className="flex gap-3">
-                  <button onClick={handleCall} className="flex-1 flex items-center justify-center gap-2 py-3 bg-user-info-light border-none rounded-xl cursor-pointer">
-                    <Icon d={Icons.phone} size={18} color="#3b82f6" strokeWidth={2} />
+                  <button onClick={handleCall} className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-50 border border-blue-200 rounded-xl cursor-pointer">
+                    <Icon d={IC.phone} size={18} color="#3b82f6" strokeWidth={2} />
                     <span className="text-sm font-bold text-user-text">Call</span>
                   </button>
-                  <button onClick={handleEmail} className="flex-1 flex items-center justify-center gap-2 py-3 bg-user-warning-light border-none rounded-xl cursor-pointer">
-                    <Icon d={Icons.mail} size={18} color="#d97706" strokeWidth={2} />
+                  <button onClick={handleEmail} className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-50 border border-amber-200 rounded-xl cursor-pointer">
+                    <Icon d={IC.mail} size={18} color="#d97706" strokeWidth={2} />
                     <span className="text-sm font-bold text-user-text">Email</span>
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Contact Details Card */}
+                        {/* Contact Details Card - Separate Mobile & Office Numbers */}
             <div className="bg-user-surface rounded-xl border border-user-border p-5 md:p-6 mb-5">
               <h3 className="text-base font-extrabold text-user-text mb-4 flex items-center gap-2">
-                <Icon d={Icons.phone} size={18} color="#B46A02" />
+                <Icon d={IC.phone} size={18} color="#B46A02" />
                 Contact Information
               </h3>
               
+              {/* Office Mobile Number */}
               <div className="mb-4 pb-3 border-b border-user-border-light">
-                <div className="text-xs text-user-text-lighter font-semibold mb-1">Mobile Number</div>
+                <div className="text-xs text-user-text-lighter font-semibold mb-1">Office Mobile Number</div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm md:text-base font-bold text-user-text">{gnOfficer?.mobile || 'Not available'}</span>
+                  <span className="text-sm md:text-base font-bold text-user-text">
+                    {gnOfficer?.officeMobile || 'Not available'}
+                  </span>
+                  {gnOfficer?.officeMobile && (
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => {
+                          const number = gnOfficer?.officeMobile?.replace(/[^0-9+]/g, '');
+                          if (number) window.location.href = `tel:${number}`;
+                        }} 
+                        className="py-1.5 px-4 bg-green-50 border border-green-200 rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-green-100 flex items-center gap-1"
+                      >
+                        <Icon d={IC.phone} size={12} color="#16a34a" />
+                        Call
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (gnOfficer?.officeMobile) {
+                            navigator.clipboard.writeText(gnOfficer.officeMobile);
+                            alert('Office mobile number copied!');
+                          }
+                        }} 
+                        className="py-1.5 px-4 bg-user-secondary-light border border-user-border rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-user-border-light flex items-center gap-1"
+                      >
+                        <Icon d={IC.copy} size={12} color="#666" />
+                        Copy
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1">Primary contact during office hours</p>
+              </div>
+
+              {/* Personal Mobile Number */}
+              <div className="mb-4 pb-3 border-b border-user-border-light">
+                <div className="text-xs text-user-text-lighter font-semibold mb-1">Personal Mobile Number</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm md:text-base font-bold text-user-text">
+                    {gnOfficer?.mobile || 'Not available'}
+                  </span>
                   {gnOfficer?.mobile && (
-                    <button onClick={handleCopyMobile} className="py-1.5 px-4 bg-user-secondary-light border border-user-border rounded-round text-xs font-semibold cursor-pointer transition-colors hover:bg-user-border-light">
-                      Copy
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => {
+                          const number = gnOfficer?.mobile?.replace(/[^0-9+]/g, '');
+                          if (number) window.location.href = `tel:${number}`;
+                        }} 
+                        className="py-1.5 px-4 bg-green-50 border border-green-200 rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-green-100 flex items-center gap-1"
+                      >
+                        <Icon d={IC.phone} size={12} color="#16a34a" />
+                        Call
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (gnOfficer?.mobile) {
+                            navigator.clipboard.writeText(gnOfficer.mobile);
+                            alert('Personal mobile number copied!');
+                          }
+                        }} 
+                        className="py-1.5 px-4 bg-user-secondary-light border border-user-border rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-user-border-light flex items-center gap-1"
+                      >
+                        <Icon d={IC.copy} size={12} color="#666" />
+                        Copy
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1">For emergencies outside office hours</p>
+              </div>
+
+              {/* Email Address */}
+              <div className="mb-4 pb-3 border-b border-user-border-light">
+                <div className="text-xs text-user-text-lighter font-semibold mb-1">Email Address</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm md:text-base font-bold text-user-text break-all">
+                    {gnOfficer?.officialEmail || 'Not available'}
+                  </span>
+                  {gnOfficer?.officialEmail && (
+                    <button 
+                      onClick={() => {
+                        if (gnOfficer?.officialEmail) {
+                          window.location.href = `mailto:${gnOfficer.officialEmail}`;
+                        }
+                      }} 
+                      className="py-1.5 px-4 bg-blue-50 border border-blue-200 rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-blue-100 flex items-center gap-1"
+                    >
+                      <Icon d={IC.mail} size={12} color="#3b82f6" />
+                      Email
                     </button>
                   )}
                 </div>
               </div>
 
-              <div className="mb-4 pb-3 border-b border-user-border-light">
-                <div className="text-xs text-user-text-lighter font-semibold mb-1">Office Phone</div>
-                <span className="text-sm md:text-base font-bold text-user-text">{gnOfficer?.officePhone || 'Not available'}</span>
-              </div>
-
-              <div className="mb-4 pb-3 border-b border-user-border-light">
-                <div className="text-xs text-user-text-lighter font-semibold mb-1">Email Address</div>
-                <span className="text-sm md:text-base font-bold text-user-text">{gnOfficer?.email || 'Not available'}</span>
-              </div>
-
-              <div>
-                <div className="text-xs text-user-text-lighter font-semibold mb-1">Emergency Contact (24/7)</div>
-                <span className="text-sm md:text-base font-bold text-user-error">{gnOfficer?.emergencyContact || '+94 71 234 5678'}</span>
+              {/* Emergency Note */}
+              <div className="mt-2 p-3 bg-red-50 rounded-lg border border-red-100">
+                <div className="flex items-center gap-2">
+                  <Icon d={IC.alertCircle} size={16} color="#dc2626" />
+                  <span className="text-xs font-semibold text-red-700">Emergency Support</span>
+                </div>
+                <p className="text-[10px] text-red-600 mt-1">
+                  For urgent matters, call the personal mobile number. For general inquiries, use office mobile during working hours.
+                </p>
               </div>
             </div>
 
             {/* Office Information Card */}
             <div className="bg-user-surface rounded-xl border border-user-border p-5 md:p-6 mb-6">
               <h3 className="text-base font-extrabold text-user-text mb-4 flex items-center gap-2">
-                <Icon d={Icons.location} size={18} color="#B46A02" />
+                <Icon d={IC.location} size={18} color="#B46A02" />
                 Office Information
               </h3>
               
               <div className="mb-4 flex gap-3">
-                <Icon d={Icons.clock} size={20} color="#d97706" />
-                <div>
-                  <div className="text-xs text-user-text-lighter font-semibold mb-0.5">Office Hours</div>
-                  <span className="text-sm md:text-base font-semibold text-user-text">{gnOfficer?.officeHours || '9:00 AM - 4:00 PM (Mon-Fri)'}</span>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <Icon d={Icons.location} size={20} color="#d97706" />
+                <Icon d={IC.location} size={20} color="#d97706" />
                 <div className="flex-1">
                   <div className="text-xs text-user-text-lighter font-semibold mb-0.5">Office Address</div>
                   <span className="text-sm md:text-base font-semibold text-user-text leading-relaxed">
@@ -513,7 +696,7 @@ const ContactGN = () => {
               onClick={() => navigate('/appointments')}
               className="w-full flex items-center justify-center gap-2.5 py-3.5 md:py-4 bg-user-primary border-none rounded-lg text-base md:text-lg font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark hover:-translate-y-0.5 active:translate-y-0"
             >
-              <Icon d={Icons.calendar} size={20} color="#3d2a00" />
+              <Icon d={IC.calendar} size={20} color="#3d2a00" />
               Book an Appointment
             </button>
           </div>
@@ -532,6 +715,14 @@ const ContactGN = () => {
         }
         .animate-fade-in {
           animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
         }
 
         @media (min-width: 769px) {

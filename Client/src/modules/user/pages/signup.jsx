@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, updateEmail } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 import gnDivisionsData from '../data/gnDivisions.json';
 
-// Step Progress Indicator
 const StepIndicator = ({ current }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
@@ -414,12 +413,16 @@ const Step1 = ({ data, onChange, onNext }) => {
   );
 };
 
-// STEP 2 — Contact Details with Real GN Divisions
+// STEP 2 — Contact Details
 const Step2 = ({ data, onChange, onNext, onBack }) => {
   const [errors, setErrors] = useState({});
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [gnDivisions, setGnDivisions] = useState([]);
   const [loadingGn, setLoadingGn] = useState(false);
+  // NEW: Email uniqueness states
+  const [emailAvailable, setEmailAvailable] = useState(true);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const emailCheckTimeout = React.useRef(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -462,6 +465,46 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
     onChange('gnDiv', '');
   };
 
+  // NEW: Email uniqueness check function
+  const checkEmailUniqueness = async (emailValue) => {
+    const normalized = emailValue.trim().toLowerCase();
+    
+    if (!normalized || !normalized.includes('@')) {
+      setEmailAvailable(true);
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+      setEmailAvailable(false);
+      return;
+    }
+
+    setCheckingEmail(true);
+    try {
+      const emailQuery = query(collection(db, 'users'), where('email', '==', normalized));
+      const snapshot = await getDocs(emailQuery);
+      const exists = !snapshot.empty;
+      setEmailAvailable(!exists);
+    } catch (error) {
+      console.error('Error checking email:', error);
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
+
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    onChange('email', value);
+    
+    if (emailCheckTimeout.current) {
+      clearTimeout(emailCheckTimeout.current);
+    }
+    
+    emailCheckTimeout.current = setTimeout(() => {
+      checkEmailUniqueness(value);
+    }, 500);
+  };
+
   const selectStyle = (hasError) => ({
     ...inp(isMobile, hasError),
     appearance: 'none',
@@ -477,7 +520,18 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
     if (!data.email.trim()) e.email = 'Email is required.';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
       e.email = 'Enter a valid email.';
-    if (!data.mobile.trim()) e.mobile = 'Mobile number is required.';
+    else if (!emailAvailable) e.email = 'This email is already registered. Please use a different email.'; // NEW
+    if (!data.mobile.trim()) {
+      e.mobile = 'Mobile number is required.';
+    } else {
+      const mobileDigits = data.mobile.replace(/\D/g, '');
+      
+      if (mobileDigits.length !== 10) {
+        e.mobile = 'Mobile number must be 10 digits (e.g., 0712345678).';
+      } else if (!mobileDigits.startsWith('0')) {
+        e.mobile = 'Mobile number must start with 0.';
+      }
+    }
     if (!data.district) e.district = 'Please select your district.';
     if (!data.dsDiv) e.dsDiv = 'Please select your DS Division.';
     if (!data.gnDiv) e.gnDiv = 'Please select your GN Division.';
@@ -502,15 +556,25 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
           <input
             type="email"
             value={data.email}
-            onChange={(e) => onChange('email', e.target.value)}
-            style={inp(isMobile, errors.email)}
+            onChange={handleEmailChange}  // CHANGED: use new handler
+            style={inp(isMobile, errors.email || (!emailAvailable && !checkingEmail ? 'Email already taken' : null))}
             onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
             onBlur={(e)  => (e.target.style.borderColor = errors.email ? '#e05050' : '#d4c9a8')}
           />
+          {checkingEmail && (
+            <p style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>
+              Checking email availability...
+            </p>
+          )}
           {errors.email && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.email}</p>}
-          {!errors.email && data.email && (
-            <p style={{ color: '#888', fontSize: '11px', marginTop: '4px' }}>
-              Each family member needs a unique email address.
+          {!errors.email && data.email && !checkingEmail && !emailAvailable && (
+            <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>
+              This email is already registered. Please use a different email.
+            </p>
+          )}
+          {!errors.email && data.email && emailAvailable && !checkingEmail && (
+            <p style={{ color: '#30a050', fontSize: '12px', marginTop: '4px' }}>
+              ✓ Email is available
             </p>
           )}
         </div>
@@ -662,8 +726,10 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
     
     try {
       const nicNumber = data.nic.trim();
+      const realEmail = data.email.trim().toLowerCase();
+      const username = data.username.trim().toLowerCase();
       
-      // Double-check NIC uniqueness using direct document lookup (NO INDEX NEEDED!)
+      // Double-check NIC uniqueness
       const nicQuery = query(collection(db, 'users'), where('nic', '==', nicNumber));
       const nicDocSnap = await getDocs(nicQuery);
       if (!nicDocSnap.empty) {
@@ -672,29 +738,44 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         return;
       }
       
-      // Create a unique email for Firebase Auth using NIC (required by Firebase)
-      // This email is never shown to the user
-      const fakeEmail = `${nicNumber}@gramasewa.local`;
+      // Double-check email uniqueness in Firestore
+      const emailQuery = query(collection(db, 'users'), where('email', '==', realEmail));
+      const emailDocSnap = await getDocs(emailQuery);
+      if (!emailDocSnap.empty) {
+        setErrors({ firebase: 'This email is already registered. Please use a different email.' });
+        setLoading(false);
+        return;
+      }
       
-      // Proceed with account creation
-      const credential = await createUserWithEmailAndPassword(auth, fakeEmail, data.password);
+      // Double-check username uniqueness in Firestore
+      const usernameQuery = query(collection(db, 'users'), where('username', '==', username));
+      const usernameDocSnap = await getDocs(usernameQuery);
+      if (!usernameDocSnap.empty) {
+        setErrors({ firebase: 'This username is already taken. Please choose another one.' });
+        setLoading(false);
+        return;
+      }
       
-      // Send email verification to real email (optional)
-      if (data.email && data.email.includes('@')) {
+      // Create account with real email
+      const credential = await createUserWithEmailAndPassword(auth, realEmail, data.password);
+      
+      // Send verification email
+      if (realEmail) {
         try {
           await sendEmailVerification(credential.user);
         } catch (e) {
-          console.warn('Email verification skipped for fake email');
+          console.warn('Email verification failed:', e.message);
         }
       }
       
+      // Update display name
       try {
         await updateProfile(credential.user, { displayName: data.username });
       } catch (e) { 
         console.warn('updateProfile failed:', e.message); 
       }
 
-      // Store user data using NIC as the DOCUMENT ID
+      // Store user data in Firestore
       try {
         await setDoc(doc(db, 'users', credential.user.uid), {
           uid: credential.user.uid,
@@ -703,7 +784,7 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
           nic: nicNumber,
           dob: data.dob,
           address: data.address,
-          email: data.email,
+          email: realEmail,
           mobile: data.mobile,
           district: data.district,
           dsDiv: data.dsDiv,
@@ -724,9 +805,9 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       let friendlyError;
       
       if (err.code === 'auth/email-already-in-use') {
-        friendlyError = 'System error. Please contact support.';
+        friendlyError = 'This email is already registered. Please use a different email.';
       } else if (err.code === 'auth/invalid-email') {
-        friendlyError = 'System error. Please contact support.';
+        friendlyError = 'Invalid email address.';
       } else if (err.code === 'auth/weak-password') {
         friendlyError = 'Password is too weak. Use at least 8 characters with letters and numbers.';
       } else if (err.code === 'auth/network-request-failed') {
@@ -765,13 +846,11 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         </h2>
         <p style={{ fontSize: isMobile ? '13px' : '14px', color: '#555', lineHeight: 1.6, marginBottom: '20px' }}>
           Your Smart Grama Sewa account is now active.<br />
-          You can now log in using your <strong>NIC number</strong> as your username.
+          You can now log in using your <strong>email address</strong> or <strong>username</strong>.
         </p>
         <p style={{ fontSize: isMobile ? '12px' : '13px', color: '#888', marginBottom: '28px' }}>
-          Note: Multiple family members can share the same email address.<br />
-          Each person logs in with their own NIC number.
           {data.email && data.email.includes('@') && (
-            <span> A verification email has been sent to {data.email}.</span>
+            <span> A verification email has been sent to <strong>{data.email}</strong>. Please verify your email to access all features.</span>
           )}
         </p>
 
@@ -812,7 +891,7 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       )}
 
       <div style={{ marginBottom: '18px' }}>
-        <label style={labelStyle(isMobile)}>User name (for display)</label>
+        <label style={labelStyle(isMobile)}>User name</label>
         <input
           type="text"
           value={data.username}
@@ -890,7 +969,7 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       </div>
 
       <p style={{ fontSize: '12px', color: '#666', marginBottom: '24px' }}>
-        You will log in using your NIC number. Keep your password secure.
+        You will log in using your email address or username. Keep your password secure.
       </p>
 
       <div style={{ 
