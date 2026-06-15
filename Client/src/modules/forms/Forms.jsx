@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../user/components/languageSwitcher';
 import { PageLoadingSkeleton } from '../user/components/skeleton';
+import NotificationBell from '../user/components/NotificationBell';
 
 // --- Icons & Styles (Consistent with teammate) ---
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
@@ -132,10 +133,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
       onLanguageChange={onLanguageChange}
     />
     
-    <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
-      <Icon d={IC.bell} size={18} color="#5a3a00" />
-      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
-    </div>
+    <NotificationBell />
     
     <div className="relative">
       <button 
@@ -187,10 +185,7 @@ const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLang
       <img src="/logo2.png" alt="Smart Grama Sewa" className="h-10 w-auto" />
     </div>
     <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={onLanguageChange} />
-    <div className="w-9 h-9 flex items-center justify-center relative">
-      <Icon d={IC.bell} size={22} color="#1e1200" />
-      <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
-    </div>
+    <NotificationBell />
     <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
       <Icon d={IC.profile} size={20} color="#3d2a00" />
     </div>
@@ -204,7 +199,7 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
     { key: 'announcements', icon: IC.announce, label: 'Announcements', path: '/announcements' },
     { key: 'appointments', icon: IC.appts, label: 'Appointments', path: '/appointments' },
     { key: 'forms', icon: IC.forms, label: 'Forms', path: '/forms' },
-    { key: 'ai', icon: IC.ai, label: 'AI Assistant', path: '/ai' },
+    { key: 'ai', icon: IC.ai, label: 'AI Assistant', path: null },
   ];
   const bottomNav = [
     { key: 'profile', icon: IC.profile, label: 'Profile', path: '/profile' },
@@ -227,7 +222,7 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
         {navItems.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
-            onClick={() => { navigate(item.path); onClose(); }} />
+            onClick={() => { if (item.key === 'ai') { window.openChatbot?.(); onClose(); return; } navigate(item.path); onClose(); }} />
         ))}
         <div className="border-t border-white/20 my-3 pt-3">
           {bottomNav.map((item) => (
@@ -248,7 +243,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
     { name: 'Announcements', path: '/announcements', icon: IC.announce },
     { name: 'Appointments', path: '/appointments', icon: IC.appts },
     { name: 'Forms', path: '/forms', icon: IC.forms },
-    { name: 'AI Assistant', path: '/ai', icon: IC.ai },
+    { name: 'AI Assistant', path: null, icon: IC.ai },
     { name: 'Profile', path: '/profile', icon: IC.profile },
     { name: 'Settings', path: '/settings', icon: IC.settings },
   ];
@@ -275,6 +270,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
         <button
           key={page.path}
           onClick={() => {
+            if (page.path === null) { window.openChatbot?.(); setShowResults(false); return; }
             navigate(page.path);
             setShowResults(false);
           }}
@@ -2051,6 +2047,7 @@ const Forms = () => {
   const [selectedForm, setSelectedForm] = useState(null);
   const [formInputs, setFormInputs] = useState({});
   const [toast, setToast] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const tabs = ['All', 'Certificates', 'Applications', 'Recommendations'];
 
@@ -2067,6 +2064,22 @@ const Forms = () => {
     { id: 10, title: "Business Registration Recommendation", cat: "Recommendations", imgSrc: "/icons/business.png", desc: "GN approval for new business starts" },
     { id: 11, title: "Assessments for Ownership of Lands", cat: "Certificates", imgSrc: "/icons/land.png", desc: "Verify land ownership and boundaries" },
   ];
+
+  useEffect(() => {
+    const selectId = searchParams.get('select');
+    if (selectId) {
+      const formId = parseInt(selectId, 10);
+      const matchedForm = formList.find(f => f.id === formId);
+      if (matchedForm) {
+        setSelectedForm(matchedForm);
+        setFormInputs({});
+        // Clean up URL select param
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('select');
+        setSearchParams(newParams, { replace: true });
+      }
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);

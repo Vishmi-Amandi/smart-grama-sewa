@@ -5,6 +5,7 @@ import { doc, getDoc, collection, addDoc, query, where, getDocs, serverTimestamp
 import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton, AppointmentsListSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
+import NotificationBell from '../components/NotificationBell';
 
 // Icons
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
@@ -60,7 +61,7 @@ const PAGE_ACTIONS = [
   { name: 'Announcements', path: '/announcements', icon: IC.announce },
   { name: 'Appointments', path: '/appointments', icon: IC.appts },
   { name: 'Forms', path: '/forms', icon: IC.forms },
-  { name: 'AI Assistant', path: '/ai', icon: IC.ai },
+  { name: 'AI Assistant', path: null, icon: IC.ai },
   { name: 'Profile', path: '/profile', icon: IC.profile },
   { name: 'Settings', path: '/settings', icon: IC.settings },
 ];
@@ -152,7 +153,7 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
         {navItems.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
-            onClick={() => navigate(`/${item.key}`)} />
+            onClick={() => item.key === 'ai' ? window.openChatbot?.() : navigate(`/${item.key}`)} />
         ))}
       </div>
       <div className="p-3 pt-2 border-t border-black/10">
@@ -190,6 +191,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
         <button
           key={page.path}
           onClick={() => {
+            if (page.path === null) { window.openChatbot?.(); setShowResults(false); return; }
             navigate(page.path);
             setShowResults(false);
           }}
@@ -243,10 +245,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
       onLanguageChange={onLanguageChange}
     />
     
-    <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
-      <Icon d={IC.bell} size={18} color="#5a3a00" />
-      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
-    </div>
+    <NotificationBell />
     
     {/* Profile Dropdown */}
     <div className="relative">
@@ -299,10 +298,7 @@ const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLang
       <img src="/logo2.png" alt="Smart Grama Sewa" className="h-10 w-auto" />
     </div>
     <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={onLanguageChange} />
-    <div className="w-9 h-9 flex items-center justify-center relative">
-      <Icon d={IC.bell} size={22} color="#1e1200" />
-      <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
-    </div>
+    <NotificationBell />
     <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
       <Icon d={IC.profile} size={20} color="#3d2a00" />
     </div>

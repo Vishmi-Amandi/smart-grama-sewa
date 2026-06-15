@@ -1,8 +1,39 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { auth } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './ChatbotWidget.css';
+
+const formList = [
+  { id: 1, title: "Residence Certificate", cat: "Certificates", desc: "Proof of residence for official use" },
+  { id: 2, title: "Character Certificate", cat: "Certificates", desc: "Proof of character for various purposes" },
+  { id: 3, title: "Income Certificate", cat: "Certificates", desc: "Proof of income for various purposes" },
+  { id: 4, title: "Valuation Certificate", cat: "Certificates", desc: "Property valuation for legal needs" },
+  { id: 5, title: "Identity Card Application", cat: "Applications", desc: "New or replacement NIC application" },
+  { id: 6, title: "Living Funds for Disabled Persons", cat: "Recommendations", desc: "Financial assistance application for persons with disabilities" },
+  { id: 7, title: "Voter Registration Form", cat: "Applications", desc: "Register or revise names on the local voting list" },
+  { id: 8, title: "Permit for Felling Trees", cat: "Recommendations", desc: "Approval to cut down Jack or protected trees" },
+  { id: 9, title: "Permit for Timber Transportation", cat: "Recommendations", desc: "Legal permit to move timber between areas" },
+  { id: 10, title: "Business Registration Recommendation", cat: "Recommendations", desc: "GN approval for new business starts" },
+  { id: 11, title: "Assessments for Ownership of Lands", cat: "Certificates", desc: "Verify land ownership and boundaries" },
+];
+
+const mapFormLinkToId = (formLink) => {
+  if (!formLink) return null;
+  const link = formLink.toLowerCase();
+  if (link.includes('residence')) return 1;
+  if (link.includes('character')) return 2;
+  if (link.includes('income') || link.includes('verification')) return 3;
+  if (link.includes('valuation')) return 4;
+  if (link.includes('nic') || link.includes('identity')) return 5;
+  if (link.includes('disabled') || link.includes('samurdhi')) return 6;
+  if (link.includes('voter')) return 7;
+  if (link.includes('felling') || link.includes('tree')) return 8;
+  if (link.includes('timber')) return 9;
+  if (link.includes('business')) return 10;
+  if (link.includes('ownership') || link.includes('land')) return 11;
+  return null;
+};
 
 const UI_TEXT = {
   en: { 
@@ -26,8 +57,10 @@ const UI_TEXT = {
 };
 
 const ChatbotWidget = () => {
+  const navigate = useNavigate();
   const [language, setLanguage] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('chat'); // 'chat' or 'forms'
   const [messages, setMessages] = useState([
     { 
       sender: 'bot', 
@@ -68,6 +101,7 @@ const ChatbotWidget = () => {
     // Reset to initial state when switching between customized (logged in & private page) and common views
     setLanguage(null);
     setHistoryLoaded(false);
+    setActiveTab('chat');
     setMessages([
       { 
         sender: 'bot', 
@@ -253,28 +287,47 @@ const ChatbotWidget = () => {
 
   return (
     <>
-      {/* Floating Widget Button */}
-      <div className="chatbot-widget-btn" onClick={toggleChat}>
-        <img src="/logo.png" alt="Smart Grama Sewa Logo" className="chatbot-logo-img" />
+      {/* Floating Widget Button — Pill Badge */}
+      <div className="chatbot-widget-btn" onClick={toggleChat} role="button" aria-label="Open AI Assistant">
+        {/* Notification dot */}
+        <span className="chatbot-notif-dot" />
+        {/* Icon */}
+        <div className="chatbot-btn-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="22" height="22">
+            <path d="M12 3C8.7 3 6 5.4 6 8.4c0 1.6.7 3 1.8 4L7 15l3.2-.9c.6.2 1.2.3 1.8.3 3.3 0 6-2.4 6-5.4C18 5.7 15.3 3 12 3z"
+              fill="rgba(255,255,255,0.25)" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+            <circle cx="9.5" cy="8.5" r="0.95" fill="white"/>
+            <circle cx="12" cy="8.5" r="0.95" fill="white"/>
+            <circle cx="14.5" cy="8.5" r="0.95" fill="white"/>
+          </svg>
+        </div>
+        {/* Label */}
+        <span className="chatbot-btn-label">AI Assistant</span>
+        {/* Pulse ring */}
+        <span className="chatbot-btn-pulse" />
       </div>
 
       <div className={`chat-container ${isOpen ? '' : 'chat-hidden'}`}>
         <header className="chat-header">
           <div className="chat-avatar">
-            <img src="/logo.png" alt="Smart Grama Sewa Logo" className="chatbot-logo-img" />
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="22" height="22">
+              <path d="M12 3C8.7 3 6 5.4 6 8.4c0 1.6.7 3 1.8 4L7 15l3.2-.9c.6.2 1.2.3 1.8.3 3.3 0 6-2.4 6-5.4C18 5.7 15.3 3 12 3z" fill="rgba(255,255,255,0.3)" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="9.5" cy="8.5" r="0.9" fill="white"/>
+              <circle cx="12" cy="8.5" r="0.9" fill="white"/>
+              <circle cx="14.5" cy="8.5" r="0.9" fill="white"/>
+            </svg>
           </div>
-          <div style={{ flex: 1 }}>
+          <div className="chat-header-info">
             <h1>{language ? UI_TEXT[language].header : "Smart Grama Sewa"}</h1>
             <p className="chat-status">{language ? UI_TEXT[language].online : "Online"}</p>
           </div>
-          <button className="chat-close-btn" onClick={toggleChat}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
+          <button className="chat-close-btn" onClick={toggleChat} aria-label="Close chat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
         </header>
-        
         <main className="chat-box" ref={chatBoxRef}>
           {isCustomized && !historyLoaded && (
             <div className="chat-history-btn-container">
@@ -287,14 +340,29 @@ const ChatbotWidget = () => {
             <div key={idx} className={`chat-message chat-${msg.sender}-message`}>
               <div className="chat-message-content">
                 {msg.text}
-                {msg.formLink && (
-                  <>
-                    <br />
-                    <a href={`/api/download/${msg.formLink}`} className="chat-form-link" download={msg.formLink}>
-                      📄 Download: {msg.formLink}
-                    </a>
-                  </>
-                )}
+                {msg.formLink && (() => {
+                  const formId = mapFormLinkToId(msg.formLink);
+                  const matchedForm = formList.find(f => f.id === formId);
+                  const formTitle = matchedForm ? matchedForm.title : "Form";
+                  return (
+                    <>
+                      <br />
+                      <button 
+                        onClick={() => {
+                          setIsOpen(false);
+                          if (formId) {
+                            navigate(`/forms?select=${formId}`);
+                          } else {
+                            navigate('/forms');
+                          }
+                        }}
+                        className="chat-form-redirect-btn"
+                      >
+                        📝 Open {formTitle}
+                      </button>
+                    </>
+                  );
+                })()}
                 {msg.options && (
                   <div className="chat-options-container">
                     {msg.options.map(opt => (

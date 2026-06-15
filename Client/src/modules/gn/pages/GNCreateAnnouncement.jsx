@@ -19,6 +19,7 @@ const GNCreateAnnouncement = ({ gnStatus, theme }) => {
   const [description, setDescription] = useState(draft?.description || "");
   const [category,       setCategory]       = useState("General");
   const [priority,       setPriority]       = useState("Normal");
+  const [language,       setLanguage]       = useState(draft?.language || "English");
   const [expiryDate, setExpiryDate] = useState(draft?.expiryDate || "");
   const [scheduleDate,   setScheduleDate]   = useState("");
   const [scheduleTime,   setScheduleTime]   = useState("");
@@ -120,7 +121,7 @@ const GNCreateAnnouncement = ({ gnStatus, theme }) => {
 
   const resetForm = () => {
     setTitle(""); setDescription(""); setCategory("General");
-    setPriority("Normal"); setExpiryDate(""); setScheduleDate("");
+    setPriority("Normal"); setLanguage("English"); setExpiryDate(""); setScheduleDate("");
     setScheduleTime(""); setIsScheduled(false); setAttachments([]);
     setErrors({});
   };
@@ -151,6 +152,7 @@ const handleSaveDraft = async () => {
   expiryDate,
   category,
   priority,
+  language,
   attachments,
   gnDiv: officerData.gnDiv || "",   // ✅ was user.displayName before
   status: "Draft",
@@ -192,13 +194,14 @@ const handlePublish = async () => {
       const officerData = officerSnap.exists() ? officerSnap.data() : {};
       const gnDiv = officerData.gnDiv || "";  
 
-      await addDoc(collection(db, "announcements"), {
+      const docRef = await addDoc(collection(db, "announcements"), {
         title,
         description,
         expiresAt: expiryDate ? Timestamp.fromDate(new Date(expiryDate)) : null,
         expiryDate: expiryDate || "",
         category,
         priority,
+        language,
         attachments,
         gnDiv,                           // ✅ now correctly defined
         status: "Active",
@@ -207,6 +210,16 @@ const handlePublish = async () => {
         createdAt: serverTimestamp(),
         publishedAt: serverTimestamp(),
       });
+      // Trigger FCM push notification to division subscribers
+      try {
+        await fetch('/api/announcements/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ gnDiv, title, description, priority, announcementId: docRef.id }),
+        });
+      } catch (notifyErr) {
+        console.warn('FCM notification failed (non-critical):', notifyErr);
+      }
     }
     await logActivity("announcement", "Published", title, `Category: ${category}, Priority: ${priority}`);
     setSuccessMsg("Announcement published successfully!");
@@ -236,6 +249,7 @@ const handlePublish = async () => {
         description: description.trim(),
         category,
         priority,
+        language,
         attachments,
         status: "Scheduled",
         createdBy: user?.uid || "",
@@ -301,8 +315,8 @@ const handlePublish = async () => {
           {errors.title && <p className="text-red-500 text-xs mt-1 text-left">{errors.title}</p>}
         </div>
 
-        {/* Category + Priority */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        {/* Category + Priority + Language */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div>
             <label className={`text-xs font-semibold uppercase tracking-wide mb-2 block text-left ${t.subtext}`}>Category</label>
             <select value={category} onChange={(e) => setCategory(e.target.value)}
@@ -318,6 +332,15 @@ const handlePublish = async () => {
               className={`w-full border ${t.border} rounded-xl px-4 py-3 text-sm outline-none focus:border-[#E5A800] transition ${t.input}`}>
               {["Normal","High","Urgent"].map((p) => (
                 <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={`text-xs font-semibold uppercase tracking-wide mb-2 block text-left ${t.subtext}`}>Language</label>
+            <select value={language} onChange={(e) => setLanguage(e.target.value)}
+              className={`w-full border ${t.border} rounded-xl px-4 py-3 text-sm outline-none focus:border-[#E5A800] transition ${t.input}`}>
+              {["English","සිංහල","தமிழ்"].map((l) => (
+                <option key={l} value={l}>{l}</option>
               ))}
             </select>
           </div>
@@ -480,6 +503,7 @@ const handlePublish = async () => {
               <div className="flex items-center gap-2 mb-3">
                 <span className={`text-xs font-bold px-2 py-1 rounded-full ${priorityColor[priority]}`}>{priority}</span>
                 <span className="text-xs text-gray-400 font-medium">{category}</span>
+                <span className="text-xs text-blue-500 font-medium">🌐 {language}</span>
               </div>
               <h3 className={`text-lg sm:text-xl font-black mb-3 text-left ${t.text}`}>{title || "Untitled Announcement"}</h3>
               <p className={`text-sm leading-relaxed mb-4 text-left ${t.subtext}`}>{description || "No description provided."}</p>

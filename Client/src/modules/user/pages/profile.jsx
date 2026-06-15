@@ -5,6 +5,7 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton, ProfileSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
+import NotificationBell from '../components/NotificationBell';
 
 // Icons
 const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
@@ -17,9 +18,9 @@ const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
 const IC = {
   dashboard:    'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10',
   announcement: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
-  appointments: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
+  appointments: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2 M9 5a2 2 0 002 2h2a2 2 0 002-2 M9 5a2 2 0 012-2h2a2 2 0 012 2',
   forms:        'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
-  ai:           'M12 2a10 10 0 100 20A10 10 0 0012 2z M12 8v4l3 3',
+  ai:           'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
   profile:      'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8z',
   settings:     'M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z',
   logout:       'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4 M16 17l5-5-5-5 M21 12H9',
@@ -43,7 +44,7 @@ const PAGE_ACTIONS = [
   { name: 'Announcements', path: '/announcements', icon: IC.announcement },
   { name: 'Appointments', path: '/appointments', icon: IC.appointments },
   { name: 'Forms', path: '/forms', icon: IC.forms },
-  { name: 'AI Assistant', path: '/ai', icon: IC.ai },
+  { name: 'AI Assistant', path: null, icon: IC.ai },
   { name: 'Profile', path: '/profile', icon: IC.profile },
   { name: 'Settings', path: '/settings', icon: IC.settings },
 ];
@@ -72,6 +73,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
         <button
           key={page.path}
           onClick={() => {
+            if (page.path === null) { window.openChatbot?.(); setShowResults(false); return; }
             navigate(page.path);
             setShowResults(false);
           }}
@@ -139,10 +141,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
       onLanguageChange={onLanguageChange}
     />
     
-    <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
-      <Icon d={IC.bell} size={18} color="#5a3a00" />
-      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
-    </div>
+    <NotificationBell />
     
     {/* Profile Dropdown */}
     <div className="relative">
@@ -195,10 +194,7 @@ const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLang
       <img src="/logo2.png" alt="Smart Grama Sewa" className="h-10 w-auto" />
     </div>
     <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={onLanguageChange} />
-    <div className="w-9 h-9 flex items-center justify-center relative">
-      <Icon d={IC.bell} size={22} color="#1e1200" />
-      <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
-    </div>
+    <NotificationBell />
     <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
       <Icon d={IC.profile} size={20} color="#3d2a00" />
     </div>
