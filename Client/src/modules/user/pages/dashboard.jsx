@@ -47,6 +47,10 @@ const IC = {
   bolt: 'M13 10V3L4 14h7v7l9-11h-7z',
   wave: 'M2 12c3.5-4 8.5-4 12 0s8.5 4 12 0 M4 16c3-3 9-3 12 0s9 3 12 0',
   sun: 'M12 2v2 M12 20v2 M4.93 4.93l1.41 1.41 M17.66 17.66l1.41 1.41 M2 12h2 M20 12h2 M5.64 17.66l1.41-1.41 M16.95 6.05l1.41-1.41 M12 6a6 6 0 100 12 6 6 0 000-12z',
+  emergency: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',
+  location: 'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z M12 10a1 1 0 100-2 1 1 0 000 2z',
+  alertTriangle: 'M12 9v4M12 17h.01M12 2a10 10 0 100 20 10 10 0 000-20z',
+  phoneCall: 'M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z',
 };
 
 // NavItem 
@@ -75,6 +79,25 @@ const QuickCard = ({ iconPath, label, onClick, tooltip }) => (
     </button>
     {tooltip && (
       <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+        {tooltip}
+      </span>
+    )}
+  </div>
+);
+
+// Emergency QuickCard
+const EmergencyCard = ({ onClick, tooltip }) => (
+  <div className="relative group w-full">
+    <button 
+      onClick={onClick} 
+      className="flex flex-col items-center justify-center gap-2 w-full py-4 px-3 bg-red-50 border border-red-200 rounded-lg cursor-pointer font-sans text-xs sm:text-sm font-bold text-red-700 transition-all duration-200 shadow-sm hover:bg-red-100 hover:-translate-y-0.5"
+    >
+      <Icon d={IC.alertTriangle} size={20} color="#dc2626" />
+      <span className="text-center whitespace-nowrap">Emergency</span>
+      {/* REMOVED: <span className="text-[9px] text-red-500 mt-0.5">24/7</span> */}
+    </button>
+    {tooltip && (
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-red-600 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
         {tooltip}
       </span>
     )}
@@ -805,7 +828,15 @@ const fetchAnnouncements = async (showRefresh = false) => {
                 <QuickCard iconPath={IC.download} label="Download Forms" onClick={() => navigate('/forms')} tooltip="Download application forms" />
                 <QuickCard iconPath={IC.ai} label="AI Assistant" onClick={() => window.openChatbot?.()} tooltip="Get help from our AI assistant" />
                 <QuickCard iconPath={IC.phone} label="Contact GN" onClick={() => navigate('/contact-gn')} tooltip="Contact your GN officer" />
-                <QuickCard iconPath={IC.phone} label="🚨 Hotline" onClick={() => { const num = gnOfficer?.emergencyContact?.replace(/[^0-9+]/g, '') || '+94712345678'; window.location.href = `tel:${num}`; }} tooltip="Call emergency hotline" />
+                <EmergencyCard 
+                  onClick={() => { 
+                    const num = gnOfficer?.officeMobile?.replace(/[^0-9+]/g, '') || gnOfficer?.mobile?.replace(/[^0-9+]/g, '') || '+94712345678'; 
+                    if (confirm("Emergency line. Only use for genuine emergencies. Call now?")) {
+                      window.location.href = `tel:${num}`;
+                    }
+                  }} 
+                  tooltip="24/7 Emergency Hotline" 
+                />
               </div>
             </div>
 
@@ -929,20 +960,40 @@ const fetchAnnouncements = async (showRefresh = false) => {
               {/* Quick Actions */}
               <div className="mb-5">
                 <div className="text-base font-extrabold text-user-text mb-3">Quick Actions</div>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { icon: IC.calendar, label: 'Book Appointment', action: () => navigate('/appointments') },
-                    { icon: IC.download, label: 'Download Forms', action: () => navigate('/forms') },
-                    { icon: IC.ai, label: 'AI Assistant', action: () => window.openChatbot?.() },
-                    { icon: IC.phone, label: 'Contact GN', action: () => navigate('/contact-gn') },
-                    { icon: IC.phone, label: '🚨 Hotline', action: () => { const num = gnOfficer?.emergencyContact?.replace(/[^0-9+]/g, '') || '+94712345678'; window.location.href = `tel:${num}`; } },
-                  ].map((item, i) => (
-                    <button key={i} onClick={item.action} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white border border-user-border text-xs font-bold text-user-text cursor-pointer shadow-sm transition-all hover:border-user-primary hover:bg-user-primary-light min-h-[85px]">
-                      <Icon d={item.icon} size={22} color="#B46A02" />
-                      {item.label}
-                    </button>
-                  ))}
+                
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <button onClick={() => navigate('/appointments')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white border border-user-border text-xs font-bold text-user-text cursor-pointer shadow-sm transition-all hover:border-user-primary hover:bg-user-primary-light min-h-[85px]">
+                    <Icon d={IC.calendar} size={22} color="#B46A02" />
+                    Book Appointment
+                  </button>
+                  <button onClick={() => navigate('/forms')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white border border-user-border text-xs font-bold text-user-text cursor-pointer shadow-sm transition-all hover:border-user-primary hover:bg-user-primary-light min-h-[85px]">
+                    <Icon d={IC.download} size={22} color="#B46A02" />
+                    Download Forms
+                  </button>
+                  <button onClick={() => window.openChatbot?.()} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white border border-user-border text-xs font-bold text-user-text cursor-pointer shadow-sm transition-all hover:border-user-primary hover:bg-user-primary-light min-h-[85px]">
+                    <Icon d={IC.ai} size={22} color="#B46A02" />
+                    AI Assistant
+                  </button>
+                  <button onClick={() => navigate('/contact-gn')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white border border-user-border text-xs font-bold text-user-text cursor-pointer shadow-sm transition-all hover:border-user-primary hover:bg-user-primary-light min-h-[85px]">
+                    <Icon d={IC.phone} size={22} color="#B46A02" />
+                    Contact GN
+                  </button>
                 </div>
+                
+                {/* Emergency Button */}
+                <button
+                  onClick={() => { 
+                    const num = gnOfficer?.officeMobile?.replace(/[^0-9+]/g, '') || gnOfficer?.mobile?.replace(/[^0-9+]/g, '') || '+94712345678'; 
+                    if (confirm("This is an emergency line. Only use for genuine emergencies. Call now?")) {
+                      window.location.href = `tel:${num}`;
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-red-500 hover:bg-red-700 text-white font-bold rounded-lg transition-all duration-200 shadow-md"
+                >
+                  <Icon d={IC.alertTriangle} size={18} color="#fff" />
+                  <span>Emergency Hotline</span>
+                  <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">24/7</span>
+                </button>
               </div>
 
               {/* Widgets */}
