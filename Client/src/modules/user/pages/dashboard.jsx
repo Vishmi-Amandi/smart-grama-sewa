@@ -679,9 +679,11 @@ const Dashboard = () => {
 
           {/* DESKTOP CONTENT */}
           <div className="desktop-content p-6 md:p-7 flex-1">
-            {/* Welcome + GN side by side */}
+
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 mb-5">
-              <div className="bg-user-primary-light border border-user-warning rounded-xl p-5 md:p-6 flex items-center gap-5">
+              <div className="bg-user-primary-light border border-user-warning rounded-xl p-5 md:p-6">
+              {/* Welcome Message */}
+              <div className="flex items-center gap-5">
                 <div className="w-[60px] h-[60px] md:w-[68px] md:h-[68px] rounded-full bg-[#e0d8c8] flex items-center justify-center flex-shrink-0 border-2 border-[#d4c090]">
                   <Icon d={IC.profile} size={28} color="#8a7060" strokeWidth={1.5} />
                 </div>
@@ -690,7 +692,29 @@ const Dashboard = () => {
                   {greeting.text}, {firstName}!
                 </div>
               </div>
-
+              
+              {/* Date and Location */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mt-4 pt-3 border-t border-user-border/30">
+                <div className="flex items-center gap-2 text-xs text-user-text-lighter">
+                  <span className="font-semibold">
+                    {new Date().toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-user-text-lighter">
+                  <Icon d={IC.location} size={14} color="#B46A02" />
+                  <span className="font-semibold">
+                    {userData?.district || 'Colombo'}, {userData?.province || 'Sri Lanka'}
+                  </span>
+                </div>
+              </div>
+            </div>
+              
+              {/* GN availablility */}
               <div className="bg-user-surface border border-user-border rounded-xl p-4 md:p-5 min-w-[190px] flex flex-col justify-center gap-1">
                 <div className="text-xs font-bold text-user-text-lighter">GN officer</div>
                 <div className="text-base md:text-base font-black text-user-text">{gnName}</div>
@@ -791,7 +815,9 @@ const Dashboard = () => {
 
             <div className="p-3.5 pb-[90px]">
               {/* Welcome card */}
-              <div className="bg-user-primary-light border border-user-warning rounded-xl p-4 flex items-center gap-3.5 mb-3">
+              <div className="bg-user-primary-light border border-user-warning rounded-xl p-4 mb-3">
+              {/* Welcome Message */}
+              <div className="flex items-center gap-3.5">
                 <div className="w-12 h-12 rounded-full bg-[#e0d8c8] flex items-center justify-center flex-shrink-0 border-2 border-[#d4c090]">
                   <Icon d={IC.profile} size={24} color="#8a7060" strokeWidth={1.5} />
                 </div>
@@ -800,6 +826,26 @@ const Dashboard = () => {
                   Welcome Back, {firstName}!
                 </div>
               </div>
+              
+              {/* Date and Location */}
+              <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-user-border/30">
+                <div className="flex items-center gap-2 text-[11px] text-user-text-lighter">
+                  <span className="font-semibold">
+                    {new Date().toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-user-text-lighter">
+                  <span className="font-semibold">
+                    {userData?.district || 'Colombo'}, {userData?.province || 'Sri Lanka'}
+                  </span>
+                </div>
+              </div>
+            </div>
 
               {/* GN Officer card */}
               <div className="bg-user-surface border border-user-border rounded-xl p-3.5 mb-5">
