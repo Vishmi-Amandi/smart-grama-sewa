@@ -7,8 +7,9 @@ import {
 } from "firebase/firestore";
 import {
   ChevronLeft, ChevronRight, CheckCircle, XCircle,
-  Loader2, RefreshCw, Plus, Pencil, Trash2, Calendar,
+  Loader2, RefreshCw, Plus, Pencil, Trash2, Calendar, Settings,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -131,6 +132,8 @@ const WalkInModal = ({ modal, onClose, onSave, onRemove, theme }) => {
     setSaving(false);
     onClose();
   };
+
+  
 
   return (
     <div className="fixed inset-0 flex items-end sm:items-center justify-center z-50 bg-black/40">
@@ -476,6 +479,7 @@ const MobileDayView = ({
 
 const GNSchedule = ({ gnStatus, theme }) => {
   const t = getThemeClasses(theme);
+  const navigate = useNavigate();
 
   const [weekStart,     setWeekStart]     = useState(getMonday(new Date()));
   const [workingHours,  setWorkingHours]  = useState(DEFAULT_WORKING_HOURS);
@@ -671,7 +675,19 @@ const GNSchedule = ({ gnStatus, theme }) => {
             {gnDivision && <span className="font-semibold">{gnDivision} · </span>}
             {slotDuration} min slots · {breakBetween} min break
           </p>
+         <div className={`px-5 py-3 border-t ${t.border}`}>
+          <p className={`text-xs ${t.subtext}`}>
+            ⓘ Walk-in slots won't appear in online booking. Adjust hours in{" "}
+            <span
+  onClick={() => navigate("/gn-settings?tab=hours")}
+  className="font-semibold text-[#8B4513] underline underline-offset-2 cursor-pointer"
+>
+  Settings → Weekly Hours
+</span>
+          </p>
         </div>
+        </div>
+        
         <div className="flex items-center gap-2 flex-shrink-0">
           {saving && <Loader2 size={12} className="animate-spin text-[#E5A800]" />}
           <button
@@ -888,12 +904,7 @@ const GNSchedule = ({ gnStatus, theme }) => {
           </tbody>
         </table>
 
-        <div className={`px-5 py-3 border-t ${t.border}`}>
-          <p className={`text-xs ${t.subtext}`}>
-            ⓘ Walk-in slots won't appear in online booking. Adjust hours in{" "}
-            <span className="font-semibold text-[#8B4513]">Settings → Weekly Hours</span>.
-          </p>
-        </div>
+        
       </div>
 
       {/* ── Settings link (mobile footer) ── */}
@@ -901,8 +912,7 @@ const GNSchedule = ({ gnStatus, theme }) => {
         <p className={`text-xs text-center ${t.subtext}`}>
           Adjust hours in{" "}
           <span
-            onClick={() => window.location.href = "/gn-settings?tab=hours"}
-            className="text-[#8B4513] font-semibold underline underline-offset-2"
+            onClick={() => navigate("/gn-settings?tab=hours")}
           >
             Settings → Weekly Hours
           </span>

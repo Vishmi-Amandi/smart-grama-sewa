@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
-import { Bell, Palette, Shield, Clock } from "lucide-react";
+import { Bell, Palette, Shield, Clock, Loader2 } from "lucide-react";
 import { auth, db } from "../../firebase";
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate,  useLocation } from "react-router-dom";
 
 const Toggle = ({ value, onChange }) => (
   <div
@@ -22,6 +22,7 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
   const t = getThemeClasses(theme);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [savingAppearance, setSavingAppearance] = useState(false);
 
   const activeTab = searchParams.get("tab") || "notification";
 
@@ -127,6 +128,17 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
     fetchWorkingHours();
   }, []);
 
+  const handleApplyAppearance = async () => {
+  setSavingAppearance(true);
+  try {
+    // your existing save logic here (Firestore update, localStorage, etc.)
+    // if no async logic yet, simulate briefly:
+    await new Promise((res) => setTimeout(res, 800));
+  } finally {
+    setSavingAppearance(false);
+  }
+};
+
   const handleSaveHours = async () => {
     setHoursLoading(true);
     setHoursSuccess("");
@@ -153,6 +165,7 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
     }
   };
 
+  
   return (
     <GNLayout gnStatus={gnStatus} theme={theme}>
 
@@ -278,9 +291,19 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
             <button className={`w-full sm:w-auto font-semibold px-5 py-2 rounded-xl transition text-center ${t.text} ${theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}>
               Reset to Defaults
             </button>
-            <button className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-6 py-2 rounded-xl transition text-center">
-              Apply Changes
-            </button>
+            <button
+  onClick={handleApplyAppearance}
+  disabled={savingAppearance}
+  className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-black font-semibold px-6 py-2 rounded-xl transition text-center flex items-center justify-center gap-2"
+>
+  {savingAppearance ? (
+    <>
+      <Loader2 size={15} className="animate-spin" /> Applying...
+    </>
+  ) : (
+    "Apply Changes"
+  )}
+</button>
           </div>
         </div>
       )}
@@ -353,9 +376,17 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
           </div>
 
           <div className="flex justify-end">
-            <button className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-6 py-2 rounded-xl transition text-center">
-              Apply Changes
-            </button>
+            <button
+  onClick={handleApplyAppearance}
+  disabled={savingAppearance}
+  className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-black font-semibold px-6 py-2 rounded-xl transition text-center flex items-center justify-center gap-2"
+>
+  {savingAppearance ? (
+    <><Loader2 size={15} className="animate-spin" /> Applying...</>
+  ) : (
+    "Apply Changes"
+  )}
+</button>
           </div>
         </div>
       )}

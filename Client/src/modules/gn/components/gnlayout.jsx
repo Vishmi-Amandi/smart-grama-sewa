@@ -55,8 +55,6 @@ const GNLayout = ({ children, gnStatus, theme }) => {
       )
     : [];
 
-  // ✅ THE FIX: properly split pathname and search so React Router
-  // detects the change even when only the query string differs
   const handleSearchNavigate = (fullPath) => {
     const [pathname, search] = fullPath.split("?");
     navigate(
@@ -125,23 +123,23 @@ const GNLayout = ({ children, gnStatus, theme }) => {
           </div>
 
           {/* Status Badge */}
-<Link
-  to="/gn-current-status"
-  className="mx-4 mt-4 bg-[#9B4D00] rounded-lg px-4 py-3 block hover:bg-[#7a3b00] transition"
-  onClick={() => setMobileSidebarOpen(false)}
->
-  <p className="text-xs text-gray-300">Current Status</p>
-  <div className="flex items-center gap-2 mt-1">
-    <span className={`w-2 h-2 rounded-full ${
-      gnStatus === "Available"   ? "bg-green-400"  :
-      gnStatus === "In Meeting"  ? "bg-orange-400" :
-      gnStatus === "On Field"    ? "bg-red-400"    :
-      gnStatus === "Unavailable" ? "bg-slate-400"  :
-      "bg-gray-400"
-    }`}></span>
-    <span className="text-white font-semibold text-sm">{gnStatus}</span>
-  </div>
-</Link>
+          <Link
+            to="/gn-current-status"
+            className="mx-4 mt-4 bg-[#9B4D00] rounded-lg px-4 py-3 block hover:bg-[#7a3b00] transition"
+            onClick={() => setMobileSidebarOpen(false)}
+          >
+            <p className="text-xs text-gray-300">Current Status</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`w-2 h-2 rounded-full ${
+                gnStatus === "Available"   ? "bg-green-400 shadow-[0_0_6px_2px_rgba(74,222,128,0.6)]"  :
+                gnStatus === "In Meeting"  ? "bg-orange-400 shadow-[0_0_6px_2px_rgba(251,146,60,0.6)]" :
+                gnStatus === "On Field"    ? "bg-red-400 shadow-[0_0_6px_2px_rgba(248,113,113,0.6)]"   :
+                gnStatus === "Unavailable" ? "bg-slate-400"                                              :
+                "bg-gray-400"
+              }`}></span>
+              <span className="text-white font-semibold text-sm">{gnStatus}</span>
+            </div>
+          </Link>
 
           {/* Navigation */}
           <nav className="flex-1 mt-6 px-4 space-y-1">
@@ -256,15 +254,16 @@ const GNLayout = ({ children, gnStatus, theme }) => {
               {/* Hamburger - Mobile Only */}
               <button
                 onClick={() => setMobileSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+                className={`lg:hidden p-2 rounded-lg ${theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
               >
-                <Menu size={24} className="text-gray-600" />
+                {/* FIX: icon color follows theme */}
+                <Menu size={24} className={theme === "dark" ? "text-gray-200" : "text-gray-600"} />
               </button>
 
               {/* Search Bar */}
               <div className="relative flex-1 sm:w-80 sm:flex-none">
                 <div className={`flex items-center rounded-full px-4 py-2 ${theme === "dark" ? "bg-gray-700" : "bg-gray-100"}`}>
-                  <Search size={18} className="text-gray-400 mr-2" />
+                  <Search size={18} className={`mr-2 ${theme === "dark" ? "text-gray-300" : "text-gray-400"}`} />
                   <input
                     type="text"
                     value={searchQuery}
@@ -277,12 +276,17 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                       }
                     }}
                     placeholder="Search pages..."
-                    className="bg-transparent outline-none text-sm text-gray-600 w-full"
+                    // FIX: white text + white placeholder in dark mode
+                    className={`bg-transparent outline-none text-sm w-full
+                      ${theme === "dark"
+                        ? "text-white placeholder-gray-400"
+                        : "text-gray-600 placeholder-gray-400"
+                      }`}
                   />
                   {searchQuery && (
                     <button
                       onClick={() => { setSearchQuery(""); setShowResults(false); }}
-                      className="text-gray-400 hover:text-gray-600 ml-1"
+                      className={`ml-1 ${theme === "dark" ? "text-gray-300 hover:text-white" : "text-gray-400 hover:text-gray-600"}`}
                     >
                       ✕
                     </button>
@@ -295,8 +299,9 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                     ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
                     {filteredPages.length > 0 ? (
                       <>
+                        {/* FIX: section header readable in dark mode */}
                         <div className={`px-4 py-2 text-xs font-semibold uppercase tracking-wide
-                          ${theme === "dark" ? "text-gray-400 bg-gray-700" : "text-gray-400 bg-gray-50"}`}>
+                          ${theme === "dark" ? "text-gray-300 bg-gray-700" : "text-gray-400 bg-gray-50"}`}>
                           Pages
                         </div>
                         {filteredPages.map((page) => (
@@ -305,19 +310,20 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                             onClick={() => handleSearchNavigate(page.path)}
                             className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition
                               ${theme === "dark"
-                                ? "text-gray-200 hover:bg-gray-700"
+                                ? "text-white hover:bg-gray-700"
                                 : "text-gray-700 hover:bg-gray-50"}`}
                           >
-                            <span className="text-[#8B4513]">{page.icon}</span>
+                            <span className="text-[#E5A800]">{page.icon}</span>
+                            {/* FIX: result name and path visible in dark mode */}
                             <span className="text-sm font-semibold">{page.name}</span>
-                            <span className={`ml-auto text-xs ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>
+                            <span className={`ml-auto text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-400"}`}>
                               → {page.path}
                             </span>
                           </div>
                         ))}
                       </>
                     ) : (
-                      <div className={`px-4 py-4 text-sm text-center ${theme === "dark" ? "text-gray-400" : "text-gray-400"}`}>
+                      <div className={`px-4 py-4 text-sm text-center ${theme === "dark" ? "text-gray-300" : "text-gray-400"}`}>
                         No results found for "{searchQuery}"
                       </div>
                     )}
@@ -341,20 +347,30 @@ const GNLayout = ({ children, gnStatus, theme }) => {
               <div className="relative">
                 <div
                   onClick={() => setShowLang(!showLang)}
-                  className="flex items-center gap-2 border rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-600 cursor-pointer hover:bg-gray-100"
+                  // FIX: border, text, and hover follow dark mode
+                  className={`flex items-center gap-2 border rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm cursor-pointer
+                    ${theme === "dark"
+                      ? "border-gray-600 text-gray-200 hover:bg-gray-700"
+                      : "border-gray-200 text-gray-600 hover:bg-gray-100"
+                    }`}
                 >
                   🌐 <span className="hidden sm:inline">{selectedLang}</span> ▾
                 </div>
                 {showLang && (
-                  <div className="absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-50 overflow-hidden">
-                    <div className="px-4 py-2 text-xs text-gray-400 uppercase tracking-wide border-b">
+                  // FIX: dropdown panel follows dark mode
+                  <div className={`absolute right-0 mt-2 w-44 border rounded-xl shadow-lg z-50 overflow-hidden
+                    ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+                    <div className={`px-4 py-2 text-xs uppercase tracking-wide border-b
+                      ${theme === "dark" ? "text-gray-400 border-gray-700" : "text-gray-400 border-gray-200"}`}>
                       Selected
                     </div>
-                    <div className="px-4 py-2 text-sm text-gray-800 font-bold bg-gray-50">
+                    <div className={`px-4 py-2 text-sm font-bold
+                      ${theme === "dark" ? "text-white bg-gray-700" : "text-gray-800 bg-gray-50"}`}>
                       ✓ {selectedLang}
                     </div>
-                    <div className="border-t my-1"></div>
-                    <div className="px-4 py-2 text-xs text-gray-400 uppercase tracking-wide">
+                    <div className={`border-t my-1 ${theme === "dark" ? "border-gray-700" : "border-gray-200"}`}></div>
+                    <div className={`px-4 py-2 text-xs uppercase tracking-wide
+                      ${theme === "dark" ? "text-gray-400" : "text-gray-400"}`}>
                       Switch to
                     </div>
                     {["English", "සිංහල", "தமிழ்"]
@@ -363,7 +379,11 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                         <div
                           key={lang}
                           onClick={() => { setSelectedLang(lang); setShowLang(false); }}
-                          className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 text-gray-700"
+                          className={`px-4 py-2 text-sm cursor-pointer
+                            ${theme === "dark"
+                              ? "text-gray-200 hover:bg-gray-700"
+                              : "text-gray-700 hover:bg-gray-100"
+                            }`}
                         >
                           {lang}
                         </div>
@@ -373,16 +393,17 @@ const GNLayout = ({ children, gnStatus, theme }) => {
               </div>
 
               {/* Notification */}
-              <span className="text-gray-500 text-base sm:text-xl cursor-pointer">🔔</span>
+              <span className={`text-base sm:text-xl cursor-pointer ${theme === "dark" ? "text-gray-200" : "text-gray-500"}`}>🔔</span>
 
               {/* User Info */}
               <Link to="/gn-profile" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
                 <div className="text-right hidden sm:block">
-                  <p className="text-sm font-semibold text-gray-800">
+                  {/* FIX: name and division label visible in dark mode */}
+                  <p className={`text-sm font-semibold ${theme === "dark" ? "text-white" : "text-gray-800"}`}>
                     {userData?.fullName || "Officer"}
                   </p>
-                  <p className="text-xs text-[#8B4513]">
-                    {userData?.gnDivisionName || "Grama Niladhari"}
+                  <p className="text-xs text-[#E5A800]">
+                    {userData?.gnDiv || "Grama Niladhari"}
                   </p>
                 </div>
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden flex items-center justify-center font-bold text-white bg-[#8B4513]">
@@ -410,14 +431,14 @@ const GNLayout = ({ children, gnStatus, theme }) => {
       </div>
 
       {/* BOTTOM NAVIGATION BAR - Mobile Only */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.1)] z-50">
+      <div className={`lg:hidden fixed bottom-0 left-0 right-0 shadow-[0_-4px_10px_rgba(0,0,0,0.1)] z-50 ${theme === "dark" ? "bg-gray-900" : "bg-white"}`}>
         <div className="flex justify-around items-center py-2 px-2">
           {mobileNavItems.map((item, index) => (
             item.action ? (
               <button
                 key={index}
                 onClick={() => handleMobileAction(item.action)}
-                className="flex flex-col items-center py-1 px-3 rounded-lg transition-colors text-gray-500 hover:text-red-600"
+                className={`flex flex-col items-center py-1 px-3 rounded-lg transition-colors ${theme === "dark" ? "text-gray-400 hover:text-red-400" : "text-gray-500 hover:text-red-600"}`}
               >
                 <span className="text-xl sm:text-2xl">{item.icon}</span>
                 <span className="text-[10px] sm:text-xs mt-1 font-medium">{item.name}</span>
@@ -430,7 +451,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                 className={`flex flex-col items-center py-1 px-3 rounded-lg transition-colors ${
                   location.pathname === item.path
                     ? "text-[#E5A800]"
-                    : "text-gray-500 hover:text-gray-700"
+                    : theme === "dark" ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 <span className="text-xl sm:text-2xl">{item.icon}</span>

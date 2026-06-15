@@ -128,7 +128,7 @@ const GNCreateAnnouncement = ({ gnStatus, theme }) => {
   // ─── Save as Draft ────────────────────────────────────────────────────────────
 const handleSaveDraft = async () => {
   if (!title.trim()) { setErrors({ general: "Please enter a title." }); return; }
-  setLoading(true);
+   setSavingDraft(true);
   try {
     const user = auth.currentUser;
     if (draft?.id) {
@@ -166,14 +166,14 @@ const handleSaveDraft = async () => {
     setErrors({ general: "Failed to save draft. Please try again." });
     console.error(err);
   } finally {
-    setLoading(false);
+    setSavingDraft(false);
   }
 };
 
 const handlePublish = async () => {
   if (!title.trim()) { setErrors({ general: "Please enter a title." }); return; }
   if (!description.trim()) { setErrors({ general: "Please enter a description." }); return; }
-  setLoading(true);
+  setPublishing(true);
   try {
     const user = auth.currentUser;
     if (draft?.id) {
@@ -215,7 +215,7 @@ const handlePublish = async () => {
     setErrors({ general: "Failed to publish. Please try again." });
     console.error(err);
   } finally {
-    setLoading(false);
+    setPublishing(false);
   }
 };
 
