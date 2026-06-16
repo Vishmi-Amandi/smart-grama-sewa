@@ -49,6 +49,7 @@ import Login from './modules/home/Login';
 import SignUpSelect from './modules/home/SignUpSelect.jsx';
 import Forms from './modules/forms/Forms';
 import ChatbotWidget from './modules/chatbot/ChatbotWidget.jsx';
+import FAQ from './modules/home/FAQ';
 
 // ===== GLOBAL CHATBOT OPENER =====
 window.openChatbot = () => window.dispatchEvent(new CustomEvent('open-chatbot'));
@@ -167,6 +168,7 @@ const GNProtectedRoute = ({ children }) => {
               {/* ===== LANDING PAGE ===== */}
               <Route path="/" element={<Home />} />
               <Route path="/home" element={<Home />} />
+              <Route path="/faq" element={<FAQ />} />
 
             {/* ===== GN MODULE ROUTES ===== */}
             <Route path="/gn-signup" element={<GNSignUp />} />
