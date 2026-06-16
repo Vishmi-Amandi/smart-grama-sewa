@@ -38,6 +38,7 @@ const IC = {
   copy: 'M8 4v12a2 2 0 002 2h8M16 4v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2z',
   alertCircle: 'M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z',
   refresh: 'M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15',
+  xCircle: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z',
 };
 
 const NavItem = ({ iconPath, label, active, onClick }) => (
@@ -417,26 +418,29 @@ const ContactGN = () => {
                 gnOfficer?.availability === 'Available' ? 'bg-green-50 border border-green-200' :
                 gnOfficer?.availability === 'In Meeting' ? 'bg-orange-50 border border-orange-200' :
                 gnOfficer?.availability === 'On Field' ? 'bg-red-50 border border-red-200' :
+                gnOfficer?.availability === 'Not Available' ? 'bg-gray-50 border border-gray-400' :                
                 'bg-gray-50 border border-gray-200'
               }`}>
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                     gnOfficer?.availability === 'Available' ? 'bg-green-100' :
                     gnOfficer?.availability === 'In Meeting' ? 'bg-orange-100' :
-                    gnOfficer?.availability === 'On Field' ? 'bg-red-100' : 'bg-gray-100'
+                    gnOfficer?.availability === 'On Field' ? 'bg-red-100' :
+                    gnOfficer?.availability === 'Not Available' ? 'bg-gray-200' : 'bg-gray-100'
                   }`}>
                     <Icon 
                       d={
                         gnOfficer?.availability === 'Available' ? IC.checkCircle :
                         gnOfficer?.availability === 'In Meeting' ? IC.clock :
-                        gnOfficer?.availability === 'On Field' ? IC.location : IC.checkCircle
+                        gnOfficer?.availability === 'On Field' ? IC.location :
+                        gnOfficer?.availability === 'Not Available' ? IC.xCircle : IC.checkCircle
                       } 
                       size={18} 
                       color={
                         gnOfficer?.availability === 'Available' ? '#16a34a' :
                         gnOfficer?.availability === 'In Meeting' ? '#ea580c' :
-                        gnOfficer?.availability === 'On Field' ? '#dc2626' : '#16a34a'
-                      } 
+                        gnOfficer?.availability === 'On Field' ? '#dc2626' :
+                        gnOfficer?.availability === 'Not Available' ? '#6b7280' : '#16a34a'                      } 
                       strokeWidth={2}
                     />
                   </div>
@@ -444,19 +448,21 @@ const ContactGN = () => {
                     <div className={`text-sm font-bold ${
                       gnOfficer?.availability === 'Available' ? 'text-green-700' :
                       gnOfficer?.availability === 'In Meeting' ? 'text-orange-700' :
-                      gnOfficer?.availability === 'On Field' ? 'text-red-700' : 'text-gray-700'
+                      gnOfficer?.availability === 'On Field' ? 'text-red-700' :
+                      gnOfficer?.availability === 'Not Available' ? 'text-gray-600' : 'text-gray-700'
                     }`}>
                       GN Officer is {gnOfficer?.availability || 'Available'}
                     </div>
                     <div className="text-xs text-gray-500">
                       {gnOfficer?.availability === 'In Meeting' && 'Currently in a meeting. May take time to respond.'}
                       {gnOfficer?.availability === 'On Field' && 'Out on field duty. For emergencies, use emergency contact.'}
+                      {gnOfficer?.availability === 'Not Available' && 'Officer is currently unavailable. Please try again later or use emergency contact.'}
                       {(!gnOfficer?.availability || gnOfficer?.availability === 'Available') && 'Ready to assist you during office hours.'}
                     </div>
                   </div>
                 </div>
                 
-                {/* Refresh Button - INSIDE the same div, on the right side */}
+                {/* Refresh Button */}
                 <button
                   onClick={refreshGNOfficer}
                   disabled={refreshing}
@@ -498,7 +504,7 @@ const ContactGN = () => {
                     <Icon d={IC.profile} size={36} color="#3d2a00" strokeWidth={1.5} />
                   </div>
                   <div>
-                    {/* ✅ Use fullName instead of name */}
+                    {/* Use fullName instead of name */}
                     <h2 className="text-xl font-extrabold text-user-text mb-1">
                       {gnOfficer?.fullName || 'Grama Niladhari'}
                     </h2>
@@ -530,7 +536,7 @@ const ContactGN = () => {
                 </div>
               </div>
             ) : (
-              // Mobile View - FIXED field names
+              // Mobile View
               <div className="bg-user-surface rounded-xl border border-user-border p-6 mb-6 text-center">
                 <div className="w-20 h-20 rounded-full bg-user-primary flex items-center justify-center mx-auto mb-4">
                   <Icon d={IC.profile} size={40} color="#3d2a00" strokeWidth={1.5} />
@@ -557,7 +563,7 @@ const ContactGN = () => {
               </div>
             )}
 
-                        {/* Contact Details Card - Separate Mobile & Office Numbers */}
+            {/* Contact Details Card */}
             <div className="bg-user-surface rounded-xl border border-user-border p-5 md:p-6 mb-5">
               <h3 className="text-base font-extrabold text-user-text mb-4 flex items-center gap-2">
                 <Icon d={IC.phone} size={18} color="#B46A02" />
