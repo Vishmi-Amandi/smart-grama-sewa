@@ -38,9 +38,44 @@ const IC = {
   unread: 'M21 12a9 9 0 11-9-9 M21 3v6h-6 M3 3l18 18',
   chevLeft: 'M15 18l-6-6 6-6',
   chevRight: 'M9 18l6-6-6-6',
+  paperclip: 'M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48',
+  fileText: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
+  image: 'M20 5a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2h16z M10 8.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z M21 15l-5-4-4 4-2-2-4 4',
 };
 
-// Tag colour map
+const getFileIcon = (fileName) => {
+  const ext = fileName?.split('.').pop()?.toLowerCase() || '';
+  if (['pdf'].includes(ext)) return 'fileText';
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) return 'image';
+  if (['doc', 'docx', 'odt'].includes(ext)) return 'fileText';
+  if (['xls', 'xlsx', 'csv'].includes(ext)) return 'fileText';
+  if (['ppt', 'pptx'].includes(ext)) return 'fileText';
+  return 'paperclip';
+};
+
+const getFileType = (fileName) => {
+  const ext = fileName?.split('.').pop()?.toLowerCase() || '';
+  const types = {
+    pdf: 'PDF',
+    jpg: 'Image', jpeg: 'Image', png: 'Image', gif: 'Image', webp: 'Image',
+    doc: 'Word', docx: 'Word',
+    xls: 'Excel', xlsx: 'Excel',
+    ppt: 'PowerPoint', pptx: 'PowerPoint',
+    txt: 'Text',
+  };
+  return types[ext] || 'File';
+};
+
+const getFileColor = (fileName) => {
+  const ext = fileName?.split('.').pop()?.toLowerCase() || '';
+  if (['pdf'].includes(ext)) return 'text-red-600 bg-red-50 border-red-200';
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) return 'text-green-600 bg-green-50 border-green-200';
+  if (['doc', 'docx', 'odt'].includes(ext)) return 'text-blue-600 bg-blue-50 border-blue-200';
+  if (['xls', 'xlsx', 'csv'].includes(ext)) return 'text-emerald-600 bg-emerald-50 border-emerald-200';
+  if (['ppt', 'pptx'].includes(ext)) return 'text-orange-600 bg-orange-50 border-orange-200';
+  return 'text-gray-600 bg-gray-50 border-gray-200';
+};
+
 const TAG = {
   Urgent: { border: '#e05050', chipBg: '#fde8e8', chipText: '#c0392b', icon: IC.alertTriangle },
   Important: { border: '#f59e0b', chipBg: '#fff3dc', chipText: '#b45309', icon: IC.star },
@@ -276,6 +311,7 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
 const DetailModal = ({ ann, onClose }) => {
   if (!ann) return null;
   const cfg = tagCfg(ann.tag);
+  
   return (
     <>
       <div onClick={onClose} className="fixed inset-0 bg-black/45 z-[100]" />
@@ -289,6 +325,35 @@ const DetailModal = ({ ann, onClose }) => {
             <Icon d={IC.calendar} size={12} color="#aaa" /> {ann.dateLabel}
           </p>
           <p className="text-sm text-user-text-light leading-relaxed mb-5">{ann.body}</p>
+
+          {ann.attachments && ann.attachments.length > 0 && (
+            <div className="mt-3 mb-4">
+              <p className="text-xs font-bold text-user-text-lighter mb-2 flex items-center gap-1.5">
+                <Icon d={IC.paperclip} size={12} color="#888" /> 
+                Attachments ({ann.attachments.length})
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {ann.attachments.map((file, idx) => {
+                  const fileIcon = getFileIcon(file.name);
+                  const fileColor = getFileColor(file.name);
+                  const fileType = getFileType(file.name);
+                  return (
+                    <a
+                      key={idx}
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold ${fileColor} hover:shadow-md transition-all`}
+                    >
+                      <Icon d={IC[fileIcon]} size={12} color="currentColor" />
+                      <span className="max-w-[120px] truncate">{file.name}</span>
+                      <span className="text-[9px] opacity-70">({fileType})</span>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
         <div className="py-3.5 px-6 border-t border-user-border-light flex justify-end">
           <button onClick={onClose} className="px-6 py-2 bg-user-primary border-none rounded-round text-sm font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark">
@@ -318,8 +383,33 @@ const AnnouncementCard = ({ ann, onClick }) => {
       </div>
       <div className="text-base font-black text-user-text mb-2">{ann.title}</div>
       <div className="text-sm text-user-text-light leading-relaxed mb-3">{preview}</div>
+
+      {ann.attachments && ann.attachments.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2 mb-2">
+          {ann.attachments.slice(0, 3).map((file, idx) => {
+            const fileIcon = getFileIcon(file.name);
+            const fileColor = getFileColor(file.name);
+            return (
+              <span
+                key={idx}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold ${fileColor} border`}
+              >
+                <Icon d={IC[fileIcon]} size={10} color="currentColor" />
+                <span className="max-w-[80px] truncate">{file.name}</span>
+              </span>
+            );
+          })}
+          {ann.attachments.length > 3 && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold text-gray-500 bg-gray-100 border border-gray-200">
+              +{ann.attachments.length - 3} more
+            </span>
+          )}
+        </div>
+      )}
       <span className="text-sm font-extrabold text-user-warning">Read more →</span>
     </div>
+
+    
   );
 };
 
@@ -593,6 +683,7 @@ const Announcements = () => {
                 body: data.body || data.description || 'No description available',
                 tag: finalTag,
                 dateLabel: dateLabel,
+                attachments: data.attachments || [],
               };
             });
           
