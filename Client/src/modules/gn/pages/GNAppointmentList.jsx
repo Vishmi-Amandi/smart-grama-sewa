@@ -11,7 +11,7 @@ const parseSlot = (slot = "") => {
 };
 
 // ── Detail Modal ──────────────────────────────────────────────────────────────
-const AppointmentDetailModal = ({ appointment: a, theme, onClose, onConfirm, onCancel }) => {
+const AppointmentDetailModal = ({ appointment: a, theme, onClose, onConfirm, onCancel, onComplete }) => {
   const t = getThemeClasses(theme);
 
   if (!a) return null;
@@ -98,7 +98,22 @@ const AppointmentDetailModal = ({ appointment: a, theme, onClose, onConfirm, onC
               </button>
             </>
           )}
-          {a.status !== "Pending" && (
+
+          {a.status === "Confirmed" && (
+            <>
+              <button
+                onClick={() => { onConfirm(a); onClose(); }}
+                className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2.5 rounded-xl transition text-sm">
+                ✓ Complete
+              </button>
+              <button
+                onClick={() => { onCancel(a.id); onClose(); }}
+                className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-semibold py-2.5 rounded-xl transition text-sm">
+                ✕ Cancel
+              </button>
+            </>
+          )}
+          {(a.status === "Completed" || a.status === "Cancelled") && (
             <button
               onClick={onClose}
               className={`flex-1 border ${t.border} ${t.subtext} font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition text-sm`}>
@@ -181,6 +196,24 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
       if (selected?.id === id) setSelected((s) => ({ ...s, status: "Cancelled" }));
     } catch (err) {
       console.error("Cancel error:", err);
+    }
+  };
+
+  const handleComplete = async (appointment) => {
+    try {
+      await updateDoc(doc(db, "appointments", appointment.id), {
+        status: "Completed",
+        completedAt: new Date().toISOString(),
+      });
+      setAppointments((prev) =>
+        prev.map((a) =>
+          a.id === appointment.id ? { ...a, status: "Completed" } : a
+        )
+      );
+      if (selected?.id === appointment.id)
+        setSelected((s) => ({ ...s, status: "Completed" }));
+    } catch (err) {
+      console.error("Complete error:", err);
     }
   };
 
@@ -278,7 +311,16 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
                           </>
                         )}
                         {a.status === "Confirmed" && (
-                          <span className="text-[10px] sm:text-xs text-green-600 font-semibold whitespace-nowrap">✓ Confirmed</span>
+                          <>
+                            <button
+                              onClick={() => handleComplete(a)}
+                              className="text-[10px] sm:text-xs bg-purple-100 text-purple-700 font-semibold px-2.5 sm:px-3 py-1 rounded-lg hover:bg-purple-200 transition whitespace-nowrap">
+                              ✓ Complete
+                            </button>
+                          </>
+                        )}
+                        {a.status === "Completed" && (
+                          <span className="text-[10px] sm:text-xs text-purple-600 font-semibold whitespace-nowrap">✓ Completed</span>
                         )}
                         {a.status === "Cancelled" && (
                           <span className="text-[10px] sm:text-xs text-red-500 font-semibold whitespace-nowrap">✕ Cancelled</span>
@@ -307,6 +349,7 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
           onClose={() => setSelected(null)}
           onConfirm={handleConfirm}
           onCancel={handleCancel}
+          onComplete={handleComplete}
         />
       )}
 
