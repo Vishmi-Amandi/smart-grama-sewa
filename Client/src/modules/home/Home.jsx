@@ -43,14 +43,14 @@ const Home = () => {
         </div>
         
         {/* Desktop Links View Navigation Panel */}
-        {!isMobile && (
-          <div className="space-x-8 font-semibold text-sm md:text-base">
-            <Link to="/" className="hover:text-[#6A2301] transition-colors">Home</Link>
-            <a href="#" className="hover:text-[#6A2301] transition-colors">About</a>
-            <a href="#" className="hover:text-[#6A2301] transition-colors">News &amp; Notices</a>
-            <a href="#" className="hover:text-[#6A2301] transition-colors">Contact</a>
-          </div>
-        )}
+{!isMobile && (
+  <div className="space-x-8 font-semibold text-sm md:text-base">
+    <Link to="/" className="hover:text-[#6A2301] transition-colors">{t('nav_home', 'Home')}</Link>
+    <Link to="/about" className="hover:text-[#6A2301] transition-colors">{t('nav_about', 'About')}</Link>
+    <a href="#" className="hover:text-[#6A2301] transition-colors">{t('nav_news', 'News & Notices')}</a>
+    <a href="#" className="hover:text-[#6A2301] transition-colors">{t('nav_contact', 'Contact')}</a>
+  </div>
+)}
 
         {/* Language Switcher Section with Balanced Sizing for Sinhala and Tamil */}
         <div className="text-xs md:text-sm flex items-center gap-1 md:gap-2 font-bold ml-auto md:ml-0">
@@ -90,11 +90,11 @@ const Home = () => {
               <button onClick={() => setMobileMenuOpen(false)} className="bg-none border-none text-xl font-bold cursor-pointer text-[#3d2a00]">✕</button>
             </div>
             <div className="flex flex-col gap-4 font-bold text-base text-[#3d2a00]">
-              <Link to="/" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/30 transition-colors">Home</Link>
-              <a href="#" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/30 transition-colors">About</a>
-              <a href="#" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/30 transition-colors">News &amp; Notices</a>
-              <a href="#" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/30 transition-colors">Contact</a>
-            </div>
+  <Link to="/" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/30 transition-colors">{t('nav_home', 'Home')}</Link>
+  <Link to="/about" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/30 transition-colors">{t('nav_about', 'About')}</Link>
+  <a href="#" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/30 transition-colors">{t('nav_news', 'News & Notices')}</a>
+  <a href="#" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/30 transition-colors">{t('nav_contact', 'Contact')}</a>
+</div>
           </div>
         </>
       )}
@@ -127,8 +127,7 @@ const Home = () => {
           }`}>
             {t('hero_desc')}
           </p>
-          {/* Updated 'to' route target link configuration path below */}
-          <Link to="/login" className="bg-[#FFCB05] text-black px-8 md:px-10 py-3 rounded-full font-bold text-sm md:text-base shadow-lg hover:bg-yellow-500 hover:scale-[1.02] active:scale-[0.98] transition-all inline-block text-center">
+          <Link to="/gn-login" className="bg-[#FFCB05] text-black px-8 md:px-10 py-3 rounded-full font-bold text-sm md:text-base shadow-lg hover:bg-yellow-500 hover:scale-[1.02] active:scale-[0.98] transition-all inline-block text-center">
             {t('btn_get_started')}
           </Link>
         </div>
