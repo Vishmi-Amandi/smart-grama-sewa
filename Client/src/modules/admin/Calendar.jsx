@@ -15,7 +15,7 @@ import { auth, db } from "../../firebase";
 import {
   LayoutDashboard, UserCheck, ArrowLeftRight, BarChart2,
   User, Activity, Megaphone, LogOut, Search, ChevronDown,
-  Bell, Calendar,
+  Bell, Calendar, TrendingUp
 } from "lucide-react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 
@@ -197,9 +197,9 @@ function Sidebar({ onLogout }) {
         <NavItem icon={BarChart2} label="System reports"
           onClick={() => navigate("/admin/reports/system")} />
         <NavItem icon={User}      label="Individual user access"
-          onClick={() => navigate("/admin/reports/user-access")} />
+          onClick={() => navigate("/admin/reports/useraccess")} />
         <NavItem icon={Activity}  label="GN activity reports"
-          onClick={() => navigate("/admin/reports/gn-activity")} />
+          onClick={() => navigate("/admin/reports/gnactivity")} />
 
         <li className="pt-4">
           <NavItem icon={Megaphone} label="Announcements" bold
