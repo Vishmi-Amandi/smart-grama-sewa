@@ -10,6 +10,7 @@
     "test:safari": "node test-safari.js"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@tailwindcss/vite": "^4.3.0",
     "firebase": "^12.10.0",
     "i18next": "^26.3.1",
