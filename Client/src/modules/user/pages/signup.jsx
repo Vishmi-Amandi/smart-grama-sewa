@@ -225,7 +225,7 @@ const DISTRICT_DS_MAP = {
   'Kegalle': ['Aranayaka', 'Bulathkohupitiya', 'Deraniyagala', 'Dehiovita', 'Galigamuwa', 'Kegalle', 'Mawanella', 'Rambukkana', 'Ruwanwella', 'Warakapola', 'Yatiyanthota'],
 };
 
-// STEP 1 — About You with NIC Uniqueness Check (Using Document ID - NO INDEX NEEDED)
+// STEP 1 — About You
 const Step1 = ({ data, onChange, onNext }) => {
   const [errors, setErrors] = useState({});
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -240,7 +240,7 @@ const Step1 = ({ data, onChange, onNext }) => {
   }, []);
 
   const checkNicUniqueness = async (nicValue) => {
-    const normalized = nicValue.trim().toUpperCase(); // ← add this
+    const normalized = nicValue.trim().toUpperCase();
     
     if (!normalized || normalized.length < 9) {
       setNicAvailable(true);
@@ -248,7 +248,7 @@ const Step1 = ({ data, onChange, onNext }) => {
       return;
     }
 
-    const isValidFormat = /^(\d{9}[VX]|\d{12})$/.test(normalized); // uppercase only
+    const isValidFormat = /^(\d{9}[VX]|\d{12})$/.test(normalized);
     if (!isValidFormat) {
       setErrors(prev => ({ ...prev, nic: 'Enter a valid NIC (9 digits+V/X or 12 digits).' }));
       setNicAvailable(false);
@@ -293,6 +293,7 @@ const Step1 = ({ data, onChange, onNext }) => {
     else if (!/^(\d{9}[VvXx]|\d{12})$/.test(data.nic.trim()))
       e.nic = 'Enter a valid NIC (9 digits+V/X or 12 digits).';
     else if (!nicAvailable)     e.nic = 'This NIC is already registered. Please contact support.';
+    if (!data.sex)              e.sex = 'Please select your gender.';
     if (!data.dob)              e.dob = 'Date of birth is required.';
     if (!data.address.trim())   e.address = 'Home address is required.';
     setErrors(e);
@@ -305,6 +306,7 @@ const Step1 = ({ data, onChange, onNext }) => {
         Personal Details
       </h2>
 
+      {/* Full Name - Full Width */}
       <div style={{ marginBottom: '18px' }}>
         <label style={labelStyle(isMobile)}>Your Full Name</label>
         <input
@@ -321,24 +323,25 @@ const Step1 = ({ data, onChange, onNext }) => {
 
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', 
         gap: '16px', 
         marginBottom: '18px' 
       }}>
+        {/* NIC */}
         <div>
           <label style={labelStyle(isMobile)}>NIC Number</label>
           <input
             type="text"
             value={data.nic}
             onChange={handleNicChange}
-            placeholder="12 digits or 9 digits+V"
+            placeholder="12 digits or 9+V"
             style={inp(isMobile, errors.nic)}
             onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
             onBlur={(e)  => (e.target.style.borderColor = errors.nic ? '#e05050' : '#d4c9a8')}
           />
           {checkingNic && (
             <p style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>
-              Checking NIC availability...
+              Checking NIC...
             </p>
           )}
           {errors.nic && (
@@ -348,10 +351,38 @@ const Step1 = ({ data, onChange, onNext }) => {
           )}
           {!errors.nic && data.nic && nicAvailable && data.nic.trim().length >= 9 && !checkingNic && (
             <p style={{ color: '#30a050', fontSize: '12px', marginTop: '4px' }}>
-              ✓ NIC is valid and available
+              ✓ NIC is valid
             </p>
           )}
         </div>
+
+        {/* Gender */}
+        <div>
+          <label style={labelStyle(isMobile)}>Gender</label>
+          <select
+            value={data.sex || ''}
+            onChange={(e) => onChange('sex', e.target.value)}
+            style={{
+              ...inp(isMobile, errors.sex),
+              appearance: 'none',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 12px center',
+              paddingRight: '36px',
+              cursor: 'pointer',
+            }}
+            onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
+            onBlur={(e)  => (e.target.style.borderColor = errors.sex ? '#e05050' : '#d4c9a8')}
+          >
+            <option value="">Select…</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+          {errors.sex && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.sex}</p>}
+        </div>
+
+        {/* Date of Birth */}
         <div>
           <label style={labelStyle(isMobile)}>Date of Birth</label>
           <input
@@ -366,6 +397,22 @@ const Step1 = ({ data, onChange, onNext }) => {
         </div>
       </div>
 
+      {/* Address - Full Width */}
+      <div style={{ marginBottom: '18px' }}>
+        <label style={labelStyle(isMobile)}>Your Home Address</label>
+        <input
+          type="text"
+          value={data.address}
+          onChange={(e) => onChange('address', e.target.value)}
+          placeholder=""
+          style={inp(isMobile, errors.address)}
+          onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
+          onBlur={(e)  => (e.target.style.borderColor = errors.address ? '#e05050' : '#d4c9a8')}
+        />
+        {errors.address && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.address}</p>}
+      </div>
+
+      {/* Continue Button */}
       <div style={{ 
         display: 'flex', 
         flexDirection: isMobile ? 'column' : 'row',
@@ -373,19 +420,7 @@ const Step1 = ({ data, onChange, onNext }) => {
         gap: '16px', 
         marginBottom: '4px' 
       }}>
-        <div style={{ flex: 1 }}>
-          <label style={labelStyle(isMobile)}>Your Home Address</label>
-          <input
-            type="text"
-            value={data.address}
-            onChange={(e) => onChange('address', e.target.value)}
-            placeholder=""
-            style={inp(isMobile, errors.address)}
-            onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
-            onBlur={(e)  => (e.target.style.borderColor = errors.address ? '#e05050' : '#d4c9a8')}
-          />
-          {errors.address && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.address}</p>}
-        </div>
+        <div style={{ flex: 1 }} />
         <div style={{ flexShrink: 0 }}>
           <DarkBtn 
             onClick={() => { 
