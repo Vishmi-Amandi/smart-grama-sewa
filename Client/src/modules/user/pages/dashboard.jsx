@@ -47,6 +47,10 @@ const IC = {
   bolt: 'M13 10V3L4 14h7v7l9-11h-7z',
   wave: 'M2 12c3.5-4 8.5-4 12 0s8.5 4 12 0 M4 16c3-3 9-3 12 0s9 3 12 0',
   sun: 'M12 2v2 M12 20v2 M4.93 4.93l1.41 1.41 M17.66 17.66l1.41 1.41 M2 12h2 M20 12h2 M5.64 17.66l1.41-1.41 M16.95 6.05l1.41-1.41 M12 6a6 6 0 100 12 6 6 0 000-12z',
+  emergency: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',
+  location: 'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z M12 10a1 1 0 100-2 1 1 0 000 2z',
+  alertTriangle: 'M12 9v4M12 17h.01M12 2a10 10 0 100 20 10 10 0 000-20z',
+  phoneCall: 'M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z',
 };
 
 // NavItem 
@@ -75,6 +79,25 @@ const QuickCard = ({ iconPath, label, onClick, tooltip }) => (
     </button>
     {tooltip && (
       <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+        {tooltip}
+      </span>
+    )}
+  </div>
+);
+
+// Emergency QuickCard
+const EmergencyCard = ({ onClick, tooltip }) => (
+  <div className="relative group w-full">
+    <button 
+      onClick={onClick} 
+      className="flex flex-col items-center justify-center gap-2 w-full py-4 px-3 bg-red-50 border border-red-200 rounded-lg cursor-pointer font-sans text-xs sm:text-sm font-bold text-red-700 transition-all duration-200 shadow-sm hover:bg-red-100 hover:-translate-y-0.5"
+    >
+      <Icon d={IC.alertTriangle} size={20} color="#dc2626" />
+      <span className="text-center whitespace-nowrap">Emergency</span>
+      {/* REMOVED: <span className="text-[9px] text-red-500 mt-0.5">24/7</span> */}
+    </button>
+    {tooltip && (
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-red-600 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
         {tooltip}
       </span>
     )}
@@ -302,29 +325,76 @@ const Dashboard = () => {
   };
 
   // Fetch announcements
-  const fetchAnnouncements = async (showRefresh = false) => {
-    showRefresh ? setRefreshingAnnouncements(true) : setLoadingAnnouncements(true);
-    try {
-      const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
-      const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'), limit(3));
-      const snap = await Promise.race([getDocs(q), timeout]);
-      if (snap.docs.length > 0) {
-        setAnnouncements(snap.docs.map(d => ({
-          id: d.id, title: d.data().title || 'Announcement',
-          body: d.data().body || d.data().description || '',
-          date: d.data().createdAt?.toDate?.().toISOString().split('T')[0] || '',
-        })));
-      } else {
-        setAnnouncements(defaultAnnouncements);
-      }
-    } catch (e) { 
-      console.error('Error fetching announcements:', e);
-      showToast('Failed to load announcements', 'error');
-    } finally { 
-      setLoadingAnnouncements(false); 
-      setRefreshingAnnouncements(false); 
+const fetchAnnouncements = async (showRefresh = false) => {
+  showRefresh ? setRefreshingAnnouncements(true) : setLoadingAnnouncements(true);
+  try {
+    // Get citizen's gnDiv from their user data
+    const citizenGnDiv = userData?.gnDiv || "";
+
+    const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
+
+    // Query 1: GN officer announcements for this citizen's division
+    const gnQuery = citizenGnDiv
+      ? query(
+          collection(db, 'announcements'),
+          where('gnDiv', '==', citizenGnDiv),
+          where('status', '==', 'Active')
+        )
+      : null;
+
+    // Query 2: Admin announcements for all_users
+    const adminAllQuery = query(
+      collection(db, 'announcements'),
+      where('category', '==', 'all_users'),
+      where('status', '==', 'published')
+    );
+
+    // Query 3: Admin announcements for gn_officers audience (visible to all)
+    const adminGnQuery = query(
+      collection(db, 'announcements'),
+      where('category', '==', 'gn_officers'),
+      where('status', '==', 'published')
+    );
+
+    const queries = [
+      gnQuery ? Promise.race([getDocs(gnQuery), timeout]) : Promise.resolve({ docs: [] }),
+      Promise.race([getDocs(adminAllQuery), timeout]),
+      Promise.race([getDocs(adminGnQuery), timeout]),
+    ];
+
+    const [gnSnap, adminAllSnap, adminGnSnap] = await Promise.all(queries);
+
+    const allDocs = [
+      ...gnSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      ...adminAllSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      ...adminGnSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+    ];
+
+    // Deduplicate by id
+    const seen = new Set();
+    const unique = allDocs
+      .filter(a => { if (seen.has(a.id)) return false; seen.add(a.id); return true; })
+      .sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0))
+      .slice(0, 5);
+
+    if (unique.length > 0) {
+      setAnnouncements(unique.map(d => ({
+        id: d.id,
+        title: d.title || 'Announcement',
+        body: d.description || d.body || '',
+        date: d.createdAt?.toDate?.().toISOString().split('T')[0] || '',
+      })));
+    } else {
+      setAnnouncements(defaultAnnouncements);
     }
-  };
+  } catch (e) {
+    console.error('Error fetching announcements:', e);
+    showToast('Failed to load announcements', 'error');
+  } finally {
+    setLoadingAnnouncements(false);
+    setRefreshingAnnouncements(false);
+  }
+};
 
   // Auth listener
   useEffect(() => {
@@ -364,7 +434,9 @@ const Dashboard = () => {
 
   // Load data on mount
   useEffect(() => { if (currentUser) fetchAppointments(false); }, [currentUser]);
-  useEffect(() => { fetchAnnouncements(false); }, []);
+  useEffect(() => { 
+  if (userData !== null) fetchAnnouncements(false); 
+}, [userData]);
 
   const handleLogout = async () => { 
     try { 
@@ -679,9 +751,11 @@ const Dashboard = () => {
 
           {/* DESKTOP CONTENT */}
           <div className="desktop-content p-6 md:p-7 flex-1">
-            {/* Welcome + GN side by side */}
+
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 mb-5">
-              <div className="bg-user-primary-light border border-user-warning rounded-xl p-5 md:p-6 flex items-center gap-5">
+              <div className="bg-user-primary-light border border-user-warning rounded-xl p-5 md:p-6">
+              {/* Welcome Message */}
+              <div className="flex items-center gap-5">
                 <div className="w-[60px] h-[60px] md:w-[68px] md:h-[68px] rounded-full bg-[#e0d8c8] flex items-center justify-center flex-shrink-0 border-2 border-[#d4c090]">
                   <Icon d={IC.profile} size={28} color="#8a7060" strokeWidth={1.5} />
                 </div>
@@ -690,7 +764,29 @@ const Dashboard = () => {
                   {greeting.text}, {firstName}!
                 </div>
               </div>
-
+              
+              {/* Date and Location */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mt-4 pt-3 border-t border-user-border/30">
+                <div className="flex items-center gap-2 text-xs text-user-text-lighter">
+                  <span className="font-semibold">
+                    {new Date().toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-user-text-lighter">
+                  <Icon d={IC.location} size={14} color="#B46A02" />
+                  <span className="font-semibold">
+                    {userData?.district || 'Colombo'}, {userData?.province || 'Sri Lanka'}
+                  </span>
+                </div>
+              </div>
+            </div>
+              
+              {/* GN availablility */}
               <div className="bg-user-surface border border-user-border rounded-xl p-4 md:p-5 min-w-[190px] flex flex-col justify-center gap-1">
                 <div className="text-xs font-bold text-user-text-lighter">GN officer</div>
                 <div className="text-base md:text-base font-black text-user-text">{gnName}</div>
@@ -699,17 +795,19 @@ const Dashboard = () => {
                   <span className={`text-sm font-bold ${
                     gnOfficer?.availability === 'Available' ? 'text-green-600' :
                     gnOfficer?.availability === 'In Meeting' ? 'text-orange-500' :
-                    gnOfficer?.availability === 'On Field' ? 'text-red-600' : 'text-gray-500'
+                    gnOfficer?.availability === 'On Field' ? 'text-red-600' :
+                    gnOfficer?.availability === 'Not Available' ? 'text-gray-500' : 'text-gray-500'
                   }`}>
                     {gnOfficer?.availability || 'Available'}
                   </span>
                   <div className={`w-2 h-2 rounded-full ${
                     gnOfficer?.availability === 'Available' ? 'bg-green-500' :
                     gnOfficer?.availability === 'In Meeting' ? 'bg-orange-500' :
-                    gnOfficer?.availability === 'On Field' ? 'bg-red-500' : 'bg-gray-400'
+                    gnOfficer?.availability === 'On Field' ? 'bg-red-500' :
+                    gnOfficer?.availability === 'Not Available' ? 'bg-gray-400' : 'bg-gray-400'
                   } animate-pulse-gn`} />
                 </div>
-                {/* Optional: Add status message */}
+                {/* Add status message */}
                 {gnOfficer?.availability === 'In Meeting' && (
                   <div className="text-[10px] text-orange-500 mt-1">Currently in a meeting</div>
                 )}
@@ -730,7 +828,15 @@ const Dashboard = () => {
                 <QuickCard iconPath={IC.download} label="Download Forms" onClick={() => navigate('/forms')} tooltip="Download application forms" />
                 <QuickCard iconPath={IC.ai} label="AI Assistant" onClick={() => window.openChatbot?.()} tooltip="Get help from our AI assistant" />
                 <QuickCard iconPath={IC.phone} label="Contact GN" onClick={() => navigate('/contact-gn')} tooltip="Contact your GN officer" />
-                <QuickCard iconPath={IC.phone} label="🚨 Hotline" onClick={() => { const num = gnOfficer?.emergencyContact?.replace(/[^0-9+]/g, '') || '+94712345678'; window.location.href = `tel:${num}`; }} tooltip="Call emergency hotline" />
+                <EmergencyCard 
+                  onClick={() => { 
+                    const num = gnOfficer?.officeMobile?.replace(/[^0-9+]/g, '') || gnOfficer?.mobile?.replace(/[^0-9+]/g, '') || '+94712345678'; 
+                    if (confirm("Emergency line. Only use for genuine emergencies. Call now?")) {
+                      window.location.href = `tel:${num}`;
+                    }
+                  }} 
+                  tooltip="24/7 Emergency Hotline" 
+                />
               </div>
             </div>
 
@@ -789,7 +895,9 @@ const Dashboard = () => {
 
             <div className="p-3.5 pb-[90px]">
               {/* Welcome card */}
-              <div className="bg-user-primary-light border border-user-warning rounded-xl p-4 flex items-center gap-3.5 mb-3">
+              <div className="bg-user-primary-light border border-user-warning rounded-xl p-4 mb-3">
+              {/* Welcome Message */}
+              <div className="flex items-center gap-3.5">
                 <div className="w-12 h-12 rounded-full bg-[#e0d8c8] flex items-center justify-center flex-shrink-0 border-2 border-[#d4c090]">
                   <Icon d={IC.profile} size={24} color="#8a7060" strokeWidth={1.5} />
                 </div>
@@ -798,6 +906,26 @@ const Dashboard = () => {
                   Welcome Back, {firstName}!
                 </div>
               </div>
+              
+              {/* Date and Location */}
+              <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-user-border/30">
+                <div className="flex items-center gap-2 text-[11px] text-user-text-lighter">
+                  <span className="font-semibold">
+                    {new Date().toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-user-text-lighter">
+                  <span className="font-semibold">
+                    {userData?.district || 'Colombo'}, {userData?.province || 'Sri Lanka'}
+                  </span>
+                </div>
+              </div>
+            </div>
 
               {/* GN Officer card */}
               <div className="bg-user-surface border border-user-border rounded-xl p-3.5 mb-5">
@@ -832,20 +960,40 @@ const Dashboard = () => {
               {/* Quick Actions */}
               <div className="mb-5">
                 <div className="text-base font-extrabold text-user-text mb-3">Quick Actions</div>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { icon: IC.calendar, label: 'Book Appointment', action: () => navigate('/appointments') },
-                    { icon: IC.download, label: 'Download Forms', action: () => navigate('/forms') },
-                    { icon: IC.ai, label: 'AI Assistant', action: () => window.openChatbot?.() },
-                    { icon: IC.phone, label: 'Contact GN', action: () => navigate('/contact-gn') },
-                    { icon: IC.phone, label: '🚨 Hotline', action: () => { const num = gnOfficer?.emergencyContact?.replace(/[^0-9+]/g, '') || '+94712345678'; window.location.href = `tel:${num}`; } },
-                  ].map((item, i) => (
-                    <button key={i} onClick={item.action} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white border border-user-border text-xs font-bold text-user-text cursor-pointer shadow-sm transition-all hover:border-user-primary hover:bg-user-primary-light min-h-[85px]">
-                      <Icon d={item.icon} size={22} color="#B46A02" />
-                      {item.label}
-                    </button>
-                  ))}
+                
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <button onClick={() => navigate('/appointments')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white border border-user-border text-xs font-bold text-user-text cursor-pointer shadow-sm transition-all hover:border-user-primary hover:bg-user-primary-light min-h-[85px]">
+                    <Icon d={IC.calendar} size={22} color="#B46A02" />
+                    Book Appointment
+                  </button>
+                  <button onClick={() => navigate('/forms')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white border border-user-border text-xs font-bold text-user-text cursor-pointer shadow-sm transition-all hover:border-user-primary hover:bg-user-primary-light min-h-[85px]">
+                    <Icon d={IC.download} size={22} color="#B46A02" />
+                    Download Forms
+                  </button>
+                  <button onClick={() => window.openChatbot?.()} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white border border-user-border text-xs font-bold text-user-text cursor-pointer shadow-sm transition-all hover:border-user-primary hover:bg-user-primary-light min-h-[85px]">
+                    <Icon d={IC.ai} size={22} color="#B46A02" />
+                    AI Assistant
+                  </button>
+                  <button onClick={() => navigate('/contact-gn')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-white border border-user-border text-xs font-bold text-user-text cursor-pointer shadow-sm transition-all hover:border-user-primary hover:bg-user-primary-light min-h-[85px]">
+                    <Icon d={IC.phone} size={22} color="#B46A02" />
+                    Contact GN
+                  </button>
                 </div>
+                
+                {/* Emergency Button */}
+                <button
+                  onClick={() => { 
+                    const num = gnOfficer?.officeMobile?.replace(/[^0-9+]/g, '') || gnOfficer?.mobile?.replace(/[^0-9+]/g, '') || '+94712345678'; 
+                    if (confirm("This is an emergency line. Only use for genuine emergencies. Call now?")) {
+                      window.location.href = `tel:${num}`;
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-red-500 hover:bg-red-700 text-white font-bold rounded-lg transition-all duration-200 shadow-md"
+                >
+                  <Icon d={IC.alertTriangle} size={18} color="#fff" />
+                  <span>Emergency Hotline</span>
+                  <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">24/7</span>
+                </button>
               </div>
 
               {/* Widgets */}
