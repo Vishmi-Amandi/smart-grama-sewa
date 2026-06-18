@@ -87,14 +87,14 @@ const QuickCard = ({ iconPath, label, onClick, tooltip }) => (
 );
 
 // Emergency QuickCard
-const EmergencyCard = ({ label, onClick, tooltip }) => (
+const EmergencyCard = ({ onClick, tooltip }) => (
   <div className="relative group w-full">
     <button 
       onClick={onClick} 
       className="flex flex-col items-center justify-center gap-2 w-full py-4 px-3 bg-red-50 border border-red-200 rounded-lg cursor-pointer font-sans text-xs sm:text-sm font-bold text-red-700 transition-all duration-200 shadow-sm hover:bg-red-100 hover:-translate-y-0.5"
     >
       <Icon d={IC.alertTriangle} size={20} color="#dc2626" />
-      <span className="text-center whitespace-nowrap">{label}</span>
+      <span className="text-center whitespace-nowrap">Emergency</span>
       {/* REMOVED: <span className="text-[9px] text-red-500 mt-0.5">24/7</span> */}
     </button>
     {tooltip && (
@@ -267,7 +267,7 @@ const Dashboard = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'en');
+  const [currentLanguage, setCurrentLanguage] = useState('en');
   const [toast, setToast] = useState(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   
@@ -723,30 +723,15 @@ const fetchAnnouncements = async (showRefresh = false) => {
                     <p className="text-sm font-bold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</p>
                     <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
                   </div>
-                  <button 
-  onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} 
-  className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-yellow-50 font-semibold text-sm text-user-text cursor-pointer transition-colors"
->
-  <Icon d={IC.profile} size={16} color="#B46A02" /> 
-  <span>{t('lbl_my_profile')}</span>
+                  <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="...">
+  <Icon d={IC.profile} size={16} color="#B46A02" /> {t('lbl_my_profile')}
 </button>
-
-<button 
-  onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} 
-  className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-yellow-50 font-semibold text-sm text-user-text cursor-pointer transition-colors"
->
-  <Icon d={IC.settings} size={16} color="#B46A02" /> 
-  <span>{t('lbl_settings')}</span>
+<button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="...">
+  <Icon d={IC.settings} size={16} color="#B46A02" /> {t('lbl_settings')}
 </button>
-
-<div className="border-t border-user-border-light"></div>
-
-<button 
-  onClick={() => { handleLogout(); setShowProfileMenu(false); }} 
-  className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-red-50 font-bold text-sm text-red-600 cursor-pointer transition-colors"
->
-  <Icon d={IC.logout} size={16} color="#ef4444" /> 
-  <span>{t('lbl_sign_out')}</span>
+<div className="border-t border-user-border-light my-1"></div>
+<button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="...">
+  <Icon d={IC.logout} size={16} color="#ef4444" /> {t('lbl_sign_out')}
 </button>
                 </div>
               )}

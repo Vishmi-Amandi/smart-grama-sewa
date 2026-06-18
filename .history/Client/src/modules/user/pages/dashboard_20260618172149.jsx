@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
@@ -87,14 +86,14 @@ const QuickCard = ({ iconPath, label, onClick, tooltip }) => (
 );
 
 // Emergency QuickCard
-const EmergencyCard = ({ label, onClick, tooltip }) => (
+const EmergencyCard = ({ onClick, tooltip }) => (
   <div className="relative group w-full">
     <button 
       onClick={onClick} 
       className="flex flex-col items-center justify-center gap-2 w-full py-4 px-3 bg-red-50 border border-red-200 rounded-lg cursor-pointer font-sans text-xs sm:text-sm font-bold text-red-700 transition-all duration-200 shadow-sm hover:bg-red-100 hover:-translate-y-0.5"
     >
       <Icon d={IC.alertTriangle} size={20} color="#dc2626" />
-      <span className="text-center whitespace-nowrap">{label}</span>
+      <span className="text-center whitespace-nowrap">Emergency</span>
       {/* REMOVED: <span className="text-[9px] text-red-500 mt-0.5">24/7</span> */}
     </button>
     {tooltip && (
@@ -106,28 +105,24 @@ const EmergencyCard = ({ label, onClick, tooltip }) => (
 );
 
 // AppointmentRow
-const AppointmentRow = ({ month, day, title, time, status, last }) => {
-  const { t } = useTranslation();
-
-  return (
-    <div className={`flex items-center gap-3.5 py-3 ${!last ? 'border-b border-user-border-light' : ''}`}>
-      <div className="w-12 flex-shrink-0 text-center bg-user-secondary-light rounded-lg py-1.5 px-1">
-        <div className="text-[10px] font-extrabold text-user-warning uppercase tracking-wide">{month}</div>
-        <div className="text-[22px] font-black text-user-text leading-tight">{day}</div>
-      </div>
-      <div className="flex-1">
-        <div className="text-sm font-extrabold text-user-text mb-0.5">{title}</div>
-        <div className="text-xs font-semibold text-user-text-lighter">{time}</div>
-      </div>
-      {status && (
-        <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 ${status === 'Confirmed' ? 'bg-user-success-light text-user-success' : 'bg-user-warning-light text-user-warning'}`}>
-          <Icon d={status === 'Confirmed' ? IC.success : IC.warning} size={8} color="currentColor" strokeWidth={2.5} />
-          {status === 'Confirmed' ? t('status_confirmed') : t('status_pending')}
-        </div>
-      )}
+const AppointmentRow = ({ month, day, title, time, status, last }) => (
+  <div className={`flex items-center gap-3.5 py-3 ${!last ? 'border-b border-user-border-light' : ''}`}>
+    <div className="w-12 flex-shrink-0 text-center bg-user-secondary-light rounded-lg py-1.5 px-1">
+      <div className="text-[10px] font-extrabold text-user-warning uppercase tracking-wide">{month}</div>
+      <div className="text-[22px] font-black text-user-text leading-tight">{day}</div>
     </div>
-  );
-};
+    <div className="flex-1">
+      <div className="text-sm font-extrabold text-user-text mb-0.5">{title}</div>
+      <div className="text-xs font-semibold text-user-text-lighter">{time}</div>
+    </div>
+    {status && (
+      <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 ${status === 'Confirmed' ? 'bg-user-success-light text-user-success' : 'bg-user-warning-light text-user-warning'}`}>
+        <Icon d={status === 'Confirmed' ? IC.success : IC.warning} size={8} color="currentColor" strokeWidth={2.5} />
+        {status === 'Confirmed' ? 'Confirmed' : 'Pending'}
+      </div>
+    )}
+  </div>
+);
 
 // Enhanced Skeleton Components
 const AppointmentsSkeleton = () => (
@@ -154,19 +149,18 @@ const AnnouncementsSkeleton = () => (
 
 // Empty State Component
 const EmptyState = ({ type, onAction }) => {
-  const { t } = useTranslation();
   const config = {
     appointments: {
       icon: IC.calendar,
-      title: t('lbl_no_upcoming_appointments'),
-      description: t('lbl_book_first_appointment'),
-      buttonText: t('lbl_book_appointment')
+      title: 'No Upcoming Appointments',
+      description: 'Book your first appointment with your GN Officer',
+      buttonText: 'Book Appointment'
     },
     announcements: {
       icon: IC.announcementIcon,
-      title: t('lbl_no_announcements_yet'),
-      description: t('lbl_check_back_later'),
-      buttonText: t('lbl_refresh')
+      title: 'No Announcements Yet',
+      description: 'Check back later for updates from your GN Officer',
+      buttonText: 'Refresh'
     }
   };
   
@@ -192,9 +186,9 @@ const EmptyState = ({ type, onAction }) => {
 // Time-based greeting with icon
 const getTimeBasedGreeting = () => {
   const hour = new Date().getHours();
-  if (hour < 12) return { text: 'greeting_morning', icon: IC.sun }; 
-  if (hour < 18) return { text: 'greeting_afternoon', icon: IC.sun }; 
-  return { text: 'greeting_evening', icon: IC.wave };
+  if (hour < 12) return { text: 'Good Morning', icon: IC.sun };
+  if (hour < 18) return { text: 'Good Afternoon', icon: IC.sun };
+  return { text: 'Good Evening', icon: IC.wave };
 };
 
 // List of all pages/functions for search
@@ -249,9 +243,8 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
           <Icon d={page.icon} size={18} color="#B46A02" />
           <div>
             <div className="text-sm font-bold text-user-text">{page.name}</div>
-            
+            <div className="text-[11px] text-user-text-lighter">Click to go to {page.name}</div>
           </div>
-          <div className="text-[11px] text-user-text-lighter">{t('lbl_click_to_go_to', { page: page.name })}</div>
         </button>
       ))}
     </div>
@@ -260,14 +253,13 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
 
 // MAIN DASHBOARD
 const Dashboard = () => {
-  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState('dashboard');
   const [announcIdx, setAnnouncIdx] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'en');
+  const [currentLanguage, setCurrentLanguage] = useState('en');
   const [toast, setToast] = useState(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   
@@ -291,8 +283,8 @@ const Dashboard = () => {
 
   // Handle language change
   const handleLanguageChange = (langCode) => {
-    i18n.changeLanguage(langCode);
     setCurrentLanguage(langCode);
+    console.log('Language changed to:', langCode);
   };
 
   // Fetch appointments
@@ -501,23 +493,23 @@ const fetchAnnouncements = async (showRefresh = false) => {
   const next = () => setAnnouncIdx(i => i === announcements.length - 1 ? 0 : i + 1);
 
   const navItems = [
-    { key: 'dashboard', icon: IC.dashboard, label: t('lbl_dashboard'), path: '/dashboard' },
-    { key: 'announcements', icon: IC.announcement, label: t('lbl_announcements'), path: '/announcements' },
-    { key: 'appointments', icon: IC.appointments, label: t('lbl_appointments'), path: '/appointments' },
-    { key: 'forms', icon: IC.forms, label: t('lbl_forms'), path: '/forms' },
-    { key: 'ai', icon: IC.ai, label: t('lbl_ai_assistant'), path: null },
+    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard', path: '/dashboard' },
+    { key: 'announcements', icon: IC.announcement, label: 'Announcements', path: '/announcements' },
+    { key: 'appointments', icon: IC.appointments, label: 'Appointments', path: '/appointments' },
+    { key: 'forms', icon: IC.forms, label: 'Forms', path: '/forms' },
+    { key: 'ai', icon: IC.ai, label: 'AI Assistant', path: null },
   ];
   const bottomNav = [
-    { key: 'profile', icon: IC.profile, label: t('lbl_profile'), path: '/profile' },
-    { key: 'settings', icon: IC.settings, label: t('lbl_settings'), path: '/settings' },
-    { key: 'logout', icon: IC.logout, label: t('lbl_sign_out'), action: 'logout' },
+    { key: 'profile', icon: IC.profile, label: 'Profile', path: '/profile' },
+    { key: 'settings', icon: IC.settings, label: 'Settings', path: '/settings' },
+    { key: 'logout', icon: IC.logout, label: 'Sign out', action: 'logout' },
   ];
 
   // Shared widget components
   const AppointmentsWidget = () => (
     <div className="bg-[#c8a882] rounded-xl overflow-hidden shadow-md">
       <div className="flex justify-between items-center px-5 py-4">
-        <div className="text-[15px] font-black text-white">{t('lbl_upcoming_appointments')}</div>
+        <div className="text-[15px] font-black text-white">Upcoming Appointments</div>
         <button 
           onClick={() => fetchAppointments(true)} 
           disabled={refreshingAppointments} 
@@ -544,11 +536,11 @@ const fetchAnnouncements = async (showRefresh = false) => {
       {appointments.length > 0 && (
         <div className="text-center py-2 border-t border-user-border-light">
           <button 
-  onClick={() => navigate('/appointments')}
-  className="text-sm text-white font-semibold hover:underline"
->
-  {t('lbl_view_all_appointments')}
-</button>
+            onClick={() => navigate('/appointments')}
+            className="text-sm text-white font-semibold hover:underline"
+          >
+            View All Appointments →
+          </button>
         </div>
       )}
     </div>
@@ -557,7 +549,7 @@ const fetchAnnouncements = async (showRefresh = false) => {
   const AnnouncementsWidget = () => (
     <div className="bg-[#c8a882] rounded-xl overflow-hidden shadow-md">
       <div className="flex justify-between items-center px-5 py-4">
-        <div className="text-[15px] font-black text-white">{t('lbl_latest_announcements')}</div>
+        <div className="text-[15px] font-black text-white">Latest Announcements</div>
         <button 
           onClick={() => fetchAnnouncements(true)} 
           disabled={refreshingAnnouncements} 
@@ -675,7 +667,7 @@ const fetchAnnouncements = async (showRefresh = false) => {
                 <Icon d={IC.search} size={16} color="#aaa" />
                 <input
                   type="text"
-                  placeholder={t('lbl_search_page_function')}
+                  placeholder="Search for a page or function..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -723,31 +715,16 @@ const fetchAnnouncements = async (showRefresh = false) => {
                     <p className="text-sm font-bold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</p>
                     <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
                   </div>
-                  <button 
-  onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} 
-  className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-yellow-50 font-semibold text-sm text-user-text cursor-pointer transition-colors"
->
-  <Icon d={IC.profile} size={16} color="#B46A02" /> 
-  <span>{t('lbl_my_profile')}</span>
-</button>
-
-<button 
-  onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} 
-  className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-yellow-50 font-semibold text-sm text-user-text cursor-pointer transition-colors"
->
-  <Icon d={IC.settings} size={16} color="#B46A02" /> 
-  <span>{t('lbl_settings')}</span>
-</button>
-
-<div className="border-t border-user-border-light"></div>
-
-<button 
-  onClick={() => { handleLogout(); setShowProfileMenu(false); }} 
-  className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-red-50 font-bold text-sm text-red-600 cursor-pointer transition-colors"
->
-  <Icon d={IC.logout} size={16} color="#ef4444" /> 
-  <span>{t('lbl_sign_out')}</span>
-</button>
+                  <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+                    <Icon d={IC.profile} size={16} color="#B46A02" /> My Profile
+                  </button>
+                  <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+                    <Icon d={IC.settings} size={16} color="#B46A02" /> Settings
+                  </button>
+                  <div className="border-t border-user-border-light my-1"></div>
+                  <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                    <Icon d={IC.logout} size={16} color="#ef4444" /> Sign Out
+                  </button>
                 </div>
               )}
             </div>
@@ -783,9 +760,9 @@ const fetchAnnouncements = async (showRefresh = false) => {
                   <Icon d={IC.profile} size={28} color="#8a7060" strokeWidth={1.5} />
                 </div>
                 <div className="flex items-center gap-2 text-xl md:text-2xl font-black text-user-text tracking-tight">
-  <Icon d={greeting.icon} size={24} color="#B46A02" />
-  {t(greeting.text)}, {firstName}!
-</div>
+                  <Icon d={greeting.icon} size={24} color="#B46A02" />
+                  {greeting.text}, {firstName}!
+                </div>
               </div>
               
               {/* Date and Location */}
@@ -811,63 +788,56 @@ const fetchAnnouncements = async (showRefresh = false) => {
               
               {/* GN availablility */}
               <div className="bg-user-surface border border-user-border rounded-xl p-4 md:p-5 min-w-[190px] flex flex-col justify-center gap-1">
-  {/* 1. Dynamic Translated Title */}
-  <div className="text-xs font-bold text-user-text-lighter">{t('lbl_gn_officer')}</div>
-  
-  <div className="text-base md:text-base font-black text-user-text">{gnName}</div>
-  {gnDivLabel && <div className="text-[11px] font-semibold text-user-text-lighter">{gnDivLabel}</div>}
-  
-  <div className="flex items-center gap-1.5 mt-1">
-    {/* 2. Dynamic Translated Status State */}
-    <span className={`text-sm font-bold ${
-      gnOfficer?.availability === 'Available' ? 'text-green-600' :
-      gnOfficer?.availability === 'In Meeting' ? 'text-orange-500' :
-      gnOfficer?.availability === 'On Field' ? 'text-red-600' :
-      gnOfficer?.availability === 'Not Available' ? 'text-gray-500' : 'text-gray-500'
-    }`}>
-      {gnOfficer?.availability ? t(`status_${gnOfficer.availability.toLowerCase().replace(' ', '_')}`) : t('status_available')}
-    </span>
-    
-    <div className={`w-2 h-2 rounded-full ${
-      gnOfficer?.availability === 'Available' ? 'bg-green-500' :
-      gnOfficer?.availability === 'In Meeting' ? 'bg-orange-500' :
-      gnOfficer?.availability === 'On Field' ? 'bg-red-500' :
-      gnOfficer?.availability === 'Not Available' ? 'bg-gray-400' : 'bg-gray-400'
-    } animate-pulse-gn`} />
-  </div>
-  
-  {/* Add status messages */}
-  {gnOfficer?.availability === 'In Meeting' && (
-    <div className="text-[10px] text-orange-500 mt-1">{t('lbl_currently_in_meeting')}</div>
-  )}
-  {gnOfficer?.availability === 'On Field' && (
-    <div className="text-[10px] text-red-500 mt-1">{t('lbl_out_on_field')}</div>
-  )}
-</div>
+                <div className="text-xs font-bold text-user-text-lighter">GN officer</div>
+                <div className="text-base md:text-base font-black text-user-text">{gnName}</div>
+                {gnDivLabel && <div className="text-[11px] font-semibold text-user-text-lighter">{gnDivLabel}</div>}
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className={`text-sm font-bold ${
+                    gnOfficer?.availability === 'Available' ? 'text-green-600' :
+                    gnOfficer?.availability === 'In Meeting' ? 'text-orange-500' :
+                    gnOfficer?.availability === 'On Field' ? 'text-red-600' :
+                    gnOfficer?.availability === 'Not Available' ? 'text-gray-500' : 'text-gray-500'
+                  }`}>
+                    {gnOfficer?.availability || 'Available'}
+                  </span>
+                  <div className={`w-2 h-2 rounded-full ${
+                    gnOfficer?.availability === 'Available' ? 'bg-green-500' :
+                    gnOfficer?.availability === 'In Meeting' ? 'bg-orange-500' :
+                    gnOfficer?.availability === 'On Field' ? 'bg-red-500' :
+                    gnOfficer?.availability === 'Not Available' ? 'bg-gray-400' : 'bg-gray-400'
+                  } animate-pulse-gn`} />
+                </div>
+                {/* Add status message */}
+                {gnOfficer?.availability === 'In Meeting' && (
+                  <div className="text-[10px] text-orange-500 mt-1">Currently in a meeting</div>
+                )}
+                {gnOfficer?.availability === 'On Field' && (
+                  <div className="text-[10px] text-red-500 mt-1">Out on field duty</div>
+                )}
+              </div>
             </div>
 
             {/* Quick Actions */}
             <div className="mb-5">
               <div className="flex items-center gap-2 text-[15px] font-extrabold text-user-text mb-3.5">
-  <Icon d={IC.bolt} size={16} color="#B46A02" />
-  {t('lbl_quick_actions')}
-</div>
-<div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-  <QuickCard iconPath={IC.calendar} label={t('lbl_book_appointment')} onClick={() => navigate('/appointments')} tooltip="Schedule a meeting with GN officer" />
-  <QuickCard iconPath={IC.download} label={t('lbl_download_forms')} onClick={() => navigate('/forms')} tooltip="Download application forms" />
-  <QuickCard iconPath={IC.ai} label={t('lbl_ai_assistant')} onClick={() => window.openChatbot?.()} tooltip="Get help from our AI assistant" />
-  <QuickCard iconPath={IC.phone} label={t('lbl_contact_gn')} onClick={() => navigate('/contact-gn')} tooltip="Contact your GN officer" />
-  <EmergencyCard 
-    label={t('lbl_emergency_hotline')}
-    onClick={() => { 
-      const num = gnOfficer?.officeMobile?.replace(/[^0-9+]/g, '') || gnOfficer?.mobile?.replace(/[^0-9+]/g, '') || '+94712345678'; 
-      if (confirm(t('lbl_emergency_confirm'))) {
-        window.location.href = `tel:${num}`;
-      }
-    }} 
-    tooltip="24/7 Emergency Hotline" 
-  />
-</div>
+                <Icon d={IC.bolt} size={16} color="#B46A02" />
+                Quick Actions
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <QuickCard iconPath={IC.calendar} label="Book Appointment" onClick={() => navigate('/appointments')} tooltip="Schedule a meeting with GN officer" />
+                <QuickCard iconPath={IC.download} label="Download Forms" onClick={() => navigate('/forms')} tooltip="Download application forms" />
+                <QuickCard iconPath={IC.ai} label="AI Assistant" onClick={() => window.openChatbot?.()} tooltip="Get help from our AI assistant" />
+                <QuickCard iconPath={IC.phone} label="Contact GN" onClick={() => navigate('/contact-gn')} tooltip="Contact your GN officer" />
+                <EmergencyCard 
+                  onClick={() => { 
+                    const num = gnOfficer?.officeMobile?.replace(/[^0-9+]/g, '') || gnOfficer?.mobile?.replace(/[^0-9+]/g, '') || '+94712345678'; 
+                    if (confirm("Emergency line. Only use for genuine emergencies. Call now?")) {
+                      window.location.href = `tel:${num}`;
+                    }
+                  }} 
+                  tooltip="24/7 Emergency Hotline" 
+                />
+              </div>
             </div>
 
             {/* Widgets */}
@@ -885,7 +855,7 @@ const fetchAnnouncements = async (showRefresh = false) => {
                 <Icon d={IC.search} size={16} color="#aaa" />
                 <input
                   type="text"
-                  placeholder={t('lbl_search_page')}
+                  placeholder="Search for a page..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -932,9 +902,9 @@ const fetchAnnouncements = async (showRefresh = false) => {
                   <Icon d={IC.profile} size={24} color="#8a7060" strokeWidth={1.5} />
                 </div>
                 <div className="flex items-center gap-2 text-xl font-black text-user-text leading-tight">
-  <Icon d={greeting.icon} size={20} color="#B46A02" />
-  {t('greeting_welcome_back')}, {firstName}!
-</div>
+                  <Icon d={greeting.icon} size={20} color="#B46A02" />
+                  Welcome Back, {firstName}!
+                </div>
               </div>
               
               {/* Date and Location */}
@@ -959,37 +929,33 @@ const fetchAnnouncements = async (showRefresh = false) => {
 
               {/* GN Officer card */}
               <div className="bg-user-surface border border-user-border rounded-xl p-3.5 mb-5">
-  <div className="flex items-center justify-between">
-    <div>
-      {/* 1. Dynamic Translated Title */}
-      <div className="text-xs font-bold text-user-text-lighter mb-0.5">{t('lbl_gn_officer')}</div>
-      <div className="text-base font-black text-user-text">{gnName}</div>
-    </div>
-    <div className="flex items-center gap-1.5">
-      {/* 2. Dynamic Translated Status State */}
-      <span className={`text-sm font-bold ${
-        gnOfficer?.availability === 'Available' ? 'text-green-600' :
-        gnOfficer?.availability === 'In Meeting' ? 'text-orange-500' :
-        gnOfficer?.availability === 'On Field' ? 'text-red-600' : 'text-gray-500'
-      }`}>
-        {gnOfficer?.availability ? t(`status_${gnOfficer.availability.toLowerCase().replace(' ', '_')}`) : t('status_available')}
-      </span>
-      
-      <div className={`w-2 h-2 rounded-full ${
-        gnOfficer?.availability === 'Available' ? 'bg-green-500' :
-        gnOfficer?.availability === 'In Meeting' ? 'bg-orange-500' :
-        gnOfficer?.availability === 'On Field' ? 'bg-red-500' : 'bg-gray-400'
-      } flex-shrink-0`} />
-    </div>
-  </div>
-  
-  {gnOfficer?.availability === 'In Meeting' && (
-    <div className="text-[10px] text-orange-500 mt-2">{t('lbl_currently_in_meeting')}</div>
-  )}
-  {gnOfficer?.availability === 'On Field' && (
-    <div className="text-[10px] text-red-500 mt-2">{t('lbl_out_on_field')}</div>
-  )}
-</div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold text-user-text-lighter mb-0.5">GN officer</div>
+                    <div className="text-base font-black text-user-text">{gnName}</div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-sm font-bold ${
+                      gnOfficer?.availability === 'Available' ? 'text-green-600' :
+                      gnOfficer?.availability === 'In Meeting' ? 'text-orange-500' :
+                      gnOfficer?.availability === 'On Field' ? 'text-red-600' : 'text-gray-500'
+                    }`}>
+                      {gnOfficer?.availability || 'Available'}
+                    </span>
+                    <div className={`w-2 h-2 rounded-full ${
+                      gnOfficer?.availability === 'Available' ? 'bg-green-500' :
+                      gnOfficer?.availability === 'In Meeting' ? 'bg-orange-500' :
+                      gnOfficer?.availability === 'On Field' ? 'bg-red-500' : 'bg-gray-400'
+                    } flex-shrink-0`} />
+                  </div>
+                </div>
+                {gnOfficer?.availability === 'In Meeting' && (
+                  <div className="text-[10px] text-orange-500 mt-2">Currently in a meeting</div>
+                )}
+                {gnOfficer?.availability === 'On Field' && (
+                  <div className="text-[10px] text-red-500 mt-2">Out on field duty</div>
+                )}
+              </div>
 
               {/* Quick Actions */}
               <div className="mb-5">

@@ -723,30 +723,15 @@ const fetchAnnouncements = async (showRefresh = false) => {
                     <p className="text-sm font-bold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</p>
                     <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
                   </div>
-                  <button 
-  onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} 
-  className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-yellow-50 font-semibold text-sm text-user-text cursor-pointer transition-colors"
->
-  <Icon d={IC.profile} size={16} color="#B46A02" /> 
-  <span>{t('lbl_my_profile')}</span>
+                  <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="...">
+  <Icon d={IC.profile} size={16} color="#B46A02" /> {t('lbl_my_profile')}
 </button>
-
-<button 
-  onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} 
-  className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-yellow-50 font-semibold text-sm text-user-text cursor-pointer transition-colors"
->
-  <Icon d={IC.settings} size={16} color="#B46A02" /> 
-  <span>{t('lbl_settings')}</span>
+<button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="...">
+  <Icon d={IC.settings} size={16} color="#B46A02" /> {t('lbl_settings')}
 </button>
-
-<div className="border-t border-user-border-light"></div>
-
-<button 
-  onClick={() => { handleLogout(); setShowProfileMenu(false); }} 
-  className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-red-50 font-bold text-sm text-red-600 cursor-pointer transition-colors"
->
-  <Icon d={IC.logout} size={16} color="#ef4444" /> 
-  <span>{t('lbl_sign_out')}</span>
+<div className="border-t border-user-border-light my-1"></div>
+<button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="...">
+  <Icon d={IC.logout} size={16} color="#ef4444" /> {t('lbl_sign_out')}
 </button>
                 </div>
               )}
@@ -852,7 +837,7 @@ const fetchAnnouncements = async (showRefresh = false) => {
   <Icon d={IC.bolt} size={16} color="#B46A02" />
   {t('lbl_quick_actions')}
 </div>
-<div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+<div className="grid grid-cols-2 md:grid-cols-5 gap-1">
   <QuickCard iconPath={IC.calendar} label={t('lbl_book_appointment')} onClick={() => navigate('/appointments')} tooltip="Schedule a meeting with GN officer" />
   <QuickCard iconPath={IC.download} label={t('lbl_download_forms')} onClick={() => navigate('/forms')} tooltip="Download application forms" />
   <QuickCard iconPath={IC.ai} label={t('lbl_ai_assistant')} onClick={() => window.openChatbot?.()} tooltip="Get help from our AI assistant" />
