@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, query, orderBy, getDocs, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, doc, updateDoc, arrayUnion, getDoc, where } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton, AnnouncementsListSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
+import NotificationBell from '../components/NotificationBell';
 
 // Icons
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
@@ -37,9 +38,44 @@ const IC = {
   unread: 'M21 12a9 9 0 11-9-9 M21 3v6h-6 M3 3l18 18',
   chevLeft: 'M15 18l-6-6 6-6',
   chevRight: 'M9 18l6-6-6-6',
+  paperclip: 'M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48',
+  fileText: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
+  image: 'M20 5a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2h16z M10 8.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z M21 15l-5-4-4 4-2-2-4 4',
 };
 
-// Tag colour map
+const getFileIcon = (fileName) => {
+  const ext = fileName?.split('.').pop()?.toLowerCase() || '';
+  if (['pdf'].includes(ext)) return 'fileText';
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) return 'image';
+  if (['doc', 'docx', 'odt'].includes(ext)) return 'fileText';
+  if (['xls', 'xlsx', 'csv'].includes(ext)) return 'fileText';
+  if (['ppt', 'pptx'].includes(ext)) return 'fileText';
+  return 'paperclip';
+};
+
+const getFileType = (fileName) => {
+  const ext = fileName?.split('.').pop()?.toLowerCase() || '';
+  const types = {
+    pdf: 'PDF',
+    jpg: 'Image', jpeg: 'Image', png: 'Image', gif: 'Image', webp: 'Image',
+    doc: 'Word', docx: 'Word',
+    xls: 'Excel', xlsx: 'Excel',
+    ppt: 'PowerPoint', pptx: 'PowerPoint',
+    txt: 'Text',
+  };
+  return types[ext] || 'File';
+};
+
+const getFileColor = (fileName) => {
+  const ext = fileName?.split('.').pop()?.toLowerCase() || '';
+  if (['pdf'].includes(ext)) return 'text-red-600 bg-red-50 border-red-200';
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) return 'text-green-600 bg-green-50 border-green-200';
+  if (['doc', 'docx', 'odt'].includes(ext)) return 'text-blue-600 bg-blue-50 border-blue-200';
+  if (['xls', 'xlsx', 'csv'].includes(ext)) return 'text-emerald-600 bg-emerald-50 border-emerald-200';
+  if (['ppt', 'pptx'].includes(ext)) return 'text-orange-600 bg-orange-50 border-orange-200';
+  return 'text-gray-600 bg-gray-50 border-gray-200';
+};
+
 const TAG = {
   Urgent: { border: '#e05050', chipBg: '#fde8e8', chipText: '#c0392b', icon: IC.alertTriangle },
   Important: { border: '#f59e0b', chipBg: '#fff3dc', chipText: '#b45309', icon: IC.star },
@@ -53,7 +89,7 @@ const PAGE_ACTIONS = [
   { name: 'Announcements', path: '/announcements', icon: IC.announce },
   { name: 'Appointments', path: '/appointments', icon: IC.appts },
   { name: 'Forms', path: '/forms', icon: IC.forms },
-  { name: 'AI Assistant', path: '/ai', icon: IC.ai },
+  { name: 'AI Assistant', path: null, icon: IC.ai },
   { name: 'Profile', path: '/profile', icon: IC.profile },
   { name: 'Settings', path: '/settings', icon: IC.settings },
 ];
@@ -96,7 +132,7 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
         {navItems.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
-            onClick={() => navigate(`/${item.key}`)} />
+            onClick={() => item.key === 'ai' ? window.openChatbot?.() : navigate(`/${item.key}`)} />
         ))}
       </div>
       <div className="p-3 pt-2 border-t border-black/10">
@@ -134,6 +170,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
         <button
           key={page.path}
           onClick={() => {
+            if (page.path === null) { window.openChatbot?.(); setShowResults(false); return; }
             navigate(page.path);
             setShowResults(false);
           }}
@@ -187,10 +224,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
       onLanguageChange={onLanguageChange}
     />
     
-    <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
-      <Icon d={IC.bell} size={18} color="#5a3a00" />
-      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
-    </div>
+    <NotificationBell />
     
     {/* Profile Dropdown */}
     <div className="relative">
@@ -259,7 +293,7 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
         {navItems.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
-            onClick={() => { navigate(`/${item.key}`); onClose(); }} />
+            onClick={() => { if (item.key === 'ai') { window.openChatbot?.(); onClose(); return; } navigate(`/${item.key}`); onClose(); }} />
         ))}
         <div className="border-t border-white/20 my-3 pt-3">
           {bottomNav.map((item) => (
@@ -277,6 +311,7 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
 const DetailModal = ({ ann, onClose }) => {
   if (!ann) return null;
   const cfg = tagCfg(ann.tag);
+  
   return (
     <>
       <div onClick={onClose} className="fixed inset-0 bg-black/45 z-[100]" />
@@ -290,6 +325,35 @@ const DetailModal = ({ ann, onClose }) => {
             <Icon d={IC.calendar} size={12} color="#aaa" /> {ann.dateLabel}
           </p>
           <p className="text-sm text-user-text-light leading-relaxed mb-5">{ann.body}</p>
+
+          {ann.attachments && ann.attachments.length > 0 && (
+            <div className="mt-3 mb-4">
+              <p className="text-xs font-bold text-user-text-lighter mb-2 flex items-center gap-1.5">
+                <Icon d={IC.paperclip} size={12} color="#888" /> 
+                Attachments ({ann.attachments.length})
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {ann.attachments.map((file, idx) => {
+                  const fileIcon = getFileIcon(file.name);
+                  const fileColor = getFileColor(file.name);
+                  const fileType = getFileType(file.name);
+                  return (
+                    <a
+                      key={idx}
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold ${fileColor} hover:shadow-md transition-all`}
+                    >
+                      <Icon d={IC[fileIcon]} size={12} color="currentColor" />
+                      <span className="max-w-[120px] truncate">{file.name}</span>
+                      <span className="text-[9px] opacity-70">({fileType})</span>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
         <div className="py-3.5 px-6 border-t border-user-border-light flex justify-end">
           <button onClick={onClose} className="px-6 py-2 bg-user-primary border-none rounded-round text-sm font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark">
@@ -319,8 +383,33 @@ const AnnouncementCard = ({ ann, onClick }) => {
       </div>
       <div className="text-base font-black text-user-text mb-2">{ann.title}</div>
       <div className="text-sm text-user-text-light leading-relaxed mb-3">{preview}</div>
+
+      {ann.attachments && ann.attachments.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2 mb-2">
+          {ann.attachments.slice(0, 3).map((file, idx) => {
+            const fileIcon = getFileIcon(file.name);
+            const fileColor = getFileColor(file.name);
+            return (
+              <span
+                key={idx}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold ${fileColor} border`}
+              >
+                <Icon d={IC[fileIcon]} size={10} color="currentColor" />
+                <span className="max-w-[80px] truncate">{file.name}</span>
+              </span>
+            );
+          })}
+          {ann.attachments.length > 3 && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold text-gray-500 bg-gray-100 border border-gray-200">
+              +{ann.attachments.length - 3} more
+            </span>
+          )}
+        </div>
+      )}
       <span className="text-sm font-extrabold text-user-warning">Read more →</span>
     </div>
+
+    
   );
 };
 
@@ -518,55 +607,126 @@ const Announcements = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const SAMPLE_DATA = [
-    { id: 's1', tag: 'Urgent', title: 'Water Supply Interruption — Ward 7', body: 'There will be a temporary water supply interruption in Ward 7 on 3 April 2026 from 9 AM to 5 PM.', dateLabel: '28 Mar 2026' },
-    { id: 's2', tag: 'Important', title: 'Gram Sabha Meeting — April 2026', body: 'Monthly Gram Sabha meeting is scheduled for 5 April 2026 at 10 AM in the Panchayat Hall.', dateLabel: '26 Mar 2026' },
-    { id: 's3', tag: 'Information', title: 'Income Certificate Service Resumed', body: 'Income Certificate applications are now open again.', dateLabel: '25 Mar 2026' },
-    { id: 's4', tag: 'Urgent', title: 'Road Repair — Main Street Closure', body: 'Road repair work on Main Street will begin on 7 April 2026.', dateLabel: '24 Mar 2026' },
-    { id: 's5', tag: 'Important', title: 'New GN Office Hours from April 2026', body: 'Starting from April 2026, the Grama Niladhari Office will operate Monday to Friday from 8:30 AM to 4:30 PM.', dateLabel: '22 Mar 2026' },
-    { id: 's6', tag: 'Information', title: 'Digital Certificates Now Available', body: 'Download your digitally signed certificates directly from the portal.', dateLabel: '20 Mar 2026' },
-  ];
-
+  // Fetch announcements from Firestore
   useEffect(() => {
-    const fetchData = async () => {
-      setAnnouncements(SAMPLE_DATA);
-      setLoading(false);
+    const fetchAnnouncements = async () => {
+      setLoading(true);
       try {
-        const timeout = new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000));
-        const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'));
-        const snap = await Promise.race([getDocs(q), timeout]);
-        if (snap.docs.length > 0) {
-          const list = snap.docs.map(d => {
-            const data = d.data();
-            const ts = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
-            return {
-              id: d.id,
-              title: data.title || 'Announcement',
-              body: data.body || data.description || '',
-              tag: data.tag || 'Information',
-              dateLabel: ts.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-            };
-          });
-          setAnnouncements(list);
+        // Wait for userData to be loaded
+        if (!userData) {
+          setLoading(false);
+          return;
         }
-      } catch (e) {
-        console.warn('Firestore announcements not available, showing sample data.');
+        
+        // Fetch ALL active announcements
+        const q = query(
+          collection(db, 'announcements'), 
+          // where('status', 'in', ['Active', 'published']),
+          orderBy('createdAt', 'desc')
+        );
+        
+        const snapshot = await getDocs(q);
+        
+        if (!snapshot.empty) {
+          const fetchedAnnouncements = snapshot.docs
+            .filter(doc => {
+              const data = doc.data();
+              const announcementGnDiv = data.gnDiv || "";
+              const category = data.category || "";
+
+              // Check if this is an admin announcement
+              const isAdminAnnouncement = announcementGnDiv === "";
+          
+              if (isAdminAnnouncement) {
+                // ADMIN ANNOUNCEMENT - filter by category
+                const allowedCategories = ["residents", "all_users"];
+                return allowedCategories.includes(category);
+              } else {
+                // GN OFFICER ANNOUNCEMENT - show only to citizens in that GN division
+                return announcementGnDiv === userData.gnDiv;
+              }
+            })
+            .map(doc => {
+              const data = doc.data();
+              let dateLabel = 'Recent';
+              
+              if (data.createdAt?.toDate) {
+                const date = data.createdAt.toDate();
+                dateLabel = date.toLocaleDateString('en-GB', { 
+                  day: '2-digit', 
+                  month: 'short', 
+                  year: 'numeric' 
+                });
+              } else if (data.date) {
+                dateLabel = data.date;
+              }
+              
+              // Map GN priority to User display tags
+              let mappedTag = 'Information';
+
+              const priorityValue = data.priority ? data.priority.charAt(0).toUpperCase() + data.priority.slice(1).toLowerCase() : '';
+
+              if (priorityValue === 'Urgent') {
+                mappedTag = 'Urgent';
+              } else if (priorityValue === 'High') {
+                mappedTag = 'Important';
+              } else if (priorityValue === 'Normal') {
+                mappedTag = 'Information';
+              }
+
+              // Use mappedTag first, then fallback to data.tag
+              const finalTag = mappedTag || data.tag || 'Information';
+
+              return {
+                id: doc.id,
+                title: data.title || 'Announcement',
+                body: data.body || data.description || 'No description available',
+                tag: finalTag,
+                dateLabel: dateLabel,
+                attachments: data.attachments || [],
+              };
+            });
+          
+          setAnnouncements(fetchedAnnouncements);
+        } else {
+          setAnnouncements([]);
+        }
+      } catch (error) {
+        console.error('Error fetching announcements:', error);
+        setAnnouncements([]);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchData();
-  }, []);
+
+    if (currentUser && userData) {
+      fetchAnnouncements();
+    } else if (!currentUser) {
+      setLoading(false);
+    }
+  }, [currentUser, userData]);
 
   const markAsRead = async (annId) => {
+    // Only mark if not already read
+    if (readIds.has(annId)) return;
+    
     setReadIds(prev => new Set([...prev, annId]));
-    if (!currentUser) return;
-    try {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        readAnnouncements: arrayUnion(annId),
-      });
-    } catch (e) { console.warn('Mark read error:', e.message); }
+    
+    if (currentUser) {
+      try {
+        await updateDoc(doc(db, 'users', currentUser.uid), {
+          readAnnouncements: arrayUnion(annId),
+        });
+      } catch (e) { 
+        console.warn('Mark read error:', e.message); 
+      }
+    }
   };
 
-  const handleLogout = async () => { await signOut(auth); navigate('/login'); };
+  const handleLogout = async () => { 
+    await signOut(auth); 
+    navigate('/login'); 
+  };
 
   const filtered = announcements.filter(a => {
     if (activeTab === 'All') return true;
@@ -574,17 +734,29 @@ const Announcements = () => {
     return a.tag === activeTab;
   });
 
-  const handleTabChange = (t) => { setActiveTab(t); setCurrentPage(1); };
+  const handleTabChange = (t) => { 
+    setActiveTab(t); 
+    setCurrentPage(1); 
+  };
+  
   const paginated = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
   const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
 
   const markAllAsRead = async () => {
-    const allIds = announcements.map(a => a.id);
+    const unreadIds = announcements.filter(a => !readIds.has(a.id)).map(a => a.id);
+    if (unreadIds.length === 0) return;
+    
+    const allIds = [...readIds, ...unreadIds];
     setReadIds(new Set(allIds));
+    
     if (currentUser) {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        readAnnouncements: allIds,
-      });
+      try {
+        await updateDoc(doc(db, 'users', currentUser.uid), {
+          readAnnouncements: allIds,
+        });
+      } catch (e) {
+        console.warn('Mark all read error:', e.message);
+      }
     }
   };
 
@@ -625,7 +797,7 @@ const Announcements = () => {
             currentUser={currentUser}
           />
 
-          {/* Mobile Topbar - Only sticky bar (logo, bell, profile) */}
+          {/* Mobile Topbar */}
           <div className="mobile-topbar hidden h-16 bg-user-primary items-center px-4 gap-3 sticky top-0 z-40 shadow-md">
             <button onClick={() => setMobileMenuOpen(true)} className="bg-none border-none cursor-pointer p-1.5 flex-shrink-0">
               <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
@@ -638,16 +810,13 @@ const Announcements = () => {
               <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
             </div>
             <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={handleLanguageChange} />
-            <div className="w-9 h-9 flex items-center justify-center relative">
-              <Icon d={IC.bell} size={22} color="#1e1200" />
-              <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
-            </div>
+            <NotificationBell />
             <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
               <Icon d={IC.profile} size={20} color="#3d2a00" />
             </div>
           </div>
 
-          {/* Mobile Content ) */}
+          {/* Mobile Content */}
           <div className="mobile-content hidden flex-1 bg-user-secondary-light overflow-y-auto">
             {/* Search Bar */}
             <div className="pt-3 px-3.5 relative">
@@ -675,11 +844,12 @@ const Announcements = () => {
                   {PAGE_ACTIONS.filter(page => page.name.toLowerCase().includes(searchQuery.toLowerCase())).map((page, idx) => (
                     <button
                       key={page.path}
-                      onClick={() => {
-                        navigate(page.path);
-                        setSearchQuery('');
-                        setShowSearchResults(false);
-                      }}
+                        onClick={() => {
+                          if (page.path === null) { window.openChatbot?.(); setSearchQuery(''); setShowSearchResults(false); return; }
+                          navigate(page.path);
+                          setSearchQuery('');
+                          setShowSearchResults(false);
+                        }}
                       className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background ${idx !== PAGE_ACTIONS.length - 1 ? 'border-b border-user-border-light' : ''}`}
                     >
                       <Icon d={page.icon} size={18} color="#B46A02" />
@@ -731,16 +901,22 @@ const Announcements = () => {
                             <Icon d={IC.check} size={32} color="#30a050" sw={2.5} />
                             <span>All caught up! No unread announcements.</span>
                           </div>
-                        ) : `No ${activeTab} announcements found.`}
+                        ) : (
+                          <div className="flex flex-col items-center gap-3">
+                            <span>No {activeTab.toLowerCase()} announcements found.</span>
+                            {activeTab !== 'All' && (
+                              <button onClick={() => handleTabChange('All')} className="px-4 py-2 bg-user-primary rounded-round text-sm font-bold text-user-text hover:bg-user-primary-dark transition-colors">
+                                View all announcements
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      {activeTab !== 'Unread' && activeTab !== 'All' && (
-                        <button onClick={() => handleTabChange('All')} className="mt-4 px-4 py-2 bg-user-primary rounded-round text-sm font-bold text-user-text hover:bg-user-primary-dark transition-colors">
-                          View all announcements
-                        </button>
-                      )}
                     </div>
                   )}
-                  <Pagination total={filtered.length} perPage={PER_PAGE} current={currentPage} onChange={setCurrentPage} />
+                  {paginated.length > 0 && (
+                    <Pagination total={filtered.length} perPage={PER_PAGE} current={currentPage} onChange={setCurrentPage} />
+                  )}
                 </>
               )}
             </div>
@@ -784,16 +960,22 @@ const Announcements = () => {
                           <Icon d={IC.check} size={32} color="#30a050" sw={2.5} />
                           <span>All caught up! No unread announcements.</span>
                         </div>
-                      ) : `No ${activeTab} announcements found.`}
+                      ) : (
+                        <div className="flex flex-col items-center gap-3">
+                          <span>No {activeTab.toLowerCase()} announcements found.</span>
+                          {activeTab !== 'All' && (
+                            <button onClick={() => handleTabChange('All')} className="px-4 py-2 bg-user-primary rounded-round text-sm font-bold text-user-text hover:bg-user-primary-dark transition-colors">
+                              View all announcements
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    {activeTab !== 'Unread' && activeTab !== 'All' && (
-                      <button onClick={() => handleTabChange('All')} className="mt-4 px-4 py-2 bg-user-primary rounded-round text-sm font-bold text-user-text hover:bg-user-primary-dark transition-colors">
-                        View all announcements
-                      </button>
-                    )}
                   </div>
                 )}
-                <Pagination total={filtered.length} perPage={PER_PAGE} current={currentPage} onChange={setCurrentPage} />
+                {paginated.length > 0 && (
+                  <Pagination total={filtered.length} perPage={PER_PAGE} current={currentPage} onChange={setCurrentPage} />
+                )}
               </>
             )}
           </div>

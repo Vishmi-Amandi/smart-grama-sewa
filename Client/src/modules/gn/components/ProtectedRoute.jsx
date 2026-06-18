@@ -38,7 +38,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  if (!user) return <Navigate to="/gn-login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
   if (status === "Pending") return <Navigate to="/gn-account-pending" replace />;
   if (status === "Rejected") return <Navigate to="/gn-account-rejected" replace />;
   return children;
