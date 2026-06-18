@@ -24,6 +24,7 @@ import GNAccountRejected from './modules/gn/pages/GNAccountRejected.jsx';
 
 // ===== USER MODULE IMPORTS =====
 import SignUp from './modules/user/pages/SignUp';
+import Verify from './modules/user/pages/verify';
 import Dashboard from './modules/user/pages/dashboard';
 import Profile from './modules/user/pages/profile';
 import Appointments from './modules/user/pages/appointments';
@@ -218,7 +219,8 @@ function App() {
           {/* ===== USER MODULE ROUTES ===== */}
           <Route path="/login" element={<Login />} />
           <Route path="/user-signup" element={<SignUp />} />
-
+          <Route path="/verify" element={<Verify />} />
+          
           <Route path="/dashboard" element={
             <UserProtectedRoute>
               <Dashboard />

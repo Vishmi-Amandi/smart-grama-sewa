@@ -5,6 +5,7 @@ import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, u
 import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 import gnDivisionsData from '../data/gnDivisions.json';
+import emailjs from '@emailjs/browser';
 
 const StepIndicator = ({ current }) => {
   const { t } = useTranslation();
@@ -719,7 +720,7 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
   );
 };
 
-// STEP 3 — Password with Email Verification and NIC double-check (Using NIC as Document ID)
+// STEP 3 — Password with Email Verification
 const Step3 = ({ data, onChange, onSubmit, onBack }) => {
   const { t } = useTranslation();
   const [showPw, setShowPw] = useState(false);
@@ -728,12 +729,22 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [verificationSent, setVerificationSent] = useState(false);
-  
+  const EMAILJS_SERVICE_ID = 'service_ntuk948'; 
+  const EMAILJS_TEMPLATE_ID = 'template_pa4tg3a';
+  const EMAILJS_PUBLIC_KEY = 'G52ZRTYVvlqCkJ0x0';
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const generateVerificationLink = (uid, email) => {
+    const data = `${uid}:${email}`;
+    const token = btoa(data);
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/verify?token=${encodeURIComponent(token)}`;
+  };
 
   const pwStrength = (pw) => {
     let s = 0;
@@ -798,6 +809,13 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       // Create account with real email
       const credential = await createUserWithEmailAndPassword(auth, realEmail, data.password);
       
+      // Update display name
+      try {
+        await updateProfile(credential.user, { displayName: data.username });
+      } catch (e) { 
+        console.warn('updateProfile failed:', e.message); 
+      }
+
       // Send verification email
       if (realEmail) {
         try {
@@ -815,30 +833,58 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       }
 
       // Store user data in Firestore
-      try {
-        await setDoc(doc(db, 'users', credential.user.uid), {
-          uid: credential.user.uid,
-          username: data.username,
-          fullName: data.fullName,
-          nic: nicNumber,
-          dob: data.dob,
-          address: data.address,
-          email: realEmail,
-          mobile: data.mobile,
-          district: data.district,
-          dsDiv: data.dsDiv,
-          gnDiv: data.gnDiv,
-          role: 'citizen',
-          createdAt: serverTimestamp(),
-          emailVerified: false,
-        });
-      } catch (firestoreErr) {
-        // Rollback: delete the Auth account
-        await credential.user.delete();
-        throw firestoreErr;
-      }
+      await setDoc(doc(db, 'users', credential.user.uid), {
+        uid: credential.user.uid,
+        username: data.username,
+        fullName: data.fullName,
+        nic: nicNumber,
+        sex: data.sex || '',
+        dob: data.dob,
+        address: data.address,
+        email: realEmail,
+        mobile: data.mobile,
+        district: data.district,
+        dsDiv: data.dsDiv,
+        gnDiv: data.gnDiv,
+        role: 'citizen',
+        createdAt: serverTimestamp(),
+        emailVerified: false,
+        verificationSentAt: serverTimestamp(),
+      });
+            
+      // GENERATE VERIFICATION LINK
+      const verificationLink = generateVerificationLink(credential.user.uid, realEmail);
       
-      setVerificationSent(true);
+      // SEND EMAIL VIA EMAILJS
+      try {
+        await emailjs.send(
+          EMAILJS_SERVICE_ID,
+          EMAILJS_TEMPLATE_ID,
+          {
+            to_email: realEmail,
+            user_name: data.fullName,
+            verify_link: verificationLink,
+          },
+          EMAILJS_PUBLIC_KEY
+        );
+        
+        console.log('✅ Verification email sent successfully!');
+        setVerificationSent(true);
+        
+      } catch (emailError) {
+        console.error('❌ Email sending failed:', emailError);
+        
+        // Fallback: Show link to user
+        const userConfirmed = window.confirm(
+          `We couldn't send the verification email automatically.\n\nPlease verify by clicking this link:\n\n${verificationLink}\n\nClick OK to open.`
+        );
+        
+        if (userConfirmed) {
+          window.open(verificationLink, '_blank');
+        }
+        
+        setVerificationSent(true);
+      }
       
     } catch (err) {
       let friendlyError;
