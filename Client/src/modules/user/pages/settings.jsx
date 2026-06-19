@@ -3,6 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
+import { 
+  getAuth, 
+  signInWithPhoneNumber, 
+  RecaptchaVerifier, 
+  PhoneAuthProvider,
+  linkWithCredential,
+  updatePhoneNumber,
+  reauthenticateWithPhoneNumber
+} from 'firebase/auth';
 import LanguageSwitcher from '../components/languageSwitcher';
 import NotificationBell from '../components/NotificationBell';
 
@@ -40,6 +49,13 @@ const IC = {
   mail:      'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6',
   trash:     'M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2',
   alertTriangle: 'M12 9v4M12 17h.01M12 2a10 10 0 100 20 10 10 0 000-20z',
+  lock: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
+  eye: 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 9a3 3 0 100 6 3 3 0 000-6z',
+  eyeOff: 'M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22',
+  mobile: 'M20 2H4a2 2 0 00-2 2v16a2 2 0 002 2h16a2 2 0 002-2V4a2 2 0 00-2-2z M8 18h8',
+  send: 'M22 2L11 13 M22 2l-7 20-4-9-9-4 20-7z',
+  refresh: 'M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15',
+  x: 'M18 6L6 18M6 6l12 12',
 };
 
 // List of all pages/functions for search
@@ -482,7 +498,8 @@ const SecurityTab = ({ currentUser, userData, db }) => {
       
       setTimeout(() => {
         alert('Password changed successfully! You will be logged out. Please log in again with your new password.');
-        signOut(auth);
+        const authInstance = getAuth();
+        signOut(authInstance);
       }, 2000);
       
       setTimeout(() => setPwSuccess(false), 3000);
@@ -502,7 +519,7 @@ const SecurityTab = ({ currentUser, userData, db }) => {
     return /^(\+94|0)?[0-9]{9,10}$/.test(mobile.replace(/\s/g, ''));
   };
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     setMobError('');
     if (!newMobile.trim()) {
       setMobError('Please enter a new mobile number.');
@@ -516,15 +533,96 @@ const SecurityTab = ({ currentUser, userData, db }) => {
       setMobError('Too many OTP attempts. Please try again later.');
       return;
     }
+        
+    let raw = newMobile.trim().replace(/\s/g, '');
     
+    // Remove leading 0 if present
+    if (raw.startsWith('0')) {
+      raw = raw.slice(1);
+    }
+    
+    // Add +94 for real SMS (no spaces)
+    const formattedPhone = '+94' + raw;
+        
     setMobLoading(true);
-    setTimeout(() => {
-      setMobLoading(false);
+    setMobError('');
+    
+    try {
+      const authInstance = getAuth();
+      
+      // Ensure container exists
+      let container = document.getElementById('recaptcha-container-security');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'recaptcha-container-security';
+        container.style.display = 'none';
+        document.body.appendChild(container);
+      }
+      
+      // Clear existing verifier
+      if (window.recaptchaVerifier) {
+        try {
+          await window.recaptchaVerifier.clear();
+        } catch (e) {
+          console.warn('Error clearing reCAPTCHA:', e);
+        }
+        window.recaptchaVerifier = null;
+      }
+      
+      // Create new verifier
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        authInstance,
+        'recaptcha-container-security',
+        {
+          size: 'invisible',
+          callback: () => {},
+          'expired-callback': () => {
+            window.recaptchaVerifier = null;
+          }
+        }
+      );
+      
+      await window.recaptchaVerifier.render();
+            
+      const confirmationResult = await signInWithPhoneNumber(
+        authInstance,
+        formattedPhone,
+        window.recaptchaVerifier
+      );
+      
+      window.confirmationResultSecurity = confirmationResult;
       setOtpSent(true);
       setTimer(60);
       setOtpAttempts(prev => prev + 1);
-      setMobError('');
-    }, 1000);
+      setMobLoading(false);
+            
+    } catch (error) {
+      console.error('SMS error:', error);
+      setMobLoading(false);
+      
+      if (window.recaptchaVerifier) {
+        try {
+          await window.recaptchaVerifier.clear();
+        } catch (e) {}
+        window.recaptchaVerifier = null;
+      }
+      
+      if (error.code === 'auth/too-many-requests') {
+        setMobError('Too many requests. Please wait and try again.');
+      } else if (error.code === 'auth/invalid-phone-number') {
+        setMobError('Invalid phone number format.');
+      } else if (error.code === 'auth/network-request-failed') {
+        setMobError('Network error. Check your connection.');
+      } else if (error.code === 'auth/captcha-check-failed') {
+        setMobError('reCAPTCHA failed. Refresh and try again.');
+      } else if (error.code === 'auth/quota-exceeded') {
+        setMobError('SMS quota exceeded (10/day). Try again tomorrow or add billing.');
+      } else if (error.code === 'auth/operation-not-allowed') {
+        setMobError('SMS region not enabled. Please enable Sri Lanka (+94) in Firebase Console > Authentication > Settings > SMS region policy.');
+      } else {
+        setMobError(`Error: ${error.message}`);
+      }
+    }
   };
 
   const handleOtpChange = (index, value) => {
@@ -545,41 +643,70 @@ const SecurityTab = ({ currentUser, userData, db }) => {
     }
   };
 
-  const handleVerifyOtp = () => {
-    const otpValue = otp.join('');
-    if (otpValue.length !== 6) {
-      setMobError('Please enter the complete 6-digit OTP.');
-      return;
-    }
-    if (otpValue !== '123456') {
-      setMobError('Incorrect OTP. Please try again.');
-      return;
-    }
+  const handleVerifyOtp = async () => {
+  const otpValue = otp.join('');
+  if (otpValue.length !== 6) {
+    setMobError('Please enter the complete 6-digit OTP.');
+    return;
+  }
+  
+  if (!window.confirmationResultSecurity) {
+    setMobError('Please request a new OTP.');
+    return;
+  }
+  
+  setMobLoading(true);
+  setMobError('');
+  
+  try {
+    const credential = PhoneAuthProvider.credential(
+      window.confirmationResultSecurity.verificationId,
+      otpValue
+    );
     
-    setPendingMobile(newMobile);
-    setShowConfirmModal(true);
-  };
-
-  const confirmMobileUpdate = async () => {
-    setMobLoading(true);
-    try {
-      if (currentUser) {
-        await updateDoc(doc(db, 'users', currentUser.uid), { mobile: pendingMobile });
-      }
-      setMobSuccess(true);
-      setNewMobile('');
-      setOtp(['', '', '', '', '', '']);
-      setOtpSent(false);
-      setTimer(0);
-      setShowConfirmModal(false);
-      
-      setTimeout(() => setMobSuccess(false), 5000);
-    } catch (e) {
-      setMobError('Failed to update mobile. Please try again.');
-    } finally {
-      setMobLoading(false);
+    await linkWithCredential(currentUser, credential);
+    
+    const formattedPhone = newMobile.startsWith('+94') ? newMobile : '+94' + newMobile.replace(/^0/, '');
+    await updateDoc(doc(db, 'users', currentUser.uid), { 
+      mobile: formattedPhone,
+      phoneNumber: formattedPhone
+    });
+    
+    // Clear OTP state
+    setOtp(['', '', '', '', '', '']);
+    setOtpSent(false);
+    setTimer(0);
+    setMobSuccess(true);
+    setNewMobile('');
+    setMobLoading(false);
+    
+    // Clear confirmation result
+    window.confirmationResultSecurity = null;
+    
+    setTimeout(() => setMobSuccess(false), 5000);
+    
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    setMobLoading(false);
+    
+    if (error.code === 'auth/invalid-verification-code') {
+      setMobError('Invalid OTP. Please check the code and try again.');
+      setOtpAttempts(prev => prev + 1);
+    } else if (error.code === 'auth/too-many-requests') {
+      setMobError('Too many failed attempts. Please request a new OTP.');
+    } else if (error.code === 'auth/provider-already-linked') {
+      setMobError('This phone number is already linked to another account.');
+    } else if (error.code === 'auth/credential-already-in-use') {
+      setMobError('This phone number is already in use by another account.');
+    } else {
+      setMobError(`Failed to verify OTP: ${error.message}`);
     }
-  };
+  }
+};
+
+const confirmMobileUpdate = async () => {
+  setShowConfirmModal(false);
+}; 
 
   const handleResendOtp = () => {
     if (timer > 0) return;
@@ -593,6 +720,38 @@ const SecurityTab = ({ currentUser, userData, db }) => {
   const passwordErrors = getPasswordErrors();
   const passwordsMatch = confirmPw && newPw === confirmPw;
   const currentMobile = userData?.mobile || 'Not set';
+
+  useEffect(() => {
+    const initRecaptcha = async () => {
+      try {
+        const authInstance = getAuth();
+        
+        let container = document.getElementById('recaptcha-container-security');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'recaptcha-container-security';
+          container.style.display = 'none'; // Hide it - it's invisible
+          document.body.appendChild(container);
+        }
+
+    } catch (error) {
+      console.error('reCAPTCHA init error:', error);
+    }
+  };
+  
+  initRecaptcha();
+  
+  return () => {
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      } catch (e) {
+        console.warn('reCAPTCHA cleanup error:', e);
+      }
+    }
+  };
+}, []);
 
   return (
     <div className="bg-user-primary-light border border-user-warning rounded-xl p-5 md:p-6">
@@ -1065,7 +1224,6 @@ const Settings = () => {
   // Handle language change
   const handleLanguageChange = (langCode) => {
     setCurrentLanguage(langCode);
-    console.log('Language changed to:', langCode);
   };
 
   useEffect(() => {
