@@ -305,8 +305,8 @@
     "lbl_scroll": "உருட்டு",
     "lbl_details": "விவரங்கள்",
     "lbl_no_appointments": "இன்னும் சந்திப்புகள் இல்லை",
-    "lbl_no_appointments_tab": "{{tab}} சந்திப்புகள் இல்லை",
-    "lbl_no_appointments_tab_desc": "உங்களிடம் தற்போது {{tab}} சந்திப்புகள் இல்லை.",
+    "lbl_no_appointments_tab": "{tab} சந்திப்புகள் இல்லை",
+    "lbl_no_appointments_tab_desc": "உங்களிடம் தற்போது {tab} சந்திப்புகள் இல்லை.",
     "lbl_cancel_error": "சந்திப்பை ரத்து செய்ய முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
     "lbl_book_appointment": "ஒரு சந்திப்பை பதிவு செய்க",
     "lbl_what_for": "இந்த சந்திப்பு எதற்காக?",
@@ -393,10 +393,6 @@
     "lbl_service_urgent": "அவசர அறிக்கை",
     "lbl_service_urgent_desc": "அவசர பிரதேச செயலாளருக்கு: 6 மணிநேரம். விரிவான: 3 நாட்கள்.",
     "lbl_service_dispute": "தகராறு தீர்வு",
-    "lbl_service_dispute_desc": "ஜிஎன் சமூக தகராறுகளைத் தீர்க்க உதவுகிறார்.",
-    "tab_pending": "நிலுவையில்",
-"tab_confirmed": "உறுதிப்படுத்தப்பட்டது",
-"tab_completed": "முடிக்கப்பட்டது",
-"tab_cancelled": "ரத்து செய்யப்பட்டது"
+    "lbl_service_dispute_desc": "ஜிஎன் சமூக தகராறுகளைத் தீர்க்க உதவுகிறார்."
   }
 }
