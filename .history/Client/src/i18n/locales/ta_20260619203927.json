@@ -424,29 +424,6 @@
 "lbl_office_information": "அலுவலக தகவல்",
 "lbl_office_address": "அலுவலக முகவரி",
 "lbl_book_an_appointment": "ஒரு சந்திப்பை பதிவு செய்க",
-"lbl_not_available": "கிடைக்கவில்லை",
-
-"lbl_profile_desc": "தனிப்பட்ட தகவல்களைப் பார்க்க மற்றும் நிர்வகிக்க.",
-"lbl_citizen_id": "குடிமகன் அடையாளம்",
-"lbl_active_account": "செயலில் உள்ள கணக்கு",
-"lbl_edit_profile": "சுயவிவரத்தைத் திருத்து",
-"lbl_personal_info": "தனிப்பட்ட தகவல்",
-"lbl_contact_details": "தொடர்பு விவரங்கள்",
-"lbl_nic_number": "தேசிய அடையாள அட்டை எண்",
-"lbl_date_of_birth": "பிறந்த தேதி",
-"lbl_gender": "பாலினம்",
-"lbl_home_address": "வீட்டு முகவரி",
-"lbl_occupation": "தொழில்",
-"lbl_mobile_number": "கைபேசி எண்",
-"lbl_email_address": "மின்னஞ்சல் முகவரி",
-"lbl_district": "மாவட்டம்",
-"lbl_ds_division": "பிரதேச செயலக பிரிவு",
-"lbl_gn_division": "ஜிஎன் பிரிவு",
-"lbl_edit_profile_desc": "உங்கள் தனிப்பட்ட தகவல் மற்றும் தொடர்பு விவரங்களைப் புதுப்பிக்கவும்.",
-"lbl_saving": "சேமிக்கிறது...",
-"lbl_save_changes": "மாற்றங்களைச் சேமி",
-"lbl_save_error": "மாற்றங்களைச் சேமிக்கத் தவறியது.",
-"lbl_profile_updated": "சுயவிவரம் வெற்றிகரமாக புதுப்பிக்கப்பட்டது!",
-"lbl_not_specified": "குறிப்பிடப்படவில்லை"
+"lbl_not_available": "கிடைக்கவில்லை"
   }
 }
