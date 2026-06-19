@@ -432,30 +432,7 @@
 "lbl_office_information": "කාර්යාල තොරතුරු",
 "lbl_office_address": "කාර්යාල ලිපිනය",
 "lbl_book_an_appointment": "හමුවීමක් වෙන්කරවා ගන්න",
-"lbl_not_available": "ලබා ගත නොහැක",
-
-"lbl_profile_desc": "පුද්ගලික තොරතුරු බලන්න සහ කළමනාකරණය කරන්න.",
-"lbl_citizen_id": "පුරවැසි හැඳුනුම්පත",
-"lbl_active_account": "සක්‍රීය ගිණුම",
-"lbl_edit_profile": "පැතිකඩ සංස්කරණය කරන්න",
-"lbl_personal_info": "පුද්ගලික තොරතුරු",
-"lbl_contact_details": "සම්බන්ධතා තොරතුරු",
-"lbl_nic_number": "ජාතික හැඳුනුම්පත් අංකය",
-"lbl_date_of_birth": "උපන් දිනය",
-"lbl_gender": "ස්ත්‍රී/පුරුෂ භාවය",
-"lbl_home_address": "නිවසේ ලිපිනය",
-"lbl_occupation": "රැකියාව",
-"lbl_mobile_number": "ජංගම දුරකථන අංකය",
-"lbl_email_address": "විද්‍යුත් තැපැල් ලිපිනය",
-"lbl_district": "දිස්ත්‍රික්කය",
-"lbl_ds_division": "ප්‍රාදේශීය ලේකම් කොට්ඨාසය",
-"lbl_gn_division": "ග්‍රාම නිලධාරී වසම",
-"lbl_edit_profile_desc": "ඔබගේ පුද්ගලික තොරතුරු සහ සම්බන්ධතා විස්තර යාවත්කාලීන කරන්න.",
-"lbl_saving": "සුරකිමින්...",
-"lbl_save_changes": "වෙනස්කම් සුරකින්න",
-"lbl_save_error": "වෙනස්කම් සුරැකීමට අසමත් විය.",
-"lbl_profile_updated": "පැතිකඩ සාර්ථකව යාවත්කාලීන කරන ලදී!",
-"lbl_not_specified": "නිශ්චිතව දක්වා නැත"
+"lbl_not_available": "ලබා ගත නොහැක"
 
   }
 }

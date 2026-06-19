@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
@@ -42,7 +41,6 @@ const IC = {
   xCircle: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z',
 };
 
-// ---------- NavItem (translated label) ----------
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
@@ -56,16 +54,15 @@ const NavItem = ({ iconPath, label, active, onClick }) => (
   </button>
 );
 
-// ---------- Search Results Dropdown (translated) ----------
-const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate, t }) => {
-  const PAGE_ACTIONS_KEYS = [
-    { key: 'dashboard', path: '/dashboard', icon: IC.dashboard },
-    { key: 'announcements', path: '/announcements', icon: IC.announcement },
-    { key: 'appointments', path: '/appointments', icon: IC.appointments },
-    { key: 'forms', path: '/forms', icon: IC.forms },
-    { key: 'ai_assistant', path: null, icon: IC.ai },
-    { key: 'profile', path: '/profile', icon: IC.profile },
-    { key: 'settings', path: '/settings', icon: IC.settings },
+const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate }) => {
+  const PAGE_ACTIONS = [
+    { name: 'Dashboard', path: '/dashboard', icon: IC.dashboard },
+    { name: 'Announcements', path: '/announcements', icon: IC.announcement },
+    { name: 'Appointments', path: '/appointments', icon: IC.appointments },
+    { name: 'Forms', path: '/forms', icon: IC.forms },
+    { name: 'AI Assistant', path: null, icon: IC.ai },
+    { name: 'Profile', path: '/profile', icon: IC.profile },
+    { name: 'Settings', path: '/settings', icon: IC.settings },
   ];
   
   const [filteredPages, setFilteredPages] = useState([]);
@@ -76,12 +73,11 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
       return;
     }
     const query = searchQuery.toLowerCase();
-    const allPages = PAGE_ACTIONS_KEYS.map(p => ({
-      ...p,
-      name: p.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${p.key}`)
-    }));
-    setFilteredPages(allPages.filter(p => p.name.toLowerCase().includes(query)));
-  }, [searchQuery, t]);
+    const filtered = PAGE_ACTIONS.filter(page =>
+      page.name.toLowerCase().includes(query)
+    );
+    setFilteredPages(filtered);
+  }, [searchQuery]);
 
   if (!showResults || filteredPages.length === 0) return null;
 
@@ -101,7 +97,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
           <Icon d={page.icon} size={18} color="#B46A02" />
           <div>
             <div className="text-sm font-bold text-user-text">{page.name}</div>
-            <div className="text-xs text-user-text-lighter">{t('lbl_click_to_go_to', { page: page.name })}</div>
+            <div className="text-xs text-user-text-lighter">Click to go to {page.name}</div>
           </div>
         </button>
       ))}
@@ -109,26 +105,19 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
   );
 };
 
-// ---------- MAIN COMPONENT ----------
 const ContactGN = () => {
-  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'en');
+  const [currentLanguage, setCurrentLanguage] = useState('en');
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [gnOfficer, setGnOfficer] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-
-  // Sync language with i18n
-  useEffect(() => {
-    setCurrentLanguage(i18n.language);
-  }, [i18n.language]);
 
   useEffect(() => {
     const handle = () => setIsMobile(window.innerWidth <= 768);
@@ -144,7 +133,7 @@ const ContactGN = () => {
 
   const handleLanguageChange = (langCode) => {
     setCurrentLanguage(langCode);
-    i18n.changeLanguage(langCode);
+    console.log('Language changed to:', langCode);
   };
 
   const fetchGNOfficer = async (gnDivision) => {
@@ -244,41 +233,29 @@ const ContactGN = () => {
     const number = gnOfficer?.officeMobile || gnOfficer?.mobile;
     if (number) {
       navigator.clipboard.writeText(number);
-      alert(t('lbl_copied'));
+      alert('Mobile number copied!');
     }
   };
 
-  // Sidebar items with translated labels
   const navItems = [
-    { key: 'dashboard', icon: IC.dashboard, path: '/dashboard' },
-    { key: 'announcements', icon: IC.announcement, path: '/announcements' },
-    { key: 'appointments', icon: IC.appointments, path: '/appointments' },
-    { key: 'forms', icon: IC.forms, path: '/forms' },
-    { key: 'ai_assistant', icon: IC.ai, path: '/ai' },
+    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard', path: '/dashboard' },
+    { key: 'announcements', icon: IC.announcement, label: 'Announcements', path: '/announcements' },
+    { key: 'appointments', icon: IC.appointments, label: 'Appointments', path: '/appointments' },
+    { key: 'forms', icon: IC.forms, label: 'Forms', path: '/forms' },
+    { key: 'ai', icon: IC.ai, label: 'AI assistant', path: '/ai' },
   ];
   const bottomNav = [
-    { key: 'profile', icon: IC.profile, path: '/profile' },
-    { key: 'settings', icon: IC.settings, path: '/settings' },
-    { key: 'logout', icon: IC.logout, action: 'logout' },
+    { key: 'profile', icon: IC.profile, label: 'Profile', path: '/profile' },
+    { key: 'settings', icon: IC.settings, label: 'Settings', path: '/settings' },
+    { key: 'logout', icon: IC.logout, label: 'Sign out', action: 'logout' },
   ];
 
   const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
 
   if (authLoading) return <PageLoadingSkeleton />;
 
-  // Get status message based on availability
-  const getStatusMessage = (availability) => {
-    switch (availability) {
-      case 'Available': return t('lbl_status_message_available');
-      case 'In Meeting': return t('lbl_status_message_in_meeting');
-      case 'On Field': return t('lbl_status_message_on_field');
-      case 'Not Available': return t('lbl_status_message_not_available');
-      default: return t('lbl_status_message_available');
-    }
-  };
-
   return (
-    <div key={i18n.language} className="user-module min-h-screen flex flex-col font-sans bg-user-background">
+    <div className="user-module min-h-screen flex flex-col font-sans bg-user-background">
       <div className="flex-1 flex">
         {/* DESKTOP SIDEBAR */}
         <div className="desktop-sidebar w-[220px] flex-shrink-0 bg-user-primary flex flex-col sticky top-0 h-screen overflow-y-auto">
@@ -287,22 +264,14 @@ const ContactGN = () => {
           </div>
           <div className="flex-1 p-3">
             {navItems.map(item => (
-              <NavItem 
-                key={item.key} 
-                iconPath={item.icon} 
-                label={item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`)}
-                active={false}
+              <NavItem key={item.key} iconPath={item.icon} label={item.label} active={false}
                 onClick={() => navigate(item.path)}
               />
             ))}
           </div>
           <div className="p-3 pt-2 border-t border-black/10">
             {bottomNav.map(item => (
-              <NavItem 
-                key={item.key} 
-                iconPath={item.icon} 
-                label={item.key === 'logout' ? t('lbl_sign_out') : t(`lbl_${item.key}`)}
-                active={false}
+              <NavItem key={item.key} iconPath={item.icon} label={item.label} active={false}
                 onClick={() => item.action === 'logout' ? handleLogout() : navigate(item.path)}
               />
             ))}
@@ -321,21 +290,13 @@ const ContactGN = () => {
                 <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
               </div>
               {navItems.map(item => (
-                <NavItem 
-                  key={item.key} 
-                  iconPath={item.icon} 
-                  label={item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`)}
-                  active={false}
+                <NavItem key={item.key} iconPath={item.icon} label={item.label} active={false}
                   onClick={() => { navigate(item.path); setMobileMenuOpen(false); }}
                 />
               ))}
               <div className="border-t border-white/20 my-3 pt-3">
                 {bottomNav.map(item => (
-                  <NavItem 
-                    key={item.key} 
-                    iconPath={item.icon} 
-                    label={item.key === 'logout' ? t('lbl_sign_out') : t(`lbl_${item.key}`)}
-                    active={false}
+                  <NavItem key={item.key} iconPath={item.icon} label={item.label} active={false}
                     onClick={() => { 
                       if (item.action === 'logout') handleLogout();
                       else navigate(item.path);
@@ -357,7 +318,7 @@ const ContactGN = () => {
                 <Icon d={IC.search} size={16} color="#aaa" />
                 <input
                   type="text"
-                  placeholder={t('lbl_search_page_function')}
+                  placeholder="Search for a page or function..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -377,7 +338,6 @@ const ContactGN = () => {
                 showResults={showSearchResults}
                 setShowResults={setShowSearchResults}
                 navigate={navigate}
-                t={t}
               />
             </div>
             <div className="flex-1" />
@@ -407,14 +367,14 @@ const ContactGN = () => {
                     <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
                   </div>
                   <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
-                    <Icon d={IC.profile} size={16} color="#B46A02" /> {t('lbl_my_profile')}
+                    <Icon d={IC.profile} size={16} color="#B46A02" /> My Profile
                   </button>
                   <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
-                    <Icon d={IC.settings} size={16} color="#B46A02" /> {t('lbl_settings')}
+                    <Icon d={IC.settings} size={16} color="#B46A02" /> Settings
                   </button>
                   <div className="border-t border-user-border-light my-1"></div>
                   <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                    <Icon d={IC.logout} size={16} color="#ef4444" /> {t('lbl_sign_out')}
+                    <Icon d={IC.logout} size={16} color="#ef4444" /> Sign Out
                   </button>
                 </div>
               )}
@@ -440,19 +400,19 @@ const ContactGN = () => {
             </div>
           </div>
 
-          {/* PAGE CONTENT */}
+                    {/* PAGE CONTENT */}
           <div className={`p-4 md:p-6 xl:p-7 flex-1 animate-fade-in`}>
             {/* Page Header */}
             <div className="mb-6">
               <h1 className="text-2xl md:text-3xl font-extrabold text-user-text tracking-tight mb-1">
-                {t('lbl_contact_gn_officer')}
+                Contact GN Officer
               </h1>
               <p className="text-sm text-user-text-lighter font-semibold">
-                {t('lbl_contact_desc')}
+                Get in touch with your Grama Niladhari officer
               </p>
             </div>
             
-            {/* Status Banner with Refresh Button */}
+                        {/* Status Banner with Refresh Button */}
             {gnOfficer && (
               <div className={`mb-5 p-3 rounded-xl flex items-center justify-between ${
                 gnOfficer?.availability === 'Available' ? 'bg-green-50 border border-green-200' :
@@ -480,8 +440,7 @@ const ContactGN = () => {
                         gnOfficer?.availability === 'Available' ? '#16a34a' :
                         gnOfficer?.availability === 'In Meeting' ? '#ea580c' :
                         gnOfficer?.availability === 'On Field' ? '#dc2626' :
-                        gnOfficer?.availability === 'Not Available' ? '#6b7280' : '#16a34a'
-                      } 
+                        gnOfficer?.availability === 'Not Available' ? '#6b7280' : '#16a34a'                      } 
                       strokeWidth={2}
                     />
                   </div>
@@ -492,10 +451,13 @@ const ContactGN = () => {
                       gnOfficer?.availability === 'On Field' ? 'text-red-700' :
                       gnOfficer?.availability === 'Not Available' ? 'text-gray-600' : 'text-gray-700'
                     }`}>
-                      {t('lbl_gn_officer_status', { status: t(`status_${gnOfficer?.availability?.toLowerCase().replace(' ', '_')}`) || t('status_available') })}
+                      GN Officer is {gnOfficer?.availability || 'Available'}
                     </div>
                     <div className="text-xs text-gray-500">
-                      {getStatusMessage(gnOfficer?.availability)}
+                      {gnOfficer?.availability === 'In Meeting' && 'Currently in a meeting. May take time to respond.'}
+                      {gnOfficer?.availability === 'On Field' && 'Out on field duty. For emergencies, use emergency contact.'}
+                      {gnOfficer?.availability === 'Not Available' && 'Officer is currently unavailable. Please try again later or use emergency contact.'}
+                      {(!gnOfficer?.availability || gnOfficer?.availability === 'Available') && 'Ready to assist you during office hours.'}
                     </div>
                   </div>
                 </div>
@@ -505,10 +467,10 @@ const ContactGN = () => {
                   onClick={refreshGNOfficer}
                   disabled={refreshing}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-all"
-                  title={t('lbl_refresh')}
+                  title="Refresh status"
                 >
                   <Icon d={IC.refresh} size={14} color="#B46A02" className={refreshing ? "animate-spin" : ""} />
-                  <span className="text-xs font-semibold text-user-text">{t('lbl_refresh')}</span>
+                  <span className="text-xs font-semibold text-user-text">Refresh</span>
                 </button>
               </div>
             )}
@@ -529,7 +491,7 @@ const ContactGN = () => {
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200"
                 >
                   <Icon d={IC.refresh} size={14} color="#B46A02" className={refreshing ? "animate-spin" : ""} />
-                  <span className="text-xs font-semibold">{t('lbl_refresh')}</span>
+                  <span className="text-xs font-semibold">Refresh</span>
                 </button>
               </div>
             )}
@@ -542,14 +504,15 @@ const ContactGN = () => {
                     <Icon d={IC.profile} size={36} color="#3d2a00" strokeWidth={1.5} />
                   </div>
                   <div>
+                    {/* Use fullName instead of name */}
                     <h2 className="text-xl font-extrabold text-user-text mb-1">
-                      {gnOfficer?.fullName || t('lbl_grama_niladhari')}
+                      {gnOfficer?.fullName || 'Grama Niladhari'}
                     </h2>
                     <p className="text-sm text-user-warning font-semibold mb-1">
-                      {t('lbl_grama_niladhari_officer')}
+                      Grama Niladhari Officer
                     </p>
                     <p className="text-xs text-user-text-lighter">
-                      {gnOfficer?.gnDiv || userData?.gnDiv || t('lbl_your_gn_division')}
+                      {gnOfficer?.gnDiv || userData?.gnDiv || 'Your GN Division'}
                     </p>
                   </div>
                 </div>
@@ -560,7 +523,7 @@ const ContactGN = () => {
                     className="flex items-center gap-2.5 py-3 px-6 bg-blue-50 border border-blue-200 rounded-xl cursor-pointer transition-all hover:bg-blue-100"
                   >
                     <Icon d={IC.phone} size={18} color="#3b82f6" strokeWidth={2} />
-                    <span className="text-sm font-bold text-user-text">{t('lbl_call')}</span>
+                    <span className="text-sm font-bold text-user-text">Call</span>
                   </button>
 
                   <button 
@@ -568,7 +531,7 @@ const ContactGN = () => {
                     className="flex items-center gap-2.5 py-3 px-6 bg-amber-50 border border-amber-200 rounded-xl cursor-pointer transition-all hover:bg-amber-100"
                   >
                     <Icon d={IC.mail} size={18} color="#d97706" strokeWidth={2} />
-                    <span className="text-sm font-bold text-user-text">{t('lbl_email')}</span>
+                    <span className="text-sm font-bold text-user-text">Email</span>
                   </button>
                 </div>
               </div>
@@ -579,22 +542,22 @@ const ContactGN = () => {
                   <Icon d={IC.profile} size={40} color="#3d2a00" strokeWidth={1.5} />
                 </div>
                 <h2 className="text-xl font-extrabold text-user-text mb-1">
-                  {gnOfficer?.fullName || t('lbl_grama_niladhari')}
+                  {gnOfficer?.fullName || 'Grama Niladhari'}
                 </h2>
                 <p className="text-sm text-user-warning font-semibold mb-2">
-                  {t('lbl_grama_niladhari_officer')}
+                  Grama Niladhari Officer
                 </p>
                 <p className="text-xs text-user-text-lighter mb-5">
-                  {gnOfficer?.gnDiv || userData?.gnDiv || t('lbl_your_gn_division')}
+                  {gnOfficer?.gnDiv || userData?.gnDiv || 'Your GN Division'}
                 </p>
                 <div className="flex gap-3">
                   <button onClick={handleCall} className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-50 border border-blue-200 rounded-xl cursor-pointer">
                     <Icon d={IC.phone} size={18} color="#3b82f6" strokeWidth={2} />
-                    <span className="text-sm font-bold text-user-text">{t('lbl_call')}</span>
+                    <span className="text-sm font-bold text-user-text">Call</span>
                   </button>
                   <button onClick={handleEmail} className="flex-1 flex items-center justify-center gap-2 py-3 bg-amber-50 border border-amber-200 rounded-xl cursor-pointer">
                     <Icon d={IC.mail} size={18} color="#d97706" strokeWidth={2} />
-                    <span className="text-sm font-bold text-user-text">{t('lbl_email')}</span>
+                    <span className="text-sm font-bold text-user-text">Email</span>
                   </button>
                 </div>
               </div>
@@ -604,15 +567,15 @@ const ContactGN = () => {
             <div className="bg-user-surface rounded-xl border border-user-border p-5 md:p-6 mb-5">
               <h3 className="text-base font-extrabold text-user-text mb-4 flex items-center gap-2">
                 <Icon d={IC.phone} size={18} color="#B46A02" />
-                {t('lbl_contact_information')}
+                Contact Information
               </h3>
               
               {/* Office Mobile Number */}
               <div className="mb-4 pb-3 border-b border-user-border-light">
-                <div className="text-xs text-user-text-lighter font-semibold mb-1">{t('lbl_office_mobile')}</div>
+                <div className="text-xs text-user-text-lighter font-semibold mb-1">Office Mobile Number</div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm md:text-base font-bold text-user-text">
-                    {gnOfficer?.officeMobile || t('lbl_not_available')}
+                    {gnOfficer?.officeMobile || 'Not available'}
                   </span>
                   {gnOfficer?.officeMobile && (
                     <div className="flex gap-2">
@@ -624,32 +587,32 @@ const ContactGN = () => {
                         className="py-1.5 px-4 bg-green-50 border border-green-200 rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-green-100 flex items-center gap-1"
                       >
                         <Icon d={IC.phone} size={12} color="#16a34a" />
-                        {t('lbl_call')}
+                        Call
                       </button>
                       <button 
                         onClick={() => {
                           if (gnOfficer?.officeMobile) {
                             navigator.clipboard.writeText(gnOfficer.officeMobile);
-                            alert(t('lbl_copied'));
+                            alert('Office mobile number copied!');
                           }
                         }} 
                         className="py-1.5 px-4 bg-user-secondary-light border border-user-border rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-user-border-light flex items-center gap-1"
                       >
                         <Icon d={IC.copy} size={12} color="#666" />
-                        {t('lbl_copy')}
+                        Copy
                       </button>
                     </div>
                   )}
                 </div>
-                <p className="text-[10px] text-gray-400 mt-1">{t('lbl_office_hours_primary')}</p>
+                <p className="text-[10px] text-gray-400 mt-1">Primary contact during office hours</p>
               </div>
 
               {/* Personal Mobile Number */}
               <div className="mb-4 pb-3 border-b border-user-border-light">
-                <div className="text-xs text-user-text-lighter font-semibold mb-1">{t('lbl_personal_mobile')}</div>
+                <div className="text-xs text-user-text-lighter font-semibold mb-1">Personal Mobile Number</div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm md:text-base font-bold text-user-text">
-                    {gnOfficer?.mobile || t('lbl_not_available')}
+                    {gnOfficer?.mobile || 'Not available'}
                   </span>
                   {gnOfficer?.mobile && (
                     <div className="flex gap-2">
@@ -661,32 +624,32 @@ const ContactGN = () => {
                         className="py-1.5 px-4 bg-green-50 border border-green-200 rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-green-100 flex items-center gap-1"
                       >
                         <Icon d={IC.phone} size={12} color="#16a34a" />
-                        {t('lbl_call')}
+                        Call
                       </button>
                       <button 
                         onClick={() => {
                           if (gnOfficer?.mobile) {
                             navigator.clipboard.writeText(gnOfficer.mobile);
-                            alert(t('lbl_copied'));
+                            alert('Personal mobile number copied!');
                           }
                         }} 
                         className="py-1.5 px-4 bg-user-secondary-light border border-user-border rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-user-border-light flex items-center gap-1"
                       >
                         <Icon d={IC.copy} size={12} color="#666" />
-                        {t('lbl_copy')}
+                        Copy
                       </button>
                     </div>
                   )}
                 </div>
-                <p className="text-[10px] text-gray-400 mt-1">{t('lbl_emergency_outside')}</p>
+                <p className="text-[10px] text-gray-400 mt-1">For emergencies outside office hours</p>
               </div>
 
               {/* Email Address */}
               <div className="mb-4 pb-3 border-b border-user-border-light">
-                <div className="text-xs text-user-text-lighter font-semibold mb-1">{t('lbl_email_address')}</div>
+                <div className="text-xs text-user-text-lighter font-semibold mb-1">Email Address</div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm md:text-base font-bold text-user-text break-all">
-                    {gnOfficer?.officialEmail || t('lbl_not_available')}
+                    {gnOfficer?.officialEmail || 'Not available'}
                   </span>
                   {gnOfficer?.officialEmail && (
                     <button 
@@ -698,7 +661,7 @@ const ContactGN = () => {
                       className="py-1.5 px-4 bg-blue-50 border border-blue-200 rounded-lg text-xs font-semibold cursor-pointer transition-colors hover:bg-blue-100 flex items-center gap-1"
                     >
                       <Icon d={IC.mail} size={12} color="#3b82f6" />
-                      {t('lbl_email')}
+                      Email
                     </button>
                   )}
                 </div>
@@ -708,10 +671,10 @@ const ContactGN = () => {
               <div className="mt-2 p-3 bg-red-50 rounded-lg border border-red-100">
                 <div className="flex items-center gap-2">
                   <Icon d={IC.alertCircle} size={16} color="#dc2626" />
-                  <span className="text-xs font-semibold text-red-700">{t('lbl_emergency_support')}</span>
+                  <span className="text-xs font-semibold text-red-700">Emergency Support</span>
                 </div>
                 <p className="text-[10px] text-red-600 mt-1">
-                  {t('lbl_emergency_note')}
+                  For urgent matters, call the personal mobile number. For general inquiries, use office mobile during working hours.
                 </p>
               </div>
             </div>
@@ -720,15 +683,15 @@ const ContactGN = () => {
             <div className="bg-user-surface rounded-xl border border-user-border p-5 md:p-6 mb-6">
               <h3 className="text-base font-extrabold text-user-text mb-4 flex items-center gap-2">
                 <Icon d={IC.location} size={18} color="#B46A02" />
-                {t('lbl_office_information')}
+                Office Information
               </h3>
               
               <div className="mb-4 flex gap-3">
                 <Icon d={IC.location} size={20} color="#d97706" />
                 <div className="flex-1">
-                  <div className="text-xs text-user-text-lighter font-semibold mb-0.5">{t('lbl_office_address')}</div>
+                  <div className="text-xs text-user-text-lighter font-semibold mb-0.5">Office Address</div>
                   <span className="text-sm md:text-base font-semibold text-user-text leading-relaxed">
-                    {gnOfficer?.officeAddress || t('lbl_gn_office')}
+                    {gnOfficer?.officeAddress || 'Grama Niladhari Office, Divisional Secretariat'}
                   </span>
                 </div>
               </div>
@@ -740,7 +703,7 @@ const ContactGN = () => {
               className="w-full flex items-center justify-center gap-2.5 py-3.5 md:py-4 bg-user-primary border-none rounded-lg text-base md:text-lg font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark hover:-translate-y-0.5 active:translate-y-0"
             >
               <Icon d={IC.calendar} size={20} color="#3d2a00" />
-              {t('lbl_book_an_appointment')}
+              Book an Appointment
             </button>
           </div>
         </div>

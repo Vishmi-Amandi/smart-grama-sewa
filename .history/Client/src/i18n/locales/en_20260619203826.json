@@ -431,29 +431,6 @@
 "lbl_office_information": "Office Information",
 "lbl_office_address": "Office Address",
 "lbl_book_an_appointment": "Book an Appointment",
-"lbl_not_available": "Not available",
-
-"lbl_profile_desc": "View and manage personal information.",
-"lbl_citizen_id": "Citizen ID",
-"lbl_active_account": "Active Account",
-"lbl_edit_profile": "Edit Profile",
-"lbl_personal_info": "Personal Information",
-"lbl_contact_details": "Contact Details",
-"lbl_nic_number": "NIC Number",
-"lbl_date_of_birth": "Date Of Birth",
-"lbl_gender": "Gender",
-"lbl_home_address": "Home Address",
-"lbl_occupation": "Occupation",
-"lbl_mobile_number": "Mobile Number",
-"lbl_email_address": "Email Address",
-"lbl_district": "District",
-"lbl_ds_division": "DS Division",
-"lbl_gn_division": "GN Division",
-"lbl_edit_profile_desc": "Update your personal information and contact details.",
-"lbl_saving": "Saving...",
-"lbl_save_changes": "Save Changes",
-"lbl_save_error": "Failed to save changes.",
-"lbl_profile_updated": "Profile updated successfully!",
-"lbl_not_specified": "Not specified"
+"lbl_not_available": "Not available"
   }
 }
