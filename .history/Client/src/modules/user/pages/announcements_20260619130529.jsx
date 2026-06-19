@@ -569,8 +569,7 @@ const Announcements = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-  // 🔥 Set initial language from i18n, not hardcoded 'en'
-  const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'en');
+  const [currentLanguage, setCurrentLanguage] = useState('en');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -581,11 +580,6 @@ const Announcements = () => {
   const [activeTab, setActiveTab] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
   const [selAnn, setSelAnn] = useState(null);
-
-  // 🔥 FIX: Keep state in sync with i18n language changes
-  useEffect(() => {
-    setCurrentLanguage(i18n.language);
-  }, [i18n.language]);
 
   const getTabCounts = () => ({
     All: announcements.length,
@@ -770,7 +764,7 @@ const Announcements = () => {
 
   if (authLoading) return <PageLoadingSkeleton />;
 
-  // 🔥 Force re‑render when language changes via the `key` prop
+  // FORCE RE-RENDER ON LANGUAGE CHANGE
   return (
     <div key={i18n.language} className="user-module min-h-screen flex flex-col font-sans bg-user-background">
       <div className="flex-1 flex">

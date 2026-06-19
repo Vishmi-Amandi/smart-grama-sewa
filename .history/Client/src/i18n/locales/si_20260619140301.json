@@ -313,8 +313,8 @@
 "lbl_scroll": "අනුචලනය",
 "lbl_details": "විස්තර",
 "lbl_no_appointments": "තවමත් හමුවීම් නැත",
-"lbl_no_appointments_tab": "{{tab}} හමුවීම් නැත",
-"lbl_no_appointments_tab_desc": "ඔබට මේ මොහොතේ {{tab}} හමුවීම් නැත.",
+"lbl_no_appointments_tab": "{tab} හමුවීම් නැත",
+"lbl_no_appointments_tab_desc": "ඔබට මේ මොහොතේ {tab} හමුවීම් නැත.",
 "lbl_cancel_error": "හමුවීම අවලංගු කිරීමට නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න.",
 "lbl_book_appointment": "හමුවීමක් වෙන්කරවා ගන්න",
 "lbl_what_for": "මෙම හමුවීම කුමක් සඳහාද?",
@@ -401,11 +401,6 @@
 "lbl_service_urgent": "හදිසි වාර්තාව",
 "lbl_service_urgent_desc": "හදිසි බෙදීම් ලේකම්වරයාට: පැය 6ක්. සවිස්තර: දින 3ක්.",
 "lbl_service_dispute": "ආරවුල් විසඳීම",
-"lbl_service_dispute_desc": "ග්‍රාම නිලධාරී ප්‍රජා ආරවුල් විසඳීමට උපකාර කරයි.",
-"tab_pending": "පොරොත්තු",
-"tab_confirmed": "තහවුරු කර ඇත",
-"tab_completed": "සම්පූර්ණ කර ඇත",
-"tab_cancelled": "අවලංගු කර ඇත"
-
+"lbl_service_dispute_desc": "ග්‍රාම නිලධාරී ප්‍රජා ආරවුල් විසඳීමට උපකාර කරයි."
   }
 }

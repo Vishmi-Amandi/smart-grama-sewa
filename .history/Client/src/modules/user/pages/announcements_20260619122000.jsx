@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, query, orderBy, getDocs, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, doc, updateDoc, arrayUnion, getDoc, where } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton, AnnouncementsListSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
 import NotificationBell from '../components/NotificationBell';
 
-// ---------- Icons ----------
+// Icons
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -44,7 +44,6 @@ const IC = {
   image: 'M20 5a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2h16z M10 8.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z M21 15l-5-4-4 4-2-2-4 4',
 };
 
-// ---------- Helper Functions ----------
 const getFileIcon = (fileName) => {
   const ext = fileName?.split('.').pop()?.toLowerCase() || '';
   if (['pdf'].includes(ext)) return 'fileText';
@@ -85,18 +84,7 @@ const TAG = {
 };
 const tagCfg = (tag) => TAG[tag] || TAG.Information;
 
-// ---------- Page Actions (keys are translated) ----------
-const PAGE_ACTIONS_KEYS = [
-  { key: 'dashboard', path: '/dashboard', icon: IC.dashboard },
-  { key: 'announcements', path: '/announcements', icon: IC.announce },
-  { key: 'appointments', path: '/appointments', icon: IC.appts },
-  { key: 'forms', path: '/forms', icon: IC.forms },
-  { key: 'ai_assistant', path: null, icon: IC.ai },
-  { key: 'profile', path: '/profile', icon: IC.profile },
-  { key: 'settings', path: '/settings', icon: IC.settings },
-];
-
-// ---------- NavItem ----------
+// NavItem for sidebar
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
@@ -110,52 +98,68 @@ const NavItem = ({ iconPath, label, active, onClick }) => (
   </button>
 );
 
-// ---------- Desktop Sidebar ----------
+// Desktop Sidebar
 const DesktopSidebar = ({ activePage, navigate, onLogout, t }) => {
   const navItems = [
-    { key: 'dashboard', icon: IC.dashboard },
-    { key: 'announcements', icon: IC.announce },
-    { key: 'appointments', icon: IC.appts },
-    { key: 'forms', icon: IC.forms },
-    { key: 'ai_assistant', icon: IC.ai },
+    { key: 'dashboard', icon: IC.dashboard, label: t('lbl_dashboard') },
+    { key: 'announcements', icon: IC.announce, label: t('lbl_announcements') },
+    { key: 'appointments', icon: IC.appts, label: t('lbl_appointments') },
+    { key: 'forms', icon: IC.forms, label: t('lbl_forms') },
+    { key: 'ai', icon: IC.ai, label: t('lbl_ai_assistant') },
   ];
   const bottomNav = [
-    { key: 'profile', icon: IC.profile },
-    { key: 'settings', icon: IC.settings },
-    { key: 'logout', icon: IC.logout },
+    { key: 'profile', icon: IC.profile, label: t('lbl_profile') },
+    { key: 'settings', icon: IC.settings, label: t('lbl_settings') },
+    { key: 'logout', icon: IC.logout, label: t('lbl_sign_out') },
   ];
 
   return (
-    <div className="desktop-sidebar w-[220px] flex-shrink-0 bg-user-primary flex flex-col sticky top-0 h-screen overflow-y-auto">
+    <div className="hidden md:flex w-[220px] flex-shrink-0 bg-user-primary flex-col sticky top-0 h-screen overflow-y-auto">
       <div className="p-5 pb-4 border-b border-black/10">
         <img src="/logo2.png" alt="Smart Grama Sewa" className="h-20 w-auto" />
       </div>
       <div className="flex-1 p-3">
-        {navItems.map((item) => {
-          const label = item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`);
-          const activeKey = item.key === 'ai_assistant' ? 'ai' : item.key;
-          return (
-            <NavItem key={item.key} iconPath={item.icon} label={label}
-              active={activePage === activeKey}
-              onClick={() => item.key === 'ai_assistant' ? window.openChatbot?.() : navigate(`/${item.key}`)} />
-          );
-        })}
+        {navItems.map((item) => (
+          <NavItem key={item.key} iconPath={item.icon} label={item.label}
+            active={activePage === item.key}
+            onClick={() => {
+              if (item.key === 'ai') { window.openChatbot?.(); return; }
+              navigate(item.key === 'dashboard' ? '/dashboard' : `/${item.key}`);
+            }} 
+          />
+        ))}
       </div>
       <div className="p-3 pt-2 border-t border-black/10">
         {bottomNav.map((item) => (
-          <NavItem key={item.key} iconPath={item.icon} 
-            label={item.key === 'logout' ? t('lbl_sign_out') : t(`lbl_${item.key}`)}
+          <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
-            onClick={() => item.key === 'logout' ? onLogout() : navigate(`/${item.key}`)} />
+            onClick={() => {
+              if (item.key === 'logout') {
+                onLogout();
+              } else {
+                navigate(item.key === 'dashboard' ? '/dashboard' : `/${item.key}`);
+              }
+            }} 
+          />
         ))}
       </div>
     </div>
   );
 };
 
-// ---------- Search Results Dropdown ----------
-const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate, t }) => {
+// Search Results Dropdown Component
+const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, setSearchQuery, navigate, t }) => {
   const [filteredPages, setFilteredPages] = useState([]);
+
+  const PAGE_ACTIONS = [
+    { name: t('lbl_dashboard'), path: '/dashboard', icon: IC.dashboard },
+    { name: t('lbl_announcements'), path: '/announcements', icon: IC.announce },
+    { name: t('lbl_appointments'), path: '/appointments', icon: IC.appts },
+    { name: t('lbl_forms'), path: '/forms', icon: IC.forms },
+    { name: t('lbl_ai_assistant'), path: null, icon: IC.ai },
+    { name: t('lbl_profile'), path: '/profile', icon: IC.profile },
+    { name: t('lbl_settings'), path: '/settings', icon: IC.settings },
+  ];
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -163,12 +167,11 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
       return;
     }
     const query = searchQuery.toLowerCase();
-    const allPages = PAGE_ACTIONS_KEYS.map(p => ({
-      ...p,
-      name: p.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${p.key}`)
-    }));
-    setFilteredPages(allPages.filter(p => p.name.toLowerCase().includes(query)));
-  }, [searchQuery, t]);
+    const filtered = PAGE_ACTIONS.filter(page =>
+      page.name.toLowerCase().includes(query)
+    );
+    setFilteredPages(filtered);
+  }, [searchQuery, PAGE_ACTIONS]);
 
   if (!showResults || filteredPages.length === 0) return null;
 
@@ -178,8 +181,14 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
         <button
           key={page.path}
           onClick={() => {
-            if (page.path === null) { window.openChatbot?.(); setShowResults(false); return; }
+            if (page.path === null) { 
+              window.openChatbot?.(); 
+              setSearchQuery?.(''); 
+              setShowResults(false); 
+              return; 
+            }
             navigate(page.path);
+            setSearchQuery?.('');
             setShowResults(false);
           }}
           className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background ${idx !== filteredPages.length - 1 ? 'border-b border-user-border-light' : ''}`}
@@ -195,9 +204,9 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
   );
 };
 
-// ---------- Desktop Topbar ----------
+// Desktop Topbar
 const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser, t }) => (
-  <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
+  <div className="hidden md:flex h-16 bg-white border-b border-user-border-light items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
     <div className="flex-1 max-w-[400px] relative">
       <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-round px-4 py-2 transition-colors hover:border-user-primary">
         <Icon d={IC.search} size={16} color="#aaa" />
@@ -222,6 +231,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
         searchQuery={searchQuery}
         showResults={showResults}
         setShowResults={setShowResults}
+        setSearchQuery={setSearchQuery}
         navigate={navigate}
         t={t}
       />
@@ -235,6 +245,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
     
     <NotificationBell />
     
+    {/* Profile Dropdown */}
     <div className="relative">
       <button 
         onClick={(e) => {
@@ -255,14 +266,23 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
             <p className="text-sm font-bold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</p>
             <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
           </div>
-          <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+          <button 
+            onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} 
+            className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-yellow-50 font-semibold text-sm text-user-text cursor-pointer transition-colors"
+          >
             <Icon d={IC.profile} size={16} color="#B46A02" /> {t('lbl_my_profile')}
           </button>
-          <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
+          <button 
+            onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} 
+            className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-yellow-50 font-semibold text-sm text-user-text cursor-pointer transition-colors"
+          >
             <Icon d={IC.settings} size={16} color="#B46A02" /> {t('lbl_settings')}
           </button>
           <div className="border-t border-user-border-light my-1"></div>
-          <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
+          <button 
+            onClick={() => { handleLogout(); setShowProfileMenu(false); }} 
+            className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-red-50 font-bold text-sm text-red-600 cursor-pointer transition-colors"
+          >
             <Icon d={IC.logout} size={16} color="#ef4444" /> {t('lbl_sign_out')}
           </button>
         </div>
@@ -271,19 +291,19 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
   </div>
 );
 
-// ---------- Mobile Sidebar ----------
+// Mobile Sidebar Overlay
 const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout, t }) => {
   const navItems = [
-    { key: 'dashboard', icon: IC.dashboard },
-    { key: 'announcements', icon: IC.announce },
-    { key: 'appointments', icon: IC.appts },
-    { key: 'forms', icon: IC.forms },
-    { key: 'ai_assistant', icon: IC.ai },
+    { key: 'dashboard', icon: IC.dashboard, label: t('lbl_dashboard') },
+    { key: 'announcements', icon: IC.announce, label: t('lbl_announcements') },
+    { key: 'appointments', icon: IC.appts, label: t('lbl_appointments') },
+    { key: 'forms', icon: IC.forms, label: t('lbl_forms') },
+    { key: 'ai', icon: IC.ai, label: t('lbl_ai_assistant') },
   ];
   const bottomNav = [
-    { key: 'profile', icon: IC.profile },
-    { key: 'settings', icon: IC.settings },
-    { key: 'logout', icon: IC.logout },
+    { key: 'profile', icon: IC.profile, label: t('lbl_profile') },
+    { key: 'settings', icon: IC.settings, label: t('lbl_settings') },
+    { key: 'logout', icon: IC.logout, label: t('lbl_sign_out') },
   ];
 
   if (!isOpen) return null;
@@ -298,21 +318,28 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout, t }) =
         <div className="px-5 pb-5 border-b border-white/20 mb-2 flex justify-center">
           <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
         </div>
-        {navItems.map((item) => {
-          const label = item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`);
-          const activeKey = item.key === 'ai_assistant' ? 'ai' : item.key;
-          return (
-            <NavItem key={item.key} iconPath={item.icon} label={label}
-              active={activePage === activeKey}
-              onClick={() => { if (item.key === 'ai_assistant') { window.openChatbot?.(); onClose(); return; } navigate(`/${item.key}`); onClose(); }} />
-          );
-        })}
+        {navItems.map((item) => (
+          <NavItem key={item.key} iconPath={item.icon} label={item.label}
+            active={activePage === item.key}
+            onClick={() => { 
+              if (item.key === 'ai') { window.openChatbot?.(); onClose(); return; } 
+              navigate(item.key === 'dashboard' ? '/dashboard' : `/${item.key}`); 
+              onClose(); 
+            }} />
+        ))}
         <div className="border-t border-white/20 my-3 pt-3">
           {bottomNav.map((item) => (
-            <NavItem key={item.key} iconPath={item.icon} 
-              label={item.key === 'logout' ? t('lbl_sign_out') : t(`lbl_${item.key}`)}
+            <NavItem key={item.key} iconPath={item.icon} label={item.label}
               active={activePage === item.key}
-              onClick={() => { if (item.key === 'logout') onLogout(); else navigate(`/${item.key}`); onClose(); }} />
+              onClick={() => { 
+                if (item.key === 'logout') {
+                  onLogout();
+                } else {
+                  navigate(item.key === 'dashboard' ? '/dashboard' : `/${item.key}`);
+                  onClose();
+                }
+              }} 
+            />
           ))}
         </div>
       </div>
@@ -320,23 +347,22 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout, t }) =
   );
 };
 
-// ---------- Detail Modal ----------
+// Detail Modal
 const DetailModal = ({ ann, onClose, t }) => {
   if (!ann) return null;
   const cfg = tagCfg(ann.tag);
-  const translatedTag = t('tab_' + ann.tag.toLowerCase());
   
   return (
     <>
       <div onClick={onClose} className="fixed inset-0 bg-black/45 z-[100]" />
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-full max-w-[560px] bg-white rounded-xl shadow-2xl overflow-hidden animate-fade-in" style={{ border: `2px solid ${cfg.border}` }}>
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-full max-w-[560px] bg-white rounded-xl shadow-2xl overflow-hidden" style={{ border: `2px solid ${cfg.border}` }}>
         <div className="pt-6 px-6 pb-0">
           <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-extrabold mb-2.5" style={{ backgroundColor: cfg.chipBg, color: cfg.chipText, border: `1.5px solid ${cfg.border}` }}>
-            <Icon d={cfg.icon} size={12} color={cfg.chipText} /> {translatedTag}
+            <Icon d={cfg.icon} size={12} color={cfg.chipText} /> {t(`tab_${ann.tag.toLowerCase()}`)}
           </span>
           <h2 className="text-lg font-black text-user-text mb-1.5 leading-tight">{ann.title}</h2>
           <p className="text-xs text-user-text-lighter font-semibold mb-3.5 flex items-center gap-1">
-            <Icon d={IC.calendar} size={12} color="#aaa" /> {ann.dateLabel}
+            <Icon d={IC.calendar} size={12} color="#aaa" /> {ann.dateLabel === 'Recent' ? t('lbl_recent') : ann.dateLabel}
           </p>
           <p className="text-sm text-user-text-light leading-relaxed mb-5">{ann.body}</p>
 
@@ -379,11 +405,10 @@ const DetailModal = ({ ann, onClose, t }) => {
   );
 };
 
-// ---------- Announcement Card ----------
+// Announcement Card
 const AnnouncementCard = ({ ann, onClick, t }) => {
   const cfg = tagCfg(ann.tag);
   const preview = ann.body.length > 160 ? ann.body.slice(0, 160) + '…' : ann.body;
-  const translatedTag = t('tab_' + ann.tag.toLowerCase());
 
   return (
     <div
@@ -393,7 +418,7 @@ const AnnouncementCard = ({ ann, onClick, t }) => {
     >
       <div className="mb-2">
         <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-extrabold" style={{ backgroundColor: cfg.chipBg, color: cfg.chipText, border: `1.5px solid ${cfg.border}` }}>
-          <Icon d={cfg.icon} size={12} color={cfg.chipText} /> {translatedTag}
+          <Icon d={cfg.icon} size={12} color={cfg.chipText} /> {t(`tab_${ann.tag.toLowerCase()}`)}
         </span>
       </div>
       <div className="text-base font-black text-user-text mb-2">{ann.title}</div>
@@ -416,7 +441,7 @@ const AnnouncementCard = ({ ann, onClick, t }) => {
           })}
           {ann.attachments.length > 3 && (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold text-gray-500 bg-gray-100 border border-gray-200">
-              +{ann.attachments.length - 3} {t('lbl_more')}
+              +{ann.attachments.length - 3} more
             </span>
           )}
         </div>
@@ -426,7 +451,7 @@ const AnnouncementCard = ({ ann, onClick, t }) => {
   );
 };
 
-// ---------- Filter Tabs ----------
+// Filter Tabs Component
 const FilterTabs = ({ tabs, activeTab, onTabChange, counts, t }) => {
   const scrollContainerRef = useRef(null);
   const [showLeftShadow, setShowLeftShadow] = useState(false);
@@ -453,40 +478,39 @@ const FilterTabs = ({ tabs, activeTab, onTabChange, counts, t }) => {
     }
   }, []);
 
-  const translatedTabs = tabs.map(tabKey => ({
-    key: tabKey,
-    label: t('tab_' + tabKey.toLowerCase())
-  }));
-
   return (
     <div className="relative mb-6 border-b border-user-border">
+      {/* Left shadow indicator */}
       {showLeftShadow && (
         <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none z-10" />
       )}
+      
+      {/* Right shadow indicator */}
       {showRightShadow && (
         <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10" />
       )}
 
+      {/* Horizontal scrollable tabs */}
       <div 
         ref={scrollContainerRef}
         className="flex gap-4 overflow-x-auto scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {translatedTabs.map((tab) => {
-          const isActive = activeTab === tab.key;
-          const count = counts[tab.key] || 0;
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab;
+          const count = counts[tab] || 0;
           
           return (
             <button
-              key={tab.key}
-              onClick={() => onTabChange(tab.key)}
+              key={tab}
+              onClick={() => onTabChange(tab)}
               className={`relative py-2.5 text-sm font-semibold whitespace-nowrap transition-all duration-200 flex-shrink-0
                 ${isActive 
                   ? 'text-user-primary border-b-2 border-user-primary' 
                   : 'text-user-text-lighter hover:text-user-text'
                 }`}
             >
-              {tab.label}
+              {t(`tab_${tab.toLowerCase()}`)}
               {count > 0 && (
                 <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs font-bold
                   ${isActive 
@@ -502,6 +526,7 @@ const FilterTabs = ({ tabs, activeTab, onTabChange, counts, t }) => {
         })}
       </div>
 
+      {/* Scroll hint for mobile */}
       {showRightShadow && (
         <div className="md:hidden flex items-center justify-center gap-1 mt-2 text-[10px] text-user-text-lighter/50">
           <span>← swipe to see more →</span>
@@ -511,8 +536,8 @@ const FilterTabs = ({ tabs, activeTab, onTabChange, counts, t }) => {
   );
 };
 
-// ---------- Pagination ----------
-const Pagination = ({ total, perPage, current, onChange, t }) => {
+// Pagination
+const Pagination = ({ total, perPage, current, onChange }) => {
   const totalPages = Math.ceil(total / perPage);
   if (totalPages <= 1) return null;
 
@@ -547,29 +572,33 @@ const Pagination = ({ total, perPage, current, onChange, t }) => {
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2.5 mt-2">
-      <span className="text-sm font-semibold text-user-text-lighter">
-        {t('lbl_pagination_info', { from, to, total })}
-      </span>
+      <span className="text-sm font-semibold text-user-text-lighter">Showing {from} - {to} of {total} announcements</span>
       <div className="flex items-center gap-1.5">
-        {navBtn(t('lbl_previous'), current === 1, () => onChange(current - 1))}
+        {navBtn('< Previous', current === 1, () => onChange(current - 1))}
         {buildPages()}
-        {navBtn(t('lbl_next'), current === totalPages, () => onChange(current + 1))}
+        {navBtn('Next >', current === totalPages, () => onChange(current + 1))}
       </div>
     </div>
   );
 };
 
-// ---------- MAIN COMPONENT ----------
-const PER_PAGE = 3;
-const TABS = ['All', 'Urgent', 'Important', 'Information', 'Unread'];
+const PAGE_ACTIONS_STATIC = [
+  { name: 'Dashboard', path: '/dashboard', icon: IC.dashboard },
+  { name: 'Announcements', path: '/announcements', icon: IC.announce },
+  { name: 'Appointments', path: '/appointments', icon: IC.appts },
+  { name: 'Forms', path: '/forms', icon: IC.forms },
+  { name: 'AI Assistant', path: null, icon: IC.ai },
+  { name: 'Profile', path: '/profile', icon: IC.profile },
+  { name: 'Settings', path: '/settings', icon: IC.settings },
+];
 
+const PER_PAGE = 3;
 const Announcements = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-  // 🔥 Set initial language from i18n, not hardcoded 'en'
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'en');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -582,10 +611,7 @@ const Announcements = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selAnn, setSelAnn] = useState(null);
 
-  // 🔥 FIX: Keep state in sync with i18n language changes
-  useEffect(() => {
-    setCurrentLanguage(i18n.language);
-  }, [i18n.language]);
+  const TABS = ['All', 'Urgent', 'Important', 'Information', 'Unread'];
 
   const getTabCounts = () => ({
     All: announcements.length,
@@ -596,11 +622,10 @@ const Announcements = () => {
   });
 
   const handleLanguageChange = (langCode) => {
-    setCurrentLanguage(langCode);
     i18n.changeLanguage(langCode);
+    setCurrentLanguage(langCode);
   };
 
-  // Auth listener
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -621,7 +646,6 @@ const Announcements = () => {
     return () => unsub();
   }, [navigate]);
 
-  // Click outside handler
   useEffect(() => {
     const handleClickOutside = () => {
       setShowSearchResults(false);
@@ -631,7 +655,7 @@ const Announcements = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Fetch announcements
+  // Fetch announcements from Firestore
   useEffect(() => {
     const fetchAnnouncements = async () => {
       setLoading(true);
@@ -655,6 +679,7 @@ const Announcements = () => {
               const announcementGnDiv = data.gnDiv || "";
               const category = data.category || "";
               const isAdminAnnouncement = announcementGnDiv === "";
+          
               if (isAdminAnnouncement) {
                 const allowedCategories = ["residents", "all_users"];
                 return allowedCategories.includes(category);
@@ -665,6 +690,7 @@ const Announcements = () => {
             .map(doc => {
               const data = doc.data();
               let dateLabel = 'Recent';
+              
               if (data.createdAt?.toDate) {
                 const date = data.createdAt.toDate();
                 dateLabel = date.toLocaleDateString('en-GB', { 
@@ -678,15 +704,21 @@ const Announcements = () => {
               
               let mappedTag = 'Information';
               const priorityValue = data.priority ? data.priority.charAt(0).toUpperCase() + data.priority.slice(1).toLowerCase() : '';
-              if (priorityValue === 'Urgent') mappedTag = 'Urgent';
-              else if (priorityValue === 'High') mappedTag = 'Important';
-              else if (priorityValue === 'Normal') mappedTag = 'Information';
+
+              if (priorityValue === 'Urgent') {
+                mappedTag = 'Urgent';
+              } else if (priorityValue === 'High') {
+                mappedTag = 'Important';
+              } else if (priorityValue === 'Normal') {
+                mappedTag = 'Information';
+              }
+
               const finalTag = mappedTag || data.tag || 'Information';
 
               return {
                 id: doc.id,
-                title: data.title || t('lbl_announcement_fallback'),
-                body: data.body || data.description || t('lbl_no_description'),
+                title: data.title || 'Announcement',
+                body: data.body || data.description || 'No description available',
                 tag: finalTag,
                 dateLabel: dateLabel,
                 attachments: data.attachments || [],
@@ -710,12 +742,10 @@ const Announcements = () => {
     } else if (!currentUser) {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, userData]);
 
   const markAsRead = async (annId) => {
     if (readIds.has(annId)) return;
-    
     setReadIds(prev => new Set([...prev, annId]));
     
     if (currentUser) {
@@ -740,8 +770,8 @@ const Announcements = () => {
     return a.tag === activeTab;
   });
 
-  const handleTabChange = (tab) => { 
-    setActiveTab(tab); 
+  const handleTabChange = (t) => { 
+    setActiveTab(t); 
     setCurrentPage(1); 
   };
   
@@ -770,12 +800,13 @@ const Announcements = () => {
 
   if (authLoading) return <PageLoadingSkeleton />;
 
-  // 🔥 Force re‑render when language changes via the `key` prop
   return (
-    <div key={i18n.language} className="user-module min-h-screen flex flex-col font-sans bg-user-background">
+    <div className="user-module min-h-screen flex flex-col font-sans bg-user-background">
       <div className="flex-1 flex">
+        {/* Desktop Sidebar */}
         <DesktopSidebar activePage="announcements" navigate={navigate} onLogout={handleLogout} t={t} />
 
+        {/* Mobile Sidebar Overlay */}
         <MobileSidebar
           isOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
@@ -786,6 +817,7 @@ const Announcements = () => {
         />
 
         <div className="flex-1 flex flex-col min-w-0">
+          {/* Desktop Topbar */}
           <DesktopTopbar 
             chipName={chipName}
             searchQuery={searchQuery}
@@ -804,7 +836,7 @@ const Announcements = () => {
           />
 
           {/* Mobile Topbar */}
-          <div className="mobile-topbar hidden h-16 bg-user-primary items-center px-4 gap-3 sticky top-0 z-40 shadow-md">
+          <div className="flex md:hidden h-16 bg-user-primary items-center px-4 gap-3 sticky top-0 z-40 shadow-md">
             <button onClick={() => setMobileMenuOpen(true)} className="bg-none border-none cursor-pointer p-1.5 flex-shrink-0">
               <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
                 <line x1="3" y1="6" x2="21" y2="6" />
@@ -823,13 +855,14 @@ const Announcements = () => {
           </div>
 
           {/* Mobile Content */}
-          <div className="mobile-content hidden flex-1 bg-user-secondary-light overflow-y-auto">
+          <div className="block md:hidden flex-1 bg-user-secondary-light overflow-y-auto">
+            {/* Search Bar */}
             <div className="pt-3 px-3.5 relative">
               <div className="flex items-center gap-2.5 bg-white border border-user-border rounded-round px-4 py-2.5">
                 <Icon d={IC.search} size={16} color="#aaa" />
                 <input
                   type="text"
-                  placeholder={t('lbl_search_page')}
+                  placeholder="Search for a page..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -846,22 +879,20 @@ const Announcements = () => {
               </div>
               {showSearchResults && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-user-border z-[1000] overflow-hidden">
-                  {PAGE_ACTIONS_KEYS.filter(page => 
-                    (page.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${page.key}`)).toLowerCase().includes(searchQuery.toLowerCase())
-                  ).map((page, idx) => (
+                  {PAGE_ACTIONS_STATIC.filter(page => page.name.toLowerCase().includes(searchQuery.toLowerCase())).map((page, idx) => (
                     <button
                       key={page.path}
-                      onClick={() => {
-                        if (page.path === null) { window.openChatbot?.(); setSearchQuery(''); setShowSearchResults(false); return; }
-                        navigate(page.path);
-                        setSearchQuery('');
-                        setShowSearchResults(false);
-                      }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background ${idx !== PAGE_ACTIONS_KEYS.length - 1 ? 'border-b border-user-border-light' : ''}`}
+                        onClick={() => {
+                          if (page.path === null) { window.openChatbot?.(); setSearchQuery(''); setShowSearchResults(false); return; }
+                          navigate(page.path);
+                          setSearchQuery('');
+                          setShowSearchResults(false);
+                        }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background ${idx !== PAGE_ACTIONS_STATIC.length - 1 ? 'border-b border-user-border-light' : ''}`}
                     >
                       <Icon d={page.icon} size={18} color="#B46A02" />
                       <div>
-                        <div className="text-sm font-bold text-user-text">{page.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${page.key}`)}</div>
+                        <div className="text-sm font-bold text-user-text">{t(`lbl_${page.name.toLowerCase().replace(/\s+/g, '_')}`)}</div>
                         <div className="text-[11px] text-user-text-lighter">{t('lbl_click_to_go')}</div>
                       </div>
                     </button>
@@ -870,6 +901,7 @@ const Announcements = () => {
               )}
             </div>
 
+            {/* Main Mobile Content */}
             <div className="p-3.5 pb-[90px]">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
                 <div>
@@ -887,7 +919,7 @@ const Announcements = () => {
                 tabs={TABS} 
                 activeTab={activeTab} 
                 onTabChange={handleTabChange} 
-                counts={tabCounts}
+                counts={tabCounts} 
                 t={t}
               />
 
@@ -910,7 +942,7 @@ const Announcements = () => {
                           </div>
                         ) : (
                           <div className="flex flex-col items-center gap-3">
-                            <span>{t('lbl_no_records_found', { tab: t('tab_' + activeTab.toLowerCase()) })}</span>
+                            <span>{t('lbl_no_records_found', { tab: activeTab === 'All' || activeTab === 'Unread' ? activeTab : t(`tab_${activeTab.toLowerCase()}`) })}</span>
                             {activeTab !== 'All' && (
                               <button onClick={() => handleTabChange('All')} className="px-4 py-2 bg-user-primary rounded-round text-sm font-bold text-user-text hover:bg-user-primary-dark transition-colors">
                                 {t('lbl_view_all_announcements')}
@@ -922,7 +954,7 @@ const Announcements = () => {
                     </div>
                   )}
                   {paginated.length > 0 && (
-                    <Pagination total={filtered.length} perPage={PER_PAGE} current={currentPage} onChange={setCurrentPage} t={t} />
+                    <Pagination total={filtered.length} perPage={PER_PAGE} current={currentPage} onChange={setCurrentPage} />
                   )}
                 </>
               )}
@@ -947,7 +979,7 @@ const Announcements = () => {
               tabs={TABS} 
               activeTab={activeTab} 
               onTabChange={handleTabChange} 
-              counts={tabCounts}
+              counts={tabCounts} 
               t={t}
             />
 
@@ -970,7 +1002,7 @@ const Announcements = () => {
                         </div>
                       ) : (
                         <div className="flex flex-col items-center gap-3">
-                          <span>{t('lbl_no_records_found', { tab: t('tab_' + activeTab.toLowerCase()) })}</span>
+                          <span>{t('lbl_no_records_found', { tab: activeTab === 'All' || activeTab === 'Unread' ? activeTab : t(`tab_${activeTab.toLowerCase()}`) })}</span>
                           {activeTab !== 'All' && (
                             <button onClick={() => handleTabChange('All')} className="px-4 py-2 bg-user-primary rounded-round text-sm font-bold text-user-text hover:bg-user-primary-dark transition-colors">
                               {t('lbl_view_all_announcements')}
@@ -982,7 +1014,7 @@ const Announcements = () => {
                   </div>
                 )}
                 {paginated.length > 0 && (
-                  <Pagination total={filtered.length} perPage={PER_PAGE} current={currentPage} onChange={setCurrentPage} t={t} />
+                  <Pagination total={filtered.length} perPage={PER_PAGE} current={currentPage} onChange={setCurrentPage} />
                 )}
               </>
             )}
@@ -995,29 +1027,6 @@ const Announcements = () => {
       <footer className="bg-[#6A2301] text-white text-center py-3 px-4 text-sm font-semibold">
         © 2026 Smart Grama Sewa. All rights reserved.
       </footer>
-
-      <style>{`
-        @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -45%); } to { opacity: 1; transform: translate(-50%, -50%); } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.2s ease; }
-        .animate-fade-in-up { animation: fadeInUp 0.3s ease; }
-        .rounded-round { border-radius: 999px; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        
-        @media (min-width: 769px) {
-          .desktop-sidebar { display: flex !important; }
-          .desktop-topbar { display: flex !important; }
-          .mobile-topbar { display: none !important; }
-          .mobile-content { display: none !important; }
-        }
-
-        @media (max-width: 768px) {
-          .desktop-sidebar { display: none !important; }
-          .desktop-topbar { display: none !important; }
-          .mobile-topbar { display: flex !important; }
-          .mobile-content { display: block !important; }
-        }
-      `}</style>
     </div>
   );
 };

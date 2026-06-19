@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, query, orderBy, getDocs, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, doc, updateDoc, arrayUnion, getDoc, where } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton, AnnouncementsListSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
 import NotificationBell from '../components/NotificationBell';
 
-// ---------- Icons ----------
+// Icons
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -44,7 +44,6 @@ const IC = {
   image: 'M20 5a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2h16z M10 8.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z M21 15l-5-4-4 4-2-2-4 4',
 };
 
-// ---------- Helper Functions ----------
 const getFileIcon = (fileName) => {
   const ext = fileName?.split('.').pop()?.toLowerCase() || '';
   if (['pdf'].includes(ext)) return 'fileText';
@@ -85,18 +84,18 @@ const TAG = {
 };
 const tagCfg = (tag) => TAG[tag] || TAG.Information;
 
-// ---------- Page Actions (keys are translated) ----------
+// List of all pages/functions for search (keys will be translated)
 const PAGE_ACTIONS_KEYS = [
   { key: 'dashboard', path: '/dashboard', icon: IC.dashboard },
   { key: 'announcements', path: '/announcements', icon: IC.announce },
   { key: 'appointments', path: '/appointments', icon: IC.appts },
   { key: 'forms', path: '/forms', icon: IC.forms },
-  { key: 'ai_assistant', path: null, icon: IC.ai },
+  { key: 'ai', path: null, icon: IC.ai },
   { key: 'profile', path: '/profile', icon: IC.profile },
   { key: 'settings', path: '/settings', icon: IC.settings },
 ];
 
-// ---------- NavItem ----------
+// NavItem for sidebar (accepts translated label)
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
@@ -110,14 +109,14 @@ const NavItem = ({ iconPath, label, active, onClick }) => (
   </button>
 );
 
-// ---------- Desktop Sidebar ----------
+// Desktop Sidebar
 const DesktopSidebar = ({ activePage, navigate, onLogout, t }) => {
   const navItems = [
     { key: 'dashboard', icon: IC.dashboard },
     { key: 'announcements', icon: IC.announce },
     { key: 'appointments', icon: IC.appts },
     { key: 'forms', icon: IC.forms },
-    { key: 'ai_assistant', icon: IC.ai },
+    { key: 'ai', icon: IC.ai },
   ];
   const bottomNav = [
     { key: 'profile', icon: IC.profile },
@@ -131,15 +130,12 @@ const DesktopSidebar = ({ activePage, navigate, onLogout, t }) => {
         <img src="/logo2.png" alt="Smart Grama Sewa" className="h-20 w-auto" />
       </div>
       <div className="flex-1 p-3">
-        {navItems.map((item) => {
-          const label = item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`);
-          const activeKey = item.key === 'ai_assistant' ? 'ai' : item.key;
-          return (
-            <NavItem key={item.key} iconPath={item.icon} label={label}
-              active={activePage === activeKey}
-              onClick={() => item.key === 'ai_assistant' ? window.openChatbot?.() : navigate(`/${item.key}`)} />
-          );
-        })}
+        {navItems.map((item) => (
+          <NavItem key={item.key} iconPath={item.icon} 
+            label={t(`lbl_${item.key}`)}
+            active={activePage === item.key}
+            onClick={() => item.key === 'ai' ? window.openChatbot?.() : navigate(`/${item.key}`)} />
+        ))}
       </div>
       <div className="p-3 pt-2 border-t border-black/10">
         {bottomNav.map((item) => (
@@ -153,7 +149,7 @@ const DesktopSidebar = ({ activePage, navigate, onLogout, t }) => {
   );
 };
 
-// ---------- Search Results Dropdown ----------
+// Search Results Dropdown Component
 const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate, t }) => {
   const [filteredPages, setFilteredPages] = useState([]);
 
@@ -163,11 +159,15 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
       return;
     }
     const query = searchQuery.toLowerCase();
+    // Map keys to translated names for filtering
     const allPages = PAGE_ACTIONS_KEYS.map(p => ({
       ...p,
-      name: p.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${p.key}`)
+      name: t(`lbl_${p.key}`)
     }));
-    setFilteredPages(allPages.filter(p => p.name.toLowerCase().includes(query)));
+    const filtered = allPages.filter(page =>
+      page.name.toLowerCase().includes(query)
+    );
+    setFilteredPages(filtered);
   }, [searchQuery, t]);
 
   if (!showResults || filteredPages.length === 0) return null;
@@ -195,7 +195,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
   );
 };
 
-// ---------- Desktop Topbar ----------
+// Desktop Topbar
 const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser, t }) => (
   <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
     <div className="flex-1 max-w-[400px] relative">
@@ -235,6 +235,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
     
     <NotificationBell />
     
+    {/* Profile Dropdown */}
     <div className="relative">
       <button 
         onClick={(e) => {
@@ -271,14 +272,14 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
   </div>
 );
 
-// ---------- Mobile Sidebar ----------
+// Mobile Sidebar Overlay
 const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout, t }) => {
   const navItems = [
     { key: 'dashboard', icon: IC.dashboard },
     { key: 'announcements', icon: IC.announce },
     { key: 'appointments', icon: IC.appts },
     { key: 'forms', icon: IC.forms },
-    { key: 'ai_assistant', icon: IC.ai },
+    { key: 'ai', icon: IC.ai },
   ];
   const bottomNav = [
     { key: 'profile', icon: IC.profile },
@@ -298,15 +299,12 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout, t }) =
         <div className="px-5 pb-5 border-b border-white/20 mb-2 flex justify-center">
           <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
         </div>
-        {navItems.map((item) => {
-          const label = item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`);
-          const activeKey = item.key === 'ai_assistant' ? 'ai' : item.key;
-          return (
-            <NavItem key={item.key} iconPath={item.icon} label={label}
-              active={activePage === activeKey}
-              onClick={() => { if (item.key === 'ai_assistant') { window.openChatbot?.(); onClose(); return; } navigate(`/${item.key}`); onClose(); }} />
-          );
-        })}
+        {navItems.map((item) => (
+          <NavItem key={item.key} iconPath={item.icon} 
+            label={t(`lbl_${item.key}`)}
+            active={activePage === item.key}
+            onClick={() => { if (item.key === 'ai') { window.openChatbot?.(); onClose(); return; } navigate(`/${item.key}`); onClose(); }} />
+        ))}
         <div className="border-t border-white/20 my-3 pt-3">
           {bottomNav.map((item) => (
             <NavItem key={item.key} iconPath={item.icon} 
@@ -320,10 +318,11 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout, t }) =
   );
 };
 
-// ---------- Detail Modal ----------
+// Detail Modal
 const DetailModal = ({ ann, onClose, t }) => {
   if (!ann) return null;
   const cfg = tagCfg(ann.tag);
+  // Use translated tag
   const translatedTag = t('tab_' + ann.tag.toLowerCase());
   
   return (
@@ -379,7 +378,7 @@ const DetailModal = ({ ann, onClose, t }) => {
   );
 };
 
-// ---------- Announcement Card ----------
+// Announcement Card
 const AnnouncementCard = ({ ann, onClick, t }) => {
   const cfg = tagCfg(ann.tag);
   const preview = ann.body.length > 160 ? ann.body.slice(0, 160) + '…' : ann.body;
@@ -426,7 +425,7 @@ const AnnouncementCard = ({ ann, onClick, t }) => {
   );
 };
 
-// ---------- Filter Tabs ----------
+// Filter Tabs Component
 const FilterTabs = ({ tabs, activeTab, onTabChange, counts, t }) => {
   const scrollContainerRef = useRef(null);
   const [showLeftShadow, setShowLeftShadow] = useState(false);
@@ -453,6 +452,7 @@ const FilterTabs = ({ tabs, activeTab, onTabChange, counts, t }) => {
     }
   }, []);
 
+  // Translate tab labels
   const translatedTabs = tabs.map(tabKey => ({
     key: tabKey,
     label: t('tab_' + tabKey.toLowerCase())
@@ -511,7 +511,7 @@ const FilterTabs = ({ tabs, activeTab, onTabChange, counts, t }) => {
   );
 };
 
-// ---------- Pagination ----------
+// Pagination
 const Pagination = ({ total, perPage, current, onChange, t }) => {
   const totalPages = Math.ceil(total / perPage);
   if (totalPages <= 1) return null;
@@ -559,18 +559,17 @@ const Pagination = ({ total, perPage, current, onChange, t }) => {
   );
 };
 
-// ---------- MAIN COMPONENT ----------
 const PER_PAGE = 3;
+// Tab keys (used for filtering and translation)
 const TABS = ['All', 'Urgent', 'Important', 'Information', 'Unread'];
 
 const Announcements = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-  // 🔥 Set initial language from i18n, not hardcoded 'en'
-  const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'en');
+  const [currentLanguage, setCurrentLanguage] = useState('en');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -582,11 +581,6 @@ const Announcements = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selAnn, setSelAnn] = useState(null);
 
-  // 🔥 FIX: Keep state in sync with i18n language changes
-  useEffect(() => {
-    setCurrentLanguage(i18n.language);
-  }, [i18n.language]);
-
   const getTabCounts = () => ({
     All: announcements.length,
     Urgent: announcements.filter(a => a.tag === 'Urgent').length,
@@ -597,10 +591,8 @@ const Announcements = () => {
 
   const handleLanguageChange = (langCode) => {
     setCurrentLanguage(langCode);
-    i18n.changeLanguage(langCode);
   };
 
-  // Auth listener
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -621,7 +613,6 @@ const Announcements = () => {
     return () => unsub();
   }, [navigate]);
 
-  // Click outside handler
   useEffect(() => {
     const handleClickOutside = () => {
       setShowSearchResults(false);
@@ -631,7 +622,7 @@ const Announcements = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Fetch announcements
+  // Fetch announcements from Firestore
   useEffect(() => {
     const fetchAnnouncements = async () => {
       setLoading(true);
@@ -740,8 +731,8 @@ const Announcements = () => {
     return a.tag === activeTab;
   });
 
-  const handleTabChange = (tab) => { 
-    setActiveTab(tab); 
+  const handleTabChange = (t) => { 
+    setActiveTab(t); 
     setCurrentPage(1); 
   };
   
@@ -770,9 +761,8 @@ const Announcements = () => {
 
   if (authLoading) return <PageLoadingSkeleton />;
 
-  // 🔥 Force re‑render when language changes via the `key` prop
   return (
-    <div key={i18n.language} className="user-module min-h-screen flex flex-col font-sans bg-user-background">
+    <div className="user-module min-h-screen flex flex-col font-sans bg-user-background">
       <div className="flex-1 flex">
         <DesktopSidebar activePage="announcements" navigate={navigate} onLogout={handleLogout} t={t} />
 
@@ -847,7 +837,7 @@ const Announcements = () => {
               {showSearchResults && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-user-border z-[1000] overflow-hidden">
                   {PAGE_ACTIONS_KEYS.filter(page => 
-                    (page.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${page.key}`)).toLowerCase().includes(searchQuery.toLowerCase())
+                    t(`lbl_${page.key}`).toLowerCase().includes(searchQuery.toLowerCase())
                   ).map((page, idx) => (
                     <button
                       key={page.path}
@@ -861,7 +851,7 @@ const Announcements = () => {
                     >
                       <Icon d={page.icon} size={18} color="#B46A02" />
                       <div>
-                        <div className="text-sm font-bold text-user-text">{page.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${page.key}`)}</div>
+                        <div className="text-sm font-bold text-user-text">{t(`lbl_${page.key}`)}</div>
                         <div className="text-[11px] text-user-text-lighter">{t('lbl_click_to_go')}</div>
                       </div>
                     </button>

@@ -290,12 +290,7 @@
 "lbl_date_time": "Date & Time",
 "lbl_review_submit": "Review & Submit",
 
-"lbl_pending_desc": "Awaiting GN Officer approval",
-"lbl_confirmed_appts": "Confirmed Appointments",
-"lbl_confirmed_desc": "Ready for your visit",
-"lbl_select_service": "Select Service",
-"lbl_date_time": "Date & Time",
-"lbl_review_submit": "Review & Submit",
+
 "lbl_cancel_appointment": "Cancel Appointment?",
 "lbl_cancel_confirm_msg": "Are you sure you want to cancel this appointment? This action cannot be undone.",
 "lbl_no_keep": "No, Keep",
@@ -312,8 +307,8 @@
 "lbl_scroll": "scroll",
 "lbl_details": "Details",
 "lbl_no_appointments": "No appointments yet",
-"lbl_no_appointments_tab": "No {{tab}} appointments",
-"lbl_no_appointments_tab_desc": "You have no {{tab}} appointments at the moment.",
+"lbl_no_appointments_tab": "No {tab} appointments",
+"lbl_no_appointments_tab_desc": "You have no {tab} appointments at the moment.",
 "lbl_cancel_error": "Could not cancel appointment. Please try again.",
 "lbl_book_appointment": "Book an appointment",
 "lbl_what_for": "What is this appointment for?",
@@ -400,10 +395,6 @@
 "lbl_service_urgent": "Urgent Report",
 "lbl_service_urgent_desc": "Emergency to DS: 6 hours. Detailed: 3 days.",
 "lbl_service_dispute": "Dispute Resolution",
-"lbl_service_dispute_desc": "GN helps settle community disputes.",
-"tab_pending": "Pending",
-"tab_confirmed": "Confirmed",
-"tab_completed": "Completed",
-"tab_cancelled": "Cancelled"
+"lbl_service_dispute_desc": "GN helps settle community disputes."
   }
 }
