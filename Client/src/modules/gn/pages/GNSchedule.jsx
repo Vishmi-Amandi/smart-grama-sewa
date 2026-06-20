@@ -38,6 +38,21 @@ const STATUS_BADGE = {
   Cancelled: "bg-red-100 text-red-600 border-red-200",
 };
 
+const WALKIN_PURPOSES = [
+  "General inquiry",
+  "Document submission",
+  "Certificate request",
+  "Complaint",
+  "Follow-up visit",
+  "Other",
+];
+
+const DUTY_TYPES = [
+  { label: "Meeting",  color: "bg-orange-100 text-orange-700 border-orange-200" },
+  { label: "On Field", color: "bg-red-100 text-red-700 border-red-200" },
+  { label: "Other",    color: "bg-slate-100 text-slate-700 border-slate-200" },
+];
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -328,11 +343,186 @@ const AppointmentModal = ({ modal, onConfirm, onCancel, onClose, theme }) => {
   );
 };
 
+// ─── Duty Block Modal ─────────────────────────────────────────────────────────
+
+const DutyBlockModal = ({ modal, onClose, onSave, onRemove, theme, existingDates = [] }) => {
+  const t = getThemeClasses(theme);
+  const existing = modal?.existing;
+
+  const [dutyDate,  setDutyDate]  = useState(modal.iso);
+  const [dutyType,  setDutyType]  = useState(existing?.type || "Meeting");
+  const [allDay,    setAllDay]    = useState(existing?.allDay ?? true);
+  const [startTime, setStartTime] = useState(existing?.startTime || "09:00");
+  const [endTime,   setEndTime]   = useState(existing?.endTime || "17:00");
+  const [note,      setNote]      = useState(existing?.note || "");
+  const [saving,    setSaving]    = useState(false);
+  const [error,     setError]     = useState("");
+
+  const dateChanged = dutyDate !== modal.iso;
+
+  const handleSave = async () => {
+    if (dutyType === "Other" && !note.trim()) {
+      setError("Please describe the work for 'Other'.");
+      return;
+    }
+    if (!dutyDate) {
+      setError("Please select a date.");
+      return;
+    }
+    setError("");
+    setSaving(true);
+    // Editing an existing block and changing the date moves it:
+    // clear the block under the old date, then save under the new date.
+    if (existing && dateChanged) {
+      await onRemove(modal.iso);
+    }
+    await onSave(dutyDate, {
+      type: dutyType,
+      allDay,
+      startTime: allDay ? null : startTime,
+      endTime:   allDay ? null : endTime,
+      note: dutyType === "Other" ? note.trim() : "",
+    });
+    setSaving(false);
+    onClose();
+  };
+
+  const handleRemove = async () => {
+    setSaving(true);
+    await onRemove(modal.iso);
+    setSaving(false);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 flex items-end sm:items-center justify-center z-50 bg-black/40">
+      <div className={`${t.card} w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl shadow-2xl p-5 sm:p-6`}>
+
+        <div className="w-10 h-1 rounded-full bg-gray-300 mx-auto mb-4 sm:hidden" />
+
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[#F5DEB3] text-[#8B4513] border border-[#8B4513]/20">
+              Duty Block
+            </span>
+            <h2 className={`text-sm font-bold mt-2 ${t.text}`}>{dutyDate || "Select a date"}</h2>
+          </div>
+          <button onClick={onClose} className={`${t.subtext} p-1`}>
+            <XCircle size={20} />
+          </button>
+        </div>
+
+        <div className="space-y-3 mb-5">
+
+          {/* Date picker */}
+          <div>
+            <label className={`text-[10px] font-semibold mb-1 block ${t.subtext}`}>Date</label>
+            <input
+              type="date"
+              value={dutyDate}
+              onChange={(e) => { setDutyDate(e.target.value); setError(""); }}
+              className={`w-full border ${t.border} rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
+            />
+          </div>
+
+          {/* Type select */}
+          <div>
+            <label className={`text-[10px] font-semibold mb-1.5 block ${t.subtext}`}>Duty Type</label>
+            <div className="flex flex-wrap gap-1.5">
+              {DUTY_TYPES.map(({ label }) => (
+                <button
+                  key={label}
+                  onClick={() => setDutyType(label)}
+                  className={`text-[11px] px-3 py-1.5 rounded-full border font-semibold transition
+                    ${dutyType === label
+                      ? "bg-[#8B4513] text-white border-[#8B4513]"
+                      : `border-gray-300 ${t.subtext}`}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Other → free text, required */}
+          {dutyType === "Other" && (
+            <div>
+              <label className={`text-[10px] font-semibold mb-1 block ${t.subtext}`}>
+                Describe the work <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={note}
+                onChange={(e) => { setNote(e.target.value); setError(""); }}
+                placeholder="e.g. Attending district coordination workshop"
+                rows={2}
+                className={`w-full border ${t.border} rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#E5A800] resize-none ${t.input}`}
+              />
+            </div>
+          )}
+
+          {/* All day toggle */}
+          <div className="flex items-center justify-between">
+            <label className={`text-xs font-semibold ${t.text}`}>Full Day</label>
+            <button
+              onClick={() => setAllDay(!allDay)}
+              className={`relative w-11 h-6 rounded-full transition ${allDay ? "bg-[#8B4513]" : "bg-gray-300"}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${allDay ? "translate-x-5" : ""}`} />
+            </button>
+          </div>
+
+          {/* Time range, only if not all day */}
+          {!allDay && (
+            <div className="flex items-center gap-2">
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className={`flex-1 border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
+              />
+              <span className={`text-xs ${t.subtext}`}>to</span>
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className={`flex-1 border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
+              />
+            </div>
+          )}
+
+          {error && <p className="text-xs text-red-600 font-semibold">{error}</p>}
+        </div>
+
+        <div className="flex gap-2">
+          {existing && (
+            <button
+              onClick={handleRemove}
+              disabled={saving}
+              className="flex items-center gap-1.5 border border-red-200 text-red-600 font-semibold px-3 py-2.5 rounded-xl text-sm"
+            >
+              <Trash2 size={13} /> Remove
+            </button>
+          )}
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 flex items-center justify-center gap-1.5 bg-[#8B4513] text-white font-semibold py-2.5 rounded-xl text-sm disabled:opacity-60"
+          >
+            {saving ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />}
+            {saving ? "Saving…" : existing ? "Update Block" : "Add Duty Block"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Mobile Day Slot List ─────────────────────────────────────────────────────
 
 const MobileDayView = ({
   days, activeDayIdx, setActiveDayIdx,
   workingHours, getSlotsForDay, getAppointmentAt, getWalkInData, isWalkIn,
+  isSlotDutyBlocked, getDutyBlock, setDutyModal,
   setModal, setWalkInModal, theme, today,
 }) => {
   const { t } = useTranslation();
@@ -450,6 +640,28 @@ const MobileDayView = ({
               );
             }
 
+            if (isSlotDutyBlocked(day.iso, time)) {
+              const dutyBlock = getDutyBlock(day.iso);
+              return (
+                <div
+                  key={time}
+                  onClick={() => setDutyModal({ iso: day.iso, existing: dutyBlock })}
+                  className="flex items-center gap-3 rounded-2xl px-4 py-3 cursor-pointer shadow-sm bg-gray-100 border-l-4 border-gray-400 active:brightness-95"
+                >
+                  <div className="flex-shrink-0 w-14">
+                    <p className="text-[10px] font-bold text-gray-400">{fmt24to12(time)}</p>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase">{dutyBlock?.type || "Blocked"}</p>
+                    {dutyBlock?.type === "Other" && dutyBlock?.note && (
+                      <p className="text-[10px] text-gray-400 truncate">{dutyBlock.note}</p>
+                    )}
+                  </div>
+                  <Pencil size={13} className="text-gray-400 opacity-50 flex-shrink-0" />
+                </div>
+              );
+            }
+
             if (walkInData) {
               return (
                 <div
@@ -513,6 +725,8 @@ const GNSchedule = ({ gnStatus, theme }) => {
   const [saving,        setSaving]        = useState(false);
   const [modal,         setModal]         = useState(null);
   const [walkInModal,   setWalkInModal]   = useState(null);
+  const [dutyBlocks,    setDutyBlocks]    = useState({});
+  const [dutyModal,     setDutyModal]     = useState(null); // { iso, existing } when open
 
   // Mobile: which day is selected (0 = Monday … 6 = Sunday)
   const todayDayIdx = (() => {
@@ -569,13 +783,16 @@ const GNSchedule = ({ gnStatus, theme }) => {
     init();
   }, []);
 
-  // ── Fetch appointments + overrides ───────────────────────────────────────────
+  // ── Fetch appointments + overrides + duty blocks ─────────────────────────────
   const fetchWeekData = useCallback(async () => {
     if (!gnUid) return;
     setLoading(true);
     try {
       const overrideSnap = await getDoc(doc(db, "gn_schedule", gnUid));
-      if (overrideSnap.exists()) setSlotOverrides(overrideSnap.data().overrides || {});
+      if (overrideSnap.exists()) {
+        setSlotOverrides(overrideSnap.data().overrides || {});
+        setDutyBlocks(overrideSnap.data().dutyBlocks || {});
+      }
 
       const officerSnap = await getDoc(doc(db, "gn_officers", gnUid));
       if (!officerSnap.exists()) return;
@@ -626,6 +843,17 @@ const GNSchedule = ({ gnStatus, theme }) => {
 
   const isWalkIn = (iso, time) => !!getWalkInData(iso, time);
 
+  const getDutyBlock = (iso) => dutyBlocks[iso] || null;
+
+  // Returns true if this specific time slot falls inside an officer's duty block for that date.
+  const isSlotDutyBlocked = (iso, time) => {
+    const block = dutyBlocks[iso];
+    if (!block) return false;
+    if (block.allDay) return true;
+    if (!block.startTime || !block.endTime) return false;
+    return time >= block.startTime && time < block.endTime;
+  };
+
   // ── Walk-in save / remove ─────────────────────────────────────────────────────
   const saveWalkIn = async (iso, time, data) => {
     const updated = {
@@ -652,6 +880,43 @@ const GNSchedule = ({ gnStatus, theme }) => {
     finally { setSaving(false); }
   };
 
+  // ── Duty block save / remove ──────────────────────────────────────────────────
+  // ── Duty block save / remove ──────────────────────────────────────────────────
+ const saveDutyBlock = async (iso, data) => {
+  const updated = { ...dutyBlocks, [iso]: data };
+  setDutyBlocks(updated);
+  setSaving(true);
+  try {
+    await setDoc(doc(db, "gn_schedule", gnUid), { dutyBlocks: updated }, { merge: true });
+
+    // ── Auto-update availability status ──
+    let newStatus;
+    if (data.allDay) {
+      newStatus = "Unavailable";
+    } else if (data.type === "Meeting") {
+      newStatus = "In Meeting";
+    } else {
+      newStatus = "On Field";
+    }
+    await updateDoc(doc(db, "gn_officers", gnUid), { availability: newStatus });
+
+  } catch (err) {
+    console.error("Duty block save error:", err);
+  } finally {
+    setSaving(false);
+  }
+};
+
+  const removeDutyBlock = async (iso) => {
+    const updated = { ...dutyBlocks };
+    delete updated[iso];
+    setDutyBlocks(updated);
+    setSaving(true);
+    try { await setDoc(doc(db, "gn_schedule", gnUid), { dutyBlocks: updated }, { merge: true }); }
+    catch (err) { console.error("Duty block remove error:", err); }
+    finally { setSaving(false); }
+  };
+
   // ── Confirm / Cancel ──────────────────────────────────────────────────────────
   const handleConfirm = async (appt) => {
     try {
@@ -675,14 +940,15 @@ const GNSchedule = ({ gnStatus, theme }) => {
       if (!workingHours[d.name]?.enabled) return acc;
       getSlotsForDay(d.name).forEach((time) => {
         const appt = getAppointmentAt(d.iso, time);
-        if (appt?.status === "Confirmed")    acc.confirmed++;
-        else if (appt?.status === "Pending") acc.pending++;
-        else if (isWalkIn(d.iso, time))      acc.walkIn++;
-        else                                 acc.available++;
+        if (appt?.status === "Confirmed")        acc.confirmed++;
+        else if (appt?.status === "Pending")     acc.pending++;
+        else if (isSlotDutyBlocked(d.iso, time)) acc.blocked++;
+        else if (isWalkIn(d.iso, time))          acc.walkIn++;
+        else                                      acc.available++;
       });
       return acc;
     },
-    { confirmed: 0, pending: 0, walkIn: 0, available: 0 }
+    { confirmed: 0, pending: 0, walkIn: 0, available: 0, blocked: 0 }
   );
 
   const prevWeek = () => { const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStart(d); setActiveDayIdx(0); };
@@ -692,6 +958,11 @@ const GNSchedule = ({ gnStatus, theme }) => {
   const allTimeSet = new Set();
   days.forEach((d) => getSlotsForDay(d.name).forEach((tt) => allTimeSet.add(tt)));
   const allTimes = Array.from(allTimeSet).sort();
+
+  // Duty blocks that fall within the visible week, for the summary list
+  const weekDutyEntries = days
+    .map((d) => ({ d, block: getDutyBlock(d.iso) }))
+    .filter(({ block }) => !!block);
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
@@ -751,6 +1022,56 @@ const GNSchedule = ({ gnStatus, theme }) => {
         </button>
       </div>
 
+      {/* ── Duty Blocks (Meeting / On Field / Other) ── */}
+      <div className={`${t.card} rounded-2xl shadow-sm border ${t.border} p-4 mb-4`}>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className={`text-sm font-bold ${t.text}`}>Official Duty Blocks</p>
+            <p className={`text-[10px] ${t.subtext}`}>
+              Block out time for meetings, field visits, or other official work. Blocked time won't be bookable by citizens.
+            </p>
+          </div>
+          <button
+            onClick={() => setDutyModal({ iso: days[activeDayIdx]?.iso || days[0].iso, existing: null })}
+            className="flex-shrink-0 flex items-center gap-1.5 bg-[#8B4513] text-white text-xs font-semibold px-3 py-2 rounded-xl"
+          >
+            <Plus size={13} /> Add
+          </button>
+        </div>
+
+        {weekDutyEntries.length === 0 ? (
+          <p className={`text-xs ${t.subtext} italic`}>No duty blocks this week.</p>
+        ) : (
+          <div className="space-y-2">
+            {weekDutyEntries.map(({ d, block }) => {
+              const typeMeta = DUTY_TYPES.find((dt) => dt.label === block.type) || DUTY_TYPES[2];
+              return (
+                <div
+                  key={d.iso}
+                  onClick={() => setDutyModal({ iso: d.iso, existing: block })}
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2.5 cursor-pointer border ${t.border} hover:brightness-95 transition`}
+                >
+                  <div className="flex-shrink-0 w-16">
+                    <p className={`text-[10px] font-bold ${t.text}`}>{d.short}</p>
+                    <p className={`text-[10px] ${t.subtext}`}>{d.iso}</p>
+                  </div>
+                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border flex-shrink-0 ${typeMeta.color}`}>
+                    {block.type}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs ${t.subtext} truncate`}>
+                      {block.allDay ? "Full day" : `${fmt24to12(block.startTime)} – ${fmt24to12(block.endTime)}`}
+                      {block.type === "Other" && block.note ? ` · ${block.note}` : ""}
+                    </p>
+                  </div>
+                  <Pencil size={13} className={`opacity-40 flex-shrink-0 ${t.subtext}`} />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* ── Stats — 2×2 on mobile, 4 cols on sm+ ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
         {[
@@ -788,6 +1109,9 @@ const GNSchedule = ({ gnStatus, theme }) => {
             getAppointmentAt={getAppointmentAt}
             getWalkInData={getWalkInData}
             isWalkIn={isWalkIn}
+            isSlotDutyBlocked={isSlotDutyBlocked}
+            getDutyBlock={getDutyBlock}
+            setDutyModal={setDutyModal}
             setModal={setModal}
             setWalkInModal={setWalkInModal}
             theme={theme}
@@ -891,6 +1215,8 @@ const GNSchedule = ({ gnStatus, theme }) => {
 
                     const appt       = getAppointmentAt(d.iso, time);
                     const walkInData = getWalkInData(d.iso, time);
+                    const dutyBlocked = !appt && isSlotDutyBlocked(d.iso, time);
+                    const dutyBlock   = dutyBlocked ? getDutyBlock(d.iso) : null;
 
                     return (
                       <td key={d.iso} className="px-1.5 py-1 align-top">
@@ -906,7 +1232,16 @@ const GNSchedule = ({ gnStatus, theme }) => {
                             <p className="text-[10px] opacity-60 truncate">{appt.service}</p>
                           </div>
                         )}
-                        {!appt && walkInData && (
+                        {!appt && dutyBlocked && (
+                          <div
+                            onClick={() => setDutyModal({ iso: d.iso, existing: dutyBlock })}
+                            className="h-9 rounded-lg px-2 flex items-center justify-center bg-gray-200/70 border border-gray-300 cursor-pointer hover:brightness-95 transition"
+                            title={`${dutyBlock?.type || "Blocked"}${dutyBlock?.note ? " · " + dutyBlock.note : ""}`}
+                          >
+                            <span className="text-[9px] font-bold uppercase text-gray-500 truncate">{dutyBlock?.type || "Blocked"}</span>
+                          </div>
+                        )}
+                        {!appt && !dutyBlocked && walkInData && (
                           <div
                             onClick={() => setWalkInModal({ iso: d.iso, time, walkInData })}
                             className="rounded-lg px-2.5 py-1.5 bg-[#F5DEB3] border-l-4 border-[#8B4513] cursor-pointer hover:brightness-95 transition group relative"
@@ -921,7 +1256,7 @@ const GNSchedule = ({ gnStatus, theme }) => {
                             <p className="text-[10px] text-[#6A2301] opacity-70 truncate">{walkInData.purpose || t('walkin')}</p>
                           </div>
                         )}
-                        {!appt && !walkInData && (
+                        {!appt && !dutyBlocked && !walkInData && (
                           <div
                             onClick={() => setWalkInModal({ iso: d.iso, time, walkInData: null })}
                             className={`h-9 rounded-lg border border-dashed ${tTheme.border} hover:border-[#8B4513] hover:bg-[#F5DEB3]/20 transition cursor-pointer flex items-center justify-center group`}
@@ -969,6 +1304,16 @@ const GNSchedule = ({ gnStatus, theme }) => {
           onConfirm={handleConfirm}
           onCancel={handleCancel}
           onClose={() => setModal(null)}
+          theme={theme}
+        />
+      )}
+
+      {dutyModal && (
+        <DutyBlockModal
+          modal={dutyModal}
+          onClose={() => setDutyModal(null)}
+          onSave={saveDutyBlock}
+          onRemove={removeDutyBlock}
           theme={theme}
         />
       )}

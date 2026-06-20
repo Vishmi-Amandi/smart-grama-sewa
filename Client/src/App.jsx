@@ -133,7 +133,7 @@ const UserProtectedRoute = ({ children }) => {
 
 // ===== MAIN APP COMPONENT =====
 function App() {
-  const [gnStatus, setGnStatus] = useState("Available");
+  const [gnStatus, setGnStatus] = useState("null");
   const [theme, setTheme] = useState("light");
   const [fontSize, setFontSize] = useState("medium");
 
@@ -142,6 +142,17 @@ function App() {
     medium: "16px",
     large: "18px",
   };
+
+  useEffect(() => {
+  const unsub = onAuthStateChanged(auth, async (user) => {
+    if (!user) return;
+    const snap = await getDoc(doc(db, "gn_officers", user.uid));
+    if (snap.exists()) {
+      setGnStatus(snap.data().availability || "Available");
+    }
+  });
+  return () => unsub();
+}, []);
 
   return (
     <ErrorBoundary>

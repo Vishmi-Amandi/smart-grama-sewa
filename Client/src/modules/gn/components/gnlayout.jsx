@@ -18,8 +18,8 @@ export const getThemeClasses = (theme) => ({
   divider: theme === "dark" ? "divide-gray-700" : "divide-gray-100",
 });
 
-const GNLayout = ({ children, gnStatus, theme }) => {
-  const { t, i18n } = useTranslation();
+const GNLayout = ({ children, theme, gnStatus: gnStatusOverride }) => {
+  const [gnStatus, setGnStatus] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -97,16 +97,15 @@ const GNLayout = ({ children, gnStatus, theme }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const docRef = doc(db, "gn_officers", user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setUserData(docSnap.data());
-        }
+      if (!user) return;
+      const snap = await getDoc(doc(db, "gn_officers", user.uid));
+      if (snap.exists()) {
+        setGnStatus(snap.data().availability || "Available");
       }
     });
     return () => unsubscribe();
   }, []);
+  const displayStatus = gnStatusOverride ?? gnStatus;
 
   // Get translated status label
   const getStatusLabel = (status) => {
@@ -171,14 +170,14 @@ const GNLayout = ({ children, gnStatus, theme }) => {
           >
             <p className="text-xs text-gray-300">{t('lbl_current_status')}</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className={`w-2 h-2 rounded-full ${
-                gnStatus === "Available"   ? "bg-green-400 shadow-[0_0_6px_2px_rgba(74,222,128,0.6)]"  :
-                gnStatus === "In Meeting"  ? "bg-orange-400 shadow-[0_0_6px_2px_rgba(251,146,60,0.6)]" :
-                gnStatus === "On Field"    ? "bg-red-400 shadow-[0_0_6px_2px_rgba(248,113,113,0.6)]"   :
-                gnStatus === "Unavailable" ? "bg-slate-400"                                              :
+             <span className={`w-2 h-2 rounded-full ${
+                displayStatus === "Available"   ? "bg-green-400 shadow-[0_0_6px_2px_rgba(74,222,128,0.6)]"  :
+                displayStatus === "In Meeting"  ? "bg-orange-400 shadow-[0_0_6px_2px_rgba(251,146,60,0.6)]" :
+                displayStatus === "On Field"    ? "bg-red-400 shadow-[0_0_6px_2px_rgba(248,113,113,0.6)]"   :
+                displayStatus === "Unavailable" ? "bg-slate-400"                                              :
                 "bg-gray-400"
-              }`}></span>
-              <span className="text-white font-semibold text-sm">{getStatusLabel(gnStatus)}</span>
+            }`}></span>
+            <span className="text-white font-semibold text-sm">{displayStatus}</span>
             </div>
           </Link>
 
