@@ -4,8 +4,7 @@ import { Bell, Palette, Shield, Clock, Loader2 } from "lucide-react";
 import { auth, db } from "../../firebase";
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useSearchParams, useNavigate,  useLocation } from "react-router-dom";
 
 const Toggle = ({ value, onChange }) => (
   <div
@@ -20,8 +19,7 @@ const Toggle = ({ value, onChange }) => (
 );
 
 const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
-  const { t, i18n } = useTranslation();
-  const tTheme = getThemeClasses(theme);
+  const t = getThemeClasses(theme);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [savingAppearance, setSavingAppearance] = useState(false);
@@ -31,13 +29,13 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
   const [channels, setChannels] = useState({ email: true, sms: false, push: true });
   const [types, setTypes] = useState({ appointments: true, system: false, citizen: true });
   const [delivery, setDelivery] = useState("hold");
-  const [language, setLanguage] = useState(i18n.language || "en");
+  const [language, setLanguage] = useState("English");
 
   const tabs = [
-    { key: "notification", label: t("tab_notification"), icon: <Bell size={14} /> },
-    { key: "appearance",   label: t("tab_appearance"),   icon: <Palette size={14} /> },
-    { key: "security",     label: t("tab_security"),     icon: <Shield size={14} /> },
-    { key: "hours",        label: t("tab_hours"),        icon: <Clock size={14} /> },
+    { key: "notification", label: "Notification",              icon: <Bell size={14} /> },
+    { key: "appearance",   label: "Appearance and Language",   icon: <Palette size={14} /> },
+    { key: "security",     label: "Security",                  icon: <Shield size={14} /> },
+    { key: "hours",        label: "Weekly Hours",              icon: <Clock size={14} /> },
   ];
 
   const [currentPassword,  setCurrentPassword]  = useState("");
@@ -67,10 +65,10 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
     setPasswordError("");
     setPasswordSuccess("");
 
-    if (!currentPassword)                         { setPasswordError(t("err_current_password_required")); return; }
-    if (!newPassword)                             { setPasswordError(t("err_new_password_required")); return; }
-    if (newPassword.length < 8)                   { setPasswordError(t("err_password_min_length")); return; }
-    if (newPassword !== confirmPassword)          { setPasswordError(t("err_passwords_dont_match")); return; }
+    if (!currentPassword)                         { setPasswordError("Please enter your current password."); return; }
+    if (!newPassword)                             { setPasswordError("Please enter a new password."); return; }
+    if (newPassword.length < 8)                   { setPasswordError("Password must be at least 8 characters."); return; }
+    if (newPassword !== confirmPassword)          { setPasswordError("Passwords don't match."); return; }
 
     setPasswordLoading(true);
     try {
@@ -79,16 +77,16 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
       await reauthenticateWithCredential(user, credential);
       await updatePassword(user, newPassword);
       await updateDoc(doc(db, "gn_officers", user.uid), { passwordChangedAt: serverTimestamp() });
-      setPasswordSuccess(t("password_changed_success"));
+      setPasswordSuccess("Password changed successfully!");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (err) {
       switch (err.code) {
-        case "auth/wrong-password":    setPasswordError(t("err_wrong_password")); break;
-        case "auth/weak-password":     setPasswordError(t("err_weak_password")); break;
-        case "auth/too-many-requests": setPasswordError(t("err_too_many_attempts")); break;
-        default:                       setPasswordError(t("err_password_change_failed"));
+        case "auth/wrong-password":    setPasswordError("Current password is incorrect."); break;
+        case "auth/weak-password":     setPasswordError("New password is too weak."); break;
+        case "auth/too-many-requests": setPasswordError("Too many attempts. Try again later."); break;
+        default:                       setPasswordError("Failed to change password. Try again.");
       }
     } finally {
       setPasswordLoading(false);
@@ -131,21 +129,15 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
   }, []);
 
   const handleApplyAppearance = async () => {
-    setSavingAppearance(true);
-    try {
-      // Apply theme via parent's setTheme
-      setTheme(theme); // already set, but just for consistency
-      // Apply font size via parent's setFontSize
-      setFontSize(fontSize);
-      // Apply language via i18n
-      await i18n.changeLanguage(language);
-      // Optionally persist to backend if needed
-      // For now just simulate a small delay
-      await new Promise((res) => setTimeout(res, 300));
-    } finally {
-      setSavingAppearance(false);
-    }
-  };
+  setSavingAppearance(true);
+  try {
+    // your existing save logic here (Firestore update, localStorage, etc.)
+    // if no async logic yet, simulate briefly:
+    await new Promise((res) => setTimeout(res, 800));
+  } finally {
+    setSavingAppearance(false);
+  }
+};
 
   const handleSaveHours = async () => {
     setHoursLoading(true);
@@ -164,45 +156,23 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
         maxAppointments,
         hoursUpdatedAt:    serverTimestamp(),
       });
-      setHoursSuccess(t("hours_saved_success"));
+      setHoursSuccess("Working hours saved successfully!");
     } catch (err) {
-      setHoursError(t("hours_save_error"));
+      setHoursError("Failed to save. Please try again.");
       console.error(err);
     } finally {
       setHoursLoading(false);
     }
   };
 
-  // Translate day names for display
-  const getDayLabel = (day) => {
-    const map = {
-      Monday: t("day_monday"),
-      Tuesday: t("day_tuesday"),
-      Wednesday: t("day_wednesday"),
-      Thursday: t("day_thursday"),
-      Friday: t("day_friday"),
-      Saturday: t("day_saturday"),
-      Sunday: t("day_sunday"),
-    };
-    return map[day] || day;
-  };
-
-  // Map language display names
-  const languageOptions = [
-    { value: "en", label: t("lang_en") },
-    { value: "si", label: t("lang_si") },
-    { value: "ta", label: t("lang_ta") },
-  ];
-
+  
   return (
     <GNLayout gnStatus={gnStatus} theme={theme}>
 
-      <h1 className="text-xl sm:text-2xl font-bold text-[#8B4513] mb-4 text-center sm:text-left">
-        {t("settings_title")}
-      </h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-[#8B4513] mb-4 text-center sm:text-left">Settings</h1>
 
       {/* Tabs */}
-      <div className={`flex flex-wrap gap-2 sm:gap-6 border-b ${tTheme.border} mb-6`}>
+      <div className={`flex flex-wrap gap-2 sm:gap-6 border-b ${t.border} mb-6`}>
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -210,7 +180,7 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
             className={`pb-3 text-xs sm:text-sm font-semibold border-b-2 transition flex items-center gap-1 sm:gap-2 whitespace-nowrap
               ${activeTab === tab.key
                 ? "border-[#8B4513] text-[#8B4513]"
-                : `border-transparent ${tTheme.subtext} hover:text-gray-600`}`}
+                : `border-transparent ${t.subtext} hover:text-gray-600`}`}
           >
             {tab.label}
           </button>
@@ -220,63 +190,53 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
       {/* ── Notification Tab ── */}
       {activeTab === "notification" && (
         <div className="space-y-4 sm:space-y-6">
-          <h2 className={`text-lg sm:text-xl font-bold text-left ${tTheme.text}`}>
-            {t("notification_title")}
-          </h2>
+          <h2 className={`text-lg sm:text-xl font-bold text-left ${t.text}`}>Notification Settings</h2>
 
-          <div className={`${tTheme.card} rounded-2xl shadow p-4 sm:p-6`}>
-            <p className={`text-sm font-semibold flex items-center gap-2 mb-1 text-left ${tTheme.text}`}>
-              🔔 {t("notification_channels")}
-            </p>
-            <p className={`text-[10px] sm:text-xs mb-4 text-left ${tTheme.subtext}`}>
-              {t("notification_channels_desc")}
-            </p>
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold flex items-center gap-2 mb-1 text-left ${t.text}`}>🔔 Notification Channels</p>
+            <p className={`text-[10px] sm:text-xs mb-4 text-left ${t.subtext}`}>Select where you want to receive notifications.</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               {[
-                { key: "email", label: t("channel_email"), sub: t("channel_email_sub"), icon: "📧" },
-                { key: "sms",   label: t("channel_sms"),   sub: t("channel_sms_sub"),   icon: "💬" },
-                { key: "push",  label: t("channel_push"),  sub: t("channel_push_sub"),  icon: "🔔" },
+                { key: "email", label: "Email",              sub: "Detailed logs and updates",    icon: "📧" },
+                { key: "sms",   label: "SMS Text",           sub: "Urgent mobile alerts",         icon: "💬" },
+                { key: "push",  label: "Push Notifications", sub: "Real-time desktop alerts",     icon: "🔔" },
               ].map((ch) => (
                 <div
                   key={ch.key}
                   onClick={() => setChannels({ ...channels, [ch.key]: !channels[ch.key] })}
                   className={`border-2 rounded-xl p-3 sm:p-4 cursor-pointer transition relative
-                    ${channels[ch.key] ? `border-[#E5A800] ${theme === "dark" ? "bg-yellow-900" : "bg-yellow-50"}` : tTheme.border}`}
+                    ${channels[ch.key] ? `border-[#E5A800] ${theme === "dark" ? "bg-yellow-900" : "bg-yellow-50"}` : t.border}`}
                 >
                   {channels[ch.key] && (
                     <span className="absolute top-2 right-2 w-5 h-5 bg-[#E5A800] rounded-full flex items-center justify-center text-xs">✓</span>
                   )}
                   <span className="text-lg sm:text-xl">{ch.icon}</span>
-                  <p className={`text-xs sm:text-sm font-semibold mt-2 text-left ${tTheme.text}`}>{ch.label}</p>
-                  <p className={`text-[10px] sm:text-xs text-left ${tTheme.subtext}`}>{ch.sub}</p>
+                  <p className={`text-xs sm:text-sm font-semibold mt-2 text-left ${t.text}`}>{ch.label}</p>
+                  <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>{ch.sub}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className={`${tTheme.card} rounded-2xl shadow p-4 sm:p-6`}>
-            <p className={`text-sm font-semibold flex items-center gap-2 mb-1 text-left ${tTheme.text}`}>
-              🔔 {t("notification_types")}
-            </p>
-            <p className={`text-[10px] sm:text-xs mb-4 text-left ${tTheme.subtext}`}>
-              {t("notification_types_desc")}
-            </p>
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold flex items-center gap-2 mb-1 text-left ${t.text}`}>🔔 Notification Types</p>
+            <p className={`text-[10px] sm:text-xs mb-4 text-left ${t.subtext}`}>Configure alerts for specific activity categories.</p>
             <div className="space-y-3 sm:space-y-4">
               {[
-                { key: "appointments", icon: "📅", label: t("type_appointments"), sub: t("type_appointments_sub") },
-                { key: "system",       icon: "⚙️", label: t("type_system"),       sub: t("type_system_sub") },
-                { key: "citizen",      icon: "👤", label: t("type_citizen"),      sub: t("type_citizen_sub") },
+                { key: "appointments", icon: "📅", label: "Appointments",    sub: "New bookings, rescheduling, and cancellations." },
+                { key: "system",       icon: "⚙️", label: "System Updates",  sub: "Maintenance windows and feature releases." },
+                { key: "citizen",      icon: "👤", label: "Citizen Activity", sub: "Profile updates and document submissions." },
               ].map((item) => (
-                <div key={item.key} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border ${tTheme.border} rounded-xl px-3 sm:px-4 py-3`}>
+                <div key={item.key} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border ${t.border} rounded-xl px-3 sm:px-4 py-3`}>
                   <div className="flex items-center gap-3">
                     <span className="text-base sm:text-lg">{item.icon}</span>
                     <div>
-                      <p className={`text-xs sm:text-sm font-semibold text-left ${tTheme.text}`}>{item.label}</p>
-                      <p className={`text-[10px] sm:text-xs text-left ${tTheme.subtext}`}>{item.sub}</p>
+                      <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>{item.label}</p>
+                      <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>{item.sub}</p>
                     </div>
                   </div>
                   <div className="flex items-center justify-between sm:justify-end gap-2">
-                    <span className={`text-[10px] sm:text-xs uppercase ${tTheme.subtext}`}>{t("status_label")}</span>
+                    <span className={`text-[10px] sm:text-xs uppercase ${t.subtext}`}>Status:</span>
                     <Toggle value={types[item.key]} onChange={(v) => setTypes({ ...types, [item.key]: v })} />
                   </div>
                 </div>
@@ -284,45 +244,41 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
             </div>
           </div>
 
-          <div className={`${tTheme.card} rounded-2xl shadow p-4 sm:p-6`}>
-            <p className={`text-sm font-semibold flex items-center gap-2 mb-1 text-left ${tTheme.text}`}>
-              🌙 {t("quiet_hours")}
-            </p>
-            <p className={`text-[10px] sm:text-xs mb-4 text-left ${tTheme.subtext}`}>
-              {t("quiet_hours_desc")}
-            </p>
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold flex items-center gap-2 mb-1 text-left ${t.text}`}>🌙 Quiet Hours</p>
+            <p className={`text-[10px] sm:text-xs mb-4 text-left ${t.subtext}`}>Set times when you do not want to be disturbed.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div>
-                <p className={`text-[10px] sm:text-xs mb-2 text-left ${tTheme.subtext}`}>{t("quiet_hours_range")}</p>
+                <p className={`text-[10px] sm:text-xs mb-2 text-left ${t.subtext}`}>Time Range</p>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                   <input type="time" defaultValue="22:00"
-                    className={`w-full sm:w-auto border ${tTheme.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${tTheme.input}`} />
-                  <span className={`text-[10px] sm:text-xs ${tTheme.subtext}`}>{t("to_label")}</span>
+                    className={`w-full sm:w-auto border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
+                  <span className={`text-[10px] sm:text-xs ${t.subtext}`}>to</span>
                   <input type="time" defaultValue="07:00"
-                    className={`w-full sm:w-auto border ${tTheme.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${tTheme.input}`} />
+                    className={`w-full sm:w-auto border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`} />
                 </div>
-                <p className={`text-[10px] sm:text-xs mt-3 text-left ${tTheme.subtext}`}>
-                  ⓘ {t("quiet_hours_note")}
+                <p className={`text-[10px] sm:text-xs mt-3 text-left ${t.subtext}`}>
+                  ⓘ Critical alerts will bypass quiet hours automatically.
                 </p>
               </div>
               <div>
-                <p className={`text-[10px] sm:text-xs mb-2 text-left ${tTheme.subtext}`}>{t("delivery_preference")}</p>
+                <p className={`text-[10px] sm:text-xs mb-2 text-left ${t.subtext}`}>Delivery Preference</p>
                 <div className="space-y-3">
                   {[
-                    { key: "hold",    label: t("delivery_hold"),    sub: t("delivery_hold_sub") },
-                    { key: "discard", label: t("delivery_discard"), sub: t("delivery_discard_sub") },
+                    { key: "hold",    label: "Hold for later",           sub: "Send a summary digest at 07:00 AM" },
+                    { key: "discard", label: "Discard notifications",    sub: "Do not deliver during these hours" },
                   ].map((item) => (
                     <div
                       key={item.key}
                       onClick={() => setDelivery(item.key)}
                       className={`flex items-start gap-3 border-2 rounded-xl px-3 sm:px-4 py-3 cursor-pointer transition
-                        ${delivery === item.key ? `border-[#E5A800] ${theme === "dark" ? "bg-yellow-900" : "bg-yellow-50"}` : tTheme.border}`}
+                        ${delivery === item.key ? `border-[#E5A800] ${theme === "dark" ? "bg-yellow-900" : "bg-yellow-50"}` : t.border}`}
                     >
                       <div className={`w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0
                         ${delivery === item.key ? "border-[#E5A800] bg-[#E5A800]" : "border-gray-300"}`} />
                       <div>
-                        <p className={`text-xs sm:text-sm font-semibold text-left ${tTheme.text}`}>{item.label}</p>
-                        <p className={`text-[10px] sm:text-xs text-left ${tTheme.subtext}`}>{item.sub}</p>
+                        <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>{item.label}</p>
+                        <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>{item.sub}</p>
                       </div>
                     </div>
                   ))}
@@ -332,20 +288,22 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-end gap-3 sm:gap-4">
-            <button className={`w-full sm:w-auto font-semibold px-5 py-2 rounded-xl transition text-center ${tTheme.text} ${theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}>
-              {t("reset_defaults")}
+            <button className={`w-full sm:w-auto font-semibold px-5 py-2 rounded-xl transition text-center ${t.text} ${theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}>
+              Reset to Defaults
             </button>
             <button
-              onClick={handleApplyAppearance}
-              disabled={savingAppearance}
-              className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-black font-semibold px-6 py-2 rounded-xl transition text-center flex items-center justify-center gap-2"
-            >
-              {savingAppearance ? (
-                <><Loader2 size={15} className="animate-spin" /> {t("applying")}</>
-              ) : (
-                t("apply_changes")
-              )}
-            </button>
+  onClick={handleApplyAppearance}
+  disabled={savingAppearance}
+  className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-black font-semibold px-6 py-2 rounded-xl transition text-center flex items-center justify-center gap-2"
+>
+  {savingAppearance ? (
+    <>
+      <Loader2 size={15} className="animate-spin" /> Applying...
+    </>
+  ) : (
+    "Apply Changes"
+  )}
+</button>
           </div>
         </div>
       )}
@@ -353,98 +311,82 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
       {/* ── Appearance Tab ── */}
       {activeTab === "appearance" && (
         <div className="space-y-4 sm:space-y-6">
-          <h2 className={`text-lg sm:text-xl font-bold text-left ${tTheme.text}`}>
-            {t("appearance_title")}
-          </h2>
+          <h2 className={`text-lg sm:text-xl font-bold text-left ${t.text}`}>Appearance and Language Settings</h2>
 
-          <div className={`${tTheme.card} rounded-2xl shadow p-4 sm:p-6`}>
-            <p className={`text-sm font-semibold mb-1 text-left ${tTheme.text}`}>
-              🌟 {t("theme_selection")}
-            </p>
-            <p className={`text-[10px] sm:text-xs mb-4 text-left ${tTheme.subtext}`}>
-              {t("theme_selection_desc")}
-            </p>
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold mb-1 text-left ${t.text}`}>🌟 Theme Selection</p>
+            <p className={`text-[10px] sm:text-xs mb-4 text-left ${t.subtext}`}>Select your preferred interface color mode.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {[
-                { key: "light", label: t("theme_light"), sub: t("theme_light_sub"), icon: "☀️" },
-                { key: "dark",  label: t("theme_dark"),  sub: t("theme_dark_sub"),  icon: "🌙" },
+                { key: "light", label: "Light Mode", sub: "Classic bright theme for daytime use.",          icon: "☀️" },
+                { key: "dark",  label: "Night Mode", sub: "Dark theme to reduce eye strain in low light.",  icon: "🌙" },
               ].map((item) => (
                 <div
                   key={item.key}
                   onClick={() => setTheme(item.key)}
                   className={`border-2 rounded-xl p-3 sm:p-4 cursor-pointer transition relative
-                    ${theme === item.key ? `border-[#E5A800] ${theme === "dark" ? "bg-yellow-900" : "bg-yellow-50"}` : tTheme.border}`}
+                    ${theme === item.key ? `border-[#E5A800] ${theme === "dark" ? "bg-yellow-900" : "bg-yellow-50"}` : t.border}`}
                 >
                   {theme === item.key && (
                     <span className="absolute top-2 right-2 w-5 h-5 bg-[#E5A800] rounded-full flex items-center justify-center text-xs">✓</span>
                   )}
                   <span className="text-xl sm:text-2xl">{item.icon}</span>
-                  <p className={`text-xs sm:text-sm font-semibold mt-2 text-left ${tTheme.text}`}>{item.label}</p>
-                  <p className={`text-[10px] sm:text-xs text-left ${tTheme.subtext}`}>{item.sub}</p>
+                  <p className={`text-xs sm:text-sm font-semibold mt-2 text-left ${t.text}`}>{item.label}</p>
+                  <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>{item.sub}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className={`${tTheme.card} rounded-2xl shadow p-4 sm:p-6`}>
-            <p className={`text-sm font-semibold mb-1 text-left ${tTheme.text}`}>
-              🔤 {t("font_size")}
-            </p>
-            <p className={`text-[10px] sm:text-xs mb-4 text-left ${tTheme.subtext}`}>
-              {t("font_size_desc")}
-            </p>
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold mb-1 text-left ${t.text}`}>🔤 Font Size</p>
+            <p className={`text-[10px] sm:text-xs mb-4 text-left ${t.subtext}`}>Adjust text size for better readability.</p>
             <div className="grid grid-cols-3 gap-2 sm:gap-4">
               {[
-                { key: "small",  label: t("font_small"),  size: "text-sm"   },
-                { key: "medium", label: t("font_medium"), size: "text-base"  },
-                { key: "large",  label: t("font_large"),  size: "text-lg"   },
+                { key: "small",  label: "Small",  size: "text-sm"   },
+                { key: "medium", label: "Medium", size: "text-base"  },
+                { key: "large",  label: "Large",  size: "text-lg"   },
               ].map((f) => (
                 <div
                   key={f.key}
                   onClick={() => setFontSize(f.key)}
                   className={`border-2 rounded-xl p-3 sm:p-4 cursor-pointer transition flex flex-col items-center gap-2
-                    ${fontSize === f.key ? `border-[#E5A800] ${theme === "dark" ? "bg-yellow-900" : "bg-yellow-50"}` : tTheme.border}`}
+                    ${fontSize === f.key ? `border-[#E5A800] ${theme === "dark" ? "bg-yellow-900" : "bg-yellow-50"}` : t.border}`}
                 >
-                  <span className={`font-semibold ${tTheme.text} ${f.size}`}>A</span>
-                  <span className={`text-[10px] sm:text-xs ${tTheme.subtext}`}>{f.label}</span>
+                  <span className={`font-semibold ${t.text} ${f.size}`}>A</span>
+                  <span className={`text-[10px] sm:text-xs ${t.subtext}`}>{f.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className={`${tTheme.card} rounded-2xl shadow p-4 sm:p-6`}>
-            <p className={`text-sm font-semibold mb-1 text-left ${tTheme.text}`}>
-              🌐 {t("language_settings")}
-            </p>
-            <p className={`text-[10px] sm:text-xs mb-4 text-left ${tTheme.subtext}`}>
-              {t("language_settings_desc")}
-            </p>
-            <p className={`text-[10px] sm:text-xs mb-2 text-left ${tTheme.subtext}`}>
-              {t("select_language")}
-            </p>
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold mb-1 text-left ${t.text}`}>🌐 Language Settings</p>
+            <p className={`text-[10px] sm:text-xs mb-4 text-left ${t.subtext}`}>Choose the primary language for the portal content.</p>
+            <p className={`text-[10px] sm:text-xs mb-2 text-left ${t.subtext}`}>Select Language</p>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className={`w-full sm:w-72 border ${tTheme.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${tTheme.input}`}
+              className={`w-full sm:w-72 border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
             >
-              {languageOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
+              <option value="English">English</option>
+              <option value="සිංහල">සිංහල</option>
+              <option value="தமிழ்">தமிழ்</option>
             </select>
           </div>
 
           <div className="flex justify-end">
             <button
-              onClick={handleApplyAppearance}
-              disabled={savingAppearance}
-              className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-black font-semibold px-6 py-2 rounded-xl transition text-center flex items-center justify-center gap-2"
-            >
-              {savingAppearance ? (
-                <><Loader2 size={15} className="animate-spin" /> {t("applying")}</>
-              ) : (
-                t("apply_changes")
-              )}
-            </button>
+  onClick={handleApplyAppearance}
+  disabled={savingAppearance}
+  className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-black font-semibold px-6 py-2 rounded-xl transition text-center flex items-center justify-center gap-2"
+>
+  {savingAppearance ? (
+    <><Loader2 size={15} className="animate-spin" /> Applying...</>
+  ) : (
+    "Apply Changes"
+  )}
+</button>
           </div>
         </div>
       )}
@@ -452,14 +394,10 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
       {/* ── Security Tab ── */}
       {activeTab === "security" && (
         <div className="space-y-4 sm:space-y-6">
-          <h2 className={`text-lg sm:text-xl font-bold text-left ${tTheme.text}`}>
-            {t("security_title")}
-          </h2>
+          <h2 className={`text-lg sm:text-xl font-bold text-left ${t.text}`}>Security Settings</h2>
 
-          <div className={`${tTheme.card} rounded-2xl shadow p-4 sm:p-6`}>
-            <p className={`text-sm font-semibold mb-4 flex items-center gap-2 text-left ${tTheme.text}`}>
-              🔒 {t("password_management")}
-            </p>
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold mb-4 flex items-center gap-2 text-left ${t.text}`}>🔒 Password Management</p>
             {passwordError && (
               <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-xs sm:text-sm text-red-600 text-left">
                 ⚠️ {passwordError}
@@ -472,42 +410,34 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
             )}
             <div className="space-y-4">
               <div>
-                <label className={`text-[10px] sm:text-xs font-semibold mb-1 block text-left ${tTheme.subtext}`}>
-                  {t("current_password")}
-                </label>
+                <label className={`text-[10px] sm:text-xs font-semibold mb-1 block text-left ${t.subtext}`}>Current Password</label>
                 <input
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full border ${tTheme.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${tTheme.input}`}
+                  className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
                 />
               </div>
               <div>
-                <label className={`text-[10px] sm:text-xs font-semibold mb-1 block text-left ${tTheme.subtext}`}>
-                  {t("new_password")}
-                </label>
+                <label className={`text-[10px] sm:text-xs font-semibold mb-1 block text-left ${t.subtext}`}>New Password</label>
                 <input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full border ${tTheme.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${tTheme.input}`}
+                  className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
                 />
-                <p className={`text-[10px] sm:text-xs mt-1 text-left ${tTheme.subtext}`}>
-                  {t("new_password_hint")}
-                </p>
+                <p className={`text-[10px] sm:text-xs mt-1 text-left ${t.subtext}`}>Must be at least 8 characters.</p>
               </div>
               <div>
-                <label className={`text-[10px] sm:text-xs font-semibold mb-1 block text-left ${tTheme.subtext}`}>
-                  {t("confirm_password")}
-                </label>
+                <label className={`text-[10px] sm:text-xs font-semibold mb-1 block text-left ${t.subtext}`}>Confirm New Password</label>
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full border ${tTheme.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${tTheme.input}`}
+                  className={`w-full border ${t.border} rounded-xl px-4 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
                 />
               </div>
               <button
@@ -515,29 +445,25 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
                 disabled={passwordLoading}
                 className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-black font-semibold px-6 py-2 rounded-xl transition"
               >
-                {passwordLoading ? t("changing") : t("change_password_btn")}
+                {passwordLoading ? "Changing..." : "Change Password"}
               </button>
             </div>
           </div>
 
-          <div className={`${tTheme.card} rounded-2xl shadow p-4 sm:p-6`}>
-            <p className={`text-sm font-semibold mb-4 flex items-center gap-2 text-left ${tTheme.text}`}>
-              💻 {t("current_session")}
-            </p>
-            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border ${tTheme.border} rounded-xl px-3 sm:px-4 py-3`}>
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold mb-4 flex items-center gap-2 text-left ${t.text}`}>💻 Current Session</p>
+            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border ${t.border} rounded-xl px-3 sm:px-4 py-3`}>
               <div className="flex items-center gap-3">
                 <span className="text-base sm:text-lg">💻</span>
                 <div>
-                  <p className={`text-xs sm:text-sm font-semibold text-left ${tTheme.text}`}>
-                    {navigator.userAgent.includes("Chrome") ? "Chrome" : t("browser")}
+                  <p className={`text-xs sm:text-sm font-semibold text-left ${t.text}`}>
+                    {navigator.userAgent.includes("Chrome") ? "Chrome" : "Browser"}
                   </p>
-                  <p className={`text-[10px] sm:text-xs text-left ${tTheme.subtext}`}>
-                    {t("current_session_active")}
-                  </p>
+                  <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>Current session • Active now</p>
                 </div>
               </div>
               <span className="text-[10px] sm:text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full self-start sm:self-center">
-                {t("current_session_badge")}
+                CURRENT SESSION
               </span>
             </div>
           </div>
@@ -547,15 +473,11 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
       {/* ── Weekly Hours Tab ── */}
       {activeTab === "hours" && (
         <div className="space-y-4 sm:space-y-6">
-          <h2 className={`text-lg sm:text-xl font-bold text-left ${tTheme.text}`}>
-            {t("weekly_hours_title")}
-          </h2>
+          <h2 className={`text-lg sm:text-xl font-bold text-left ${t.text}`}>Weekly Hours Settings</h2>
 
-          <div className={`${tTheme.card} rounded-2xl shadow p-4 sm:p-6`}>
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <p className={`text-sm font-semibold text-left ${tTheme.text}`}>
-                {t("working_hours_label")}
-              </p>
+              <p className={`text-sm font-semibold text-left ${t.text}`}>Regular Working Hours</p>
               <button
                 onClick={() => {
                   const updated = {};
@@ -566,7 +488,7 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
                 }}
                 className="text-[10px] sm:text-xs text-[#E5A800] font-semibold hover:underline text-left sm:text-right"
               >
-                {t("apply_to_all_days")}
+                Apply to all days
               </button>
             </div>
 
@@ -580,9 +502,7 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
                       onChange={(e) => setWorkingHours({ ...workingHours, [day]: { ...hours, enabled: e.target.checked } })}
                       className="accent-[#E5A800]"
                     />
-                    <span className={`text-[10px] sm:text-xs font-semibold w-24 text-left ${tTheme.text}`}>
-                      {getDayLabel(day)}
-                    </span>
+                    <span className={`text-[10px] sm:text-xs font-semibold w-24 text-left ${t.text}`}>{day}</span>
                   </div>
                   {hours.enabled ? (
                     <div className="flex flex-wrap items-center gap-2">
@@ -590,20 +510,20 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
                         type="time"
                         value={hours.start}
                         onChange={(e) => setWorkingHours({ ...workingHours, [day]: { ...hours, start: e.target.value } })}
-                        className={`border ${tTheme.border} rounded-lg px-2 py-1 text-xs outline-none focus:border-[#E5A800] ${tTheme.input}`}
+                        className={`border ${t.border} rounded-lg px-2 py-1 text-xs outline-none focus:border-[#E5A800] ${t.input}`}
                       />
-                      <span className={`text-[10px] sm:text-xs ${tTheme.subtext}`}>{t("to_label")}</span>
+                      <span className={`text-[10px] sm:text-xs ${t.subtext}`}>to</span>
                       <input
                         type="time"
                         value={hours.end}
                         onChange={(e) => setWorkingHours({ ...workingHours, [day]: { ...hours, end: e.target.value } })}
-                        className={`border ${tTheme.border} rounded-lg px-2 py-1 text-xs outline-none focus:border-[#E5A800] ${tTheme.input}`}
+                        className={`border ${t.border} rounded-lg px-2 py-1 text-xs outline-none focus:border-[#E5A800] ${t.input}`}
                       />
-                      <span className={`text-[10px] sm:text-xs ${tTheme.subtext}`}>{t("lunch_label")}</span>
+                      <span className={`text-[10px] sm:text-xs ${t.subtext}`}>Lunch</span>
                       <select
                         value={hours.lunch}
                         onChange={(e) => setWorkingHours({ ...workingHours, [day]: { ...hours, lunch: e.target.value } })}
-                        className={`border ${tTheme.border} rounded-lg px-2 py-1 text-xs outline-none focus:border-[#E5A800] ${tTheme.input}`}
+                        className={`border ${t.border} rounded-lg px-2 py-1 text-xs outline-none focus:border-[#E5A800] ${t.input}`}
                       >
                         <option value="12:00">12:00 PM</option>
                         <option value="12:30">12:30 PM</option>
@@ -612,68 +532,59 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
                       </select>
                     </div>
                   ) : (
-                    <span className={`text-[10px] sm:text-xs text-left ${tTheme.subtext}`}>{t("closed_label")}</span>
+                    <span className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>Closed</span>
                   )}
                 </div>
               ))}
             </div>
           </div>
 
-          <div className={`${tTheme.card} rounded-2xl shadow p-4 sm:p-6`}>
-            <p className={`text-sm font-semibold mb-4 text-left ${tTheme.text}`}>
-              {t("appointment_slot_settings")}
-            </p>
+          <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6`}>
+            <p className={`text-sm font-semibold mb-4 text-left ${t.text}`}>Appointment Slot Settings</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
               <div>
-                <p className={`text-[10px] sm:text-xs mb-1 text-left ${tTheme.subtext}`}>
-                  {t("slot_duration")}
-                </p>
+                <p className={`text-[10px] sm:text-xs mb-1 text-left ${t.subtext}`}>Slot Duration</p>
                 <select
                   value={slotDuration}
                   onChange={(e) => setSlotDuration(e.target.value)}
-                  className={`w-full border ${tTheme.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${tTheme.input}`}
+                  className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
                 >
-                  <option value="10">{t("slot_10")}</option>
-                  <option value="15">{t("slot_15")}</option>
-                  <option value="30">{t("slot_30")}</option>
-                  <option value="45">{t("slot_45")}</option>
-                  <option value="60">{t("slot_60")}</option>
+                  <option value="10">10 minutes</option>
+                  <option value="15">15 minutes</option>
+                  <option value="30">30 minutes</option>
+                  <option value="45">45 minutes</option>
+                  <option value="60">60 minutes</option>
                 </select>
               </div>
               <div>
-                <p className={`text-[10px] sm:text-xs mb-1 text-left ${tTheme.subtext}`}>
-                  {t("break_between_slots")}
-                </p>
+                <p className={`text-[10px] sm:text-xs mb-1 text-left ${t.subtext}`}>Break Between Slots</p>
                 <select
                   value={breakBetweenSlots}
                   onChange={(e) => setBreakBetweenSlots(e.target.value)}
-                  className={`w-full border ${tTheme.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${tTheme.input}`}
+                  className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
                 >
-                  <option value="5">{t("break_5")}</option>
-                  <option value="10">{t("break_10")}</option>
-                  <option value="15">{t("break_15")}</option>
+                  <option value="5">5 minutes</option>
+                  <option value="10">10 minutes</option>
+                  <option value="15">15 minutes</option>
                 </select>
               </div>
               <div>
-                <p className={`text-[10px] sm:text-xs mb-1 text-left ${tTheme.subtext}`}>
-                  {t("max_appointments_per_day")}
-                </p>
+                <p className={`text-[10px] sm:text-xs mb-1 text-left ${t.subtext}`}>Max Appointments/Day</p>
                 <input
                   type="number"
                   value={maxAppointments}
                   onChange={(e) => setMaxAppointments(e.target.value)}
-                  className={`w-full border ${tTheme.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${tTheme.input}`}
+                  className={`w-full border ${t.border} rounded-xl px-3 py-2 text-sm outline-none focus:border-[#E5A800] ${t.input}`}
                 />
               </div>
             </div>
-            <p className={`text-[10px] sm:text-xs text-left ${tTheme.subtext}`}>
-              ⓘ {t("slot_calculation_note", {
-                slots: Math.floor((8 * 60) / (parseInt(slotDuration) + parseInt(breakBetweenSlots)))
-              })}
+            <p className={`text-[10px] sm:text-xs text-left ${t.subtext}`}>
+              ⓘ Based on your hours and duration you can host up to{" "}
+              {Math.floor((8 * 60) / (parseInt(slotDuration) + parseInt(breakBetweenSlots)))} slots per day.
             </p>
           </div>
 
-          {/* ── Apply Changes row ── */}
+          {/* ── Apply Changes row — message sits right beside the button ── */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
             {hoursSuccess && (
               <p className="flex items-center gap-1.5 text-xs text-green-600 font-semibold">
@@ -690,7 +601,7 @@ const GNSettings = ({ gnStatus, theme, setTheme, fontSize, setFontSize }) => {
               disabled={hoursLoading}
               className="w-full sm:w-auto bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-black font-semibold px-6 py-2 rounded-xl transition text-center"
             >
-              {hoursLoading ? t("saving_hours") : t("apply_changes")}
+              {hoursLoading ? "Saving..." : "Apply Changes"}
             </button>
           </div>
         </div>
