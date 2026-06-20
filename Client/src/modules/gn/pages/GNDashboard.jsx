@@ -9,6 +9,7 @@ import {
   collection, query, where, getDocs, doc, getDoc, orderBy, limit,
 } from "firebase/firestore";
 import { auth, db } from "../../firebase";
+import { useTranslation } from "react-i18next";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -59,7 +60,8 @@ const LegendDot = ({ color, label }) => (
 // Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 const GNDashboard = ({ gnStatus, theme }) => {
-  const t = getThemeClasses(theme);
+  const { t, i18n } = useTranslation();
+  const tTheme = getThemeClasses(theme);
   const navigate = useNavigate();
   const agendaRef = useRef(null);
 
@@ -108,6 +110,7 @@ const GNDashboard = ({ gnStatus, theme }) => {
     const fetchAdminAnnouncements = async () => {
       try {
         setAnnouncementsLoading(true);
+
         const [snapAll, snapGN] = await Promise.all([
           getDocs(query(collection(db, "announcements"), where("category", "==", "all_users"))),
           getDocs(query(collection(db, "announcements"), where("category", "==", "gn_officers"))),
@@ -346,7 +349,11 @@ const GNDashboard = ({ gnStatus, theme }) => {
   const categoryStyle = (category) =>
     category === "gn_officers" ? "bg-[#8B4513]/10 text-[#8B4513]" : "bg-blue-50 text-blue-700";
   const categoryLabel = (category) =>
-    category === "gn_officers" ? "GN Officers" : "All Users";
+    category === "gn_officers" ? t('category_gn_officers') : t('category_all_users');
+
+  // Localized month/year for calendar
+  const now = new Date();
+  const monthYear = now.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' });
 
   // ─────────────────────────────────────────────────────────────────────────
   // Render
@@ -370,7 +377,9 @@ const GNDashboard = ({ gnStatus, theme }) => {
     <GNLayout gnStatus={gnStatus} theme={theme}>
 
       {/* Page Title */}
-      <h1 className="text-xl sm:text-2xl font-bold text-[#8B4513] mb-4 sm:mb-6 px-1">Dashboard</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-[#8B4513] mb-4 sm:mb-6 px-1">
+        {t('lbl_dashboard')}
+      </h1>
 
       {/* ── Stats Row ───────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
@@ -384,12 +393,14 @@ const GNDashboard = ({ gnStatus, theme }) => {
           className={`${t.card} rounded-2xl shadow p-4 sm:p-5 text-left transition hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer`}
         >
           <div className="flex items-center justify-between">
-            <p className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wide ${t.subtext}`}>Today's Appointments</p>
+            <p className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wide ${tTheme.subtext}`}>
+              {t('lbl_todays_appointments')}
+            </p>
             <CalendarCheck size={18} className="text-gray-400" />
           </div>
-          <h2 className={`text-3xl sm:text-4xl font-bold mt-2 ${t.text}`}>{appointmentStats.today}</h2>
+          <h2 className={`text-3xl sm:text-4xl font-bold mt-2 ${tTheme.text}`}>{appointmentStats.today}</h2>
           <p className="text-[10px] sm:text-xs text-green-500 mt-2 flex items-center gap-1">
-            <TrendingUp size={10} /> Appointments today
+            <TrendingUp size={10} /> {t('lbl_appointments_today')}
           </p>
         </button>
 
@@ -398,12 +409,14 @@ const GNDashboard = ({ gnStatus, theme }) => {
           className={`${t.card} rounded-2xl shadow p-4 sm:p-5 text-left transition hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer`}
         >
           <div className="flex items-center justify-between">
-            <p className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wide ${t.subtext}`}>Pending Requests</p>
+            <p className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wide ${tTheme.subtext}`}>
+              {t('lbl_pending_requests')}
+            </p>
             <ClipboardList size={18} className="text-gray-400" />
           </div>
-          <h2 className={`text-3xl sm:text-4xl font-bold mt-2 ${t.text}`}>{appointmentStats.pending}</h2>
+          <h2 className={`text-3xl sm:text-4xl font-bold mt-2 ${tTheme.text}`}>{appointmentStats.pending}</h2>
           <p className="text-[10px] sm:text-xs text-orange-500 mt-2 flex items-center gap-1">
-            <AlertCircle size={10} /> Requires attention
+            <AlertCircle size={10} /> {t('lbl_requires_attention')}
           </p>
         </button>
 
@@ -412,7 +425,9 @@ const GNDashboard = ({ gnStatus, theme }) => {
           className={`${t.card} rounded-2xl shadow p-4 sm:p-5 text-left transition hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer`}
         >
           <div className="flex items-center justify-between">
-            <p className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wide ${t.subtext}`}>Total Announcements</p>
+            <p className={`text-[10px] sm:text-xs font-semibold uppercase tracking-wide ${tTheme.subtext}`}>
+              {t('lbl_total_announcements')}
+            </p>
             <Megaphone size={18} className="text-gray-400" />
           </div>
           <h2 className={`text-3xl sm:text-4xl font-bold mt-2 ${t.text}`}>{announcementStats.total}</h2>
@@ -687,15 +702,15 @@ const GNDashboard = ({ gnStatus, theme }) => {
               <Bell size={16} className="text-[#8B4513]" />
             </div>
             <div>
-              <p className={`text-sm font-bold ${t.text}`}>Notices from Administration</p>
-              <p className={`text-[10px] ${t.subtext}`}>
-                {adminAnnouncements.length} active notice{adminAnnouncements.length !== 1 ? "s" : ""}
+              <p className={`text-sm font-bold ${tTheme.text}`}>{t('lbl_notices_from_admin')}</p>
+              <p className={`text-[10px] ${tTheme.subtext}`}>
+                {t('lbl_active_notices', { count: adminAnnouncements.length })}
               </p>
             </div>
           </div>
           {adminAnnouncements.length > 0 && (
             <span className="text-[10px] font-bold bg-[#E5A800] text-[#3d2a00] px-2 py-0.5 rounded-full">
-              {adminAnnouncements.length} New
+              {t('lbl_new')}
             </span>
           )}
         </div>
@@ -711,8 +726,8 @@ const GNDashboard = ({ gnStatus, theme }) => {
             <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-1">
               <Bell size={22} className="text-gray-300" />
             </div>
-            <p className={`text-sm font-semibold ${t.subtext}`}>No notices at the moment</p>
-            <p className={`text-xs ${t.subtext}`}>Admin announcements will appear here</p>
+            <p className={`text-sm font-semibold ${tTheme.subtext}`}>{t('lbl_no_notices')}</p>
+            <p className={`text-xs ${tTheme.subtext}`}>{t('lbl_no_notices_desc')}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -738,7 +753,7 @@ const GNDashboard = ({ gnStatus, theme }) => {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-1.5 mb-1">
                         <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md ${priorityStyle(item.priority)}`}>
-                          {item.priority || "Normal"}
+                          {t(`priority_${item.priority?.toLowerCase() || 'normal'}`)}
                         </span>
                         <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md ${categoryStyle(item.category)}`}>
                           {categoryLabel(item.category)}
@@ -750,7 +765,7 @@ const GNDashboard = ({ gnStatus, theme }) => {
                       )}
                     </div>
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                      <span className={`text-[10px] ${t.subtext}`}>{timeAgo(item.publishedAt)}</span>
+                      <span className={`text-[10px] ${tTheme.subtext}`}>{timeAgo(item.publishedAt)}</span>
                       <ChevronRight
                         size={14}
                         className={`text-gray-400 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
@@ -761,7 +776,7 @@ const GNDashboard = ({ gnStatus, theme }) => {
                   {isExpanded && (
                     <div className={`px-4 pb-4 border-t ${isHighPriority ? "border-red-100" : "border-gray-100"}`}>
                       {item.description && (
-                        <p className={`text-sm mt-3 leading-relaxed ${t.text}`}>{item.description}</p>
+                        <p className={`text-sm mt-3 leading-relaxed ${tTheme.text}`}>{item.description}</p>
                       )}
                       <div className={`flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[10px] ${t.subtext}`}>
                         <span>📅 Published: {formatDate(item.publishedAt)}</span>
@@ -770,8 +785,8 @@ const GNDashboard = ({ gnStatus, theme }) => {
                       </div>
                       {item.attachments?.length > 0 && (
                         <div className="mt-3">
-                          <p className={`text-[10px] font-bold uppercase tracking-wide mb-1.5 ${t.subtext}`}>
-                            Attachments
+                          <p className={`text-[10px] font-bold uppercase tracking-wide mb-1.5 ${tTheme.subtext}`}>
+                            {t('lbl_attachments')}
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {item.attachments.map((url, i) => (
@@ -782,7 +797,7 @@ const GNDashboard = ({ gnStatus, theme }) => {
                                 rel="noreferrer"
                                 className="flex items-center gap-1.5 text-xs font-semibold text-[#8B4513] bg-[#8B4513]/10 hover:bg-[#8B4513]/20 px-3 py-1.5 rounded-lg transition"
                               >
-                                📎 Attachment {i + 1}
+                                📎 {t('lbl_attachment', { number: i + 1 })}
                               </a>
                             ))}
                           </div>
@@ -800,17 +815,17 @@ const GNDashboard = ({ gnStatus, theme }) => {
       {/* ── Division Request Status Modal ─────────────────────────────────────── */}
       {showDivisionModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-3 sm:px-4">
-          <div className={`${t.card} rounded-2xl shadow-2xl w-full max-w-[90%] sm:max-w-md p-5 sm:p-6`}>
+          <div className={`${tTheme.card} rounded-2xl shadow-2xl w-full max-w-[90%] sm:max-w-md p-5 sm:p-6`}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className={`text-sm sm:text-base font-bold ${t.text}`}>GN Division Change Request</h2>
-              <button onClick={() => setShowDivisionModal(false)} className={`${t.subtext} hover:text-gray-600 text-xl`}>✕</button>
+              <h2 className={`text-sm sm:text-base font-bold ${tTheme.text}`}>{t('lbl_gn_division_change_request')}</h2>
+              <button onClick={() => setShowDivisionModal(false)} className={`${tTheme.subtext} hover:text-gray-600 text-xl`}>✕</button>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
               <div>
-                <p className={`text-xs ${t.subtext}`}>Requested Division</p>
-                <p className={`text-sm font-bold ${t.text}`}>{divisionRequest?.toDivision}</p>
-                <p className={`text-xs ${t.subtext}`}>{divisionRequest?.toDistrict}</p>
+                <p className={`text-xs ${tTheme.subtext}`}>{t('lbl_requested_division')}</p>
+                <p className={`text-sm font-bold ${tTheme.text}`}>{divisionRequest?.toDivision}</p>
+                <p className={`text-xs ${tTheme.subtext}`}>{divisionRequest?.toDistrict}</p>
               </div>
               <span className={`text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-center ${
                 divisionRequest?.status === "Pending"  ? "bg-yellow-100 text-yellow-700" :
@@ -818,9 +833,9 @@ const GNDashboard = ({ gnStatus, theme }) => {
                 divisionRequest?.status === "Rejected" ? "bg-red-100 text-red-600"      :
                 "bg-gray-100 text-gray-500"
               }`}>
-                {divisionRequest?.status === "Pending"  ? "⏳ Pending"  :
-                 divisionRequest?.status === "Approved" ? "✅ Approved" :
-                 divisionRequest?.status === "Rejected" ? "❌ Rejected" :
+                {divisionRequest?.status === "Pending"  ? `⏳ ${t('status_pending')}` :
+                 divisionRequest?.status === "Approved" ? `✅ ${t('status_approved')}` :
+                 divisionRequest?.status === "Rejected" ? `❌ ${t('status_rejected')}` :
                  divisionRequest?.status}
               </span>
             </div>
@@ -833,17 +848,17 @@ const GNDashboard = ({ gnStatus, theme }) => {
 
             {divisionRequest?.status === "Pending" && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-3 sm:px-4 py-3 mb-4">
-                <p className="text-xs text-yellow-700 font-semibold">Your request is currently under review by the admin.</p>
+                <p className="text-xs text-yellow-700 font-semibold">{t('lbl_under_review')}</p>
               </div>
             )}
             {divisionRequest?.status === "Approved" && (
               <div className="bg-green-50 border border-green-200 rounded-xl px-3 sm:px-4 py-3 mb-4">
-                <p className="text-xs text-green-700 font-semibold">Your division change has been approved!</p>
+                <p className="text-xs text-green-700 font-semibold">{t('lbl_approved_message')}</p>
               </div>
             )}
             {divisionRequest?.status === "Rejected" && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-3 sm:px-4 py-3 mb-4">
-                <p className="text-xs text-red-600 font-semibold">Your request was rejected. You can submit a new request.</p>
+                <p className="text-xs text-red-600 font-semibold">{t('lbl_rejected_message')}</p>
               </div>
             )}
 
