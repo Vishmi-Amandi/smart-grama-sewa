@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { UserCheck, CalendarDays, Map, RefreshCw, Clock, UserX, Loader2 } from "lucide-react";
 import { auth, db } from "../../firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
 
 const GNCurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
   const [selected, setSelected] = useState(gnStatus);
@@ -52,6 +52,27 @@ const GNCurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
     "On Field":    <Map size={28} className="text-red-500" />,
     "Unavailable": <UserX size={28} className="text-slate-500" />,
   }[selected];
+
+
+  useEffect(() => {
+  const fetchStatus = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const snap = await getDoc(doc(db, "gn_officers", user.uid));
+      if (snap.exists()) {
+        const saved = snap.data().availability;
+        if (saved) {
+          setSelected(saved);
+          setGnStatus(saved); // sync parent too
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch status:", err);
+    }
+  };
+  fetchStatus();
+}, []);
 
   return (
     <GNLayout gnStatus={gnStatus} theme={theme}>

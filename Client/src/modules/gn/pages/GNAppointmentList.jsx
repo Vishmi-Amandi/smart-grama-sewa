@@ -3,6 +3,7 @@ import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { auth, db } from "../../firebase";
 import { collection, query, where, getDocs, doc, updateDoc, orderBy, getDoc } from "firebase/firestore";
 import { X, User, Calendar, Clock, FileText, Phone, MapPin, Hash } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 
 const parseSlot = (slot = "") => {
   const isoMatch = slot.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})/);
@@ -135,6 +136,12 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
   const [filterStatus, setFilterStatus] = useState("All");
   const [gnDivision, setGnDivision] = useState("");
   const [selected, setSelected] = useState(null); // appointment open in modal
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const status = searchParams.get("status");
+    if (status) setFilterStatus(status);
+  }, []);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -230,7 +237,7 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
 
       {/* Filter bar */}
       <div className={`${t.card} rounded-2xl shadow px-3 sm:px-5 py-2.5 sm:py-3 flex flex-wrap items-center gap-2 sm:gap-4 mb-4 sm:mb-6`}>
-        {["All", "Pending", "Confirmed", "Cancelled"].map((status) => (
+       {["All", "Pending", "Confirmed", "Completed", "Cancelled"].map((status) => (
           <button
             key={status}
             onClick={() => setFilterStatus(status)}
@@ -313,9 +320,14 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
                         {a.status === "Confirmed" && (
                           <>
                             <button
-                              onClick={() => handleComplete(a)}
-                              className="text-[10px] sm:text-xs bg-purple-100 text-purple-700 font-semibold px-2.5 sm:px-3 py-1 rounded-lg hover:bg-purple-200 transition whitespace-nowrap">
+                              onClick={() => { onComplete(a); onClose(); }}  // ← was onConfirm
+                              className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2.5 rounded-xl transition text-sm">
                               ✓ Complete
+                            </button>
+                            <button
+                              onClick={() => { onCancel(a.id); onClose(); }}
+                              className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-semibold py-2.5 rounded-xl transition text-sm">
+                              ✕ Cancel
                             </button>
                           </>
                         )}
