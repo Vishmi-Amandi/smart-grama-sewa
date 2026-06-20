@@ -1097,16 +1097,7 @@
 "err_to_district_required": "Please select target district.",
 "err_reason_required": "Please provide a reason for transfer.",
 "err_effective_date_required": "Please select an effective date.",
-"err_submit_failed": "Failed to submit request. Please try again.",
-
-"current_status_title": "Current Status",
-"currently_label": "CURRENTLY",
-"availability_toggle_title": "Availability Toggle",
-"availability_toggle_desc": "Selecting a status will update your profile on the Public Citizen Portal immediately. Ensure your status reflects your current activity to avoid citizen inconvenience.",
-"update_status_btn": "Update Current Status",
-"updating_status": "Updating...",
-"last_updated": "Last Updated: {{time}}",
-"not_updated_yet": "Not updated yet this session"
+"err_submit_failed": "Failed to submit request. Please try again."
 
 
   }
