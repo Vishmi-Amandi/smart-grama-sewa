@@ -3,27 +3,13 @@ import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { UserCheck, CalendarDays, Map, RefreshCw, Clock, UserX, Loader2 } from "lucide-react";
 import { auth, db } from "../../firebase";
 import { doc, updateDoc } from "firebase/firestore";
-import { useTranslation } from "react-i18next";
 
 const GNCurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
-  const { t } = useTranslation();
-  const tTheme = getThemeClasses(theme);
   const [selected, setSelected] = useState(gnStatus);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const t = getThemeClasses(theme);
 
-  // Get translated status label
-  const getStatusLabel = (statusKey) => {
-    const map = {
-      "Available": t("status_available"),
-      "In Meeting": t("status_in_meeting"),
-      "On Field": t("status_on_field"),
-      "Unavailable": t("status_not_available"),
-    };
-    return map[statusKey] || statusKey;
-  };
-
-  // Status options with translated labels
   const statuses = [
     { label: "Available",    icon: <UserCheck size={24} />,    color: "text-green-600",  selectedBorder: "border-green-500",  selectedBg: theme === "dark" ? "bg-green-900"  : "bg-green-50"  },
     { label: "In Meeting",   icon: <CalendarDays size={24} />, color: "text-orange-500", selectedBorder: "border-orange-500", selectedBg: theme === "dark" ? "bg-orange-900" : "bg-orange-50" },
@@ -67,39 +53,35 @@ const GNCurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
     "Unavailable": <UserX size={28} className="text-slate-500" />,
   }[selected];
 
-  const selectedLabel = getStatusLabel(selected);
-  const selectedUpper = selectedLabel.toUpperCase();
-
   return (
     <GNLayout gnStatus={gnStatus} theme={theme}>
 
       <h1 className="text-xl sm:text-2xl font-bold text-[#8B4513] mb-4 sm:mb-6 text-center sm:text-left">
-        {t("current_status_title")}
+        Current Status
       </h1>
 
-      <div className={`${tTheme.card} rounded-2xl shadow p-4 sm:p-6 md:p-8`}>
+      <div className={`${t.card} rounded-2xl shadow p-4 sm:p-6 md:p-8`}>
         <div className="flex flex-col md:flex-row gap-6 md:gap-10">
 
           {/* Circle */}
           <div className="flex-shrink-0 flex items-center justify-center">
             <div className={`w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-full border-4 flex flex-col items-center justify-center ${circleBorderColor}`}>
               {circleIcon}
-              <p className={`text-[10px] sm:text-xs mt-1 text-center ${tTheme.subtext}`}>
-                {t("currently_label")}
-              </p>
+              <p className={`text-[10px] sm:text-xs mt-1 text-center ${t.subtext}`}>CURRENTLY</p>
               <p className={`font-bold text-xs sm:text-sm text-center ${circleTextColor}`}>
-                {selectedUpper}
+                {selected.toUpperCase()}
               </p>
             </div>
           </div>
 
           {/* Content */}
           <div className="flex-1">
-            <h2 className={`text-base sm:text-lg font-bold mb-1 text-center md:text-left ${tTheme.text}`}>
-              {t("availability_toggle_title")}
+            <h2 className={`text-base sm:text-lg font-bold mb-1 text-center md:text-left ${t.text}`}>
+              Availability Toggle
             </h2>
             <p className="text-xs sm:text-sm text-orange-500 mb-5 sm:mb-6 text-center md:text-left">
-              {t("availability_toggle_desc")}
+              Selecting a status will update your profile on the Public Citizen Portal immediately.
+              Ensure your status reflects your current activity to avoid citizen inconvenience.
             </p>
 
             {/* Status Options */}
@@ -113,13 +95,11 @@ const GNCurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
                     ${isUpdating ? "opacity-50 cursor-not-allowed" : ""}
                     ${selected === status.label
                       ? `${status.selectedBorder} ${status.selectedBg}`
-                      : `${tTheme.border} hover:border-gray-300`
+                      : `${t.border} hover:border-gray-300`
                     }`}
                 >
                   <span className={status.color}>{status.icon}</span>
-                  <span className={`text-xs sm:text-sm font-semibold text-center ${tTheme.text}`}>
-                    {getStatusLabel(status.label)}
-                  </span>
+                  <span className={`text-xs sm:text-sm font-semibold text-center ${t.text}`}>{status.label}</span>
                   {selected === status.label && (
                     <span className="text-green-500 text-[10px] sm:text-xs">✓</span>
                   )}
@@ -129,9 +109,9 @@ const GNCurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
 
             {/* Bottom Row */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-              <p className={`text-[10px] sm:text-xs flex items-center justify-center gap-1 text-center ${tTheme.subtext}`}>
+              <p className={`text-[10px] sm:text-xs flex items-center justify-center gap-1 text-center ${t.subtext}`}>
                 <Clock size={12} />
-                {lastUpdated ? t("last_updated", { time: lastUpdated }) : t("not_updated_yet")}
+                {lastUpdated ? `Last Updated: ${lastUpdated}` : "Not updated yet this session"}
               </p>
               <button
                 onClick={handleUpdate}
@@ -145,12 +125,12 @@ const GNCurrentStatus = ({ gnStatus, setGnStatus, theme }) => {
                 {isUpdating ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    {t("updating_status")}
+                    Updating...
                   </>
                 ) : (
                   <>
                     <RefreshCw size={16} />
-                    {t("update_status_btn")}
+                    Update Current Status
                   </>
                 )}
               </button>
