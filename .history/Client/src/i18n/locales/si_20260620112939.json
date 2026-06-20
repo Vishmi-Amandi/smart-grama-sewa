@@ -588,7 +588,6 @@
 "btn_change_gn_division": "GN කොට්ඨාසය වෙනස් කරන්න",
 "lbl_notices_from_admin": "පරිපාලනයෙන් දැනුම්දීම්",
 "lbl_active_notices": "ක්‍රියාකාරී දැනුම්දීම් {{count}} ක්",
-"lbl_active_notices_plural": "ක්‍රියාකාරී දැනුම්දීම් {{count}} ක්",
 "lbl_new": "අලුත්",
 "lbl_no_notices": "මේ මොහොතේ දැනුම්දීම් නැත",
 "lbl_no_notices_desc": "පරිපාලක නිවේදන මෙතැනින් දිස්වනු ඇත",
@@ -620,7 +619,8 @@
 "lbl_current_status": "වත්මන් තත්ත්වය",
 "lbl_grama_niladhari": "ග්‍රාම නිලධාරී",
 "lbl_portal": "ද්වාරය",
-
+"lbl_smart_grama_sewa": "ස්මාර්ට් ග්‍රාම සේවා",
+"lbl_all_rights_reserved": "සියලුම හිමිකම් ඇවිරිණි.",
 "lbl_officer": "නිලධාරී",
 "lbl_avatar": "අවතාරය",
 "lbl_announcement_list": "නිවේදන ලැයිස්තුව",

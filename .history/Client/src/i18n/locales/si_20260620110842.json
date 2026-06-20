@@ -588,7 +588,6 @@
 "btn_change_gn_division": "GN කොට්ඨාසය වෙනස් කරන්න",
 "lbl_notices_from_admin": "පරිපාලනයෙන් දැනුම්දීම්",
 "lbl_active_notices": "ක්‍රියාකාරී දැනුම්දීම් {{count}} ක්",
-"lbl_active_notices_plural": "ක්‍රියාකාරී දැනුම්දීම් {{count}} ක්",
 "lbl_new": "අලුත්",
 "lbl_no_notices": "මේ මොහොතේ දැනුම්දීම් නැත",
 "lbl_no_notices_desc": "පරිපාලක නිවේදන මෙතැනින් දිස්වනු ඇත",
@@ -613,29 +612,7 @@
 "status_rejected": "ප්‍රතික්ෂේප කර ඇත",
 "lbl_just_now": "දැන් ගත",
 "lbl_hours_ago": "පැය {{hours}}කට පෙර",
-"lbl_days_ago": "දින {{days}}කට පෙර",
-
-"lbl_schedule": "කාලසටහන",
-"lbl_citizen_search": "පුරවැසි සෙවීම",
-"lbl_current_status": "වත්මන් තත්ත්වය",
-"lbl_grama_niladhari": "ග්‍රාම නිලධාරී",
-"lbl_portal": "ද්වාරය",
-
-"lbl_officer": "නිලධාරී",
-"lbl_avatar": "අවතාරය",
-"lbl_announcement_list": "නිවේදන ලැයිස්තුව",
-"lbl_notification_settings": "දැනුම්දීම් සැකසුම්",
-"lbl_appearance_settings": "පෙනුම සහ භාෂා සැකසුම්",
-"lbl_security_settings": "ආරක්ෂක සැකසුම්",
-"lbl_weekly_hours_settings": "සතිපතා පැය සැකසුම්",
-"lbl_personal_info_profile": "පුද්ගලික තොරතුරු පැතිකඩ",
-"lbl_office_details_profile": "කාර්යාල විස්තර පැතිකඩ",
-"lbl_activity_log_profile": "ක්‍රියාකාරකම් සටහන් පැතිකඩ",
-"lbl_search_pages": "පිටු සොයන්න...",
-"lbl_pages": "පිටු",
-"lbl_no_results": "\"{{query}}\" සඳහා ප්‍රතිඵල නොමැත",
-"lbl_selected": "තෝරාගත්",
-"lbl_switch_to": "වෙත මාරු වන්න"
+"lbl_days_ago": "දින {{days}}කට පෙර"
 
   }
 }

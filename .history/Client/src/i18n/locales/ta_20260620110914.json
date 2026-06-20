@@ -579,8 +579,7 @@
 "btn_create_announcement": "அறிவிப்பை உருவாக்கு",
 "btn_change_gn_division": "ஜிஎன் பிரிவை மாற்று",
 "lbl_notices_from_admin": "நிர்வாகத்திலிருந்து அறிவிப்புகள்",
-"lbl_active_notices": "{{count}} செயலில் உள்ள அறிவிப்பு",
-"lbl_active_notices_plural": "{{count}} செயலில் உள்ள அறிவிப்புகள்",
+"lbl_active_notices": "{{count}} செயலில் உள்ள அறிவிப்புகள்",
 "lbl_new": "புதிய",
 "lbl_no_notices": "தற்போது அறிவிப்புகள் இல்லை",
 "lbl_no_notices_desc": "நிர்வாக அறிவிப்புகள் இங்கே தோன்றும்",
@@ -605,28 +604,6 @@
 "status_rejected": "நிராகரிக்கப்பட்டது",
 "lbl_just_now": "இப்போது",
 "lbl_hours_ago": "{{hours}} மணி நேரத்திற்கு முன்",
-"lbl_days_ago": "{{days}} நாட்களுக்கு முன்",
-
-"lbl_schedule": "அட்டவணை",
-"lbl_citizen_search": "குடிமகன் தேடல்",
-"lbl_current_status": "தற்போதைய நிலை",
-"lbl_grama_niladhari": "கிராம நிலதாரி",
-"lbl_portal": "வலைவாசல்",
-
-"lbl_officer": "அதிகாரி",
-"lbl_avatar": "அவதார்",
-"lbl_announcement_list": "அறிவிப்பு பட்டியல்",
-"lbl_notification_settings": "அறிவிப்பு அமைப்புகள்",
-"lbl_appearance_settings": "தோற்றம் & மொழி அமைப்புகள்",
-"lbl_security_settings": "பாதுகாப்பு அமைப்புகள்",
-"lbl_weekly_hours_settings": "வாராந்திர மணிநேர அமைப்புகள்",
-"lbl_personal_info_profile": "தனிப்பட்ட தகவல் சுயவிவரம்",
-"lbl_office_details_profile": "அலுவலக விவரங்கள் சுயவிவரம்",
-"lbl_activity_log_profile": "செயல்பாடு பதிவு சுயவிவரம்",
-"lbl_search_pages": "பக்கங்களைத் தேடுங்கள்...",
-"lbl_pages": "பக்கங்கள்",
-"lbl_no_results": "\"{{query}}\" க்கு முடிவுகள் எதுவும் இல்லை",
-"lbl_selected": "தேர்ந்தெடுக்கப்பட்டது",
-"lbl_switch_to": "இதற்கு மாறு"
+"lbl_days_ago": "{{days}} நாட்களுக்கு முன்"
   }
 }

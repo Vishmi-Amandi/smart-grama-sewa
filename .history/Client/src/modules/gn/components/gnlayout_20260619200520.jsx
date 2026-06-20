@@ -4,7 +4,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
-import { useTranslation } from 'react-i18next';
 
 export const getThemeClasses = (theme) => ({
   bg: theme === "dark" ? "bg-gray-900" : "bg-[#F5F0DC]",
@@ -19,53 +18,35 @@ export const getThemeClasses = (theme) => ({
 });
 
 const GNLayout = ({ children, gnStatus, theme }) => {
-  const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
 
   const [showLang, setShowLang] = useState(false);
-  const [selectedLang, setSelectedLang] = useState(
-    i18n.language === 'si' ? 'සිංහල' :
-    i18n.language === 'ta' ? 'தமிழ்' : 'English'
-  );
+  const [selectedLang, setSelectedLang] = useState("English");
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [userData, setUserData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // Language options for dropdown
-  const languages = [
-    { code: 'en', label: 'English', display: 'EN' },
-    { code: 'si', label: 'සිංහල', display: 'SI' },
-    { code: 'ta', label: 'தமிழ்', display: 'TA' },
-  ];
-
-  const changeLanguage = (langCode, langLabel) => {
-    i18n.changeLanguage(langCode);
-    setSelectedLang(langLabel);
-    setShowLang(false);
-    // Also update the dropdown in child components via state
-  };
-
   const searchPages = [
-    { name: t('lbl_dashboard'), path: "/gn-dashboard", icon: <LayoutDashboard size={16} /> },
-    { name: t('lbl_appointments'), path: "/gn-appointments", icon: <CalendarDays size={16} /> },
-    { name: t('lbl_schedule'), path: "/gn-schedule", icon: <Clock size={16} /> },
-    { name: t('btn_create_announcement'), path: "/gn-create-announcement", icon: <Megaphone size={16} /> },
-    { name: t('lbl_announcement_list'), path: "/gn-announcement-list", icon: <Megaphone size={16} /> },
-    { name: t('lbl_citizen_search'), path: "/gn-citizen-search", icon: <Search size={16} /> },
-    { name: t('lbl_profile'), path: "/gn-profile", icon: <User size={16} /> },
-    { name: t('lbl_settings'), path: "/gn-settings", icon: <Settings size={16} /> },
-    { name: t('lbl_current_status'), path: "/gn-current-status", icon: <User size={16} /> },
-    { name: t('btn_change_gn_division'), path: "/gn-change-gn-division", icon: <LogOut size={16} /> },
-    { name: t('lbl_notification_settings'), path: "/gn-settings?tab=notification", icon: <Settings size={16} /> },
-    { name: t('lbl_appearance_settings'), path: "/gn-settings?tab=appearance", icon: <Settings size={16} /> },
-    { name: t('lbl_security_settings'), path: "/gn-settings?tab=security", icon: <Settings size={16} /> },
-    { name: t('lbl_weekly_hours_settings'), path: "/gn-settings?tab=hours", icon: <Settings size={16} /> },
-    { name: t('lbl_personal_info_profile'), path: "/gn-profile?tab=personal", icon: <User size={16} /> },
-    { name: t('lbl_office_details_profile'), path: "/gn-profile?tab=office", icon: <User size={16} /> },
-    { name: t('lbl_activity_log_profile'), path: "/gn-profile?tab=activity", icon: <User size={16} /> },
+    { name: "Dashboard", path: "/gn-dashboard", icon: <LayoutDashboard size={16} /> },
+    { name: "Appointments", path: "/gn-appointments", icon: <CalendarDays size={16} /> },
+    { name: "Schedule", path: "/gn-schedule", icon: <Clock size={16} /> },
+    { name: "Create Announcement", path: "/gn-create-announcement", icon: <Megaphone size={16} /> },
+    { name: "Announcement List", path: "/gn-announcement-list", icon: <Megaphone size={16} /> },
+    { name: "Citizen Search", path: "/gn-citizen-search", icon: <Search size={16} /> },
+    { name: "Profile", path: "/gn-profile", icon: <User size={16} /> },
+    { name: "Settings", path: "/gn-settings", icon: <Settings size={16} /> },
+    { name: "Current Status", path: "/gn-current-status", icon: <User size={16} /> },
+    { name: "Change GN Division", path: "/gn-change-gn-division", icon: <LogOut size={16} /> },
+    { name: "Notification Settings", path: "/gn-settings?tab=notification", icon: <Settings size={16} /> },
+    { name: "Appearance & Language Settings", path: "/gn-settings?tab=appearance", icon: <Settings size={16} /> },
+    { name: "Security Settings", path: "/gn-settings?tab=security", icon: <Settings size={16} /> },
+    { name: "Weekly Hours Settings", path: "/gn-settings?tab=hours", icon: <Settings size={16} /> },
+    { name: "Personal Info Profile", path: "/gn-profile?tab=personal", icon: <User size={16} /> },
+    { name: "Office Details Profile", path: "/gn-profile?tab=office", icon: <User size={16} /> },
+    { name: "Activity Log Profile", path: "/gn-profile?tab=activity", icon: <User size={16} /> },
   ];
 
   const filteredPages = searchQuery.trim()
@@ -86,16 +67,6 @@ const GNLayout = ({ children, gnStatus, theme }) => {
   };
 
   useEffect(() => {
-    // Keep selectedLang in sync with i18n language changes
-    const langMap = {
-      en: 'English',
-      si: 'සිංහල',
-      ta: 'தமிழ்'
-    };
-    setSelectedLang(langMap[i18n.language] || 'English');
-  }, [i18n.language]);
-
-  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const docRef = doc(db, "gn_officers", user.uid);
@@ -108,24 +79,12 @@ const GNLayout = ({ children, gnStatus, theme }) => {
     return () => unsubscribe();
   }, []);
 
-  // Get translated status label
-  const getStatusLabel = (status) => {
-    if (!status) return t('status_available');
-    const statusMap = {
-      'Available': t('status_available'),
-      'In Meeting': t('status_in_meeting'),
-      'On Field': t('status_on_field'),
-      'Unavailable': t('status_not_available'),
-    };
-    return statusMap[status] || status;
-  };
-
   const mobileNavItems = [
-    { name: t('lbl_dashboard'), path: "/gn-dashboard", icon: <LayoutDashboard size={20} /> },
-    { name: t('lbl_appointments'), path: "/gn-appointments", icon: <CalendarDays size={20} /> },
-    { name: t('lbl_citizen_search'), path: "/gn-citizen-search", icon: <Search size={20} /> },
-    { name: t('lbl_profile'), path: "/gn-profile", icon: <User size={20} /> },
-    { name: t('lbl_sign_out'), action: "signout", icon: <LogOut size={20} /> },
+    { name: "Dashboard", path: "/gn-dashboard", icon: <LayoutDashboard size={20} /> },
+    { name: "Appointments", path: "/gn-appointments", icon: <CalendarDays size={20} /> },
+    { name: "Citizen Search", path: "/gn-citizen-search", icon: <Search size={20} /> },
+    { name: "Profile", path: "/gn-profile", icon: <User size={20} /> },
+    { name: "Sign Out", action: "signout", icon: <LogOut size={20} /> },
   ];
 
   const handleMobileAction = (action) => {
@@ -154,11 +113,11 @@ const GNLayout = ({ children, gnStatus, theme }) => {
 
           {/* Branding */}
           <div className="p-5 text-center border-b border-[#9B4D00]">
-            <h1 className="text-white font-bold text-lg">{t('lbl_grama_niladhari')}</h1>
-            <p className="text-[#E5A800] font-semibold text-sm">{t('lbl_portal')}</p>
+            <h1 className="text-white font-bold text-lg">Grama Niladhari</h1>
+            <p className="text-[#E5A800] font-semibold text-sm">Portal</p>
             <img
               src="/logo.png"
-              alt={t('lbl_smart_grama_sewa')}
+              alt="Smart Grama Sewa Logo"
               className="w-32 h-32 mx-auto mt-3 object-contain"
             />
           </div>
@@ -169,7 +128,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
             className="mx-4 mt-4 bg-[#9B4D00] rounded-lg px-4 py-3 block hover:bg-[#7a3b00] transition"
             onClick={() => setMobileSidebarOpen(false)}
           >
-            <p className="text-xs text-gray-300">{t('lbl_current_status')}</p>
+            <p className="text-xs text-gray-300">Current Status</p>
             <div className="flex items-center gap-2 mt-1">
               <span className={`w-2 h-2 rounded-full ${
                 gnStatus === "Available"   ? "bg-green-400 shadow-[0_0_6px_2px_rgba(74,222,128,0.6)]"  :
@@ -178,7 +137,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                 gnStatus === "Unavailable" ? "bg-slate-400"                                              :
                 "bg-gray-400"
               }`}></span>
-              <span className="text-white font-semibold text-sm">{getStatusLabel(gnStatus)}</span>
+              <span className="text-white font-semibold text-sm">{gnStatus}</span>
             </div>
           </Link>
 
@@ -189,7 +148,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
               onClick={() => setMobileSidebarOpen(false)}
               className={`flex items-center gap-3 rounded-lg px-4 py-2 ${location.pathname === "/gn-dashboard" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}
             >
-              <LayoutDashboard size={18} /> {t('lbl_dashboard')}
+              <LayoutDashboard size={18} /> Dashboard
             </Link>
 
             <Link
@@ -197,7 +156,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
               onClick={() => setMobileSidebarOpen(false)}
               className={`flex items-center gap-3 rounded-lg px-4 py-2 ${location.pathname === "/gn-appointments" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}
             >
-              <CalendarDays size={18} /> {t('lbl_appointments')}
+              <CalendarDays size={18} /> Appointments
             </Link>
 
             <Link
@@ -205,7 +164,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
               onClick={() => setMobileSidebarOpen(false)}
               className={`flex items-center gap-3 px-4 py-2 rounded-lg ${location.pathname === "/gn-schedule" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}
             >
-              <Clock size={18} /> {t('lbl_schedule')}
+              <Clock size={18} /> Schedule
             </Link>
 
             {/* Announcements Dropdown */}
@@ -219,7 +178,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                   }`}
               >
                 <Megaphone size={18} />
-                <span className="flex-1">{t('lbl_announcements')}</span>
+                <span className="flex-1">Announcements</span>
                 <span className="text-xs">{showAnnouncements ? "▲" : "▼"}</span>
               </div>
               {showAnnouncements && (
@@ -229,14 +188,14 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                     onClick={() => setMobileSidebarOpen(false)}
                     className="flex items-center gap-2 text-orange-200 px-4 py-2 rounded-lg hover:bg-[#9B4D00] text-sm"
                   >
-                    {t('btn_create_announcement')}
+                    Create Announcement
                   </Link>
                   <Link
                     to="/gn-announcement-list"
                     onClick={() => setMobileSidebarOpen(false)}
                     className="flex items-center gap-2 text-orange-200 px-4 py-2 rounded-lg hover:bg-[#9B4D00] text-sm"
                   >
-                    {t('lbl_announcement_list')}
+                    Announcement List
                   </Link>
                 </div>
               )}
@@ -247,7 +206,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
               onClick={() => setMobileSidebarOpen(false)}
               className={`flex items-center gap-3 px-4 py-2 rounded-lg ${location.pathname === "/gn-citizen-search" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}
             >
-              <Search size={18} /> {t('lbl_citizen_search')}
+              <Search size={18} /> Citizen Search
             </Link>
 
             <hr className="border-[#9B4D00] my-2" />
@@ -257,7 +216,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
               onClick={() => setMobileSidebarOpen(false)}
               className={`flex items-center gap-3 px-4 py-2 rounded-lg ${location.pathname === "/gn-profile" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}
             >
-              <User size={18} /> {t('lbl_profile')}
+              <User size={18} /> Profile
             </Link>
 
             <Link
@@ -265,7 +224,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
               onClick={() => setMobileSidebarOpen(false)}
               className={`flex items-center gap-3 px-4 py-2 rounded-lg ${location.pathname === "/gn-settings" ? "bg-[#E5A800] text-black font-semibold" : "text-white hover:bg-[#9B4D00]"}`}
             >
-              <Settings size={18} /> {t('lbl_settings')}
+              <Settings size={18} /> Settings
             </Link>
           </nav>
 
@@ -273,7 +232,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
             onClick={() => signOut(auth).then(() => navigate("/home"))}
             className="flex items-center gap-3 text-white px-8 py-4 rounded-lg hover:bg-[#9B4D00] w-full"
           >
-            <LogOut size={18} /> {t('lbl_sign_out')}
+            <LogOut size={18} /> Sign Out
           </button>
         </aside>
 
@@ -297,6 +256,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                 onClick={() => setMobileSidebarOpen(true)}
                 className={`lg:hidden p-2 rounded-lg ${theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
               >
+                {/* FIX: icon color follows theme */}
                 <Menu size={24} className={theme === "dark" ? "text-gray-200" : "text-gray-600"} />
               </button>
 
@@ -315,7 +275,8 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                         handleSearchNavigate(filteredPages[0].path);
                       }
                     }}
-                    placeholder={t('lbl_search_pages')}
+                    placeholder="Search pages..."
+                    // FIX: white text + white placeholder in dark mode
                     className={`bg-transparent outline-none text-sm w-full
                       ${theme === "dark"
                         ? "text-white placeholder-gray-400"
@@ -338,9 +299,10 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                     ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
                     {filteredPages.length > 0 ? (
                       <>
+                        {/* FIX: section header readable in dark mode */}
                         <div className={`px-4 py-2 text-xs font-semibold uppercase tracking-wide
                           ${theme === "dark" ? "text-gray-300 bg-gray-700" : "text-gray-400 bg-gray-50"}`}>
-                          {t('lbl_pages')}
+                          Pages
                         </div>
                         {filteredPages.map((page) => (
                           <div
@@ -352,6 +314,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                                 : "text-gray-700 hover:bg-gray-50"}`}
                           >
                             <span className="text-[#E5A800]">{page.icon}</span>
+                            {/* FIX: result name and path visible in dark mode */}
                             <span className="text-sm font-semibold">{page.name}</span>
                             <span className={`ml-auto text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-400"}`}>
                               → {page.path}
@@ -361,7 +324,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                       </>
                     ) : (
                       <div className={`px-4 py-4 text-sm text-center ${theme === "dark" ? "text-gray-300" : "text-gray-400"}`}>
-                        {t('lbl_no_results', { query: searchQuery })}
+                        No results found for "{searchQuery}"
                       </div>
                     )}
                   </div>
@@ -384,6 +347,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
               <div className="relative">
                 <div
                   onClick={() => setShowLang(!showLang)}
+                  // FIX: border, text, and hover follow dark mode
                   className={`flex items-center gap-2 border rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm cursor-pointer
                     ${theme === "dark"
                       ? "border-gray-600 text-gray-200 hover:bg-gray-700"
@@ -393,11 +357,12 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                   🌐 <span className="hidden sm:inline">{selectedLang}</span> ▾
                 </div>
                 {showLang && (
+                  // FIX: dropdown panel follows dark mode
                   <div className={`absolute right-0 mt-2 w-44 border rounded-xl shadow-lg z-50 overflow-hidden
                     ${theme === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
                     <div className={`px-4 py-2 text-xs uppercase tracking-wide border-b
                       ${theme === "dark" ? "text-gray-400 border-gray-700" : "text-gray-400 border-gray-200"}`}>
-                      {t('lbl_selected')}
+                      Selected
                     </div>
                     <div className={`px-4 py-2 text-sm font-bold
                       ${theme === "dark" ? "text-white bg-gray-700" : "text-gray-800 bg-gray-50"}`}>
@@ -406,21 +371,21 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                     <div className={`border-t my-1 ${theme === "dark" ? "border-gray-700" : "border-gray-200"}`}></div>
                     <div className={`px-4 py-2 text-xs uppercase tracking-wide
                       ${theme === "dark" ? "text-gray-400" : "text-gray-400"}`}>
-                      {t('lbl_switch_to')}
+                      Switch to
                     </div>
-                    {languages
-                      .filter((lang) => lang.label !== selectedLang)
+                    {["English", "සිංහල", "தமிழ்"]
+                      .filter((lang) => lang !== selectedLang)
                       .map((lang) => (
                         <div
-                          key={lang.code}
-                          onClick={() => changeLanguage(lang.code, lang.label)}
+                          key={lang}
+                          onClick={() => { setSelectedLang(lang); setShowLang(false); }}
                           className={`px-4 py-2 text-sm cursor-pointer
                             ${theme === "dark"
                               ? "text-gray-200 hover:bg-gray-700"
                               : "text-gray-700 hover:bg-gray-100"
                             }`}
                         >
-                          {lang.label}
+                          {lang}
                         </div>
                       ))}
                   </div>
@@ -433,11 +398,12 @@ const GNLayout = ({ children, gnStatus, theme }) => {
               {/* User Info */}
               <Link to="/gn-profile" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
                 <div className="text-right hidden sm:block">
+                  {/* FIX: name and division label visible in dark mode */}
                   <p className={`text-sm font-semibold ${theme === "dark" ? "text-white" : "text-gray-800"}`}>
-                    {userData?.fullName || t('lbl_officer')}
+                    {userData?.fullName || "Officer"}
                   </p>
                   <p className="text-xs text-[#E5A800]">
-                    {userData?.gnDiv || t('lbl_grama_niladhari')}
+                    {userData?.gnDiv || "Grama Niladhari"}
                   </p>
                 </div>
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden flex items-center justify-center font-bold text-white bg-[#8B4513]">
@@ -445,7 +411,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                     <img
                       key={userData.photoURL}
                       src={userData.photoURL}
-                      alt={t('lbl_avatar')}
+                      alt="avatar"
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -498,7 +464,7 @@ const GNLayout = ({ children, gnStatus, theme }) => {
 
       {/* Footer */}
       <footer className="bg-[#5C1E00] text-[#E5A800] text-center py-3 text-sm flex-shrink-0 hidden lg:block">
-        © 2026 {t('lbl_smart_grama_sewa')}. {t('lbl_all_rights_reserved')}
+        © 2026 Smart Grama Sewa. All rights reserved.
       </footer>
 
     </div>
