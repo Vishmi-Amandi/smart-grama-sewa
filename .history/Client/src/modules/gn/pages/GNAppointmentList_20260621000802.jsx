@@ -3,6 +3,7 @@ import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { auth, db } from "../../firebase";
 import { collection, query, where, getDocs, doc, updateDoc, orderBy, getDoc } from "firebase/firestore";
 import { X, User, Calendar, Clock, FileText, Phone, MapPin, Hash } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 const parseSlot = (slot = "") => {
@@ -142,14 +143,12 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
   const [filterStatus, setFilterStatus] = useState("All");
   const [gnDivision, setGnDivision] = useState("");
   const [selected, setSelected] = useState(null);
+  const [searchParams] = useSearchParams();
 
-  // Filter tabs with translated labels
-  const filterTabs = [
-    { key: "All", label: t('tab_all') },
-    { key: "Pending", label: t('tab_pending') },
-    { key: "Confirmed", label: t('tab_confirmed') },
-    { key: "Cancelled", label: t('tab_cancelled') },
-  ];
+  useEffect(() => {
+    const status = searchParams.get("status");
+    if (status) setFilterStatus(status);
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -234,6 +233,15 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
   const filtered = appointments.filter(
     (a) => filterStatus === "All" || a.status === filterStatus
   );
+
+  // Filter tabs with translations
+  const filterTabs = [
+    { key: "All", label: t('tab_all') },
+    { key: "Pending", label: t('tab_pending') },
+    { key: "Confirmed", label: t('tab_confirmed') },
+    { key: "Completed", label: t('tab_completed') },
+    { key: "Cancelled", label: t('tab_cancelled') },
+  ];
 
   return (
     <GNLayout gnStatus={gnStatus} theme={theme}>
@@ -329,11 +337,18 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
                             </>
                           )}
                           {a.status === "Confirmed" && (
-                            <button
-                              onClick={() => handleComplete(a)}
-                              className="text-[10px] sm:text-xs bg-purple-100 text-purple-700 font-semibold px-2.5 sm:px-3 py-1 rounded-lg hover:bg-purple-200 transition whitespace-nowrap">
-                              ✓ {t('btn_complete')}
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleComplete(a)}
+                                className="text-[10px] sm:text-xs bg-purple-100 text-purple-700 font-semibold px-2.5 sm:px-3 py-1 rounded-lg hover:bg-purple-200 transition whitespace-nowrap">
+                                ✓ {t('btn_complete')}
+                              </button>
+                              <button
+                                onClick={() => handleCancel(a.id)}
+                                className="text-[10px] sm:text-xs bg-red-100 text-red-700 font-semibold px-2.5 sm:px-3 py-1 rounded-lg hover:bg-red-200 transition whitespace-nowrap">
+                                ✕ {t('btn_cancel')}
+                              </button>
+                            </>
                           )}
                           {a.status === "Completed" && (
                             <span className="text-[10px] sm:text-xs text-purple-600 font-semibold whitespace-nowrap">✓ {t('status_completed')}</span>
