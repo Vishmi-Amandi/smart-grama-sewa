@@ -3,6 +3,7 @@ import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { auth, db } from "../../firebase";
 import { collection, query, where, getDocs, doc, updateDoc, orderBy, getDoc } from "firebase/firestore";
 import { X, User, Calendar, Clock, FileText, Phone, MapPin, Hash } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 const parseSlot = (slot = "") => {
@@ -141,15 +142,13 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("All");
   const [gnDivision, setGnDivision] = useState("");
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState(null); // appointment open in modal
+  const [searchParams] = useSearchParams();
 
-  // Filter tabs with translated labels
-  const filterTabs = [
-    { key: "All", label: t('tab_all') },
-    { key: "Pending", label: t('tab_pending') },
-    { key: "Confirmed", label: t('tab_confirmed') },
-    { key: "Cancelled", label: t('tab_cancelled') },
-  ];
+  useEffect(() => {
+    const status = searchParams.get("status");
+    if (status) setFilterStatus(status);
+  }, []);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -243,8 +242,8 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
       </div>
 
       {/* Filter bar */}
-      <div className={`${tTheme.card} rounded-2xl shadow px-3 sm:px-5 py-2.5 sm:py-3 flex flex-wrap items-center gap-2 sm:gap-4 mb-4 sm:mb-6`}>
-        {filterTabs.map((tab) => (
+      <div className={`${t.card} rounded-2xl shadow px-3 sm:px-5 py-2.5 sm:py-3 flex flex-wrap items-center gap-2 sm:gap-4 mb-4 sm:mb-6`}>
+       {["All", "Pending", "Confirmed", "Completed", "Cancelled"].map((status) => (
           <button
             key={tab.key}
             onClick={() => setFilterStatus(tab.key)}
@@ -330,22 +329,27 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
                           )}
                           {a.status === "Confirmed" && (
                             <button
-                              onClick={() => handleComplete(a)}
-                              className="text-[10px] sm:text-xs bg-purple-100 text-purple-700 font-semibold px-2.5 sm:px-3 py-1 rounded-lg hover:bg-purple-200 transition whitespace-nowrap">
-                              ✓ {t('btn_complete')}
+                              onClick={() => { onComplete(a); onClose(); }}  // ← was onConfirm
+                              className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2.5 rounded-xl transition text-sm">
+                              ✓ Complete
                             </button>
-                          )}
-                          {a.status === "Completed" && (
-                            <span className="text-[10px] sm:text-xs text-purple-600 font-semibold whitespace-nowrap">✓ {t('status_completed')}</span>
-                          )}
-                          {a.status === "Cancelled" && (
-                            <span className="text-[10px] sm:text-xs text-red-500 font-semibold whitespace-nowrap">✕ {t('status_cancelled')}</span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
+                            <button
+                              onClick={() => { onCancel(a.id); onClose(); }}
+                              className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-semibold py-2.5 rounded-xl transition text-sm">
+                              ✕ Cancel
+                            </button>
+                          </>
+                        )}
+                        {a.status === "Completed" && (
+                          <span className="text-[10px] sm:text-xs text-purple-600 font-semibold whitespace-nowrap">✓ Completed</span>
+                        )}
+                        {a.status === "Cancelled" && (
+                          <span className="text-[10px] sm:text-xs text-red-500 font-semibold whitespace-nowrap">✕ Cancelled</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
