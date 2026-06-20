@@ -10,6 +10,8 @@ import {
   RecaptchaVerifier, 
   PhoneAuthProvider,
   linkWithCredential,
+  updatePhoneNumber,
+  reauthenticateWithPhoneNumber
 } from 'firebase/auth';
 import LanguageSwitcher from '../components/languageSwitcher';
 import NotificationBell from '../components/NotificationBell';
@@ -38,6 +40,7 @@ const IC = {
   globe:     'M12 2a10 10 0 100 20 10 10 0 000-20z M12 2c2 2 3 4.5 3 10s-1 8-3 10 M12 2c-2 2-3 4.5-3 10s1 8 3 10 M22 12h-4 M2 12H6',  
   palette:   'M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 011.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z',
   shield:    'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+  user:      'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8z',
   sun:       'M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41M12 6a6 6 0 100 12 6 6 0 000-12z',
   moon:      'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z',
   check:     'M20 6L9 17l-5-5',
@@ -113,8 +116,8 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
-      ? 'bg-yellow-100 text-user-primary font-extrabold shadow-md' 
-      : 'bg-transparent text-gray-700 font-semibold hover:bg-yellow-50'
+      ? 'bg-user-background text-white font-extrabold shadow-md' 
+      : 'bg-transparent text-gray-700 font-semibold hover:bg-yellow-100'
   }`}
     style={{ color: active ? '#B46A02' : '#5a3a00' }}
   >
@@ -166,7 +169,7 @@ const DesktopSidebar = ({ activePage, navigate, onLogout, t }) => {
   );
 };
 
-// ---------- Desktop Topbar (email removed) ----------
+// ---------- Desktop Topbar ----------
 const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser, t }) => (
   <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
     <div className="flex-1 max-w-[400px] relative">
@@ -224,7 +227,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
         <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden animate-fade-in">
           <div className="p-3 border-b border-user-border-light">
             <p className="text-sm font-bold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</p>
-            {/* EMAIL LINE REMOVED */}
+            <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
           </div>
           <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
             <Icon d={IC.profile} size={16} color="#B46A02" /> {t('lbl_my_profile')}
@@ -314,6 +317,7 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout, t }) =
 
 // ---------- Apply settings (unchanged) ----------
 const applySettings = (s) => {
+  // Apply Theme (Light/Dark)
   if (s.theme === 'dark') {
     document.documentElement.classList.add('dark');
     document.body.classList.add('dark-mode');
@@ -324,6 +328,7 @@ const applySettings = (s) => {
     document.body.classList.remove('dark-mode');
   }
 
+  // Apply Text Size - affects the entire page (html element)
   if (s.textSize === 'small') {
     document.documentElement.style.fontSize = '14px';
   } else if (s.textSize === 'large') {
@@ -332,12 +337,15 @@ const applySettings = (s) => {
     document.documentElement.style.fontSize = '16px';
   }
   
+  // Set data attributes for CSS targeting
   document.documentElement.setAttribute('data-theme', s.theme || 'light');
   document.documentElement.setAttribute('data-textsize', s.textSize || 'normal');
+  
+  // Store in localStorage
   localStorage.setItem('userSettings', JSON.stringify(s));
 };
 
-// ---------- Radio option ----------
+// ---------- Radio option (translated labels passed) ----------
 const RadioOption = ({ selected, onClick, label, sub }) => (
   <div 
     onClick={onClick} 
@@ -1214,32 +1222,23 @@ const Settings = () => {
 
   const [activeTab, setActiveTab] = useState('language');
   const [settings, setSettings] = useState({
-    language: i18n.language || 'en',
-    theme: 'light',
-    textSize: 'normal',
-    notifReminders: true,
-    notifUpdates: false,
-    notifAnnouncements: true,
-    deliveryEmail: true,
-    deliveryBrowser: true,
-    deliverySMS: false,
+    language: 'en', theme: 'light', textSize: 'normal',
+    notifReminders: true, notifUpdates: false, notifAnnouncements: true,
+    deliveryEmail: true, deliveryBrowser: true, deliverySMS: false,
   });
   const [showToast, setShowToast] = useState(false);
 
-  // 🔥 SYNC LANGUAGE: Keep settings.language in sync with i18n.language
+  // Sync language with i18n
   useEffect(() => {
     setCurrentLanguage(i18n.language);
-    setSettings(prev => ({ ...prev, language: i18n.language }));
   }, [i18n.language]);
 
-  // Handle language change from dropdown
+  // Handle language change
   const handleLanguageChange = (langCode) => {
     setCurrentLanguage(langCode);
     i18n.changeLanguage(langCode);
-    // The useEffect above will update settings.language automatically
   };
 
-  // Auth listener
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -1256,14 +1255,13 @@ const Settings = () => {
     return () => unsub();
   }, [navigate]);
 
-  // Handle resize
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Click outside
+  // Click outside to close search results and profile menu
   useEffect(() => {
     const handleClickOutside = () => {
       setShowSearchResults(false);
@@ -1273,31 +1271,23 @@ const Settings = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
   
-  // Load saved settings on mount, but override language with i18n
+  // Load saved settings on mount
   useEffect(() => {
     const saved = localStorage.getItem('userSettings');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        parsed.language = i18n.language || parsed.language || 'en';
         setSettings(parsed);
         applySettings(parsed);
       } catch (e) { }
-    } else {
-      setSettings(prev => ({ ...prev, language: i18n.language || 'en' }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 🔥 UPDATE SETTING: Now also changes i18n for language
+  // Update setting function
   const updateSetting = (key, value) => {
     const next = { ...settings, [key]: value };
     setSettings(next);
     applySettings(next);
-    if (key === 'language') {
-      i18n.changeLanguage(value);
-      setCurrentLanguage(value);
-    }
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2000);
   };
@@ -1322,7 +1312,10 @@ const Settings = () => {
   return (
     <div key={i18n.language} className="user-module min-h-screen flex flex-col font-sans bg-user-background">
       <div className="flex-1 flex">
+        {/* Desktop Sidebar */}
         <DesktopSidebar activePage="settings" navigate={navigate} onLogout={handleLogout} t={t} />
+
+        {/* Mobile Sidebar Overlay */}
         <MobileSidebar
           isOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
@@ -1332,7 +1325,9 @@ const Settings = () => {
           t={t}
         />
 
+        {/* Main Column */}
         <div className="flex-1 flex flex-col min-w-0">
+          {/* Desktop Topbar */}
           <DesktopTopbar 
             chipName={chipName}
             searchQuery={searchQuery}
@@ -1350,6 +1345,7 @@ const Settings = () => {
             t={t}
           />
 
+          {/* Mobile Topbar */}
           <MobileTopbar 
             chipName={chipName}
             onMenuClick={() => setMobileMenuOpen(true)}
@@ -1405,24 +1401,9 @@ const Settings = () => {
             {activeTab === 'language' && (
               <ContentCard>
                 <div className="text-sm font-extrabold text-user-secondary mb-4">{t('lbl_portal_language')}</div>
-                <RadioOption 
-                  selected={settings.language === 'si'} 
-                  onClick={() => updateSetting('language', 'si')} 
-                  label={t('lbl_lang_si')} 
-                  sub={t('lbl_lang_si_sub')} 
-                />
-                <RadioOption 
-                  selected={settings.language === 'ta'} 
-                  onClick={() => updateSetting('language', 'ta')} 
-                  label={t('lbl_lang_ta')} 
-                  sub={t('lbl_lang_ta_sub')} 
-                />
-                <RadioOption 
-                  selected={settings.language === 'en'} 
-                  onClick={() => updateSetting('language', 'en')} 
-                  label={t('lbl_lang_en')} 
-                  sub={t('lbl_lang_en_sub')} 
-                />
+                <RadioOption selected={settings.language === 'si'} onClick={() => updateSetting('language', 'si')} label={t('lbl_lang_si')} sub={t('lbl_lang_si_sub')} />
+                <RadioOption selected={settings.language === 'ta'} onClick={() => updateSetting('language', 'ta')} label={t('lbl_lang_ta')} sub={t('lbl_lang_ta_sub')} />
+                <RadioOption selected={settings.language === 'en'} onClick={() => updateSetting('language', 'en')} label={t('lbl_lang_en')} sub={t('lbl_lang_en_sub')} />
               </ContentCard>
             )}
 
@@ -1508,6 +1489,7 @@ const Settings = () => {
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .rounded-round { border-radius: 999px; }
 
+        /* Smooth transitions */
         * {
           transition: background-color 0.2s ease, 
                       color 0.2s ease, 
