@@ -1291,12 +1291,6 @@
 "timeline_activated": "Account Activated",
 "timeline_activated_desc": "Pending approval",
 "sign_out_btn": "Sign Out",
-
-"account_rejected_title": "Account Rejected",
-"account_rejected_desc": "Unfortunately your registration has been rejected by the admin.",
-"admin_note_label": "Admin Note",
-"account_rejected_contact": "Please contact your divisional office for more information or reapply with correct details.",
-"sign_out_btn": "Sign Out",
 "app_name": "Smart Grama Sewa",
 "all_rights_reserved": "All rights reserved."
 
