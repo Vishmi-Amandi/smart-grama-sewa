@@ -1342,28 +1342,8 @@
 "verify_redirecting": "Redirecting to login...",
 "verify_failed_title": "Verification Failed",
 "verify_go_to_login": "Go to Login",
-"app_name": "Smart Grama Sewa",
+"app_name": "Smart Grama Sewa"
 
-"duty_block_title": "Duty Block",
-"duty_select_date": "Select a date",
-"duty_date_label": "Date",
-"duty_type_label": "Duty Type",
-"duty_other_label": "Describe the work",
-"duty_other_placeholder": "e.g. Attending district coordination workshop",
-"duty_all_day": "Full Day",
-"duty_to": "to",
-"duty_meeting": "Meeting",
-"duty_on_field": "On Field",
-"duty_other": "Other",
-"duty_other_error": "Please describe the work for 'Other'.",
-"duty_date_error": "Please select a date.",
-"update_block": "Update Block",
-"add_duty_block": "Add Duty Block",
-"duty_blocks_title": "Official Duty Blocks",
-"duty_blocks_desc": "Block out time for meetings, field visits, or other official work. Blocked time won't be bookable by citizens.",
-"add": "Add",
-"no_duty_blocks": "No duty blocks this week.",
-"full_day": "Full day"
 
   }
 }
