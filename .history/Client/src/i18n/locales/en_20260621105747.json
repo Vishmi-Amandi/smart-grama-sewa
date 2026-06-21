@@ -1280,25 +1280,7 @@
 "reason_label": "Reason",
 "effective_date_label": "Effective Date",
 "admin_response_label": "Admin Response",
-"view_transfer_letter": "View Transfer Letter",
-
-"account_pending_title": "Account Under Review",
-"account_pending_desc": "Your registration has been submitted successfully. Our admin team is reviewing your details and documents. You will be notified once your account is approved.",
-"timeline_submitted": "Registration Submitted",
-"timeline_submitted_desc": "Your details have been received",
-"timeline_review": "Admin Review",
-"timeline_review_desc": "Your account is being reviewed",
-"timeline_activated": "Account Activated",
-"timeline_activated_desc": "Pending approval",
-"sign_out_btn": "Sign Out",
-
-"account_rejected_title": "Account Rejected",
-"account_rejected_desc": "Unfortunately your registration has been rejected by the admin.",
-"admin_note_label": "Admin Note",
-"account_rejected_contact": "Please contact your divisional office for more information or reapply with correct details.",
-"sign_out_btn": "Sign Out",
-"app_name": "Smart Grama Sewa",
-"all_rights_reserved": "All rights reserved."
+"view_transfer_letter": "View Transfer Letter"
 
 
   }
