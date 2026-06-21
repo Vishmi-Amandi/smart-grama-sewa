@@ -60,7 +60,6 @@ const Verify = () => {
         }, 3000);
 
       } catch (err) {
-        console.error('Verification error:', err);
         setError('Invalid or expired verification link.');
         setVerifying(false);
       }

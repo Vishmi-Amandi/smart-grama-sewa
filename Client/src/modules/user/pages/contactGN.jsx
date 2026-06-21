@@ -8,7 +8,6 @@ import { PageLoadingSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
 import NotificationBell from '../components/NotificationBell';
 
-// Icons
 const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
@@ -42,7 +41,6 @@ const IC = {
   xCircle: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z',
 };
 
-// ---------- NavItem (translated label) ----------
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
@@ -149,27 +147,21 @@ const ContactGN = () => {
 
   const fetchGNOfficer = async (gnDivision) => {
     if (!gnDivision) {
-      console.log("No GN division provided");
       setGnOfficer(null);
       return;
     }
     
-    try {
-      console.log("Searching for GN officer in division:", gnDivision);
-      
+    try {      
       const q = query(collection(db, 'gn_officers'), where('gnDiv', '==', gnDivision));
       const querySnapshot = await getDocs(q);
       
       if (!querySnapshot.empty) {
         const gnData = querySnapshot.docs[0].data();
-        console.log("Found GN officer:", gnData.fullName);
         setGnOfficer(gnData);
       } else {
-        console.log("No GN officer found for division:", gnDivision);
         setGnOfficer(null);
       }
     } catch (error) {
-      console.error('Error fetching GN officer:', error);
       setGnOfficer(null);
     }
   };
@@ -194,7 +186,6 @@ const ContactGN = () => {
             await fetchGNOfficer(data.gnDiv || data.divisionalSecretariat);
           }
         } catch (error) {
-          console.error('Error fetching user data:', error);
         }
       } else {
         navigate('/login');
@@ -223,7 +214,6 @@ const ContactGN = () => {
       await signOut(auth);
       navigate('/login');
     } catch (e) {
-      console.error(e);
     }
   };
 
@@ -248,7 +238,6 @@ const ContactGN = () => {
     }
   };
 
-  // Sidebar items with translated labels
   const navItems = [
     { key: 'dashboard', icon: IC.dashboard, path: '/dashboard' },
     { key: 'announcements', icon: IC.announcement, path: '/announcements' },
@@ -266,7 +255,6 @@ const ContactGN = () => {
 
   if (authLoading) return <PageLoadingSkeleton />;
 
-  // Get status message based on availability
   const getStatusMessage = (availability) => {
     switch (availability) {
       case 'Available': return t('lbl_status_message_available');
@@ -452,7 +440,7 @@ const ContactGN = () => {
               </p>
             </div>
             
-            {/* Status Banner with Refresh Button */}
+            {/* Status Banner */}
             {gnOfficer && (
               <div className={`mb-5 p-3 rounded-xl flex items-center justify-between ${
                 gnOfficer?.availability === 'Available' ? 'bg-green-50 border border-green-200' :
@@ -534,7 +522,7 @@ const ContactGN = () => {
               </div>
             )}
 
-            {/* GN Officer Card - Desktop View */}
+            {/* GN Officer Card */}
             {!isMobile ? (
               <div className="bg-user-surface rounded-xl border border-user-border p-6 mb-6 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-5">
@@ -573,7 +561,6 @@ const ContactGN = () => {
                 </div>
               </div>
             ) : (
-              // Mobile View
               <div className="bg-user-surface rounded-xl border border-user-border p-6 mb-6 text-center">
                 <div className="w-20 h-20 rounded-full bg-user-primary flex items-center justify-center mx-auto mb-4">
                   <Icon d={IC.profile} size={40} color="#3d2a00" strokeWidth={1.5} />

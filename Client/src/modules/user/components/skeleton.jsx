@@ -1,6 +1,5 @@
 import React from 'react';
 
-// Base skeleton block
 const SkeletonBlock = ({ w = '100%', h = 14, radius = 6, mb = 0, className = '' }) => (
   <div 
     className={`skeleton-block ${className}`}
@@ -13,7 +12,6 @@ const SkeletonBlock = ({ w = '100%', h = 14, radius = 6, mb = 0, className = '' 
   />
 );
 
-// Pulse keyframe
 const SkeletonStyle = () => (
   <style>{`
     @keyframes skeletonPulse {
@@ -32,9 +30,6 @@ const SkeletonStyle = () => (
   `}</style>
 );
 
-// ============================================
-// DESKTOP PAGE LOADING SKELETON (Width > 768px)
-// ============================================
 export const DesktopPageLoadingSkeleton = () => (
   <div className="min-h-screen flex font-sans" style={{ backgroundColor: 'var(--bg-page)' }}>
     <SkeletonStyle />
@@ -85,9 +80,7 @@ export const DesktopPageLoadingSkeleton = () => (
   </div>
 );
 
-// ============================================
-// MOBILE PAGE LOADING SKELETON (Width ≤ 768px)
-// ============================================
+
 export const MobilePageLoadingSkeleton = () => (
   <div className="min-h-screen block md:hidden" style={{ backgroundColor: 'var(--bg-page)' }}>
     <SkeletonStyle />
@@ -150,9 +143,6 @@ export const MobilePageLoadingSkeleton = () => (
   </div>
 );
 
-// ============================================
-// RESPONSIVE SKELETON (Auto-switches based on screen)
-// ============================================
 export const PageLoadingSkeleton = () => (
   <>
     <DesktopPageLoadingSkeleton />
@@ -160,9 +150,6 @@ export const PageLoadingSkeleton = () => (
   </>
 );
 
-// ============================================
-// DASHBOARD SKELETONS
-// ============================================
 
 export const DesktopDashboardSkeleton = () => (
   <div className="hidden md:block">
@@ -305,9 +292,6 @@ export const DashboardSkeleton = () => (
   </>
 );
 
-// ============================================
-// FORMS SKELETONS
-// ============================================
 
 export const DesktopFormsSkeleton = () => (
   <div className="hidden md:block">
@@ -411,10 +395,6 @@ export const FormsSkeleton = () => (
   </>
 );
 
-// ============================================
-// APPOINTMENTS SKELETONS
-// ============================================
-
 export const MobileAppointmentsListSkeleton = () => (
   <div className="block md:hidden">
     <SkeletonStyle />
@@ -477,10 +457,6 @@ export const AppointmentsListSkeleton = () => (
   </>
 );
 
-// ============================================
-// ANNOUNCEMENTS SKELETONS
-// ============================================
-
 export const MobileAnnouncementsListSkeleton = () => (
   <div className="block md:hidden">
     <SkeletonStyle />
@@ -530,9 +506,6 @@ export const AnnouncementsListSkeleton = () => (
   </>
 );
 
-// ============================================
-// PROFILE SKELETONS
-// ============================================
 
 export const MobileProfileSkeleton = () => (
   <div className="block md:hidden p-4">
@@ -662,9 +635,6 @@ export const SettingsSkeleton = () => (
   </>
 );
 
-// ============================================
-// EXPORT ALL
-// ============================================
 
 export default {
   PageLoadingSkeleton,

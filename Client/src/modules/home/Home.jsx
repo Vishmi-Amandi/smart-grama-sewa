@@ -35,14 +35,23 @@ const Home = () => {
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const q = query(
-          collection(db, 'announcements'),
-          where('isPublic', '==', true),
-          orderBy('createdAt', 'desc'),
-          limit(6)
-        );
-        const snapshot = await getDocs(q);
-        setAnnouncements(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const snapshot = await getDocs(collection(db, 'announcements'));
+        
+        const allData = snapshot.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data() 
+        }));
+        
+        const publicAnnouncements = allData
+          .filter(ann => ann.category === 'all_users')
+          .sort((a, b) => {
+            const dateA = a.publishedAt?.toDate?.() || new Date(a.publishedAt);
+            const dateB = b.publishedAt?.toDate?.() || new Date(b.publishedAt);
+            return dateB - dateA;
+          })
+          .slice(0, 6);
+        
+        setAnnouncements(publicAnnouncements);
       } catch (err) {
         console.error('Failed to fetch announcements:', err);
         setAnnouncements([]);
@@ -62,19 +71,25 @@ const Home = () => {
     }, 50);
   };
 
-  const badgeStyle = (type) => {
-    const map = {
-      urgent:  { bg: '#FEE2E2', text: '#B91C1C', label: 'Urgent' },
-      general: { bg: '#FEF9C3', text: '#92400E', label: 'General' },
-      event:   { bg: '#DBEAFE', text: '#1D4ED8', label: 'Event' },
-    };
-    return map[type] || map['general'];
+  const badgeStyle = (priority) => {
+    if (priority === 'high') {
+      return { bg: '#FEE2E2', text: '#B91C1C', label: 'High Priority' };
+    } else if (priority === 'medium') {
+      return { bg: '#FEF9C3', text: '#92400E', label: 'Medium' };
+    } else if (priority === 'low') {
+      return { bg: '#DBEAFE', text: '#1D4ED8', label: 'Low' };
+    }
+    return { bg: '#F3F4F6', text: '#6B7280', label: 'General' };
   };
 
   const formatDate = (ts) => {
     if (!ts) return '';
     const d = ts.toDate ? ts.toDate() : new Date(ts);
-    return d.toLocaleDateString('en-LK', { day: 'numeric', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString('en-LK', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric' 
+    });
   };
 
   const IconBox = ({ icon: Icon }) => (
@@ -89,7 +104,7 @@ const Home = () => {
       className="min-h-screen flex flex-col font-sans relative overflow-x-hidden"
     >
 
-      {/* ─── NAVBAR ──────────────────────────────────────────────────────────── */}
+      {/* NAVBAR */}
       <nav
         style={{ backgroundColor: 'var(--bg-topbar)' }}
         className="flex justify-between items-center py-3 px-4 md:px-8 shadow-sm sticky top-0 z-50"
@@ -249,7 +264,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ─── NEWS & NOTICES ──────────────────────────────────────────────────── */}
+      {/* NEWS & NOTICES */}
       <section id="news" className="py-16 md:py-24 px-6 md:px-16" style={{ backgroundColor: '#fff' }}>
         <div className="max-w-5xl mx-auto">
 
@@ -287,7 +302,7 @@ const Home = () => {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
               {announcements.map((ann) => {
-                const badge = badgeStyle(ann.type);
+                const badge = badgeStyle(ann.priority);
                 const isExpanded = expandedId === ann.id;
                 return (
                   <div
@@ -301,22 +316,28 @@ const Home = () => {
                       >
                         {badge.label}
                       </span>
-                      <span className="text-[11px] text-[#9a7c40]">{formatDate(ann.createdAt)}</span>
+                      <span className="text-[11px] text-[#9a7c40]">
+                        {formatDate(ann.publishedAt || ann.createdAt)}
+                      </span>
                     </div>
 
-                    <p className="font-bold text-[#3d2a00] text-sm leading-snug">{ann.title}</p>
+                    <p className="font-bold text-[#3d2a00] text-sm leading-snug">
+                      {ann.title || 'Untitled'}
+                    </p>
 
                     <p className="text-xs text-[#5a3e00] leading-relaxed line-clamp-3">
-                      {ann.content || ann.description || ann.message || ''}
+                      {ann.description || ann.message || ann.content || ''}
                     </p>
 
                     <div className="flex justify-between items-center mt-auto pt-2 border-t border-[#f0e8d0]">
-                      {ann.gnDivision && (
-                        <span className="flex items-center gap-1 text-[10px] text-[#7a5c00] font-medium bg-[#F5C400]/20 px-2 py-0.5 rounded-full">
-                          <MapPin size={10} strokeWidth={2.5} />
-                          {ann.gnDivision}
-                        </span>
-                      )}
+                      <div className="flex gap-2 items-center">
+                        {ann.gnDivision && (
+                          <span className="flex items-center gap-1 text-[10px] text-[#7a5c00] font-medium bg-[#F5C400]/20 px-2 py-0.5 rounded-full">
+                            <MapPin size={10} strokeWidth={2.5} />
+                            {ann.gnDivision}
+                          </span>
+                        )}
+                      </div>
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : ann.id)}
                         className="flex items-center gap-1 text-[11px] font-bold text-[#6A2301] ml-auto bg-transparent border-none cursor-pointer"
@@ -347,7 +368,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ─── CONTACT ─────────────────────────────────────────────────────────── */}
+      {/* CONTACT */}
       <section id="contact" className="py-16 md:py-24 px-6 md:px-16" style={{ backgroundColor: '#FFFBF0' }}>
         <div className="max-w-5xl mx-auto">
 
@@ -449,7 +470,7 @@ const Home = () => {
                   </p>
                 </div>
                 <Link
-                  to="/login"
+                  to="/login" 
                   className="flex-shrink-0 bg-[#6A2301] text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-[#8B2F00] transition-colors text-center shadow-md max-w-full md:max-w-[200px]"
                 >
                   {t('btn_contact_gn')}

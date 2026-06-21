@@ -324,7 +324,6 @@ const Dashboard = () => {
         .slice(0, 3);
       setAppointments(list);
     } catch (e) { 
-      console.error('Error fetching appointments:', e);
       showToast('Failed to load appointments', 'error');
     } finally { 
       setLoadingAppointments(false); 
@@ -396,7 +395,6 @@ const fetchAnnouncements = async (showRefresh = false) => {
       setAnnouncements(defaultAnnouncements);
     }
   } catch (e) {
-    console.error('Error fetching announcements:', e);
     showToast('Failed to load announcements', 'error');
   } finally {
     setLoadingAnnouncements(false);
@@ -423,17 +421,14 @@ const fetchAnnouncements = async (showRefresh = false) => {
                 
                 if (!querySnap.empty) {
                   const gnData = querySnap.docs[0].data();
-                  console.log("✅ Found GN Officer:", gnData.fullName, "Status:", gnData.availability);
                   setGnOfficer(gnData);
                 } else {
-                  console.log("❌ No GN officer found for division:", data.gnDiv);
                 }
               } catch (e) { 
-                console.warn('GN officer fetch error:', e.message);
               }
             }
           }
-        } catch (e) { console.warn('User profile:', e.message); }
+        } catch (e) {}
       } else { navigate('/login'); }
       setAuthLoading(false);
     });
@@ -441,7 +436,8 @@ const fetchAnnouncements = async (showRefresh = false) => {
   }, [navigate]);
 
   // Load data on mount
-  useEffect(() => { if (currentUser) fetchAppointments(false); }, [currentUser]);
+  useEffect(() => { 
+    if (currentUser) fetchAppointments(false); }, [currentUser]);
   useEffect(() => { 
   if (userData !== null) fetchAnnouncements(false); 
 }, [userData]);
@@ -452,12 +448,10 @@ const fetchAnnouncements = async (showRefresh = false) => {
       showToast('Logged out successfully', 'success');
       navigate('/login'); 
     } catch (e) { 
-      console.error(e);
       showToast('Failed to logout', 'error');
     } 
   };
 
-  // Search function
   const getFilteredPages = () => {
     if (!searchQuery.trim()) return [];
     const query = searchQuery.toLowerCase();
@@ -513,7 +507,6 @@ const fetchAnnouncements = async (showRefresh = false) => {
     { key: 'logout', icon: IC.logout, label: t('lbl_sign_out'), action: 'logout' },
   ];
 
-  // Shared widget components
   const AppointmentsWidget = () => (
     <div className="bg-[#c8a882] rounded-xl overflow-hidden shadow-md">
       <div className="flex justify-between items-center px-5 py-4">
@@ -724,30 +717,30 @@ const fetchAnnouncements = async (showRefresh = false) => {
                     <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
                   </div>
                   <button 
-  onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} 
-  className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-yellow-50 font-semibold text-sm text-user-text cursor-pointer transition-colors"
->
-  <Icon d={IC.profile} size={16} color="#B46A02" /> 
-  <span>{t('lbl_my_profile')}</span>
-</button>
+                    onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} 
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-yellow-50 font-semibold text-sm text-user-text cursor-pointer transition-colors"
+                  >
+                    <Icon d={IC.profile} size={16} color="#B46A02" /> 
+                    <span>{t('lbl_my_profile')}</span>
+                  </button>
 
-<button 
-  onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} 
-  className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-yellow-50 font-semibold text-sm text-user-text cursor-pointer transition-colors"
->
-  <Icon d={IC.settings} size={16} color="#B46A02" /> 
-  <span>{t('lbl_settings')}</span>
-</button>
+                  <button 
+                    onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} 
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-yellow-50 font-semibold text-sm text-user-text cursor-pointer transition-colors"
+                  >
+                    <Icon d={IC.settings} size={16} color="#B46A02" /> 
+                    <span>{t('lbl_settings')}</span>
+                  </button>
 
-<div className="border-t border-user-border-light"></div>
+                  <div className="border-t border-user-border-light"></div>
 
-<button 
-  onClick={() => { handleLogout(); setShowProfileMenu(false); }} 
-  className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-red-50 font-bold text-sm text-red-600 cursor-pointer transition-colors"
->
-  <Icon d={IC.logout} size={16} color="#ef4444" /> 
-  <span>{t('lbl_sign_out')}</span>
-</button>
+                  <button 
+                    onClick={() => { handleLogout(); setShowProfileMenu(false); }} 
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left border-none bg-transparent hover:bg-red-50 font-bold text-sm text-red-600 cursor-pointer transition-colors"
+                  >
+                    <Icon d={IC.logout} size={16} color="#ef4444" /> 
+                    <span>{t('lbl_sign_out')}</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -783,9 +776,9 @@ const fetchAnnouncements = async (showRefresh = false) => {
                   <Icon d={IC.profile} size={28} color="#8a7060" strokeWidth={1.5} />
                 </div>
                 <div className="flex items-center gap-2 text-xl md:text-2xl font-black text-user-text tracking-tight">
-  <Icon d={greeting.icon} size={24} color="#B46A02" />
-  {t(greeting.text)}, {firstName}!
-</div>
+                  <Icon d={greeting.icon} size={24} color="#B46A02" />
+                  {t(greeting.text)}, {firstName}!
+                </div>
               </div>
               
               {/* Date and Location */}
@@ -811,63 +804,63 @@ const fetchAnnouncements = async (showRefresh = false) => {
               
               {/* GN availablility */}
               <div className="bg-user-surface border border-user-border rounded-xl p-4 md:p-5 min-w-[190px] flex flex-col justify-center gap-1">
-  {/* 1. Dynamic Translated Title */}
-  <div className="text-xs font-bold text-user-text-lighter">{t('lbl_gn_officer')}</div>
-  
-  <div className="text-base md:text-base font-black text-user-text">{gnName}</div>
-  {gnDivLabel && <div className="text-[11px] font-semibold text-user-text-lighter">{gnDivLabel}</div>}
-  
-  <div className="flex items-center gap-1.5 mt-1">
-    {/* 2. Dynamic Translated Status State */}
-    <span className={`text-sm font-bold ${
-      gnOfficer?.availability === 'Available' ? 'text-green-600' :
-      gnOfficer?.availability === 'In Meeting' ? 'text-orange-500' :
-      gnOfficer?.availability === 'On Field' ? 'text-red-600' :
-      gnOfficer?.availability === 'Not Available' ? 'text-gray-500' : 'text-gray-500'
-    }`}>
-      {gnOfficer?.availability ? t(`status_${gnOfficer.availability.toLowerCase().replace(' ', '_')}`) : t('status_available')}
-    </span>
-    
-    <div className={`w-2 h-2 rounded-full ${
-      gnOfficer?.availability === 'Available' ? 'bg-green-500' :
-      gnOfficer?.availability === 'In Meeting' ? 'bg-orange-500' :
-      gnOfficer?.availability === 'On Field' ? 'bg-red-500' :
-      gnOfficer?.availability === 'Not Available' ? 'bg-gray-400' : 'bg-gray-400'
-    } animate-pulse-gn`} />
-  </div>
-  
-  {/* Add status messages */}
-  {gnOfficer?.availability === 'In Meeting' && (
-    <div className="text-[10px] text-orange-500 mt-1">{t('lbl_currently_in_meeting')}</div>
-  )}
-  {gnOfficer?.availability === 'On Field' && (
-    <div className="text-[10px] text-red-500 mt-1">{t('lbl_out_on_field')}</div>
-  )}
-</div>
+                {/* 1. Dynamic Translated Title */}
+                <div className="text-xs font-bold text-user-text-lighter">{t('lbl_gn_officer')}</div>
+                
+                <div className="text-base md:text-base font-black text-user-text">{gnName}</div>
+                {gnDivLabel && <div className="text-[11px] font-semibold text-user-text-lighter">{gnDivLabel}</div>}
+                
+                <div className="flex items-center gap-1.5 mt-1">
+                  {/* 2. Dynamic Translated Status State */}
+                  <span className={`text-sm font-bold ${
+                    gnOfficer?.availability === 'Available' ? 'text-green-600' :
+                    gnOfficer?.availability === 'In Meeting' ? 'text-orange-500' :
+                    gnOfficer?.availability === 'On Field' ? 'text-red-600' :
+                    gnOfficer?.availability === 'Not Available' ? 'text-gray-500' : 'text-gray-500'
+                  }`}>
+                    {gnOfficer?.availability ? t(`status_${gnOfficer.availability.toLowerCase().replace(' ', '_')}`) : t('status_available')}
+                  </span>
+                  
+                  <div className={`w-2 h-2 rounded-full ${
+                    gnOfficer?.availability === 'Available' ? 'bg-green-500' :
+                    gnOfficer?.availability === 'In Meeting' ? 'bg-orange-500' :
+                    gnOfficer?.availability === 'On Field' ? 'bg-red-500' :
+                    gnOfficer?.availability === 'Not Available' ? 'bg-gray-400' : 'bg-gray-400'
+                  } animate-pulse-gn`} />
+                </div>
+                
+                {/* Add status messages */}
+                {gnOfficer?.availability === 'In Meeting' && (
+                  <div className="text-[10px] text-orange-500 mt-1">{t('lbl_currently_in_meeting')}</div>
+                )}
+                {gnOfficer?.availability === 'On Field' && (
+                  <div className="text-[10px] text-red-500 mt-1">{t('lbl_out_on_field')}</div>
+                )}
+              </div>
             </div>
 
             {/* Quick Actions */}
             <div className="mb-5">
               <div className="flex items-center gap-2 text-[15px] font-extrabold text-user-text mb-3.5">
-  <Icon d={IC.bolt} size={16} color="#B46A02" />
-  {t('lbl_quick_actions')}
-</div>
-<div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-  <QuickCard iconPath={IC.calendar} label={t('lbl_book_appointment')} onClick={() => navigate('/appointments')} tooltip="Schedule a meeting with GN officer" />
-  <QuickCard iconPath={IC.download} label={t('lbl_download_forms')} onClick={() => navigate('/forms')} tooltip="Download application forms" />
-  <QuickCard iconPath={IC.ai} label={t('lbl_ai_assistant')} onClick={() => window.openChatbot?.()} tooltip="Get help from our AI assistant" />
-  <QuickCard iconPath={IC.phone} label={t('lbl_contact_gn')} onClick={() => navigate('/contact-gn')} tooltip="Contact your GN officer" />
-  <EmergencyCard 
-    label={t('lbl_emergency_hotline')}
-    onClick={() => { 
-      const num = gnOfficer?.officeMobile?.replace(/[^0-9+]/g, '') || gnOfficer?.mobile?.replace(/[^0-9+]/g, '') || '+94712345678'; 
-      if (confirm(t('lbl_emergency_confirm'))) {
-        window.location.href = `tel:${num}`;
-      }
-    }} 
-    tooltip="24/7 Emergency Hotline" 
-  />
-</div>
+                <Icon d={IC.bolt} size={16} color="#B46A02" />
+                {t('lbl_quick_actions')}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <QuickCard iconPath={IC.calendar} label={t('lbl_book_appointment')} onClick={() => navigate('/appointments')} tooltip="Schedule a meeting with GN officer" />
+                <QuickCard iconPath={IC.download} label={t('lbl_download_forms')} onClick={() => navigate('/forms')} tooltip="Download application forms" />
+                <QuickCard iconPath={IC.ai} label={t('lbl_ai_assistant')} onClick={() => window.openChatbot?.()} tooltip="Get help from our AI assistant" />
+                <QuickCard iconPath={IC.phone} label={t('lbl_contact_gn')} onClick={() => navigate('/contact-gn')} tooltip="Contact your GN officer" />
+                <EmergencyCard 
+                  label={t('lbl_emergency_hotline')}
+                  onClick={() => { 
+                    const num = gnOfficer?.officeMobile?.replace(/[^0-9+]/g, '') || gnOfficer?.mobile?.replace(/[^0-9+]/g, '') || '+94712345678'; 
+                    if (confirm(t('lbl_emergency_confirm'))) {
+                      window.location.href = `tel:${num}`;
+                    }
+                  }} 
+                  tooltip="24/7 Emergency Hotline" 
+                />
+              </div>
             </div>
 
             {/* Widgets */}
@@ -932,9 +925,9 @@ const fetchAnnouncements = async (showRefresh = false) => {
                   <Icon d={IC.profile} size={24} color="#8a7060" strokeWidth={1.5} />
                 </div>
                 <div className="flex items-center gap-2 text-xl font-black text-user-text leading-tight">
-  <Icon d={greeting.icon} size={20} color="#B46A02" />
-  {t('greeting_welcome_back')}, {firstName}!
-</div>
+                  <Icon d={greeting.icon} size={20} color="#B46A02" />
+                  {t('greeting_welcome_back')}, {firstName}!
+                </div>
               </div>
               
               {/* Date and Location */}
@@ -959,37 +952,37 @@ const fetchAnnouncements = async (showRefresh = false) => {
 
               {/* GN Officer card */}
               <div className="bg-user-surface border border-user-border rounded-xl p-3.5 mb-5">
-  <div className="flex items-center justify-between">
-    <div>
-      {/* 1. Dynamic Translated Title */}
-      <div className="text-xs font-bold text-user-text-lighter mb-0.5">{t('lbl_gn_officer')}</div>
-      <div className="text-base font-black text-user-text">{gnName}</div>
-    </div>
-    <div className="flex items-center gap-1.5">
-      {/* 2. Dynamic Translated Status State */}
-      <span className={`text-sm font-bold ${
-        gnOfficer?.availability === 'Available' ? 'text-green-600' :
-        gnOfficer?.availability === 'In Meeting' ? 'text-orange-500' :
-        gnOfficer?.availability === 'On Field' ? 'text-red-600' : 'text-gray-500'
-      }`}>
-        {gnOfficer?.availability ? t(`status_${gnOfficer.availability.toLowerCase().replace(' ', '_')}`) : t('status_available')}
-      </span>
-      
-      <div className={`w-2 h-2 rounded-full ${
-        gnOfficer?.availability === 'Available' ? 'bg-green-500' :
-        gnOfficer?.availability === 'In Meeting' ? 'bg-orange-500' :
-        gnOfficer?.availability === 'On Field' ? 'bg-red-500' : 'bg-gray-400'
-      } flex-shrink-0`} />
-    </div>
-  </div>
-  
-  {gnOfficer?.availability === 'In Meeting' && (
-    <div className="text-[10px] text-orange-500 mt-2">{t('lbl_currently_in_meeting')}</div>
-  )}
-  {gnOfficer?.availability === 'On Field' && (
-    <div className="text-[10px] text-red-500 mt-2">{t('lbl_out_on_field')}</div>
-  )}
-</div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    {/* 1. Dynamic Translated Title */}
+                    <div className="text-xs font-bold text-user-text-lighter mb-0.5">{t('lbl_gn_officer')}</div>
+                    <div className="text-base font-black text-user-text">{gnName}</div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {/* 2. Dynamic Translated Status State */}
+                    <span className={`text-sm font-bold ${
+                      gnOfficer?.availability === 'Available' ? 'text-green-600' :
+                      gnOfficer?.availability === 'In Meeting' ? 'text-orange-500' :
+                      gnOfficer?.availability === 'On Field' ? 'text-red-600' : 'text-gray-500'
+                    }`}>
+                      {gnOfficer?.availability ? t(`status_${gnOfficer.availability.toLowerCase().replace(' ', '_')}`) : t('status_available')}
+                    </span>
+                    
+                    <div className={`w-2 h-2 rounded-full ${
+                      gnOfficer?.availability === 'Available' ? 'bg-green-500' :
+                      gnOfficer?.availability === 'In Meeting' ? 'bg-orange-500' :
+                      gnOfficer?.availability === 'On Field' ? 'bg-red-500' : 'bg-gray-400'
+                    } flex-shrink-0`} />
+                  </div>
+                </div>
+                
+                {gnOfficer?.availability === 'In Meeting' && (
+                  <div className="text-[10px] text-orange-500 mt-2">{t('lbl_currently_in_meeting')}</div>
+                )}
+                {gnOfficer?.availability === 'On Field' && (
+                  <div className="text-[10px] text-red-500 mt-2">{t('lbl_out_on_field')}</div>
+                )}
+              </div>
 
               {/* Quick Actions */}
               <div className="mb-5">
