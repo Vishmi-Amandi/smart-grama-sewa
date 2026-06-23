@@ -1366,21 +1366,21 @@
 "full_day": "Full day",
 
 
-
-  "nav": {
+"nav": {
     "dashboard": "Dashboard",
     "announcements": "Announcements",
     "appointments": "Appointments",
     "forms": "Forms",
     "ai": "AI Assistant",
-    "profile": "Profile",
+    "profile": "My Profile",
     "settings": "Settings",
     "logout": "Sign Out"
   },
-  "search": {
-    "placeholder": "Search for a page or function...",
-    "clickToGo": "Click to go to {{name}}"
-  },
+
+
+
+
+
   "forms": {
     "pageTitle": "Forms",
     "pageSubtitle": "Apply for certificates, permits, and official documents through your Grama Niladhari",
@@ -1415,6 +1415,11 @@
     },
     "modal": {
       "officialPortal": "Official Verification Portal",
+      "step1": "1",
+      "step2": "2",
+      "step3": "3",
+      "step4": "4",
+      "step5": "5",
       "divisionApplicant": "Division & Applicant Info",
       "residenceFamily": "Residence & Family",
       "verificationReason": "Verification & Reason",
@@ -1619,125 +1624,7 @@
       "leased": "Leased Land (Temporary Grant)",
       "traditional": "Traditional Ownership (Nindagam)"
     }
-  },
-  "common": {
-    "select": "Select",
-    "addRow": "Add Row",
-    "remove": "Remove"
-  },
-  "validation": {
-    "phone": "Phone number must be exactly 10 digits.",
-    "nic": "NIC must be 12 numbers or 9 numbers followed by a V.",
-    "correctErrors": "Please correct the validation errors highlighted in red before proceeding.",
-    "ycDobRange": "Date of Birth must strictly be between 2008-02-01 and 2010-01-31 to utilize the Young Citizen track.",
-    "pdfError": "Failed to generate PDF. Please try again."
-  },
-  "toast": {
-    "downloadSuccess": "PDF downloaded successfully!"
-  },
-  "income": {
-    "toggleStreams": "Toggle your active financial streams below to fill details:",
-    "jobLabel": "1. Income From Employment / Profession",
-    "propertyLabel": "2. Income From Land and Property",
-    "businessLabel": "3. Income From Businesses",
-    "totalAnnual": "Total Annual Income",
-    "reliefQuestion": "Are you a recipient of Samurdhi or any other public relief/allowance?",
-    "attachAudits": "Attach Document Audits (Certified Verification Slips)",
-    "purposes": {
-      "university": "University Admission",
-      "bankLoan": "Bank Loan",
-      "scholarship": "Scholarship",
-      "other": "Other External Verification"
-    }
-  },
-  "valuation": {
-    "fourBoundaries": "Four Boundaries (හතර මායිම්)",
-    "totalExtent": "Total Extent of Land (මුළු විශාලත්වය)",
-    "supportingFiles": "Supporting Files (Scanned Title Deeds, Survey Plan PDF)"
-  },
-  "identity": {
-    "drpAdmin": "DRP Administrative Division Office Info",
-    "nameMatrix": "Full Name Matrix (English Block Letters Only)",
-    "attachPhoto": "Affix Color Photograph Registry (35mm x 45mm)",
-    "drpDeclaration": "DRP Applicant Declaration: I declare that I am a citizen of Sri Lanka and all documentation attached is accurate."
-  },
-  "disabled": {
-    "tableA": "👥 Table A: Family Members with Disabilities",
-    "tableB": "👥 Table B: Other Family Members",
-    "fullName": "Full Name",
-    "relationship": "Relationship",
-    "gender": "Gender",
-    "status": "Status",
-    "nic": "NIC Number",
-    "disabilityType": "Disability",
-    "incomeSource": "Income Source & Amount",
-    "medicalCert": "🩺 Section C: Medical Officer Certification"
-  },
-  "voter": {
-    "checkRegister": "Check Live Electoral Register Profile",
-    "crossVerify": "Cross-verify registration logs instantly.",
-    "optionA": "[ Option A ]",
-    "optionADesc": "Register a young citizen turning 18 (YC Form Track)",
-    "optionB": "[ Option B ]",
-    "optionBDesc": "Update household general voter list (ER Form Track)",
-    "ycForm": "Young Citizen Enrollment (YC Form)",
-    "erForm": "Annual Electoral Register Revision (ER Form)",
-    "newlyAdded": "➕ Persons to be NEWLY Added",
-    "deleted": "➖ Persons to be DELETED",
-    "fullName": "Full Name",
-    "relationship": "Relationship",
-    "nic": "NIC Number",
-    "gender": "Gender",
-    "reason": "Reason",
-    "deathDate": "Date of Death",
-    "newAddress": "New Address",
-    "newPhone": "New Phone",
-    "legalAcknowledgment": "Legal Acknowledgment: I declare the particulars given are true and accurate. I am aware that false information is a punishable offence under Section 12(4) of the Registration of Electors Act."
-  },
-  "tree": {
-    "landExtent": "Land Extent / Dimensions",
-    "ldoLease": "LDO Lease / Permit Land",
-    "species": "Tree Species",
-    "girth": "Girth (M/Inches)",
-    "height": "Height (M)",
-    "middleGirth": "Middle Girth / Breast Height",
-    "reason": "Reason for Felling",
-    "proximityDanger": "Proximity Danger Flag (near utility lines / buildings)",
-    "deedCopy": "Certified Copy of Title Deed",
-    "surveyPlan": "Approved Survey Plan PDF",
-    "photoEvidence": "Photographic Evidence",
-    "declaration": "I hereby state that all logged metrics regarding timber dimensions and land tenure are accurate."
-  },
-  "timber": {
-    "species": "Species / Variety",
-    "girth": "Girth / Circumference (M)",
-    "height": "Height (M)",
-    "woodVol": "Est Wood Volume (m³)",
-    "firewoodVol": "Est Firewood Vol (m³)",
-    "noThreat": "No Threat",
-    "yesDanger": "Yes (Danger)",
-    "sketchMap": "Land Sketch Map / Layout Diagram *",
-    "deedCopy": "Certified Copy of Title Deed *",
-    "landPlan": "Certified Copy of Land Plan Map *",
-    "declaration": "I hereby state that all property boundaries, volume projections, and infrastructure threat criteria logged here are valid and accurate."
-  },
-  "business": {
-    "retail": "Retail Shop / Grocery",
-    "it": "Software / Technology Services",
-    "manufacturing": "Manufacturing / Workshop",
-    "owned": "Owned by Applicant",
-    "rented": "Rented / Leased",
-    "family": "Family-Owned",
-    "environmentalCompliance": "Environmental Protection Compliance",
-    "complianceCheck": "I verify that business operations cause no hazardous waste or environmental violations.",
-    "premisesProof": "Premises Proof (Deed / Lease Agreement) *",
-    "ownerIdProof": "Proprietor Identity Copy (NIC Scan) *",
-    "finalDeclaration": "I hereby certify all information submitted is completely truthful and valid."
-  },
-  "assessment": {
-    "supportingDocs": "Supporting Documents (Title Deed / Grant Copy)"
   }
-
 
 
   }

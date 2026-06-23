@@ -124,7 +124,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
     <div className="flex-1" />
     
     <LanguageSwitcher 
-      currentLanguage={currentLanguage} 
+      currentLanguage={i18n.language}
       onLanguageChange={onLanguageChange}
     />
     
@@ -1829,7 +1829,6 @@ const Forms = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState('en');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -1916,9 +1915,8 @@ const Forms = () => {
   const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
 
   const handleLanguageChange = (langCode) => {
-    setCurrentLanguage(langCode);
-    i18n.changeLanguage(langCode);
-  };
+  i18n.changeLanguage(langCode);
+};
 
   useEffect(() => {
     const handleClickOutside = () => { setShowSearchResults(false); setShowProfileMenu(false); };
@@ -1948,7 +1946,7 @@ const Forms = () => {
               showResults={showSearchResults}
               setShowResults={setShowSearchResults}
               navigate={navigate}
-              currentLanguage={currentLanguage}
+              currentLanguage={i18n.language}
               onLanguageChange={handleLanguageChange}
               showProfileMenu={showProfileMenu}
               setShowProfileMenu={setShowProfileMenu}
