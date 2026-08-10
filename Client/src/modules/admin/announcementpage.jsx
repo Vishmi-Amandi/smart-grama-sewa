@@ -116,7 +116,7 @@ function Sidebar({ onLogout }) {
         </li>
         <li className="pt-2">
           <NavItem icon={TrendingUp} label="Statistical Changes" bold 
-            onClick={() => navigate('/admin/statistical-changes')} />
+            onClick={() => navigate('/admin/staticalchanges')} />
         </li>
         {/* <li className="px-4 pt-1">
           <NavItem icon={Bell} label="Notifications" bold
