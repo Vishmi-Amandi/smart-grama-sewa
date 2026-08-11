@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, UserCheck, ArrowLeftRight, BarChart2,
   User, Activity, Megaphone, Calendar, Bell, LogOut, Search,
-  ChevronDown, CheckCircle, XCircle
+  ChevronDown, CheckCircle, XCircle, TrendingUp 
 } from 'lucide-react';
 import { db } from '../../firebase';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
@@ -78,7 +78,7 @@ function Sidebar({ onLogout }) {
             onClick={() => navigate("/admin/calendar")} />
         </li>
         <li className="pt-2">
-          <NavItem icon={TrendingUp} label="Statistical Changes" bold active
+          <NavItem icon={TrendingUp} label="Statistical Changes" bold 
             onClick={() => navigate('/admin/statistical-changes')} />
         </li>
       </ul>
