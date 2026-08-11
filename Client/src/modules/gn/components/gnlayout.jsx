@@ -61,6 +61,14 @@ const GNNotificationBell = ({ theme }) => {
     return `${Math.floor(mins/1440)}d ago`;
   };
 
+  // Notification type display config
+  const TYPE_CONFIG = {
+    new_appointment:    { icon: '📋', color: '#8B4513', bg: '#FEF3C7', nav: '/gn-appointments' },
+    transfer_approved:  { icon: '✅', color: '#065F46', bg: '#D1FAE5', nav: '/change-gn-request-status' },
+    transfer_rejected:  { icon: '❌', color: '#991B1B', bg: '#FEE2E2', nav: '/change-gn-request-status' },
+  };
+  const getTypeConfig = (type) => TYPE_CONFIG[type] || { icon: '🔔', color: '#8B4513', bg: '#FEF3C7', nav: '/gn-appointments' };
+
   return (
     <div ref={dropdownRef} className="relative">
       <button
@@ -94,29 +102,38 @@ const GNNotificationBell = ({ theme }) => {
                 <p className="text-xs text-gray-400 mt-1">New appointment requests will appear here</p>
               </div>
             ) : (
-              notifications.slice(0, 10).map(n => (
-                <div
-                  key={n.id}
-                  onClick={() => { markAsRead(n.id); setIsOpen(false); navigate('/gn-appointments'); }}
-                  className={`flex gap-3 px-4 py-3 cursor-pointer border-b transition-colors ${
-                    theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-50 hover:bg-amber-50'
-                  } ${!n.read ? (theme === 'dark' ? 'bg-gray-700/50' : 'bg-amber-50/60') : ''}`}
-                  style={{ borderLeft: !n.read ? '3px solid #8B4513' : '3px solid transparent' }}
-                >
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-amber-100">
-                    <span style={{ fontSize: '15px' }}>📋</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className={`text-xs font-bold truncate ${!n.read ? 'text-[#8B4513]' : theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                      {n.title}
+              notifications.slice(0, 10).map(n => {
+                const cfg = getTypeConfig(n.type);
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => { markAsRead(n.id); setIsOpen(false); navigate(cfg.nav); }}
+                    className={`flex gap-3 px-4 py-3 cursor-pointer border-b transition-colors ${
+                      theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-50 hover:bg-gray-50'
+                    } ${!n.read ? (theme === 'dark' ? 'bg-gray-700/50' : '') : ''}`}
+                    style={{
+                      borderLeft: !n.read ? `3px solid ${cfg.color}` : '3px solid transparent',
+                      background: !n.read ? `${cfg.bg}50` : undefined,
+                    }}
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ background: cfg.bg }}>
+                      <span style={{ fontSize: '15px' }}>{cfg.icon}</span>
                     </div>
-                    <div className="text-xs text-gray-500 mt-0.5" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {(n.body || '').slice(0, 100)}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold truncate"
+                        style={{ color: !n.read ? cfg.color : theme === 'dark' ? '#fff' : '#1f2937' }}>
+                        {n.title}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5"
+                        style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {(n.body || '').slice(0, 110)}
+                      </div>
+                      <div className="text-[10px] text-gray-400 mt-1">{timeAgo(n.createdAt)}</div>
                     </div>
-                    <div className="text-[10px] text-gray-400 mt-1">{timeAgo(n.createdAt)}</div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
           {notifications.length > 0 && (

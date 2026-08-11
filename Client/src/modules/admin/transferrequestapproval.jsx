@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { db } from '../../firebase';
 import {
-  collection, getDocs, doc, updateDoc, addDoc, Timestamp, query, where
+  collection, getDocs, doc, updateDoc, setDoc, Timestamp, query, where
 } from 'firebase/firestore';
 
 // ─── Colors ───────────────────────────────────────────────────────────────
@@ -298,8 +298,6 @@ export default function TransferRequestApproval() {
         const officerDoc = officerSnap.docs[0];
 
         // 2. Update gn_officers with new division/district details
-        //    We map fromDivision→toDivision and fromDistrict→toDistrict
-        //    and clear/flag officeAddress & officeMobile for the officer to update
         await updateDoc(doc(db, 'gn_officers', officerDoc.id), {
           gnDivision:             request.toDivision   || '',
           gnDivisionName:         request.toDivision   || '',
@@ -307,17 +305,16 @@ export default function TransferRequestApproval() {
           district:               request.toDistrict   || '',
           divisionalSecretariat:  request.toDistrict   || '',
           dsDiv:                  request.toDistrict   || '',
-          gnCode:                 '',   // reset; officer updates after transfer
-          province:               '',   // reset; officer updates after transfer
+          gnCode:                 '',
+          province:               '',
         });
 
-        // 3. Send notification to the GN officer
-        await addDoc(collection(db, 'notifications'), {
-          uid:       request.uid,
-          email:     request.email || '',
-          title:     'Transfer Request Approved',
-          message:   'Your transfer request has been approved. Please update your office address (officeAddress) and office mobile number (officeMobile) in your profile to reflect your new posting.',
+        // 3. Send in-app notification to the GN officer's personal notifications sub-collection
+        const notifRef = doc(collection(db, 'gn_officers', officerDoc.id, 'notifications'));
+        await setDoc(notifRef, {
           type:      'transfer_approved',
+          title:     '✅ Transfer Request Approved',
+          body:      `Your division transfer request from "${request.fromDivision || 'your current division'}" to "${request.toDivision}" (${request.toDistrict} District) has been approved by the Admin. Effective date: ${request.effectiveDate || 'N/A'}. Please update your office address and mobile in your profile.`,
           read:      false,
           createdAt: Timestamp.now(),
         });
@@ -338,16 +335,37 @@ export default function TransferRequestApproval() {
     }
   }
 
-  // ── Reject: just update status ──
+  // ── Reject: update status + send rejection notification ──
   async function handleReject(request) {
     const docId = request._docId;
     setActionLoading(p => ({ ...p, [docId]: 'rejected' }));
     try {
+      // 1. Update the transfer request status
       await updateDoc(doc(db, 'gn_change_gn_division', docId), { status: 'rejected' });
+
+      // 2. Find the gn_officer document by uid and send rejection notification
+      const officerQuery = query(
+        collection(db, 'gn_officers'),
+        where('uid', '==', request.uid)
+      );
+      const officerSnap = await getDocs(officerQuery);
+
+      if (!officerSnap.empty) {
+        const officerDoc = officerSnap.docs[0];
+        const notifRef = doc(collection(db, 'gn_officers', officerDoc.id, 'notifications'));
+        await setDoc(notifRef, {
+          type:      'transfer_rejected',
+          title:     '❌ Transfer Request Rejected',
+          body:      `Your division transfer request from "${request.fromDivision || 'your current division'}" to "${request.toDivision}" (${request.toDistrict} District) has been rejected by the Admin. Please contact the administration for further clarification.`,
+          read:      false,
+          createdAt: Timestamp.now(),
+        });
+      }
+
       setRequests(prev =>
         prev.map(r => r._docId === docId ? { ...r, status: 'rejected' } : r)
       );
-      showToast('Transfer request rejected.', 'error');
+      showToast('Transfer request rejected. Officer notified.', 'error');
     } catch (e) {
       showToast('Rejection failed: ' + (e.message || 'Unknown error'), 'error');
     } finally {
