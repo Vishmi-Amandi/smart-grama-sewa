@@ -270,81 +270,9 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
 };
 
 // ============================================================
-// MAPPING OF FORM FIELDS (for Download Form)
+// SIMPLE PDF GENERATION – NOW WITH TRANSLATIONS
 // ============================================================
-const formFieldKeys = {
-  1: [ // Residence Certificate
-    'applicantName', 'applicantAddress', 'sex', 'age', 'civilStatus', 'isSriLankan', 'religion', 'occupation',
-    'villagePeriod', 'gnPeriod', 'residenceEvidence', 'nicNumber', 'electoralDetails',
-    'fatherName', 'fatherAddress', 'courtConviction', 'socialService', 'certificatePurpose'
-  ],
-  2: [ // Character Certificate – same fields as Residence (they are similar)
-    'applicantName', 'applicantAddress', 'sex', 'age', 'civilStatus', 'isSriLankan', 'religion', 'occupation',
-    'villagePeriod', 'gnPeriod', 'residenceEvidence', 'nicNumber', 'electoralDetails',
-    'fatherName', 'fatherAddress', 'courtConviction', 'socialService', 'certificatePurpose'
-  ],
-  3: [ // Income Certificate
-    'incFullName', 'incAddress', 'incNic', 'incPurpose',
-    'incomeJobAmt', 'incomeLandAmt', 'incomeBizAmt',
-    'summaryEmployment', 'summaryLand', 'summaryBusiness', 'summaryOther',
-    'reliefName', 'incomeAccuracyEvidence', 'submissionTargetInstitution'
-  ],
-  4: [ // Valuation Certificate
-    'valRefNo', 'valRequestDate', 'valDsDivision', 'valGnDivision', 'valLandName',
-    'boundNorth', 'boundEast', 'boundSouth', 'boundWest',
-    'sizeAcres', 'sizeRoods', 'sizePerches',
-    'valLandType', 'possessionYears', 'possessionMonths'
-  ],
-  5: [ // Identity Card Application
-    'nicFamilyName', 'nicOtherNames', 'nicSurname', 'nicPreferredName',
-    'nicSex', 'nicCivilStatus', 'nicDob', 'nicBirthCertNo',
-    'nicBirthPlace', 'nicBirthDistrict', 'nicOccupation',
-    'nicPermAddress', 'nicPostalAddress', 'nicMobilePhone', 'nicEmail'
-  ],
-  6: [ // Living Funds for Disabled Persons
-    'lawDistrict', 'lawDsOffice', 'lawGnDivision',
-    'lawFullName', 'lawDisabilityNature', 'lawDisabilityCause',
-    'lawAccidentYear', 'lawOtherCauseDetails', 'lawVocationalOrEducation',
-    'lawBankAccountNo', 'lawBankNameBranch'
-  ],
-  7: [ // Voter Registration
-    'voterElectoralDistrict', 'voterPollingDivision', 'voterPollingDistrictNo',
-    'voterGnDivision', 'voterVillageStreet', 'voterHouseholdNo',
-    'ycFullName', 'ycNicNo', 'ycDob', 'ycGender', 'ycCivilStatus', 'ycRelationToChief',
-    'voterChiefName', 'voterChiefNic', 'voterChiefPhone', 'voterChiefWhatsApp'
-  ],
-  8: [ // Permit for Felling Trees
-    'treeApplicantStatus', 'treeFullName', 'treeNic', 'treePhone',
-    'treePermanentAddress', 'treeWhatsApp',
-    'treeLandName', 'treeDistrict', 'treeDsDivision', 'treeGnDivision',
-    'treeLandAcres', 'treeLandRoods', 'treeLandPerches',
-    'treeOwnershipType', 'treeDeedNoDate', 'treeLegalDisputesExist',
-    'treeBoundNorth', 'treeBoundEast', 'treeBoundSouth', 'treeBoundWest'
-  ],
-  9: [ // Permit for Timber Transportation
-    'removalGnDiv', 'removalDsOffice',
-    'voterChiefName', 'voterChiefNic', 'voterChiefPhone',
-    'removalLandownerName', 'treeCuttingReason',
-    'removalLandName', 'removalVillageLocalArea',
-    'removalOwnershipType',
-    'remBoundNorth', 'remBoundEast', 'remBoundSouth', 'remBoundWest',
-    'removalDeedNumber', 'removalDeedDate', 'removalDisputeStatus'
-  ],
-  10: [ // Business Registration
-    'biz_prop_name', 'biz_nature_type', 'biz_legal_structure',
-    'biz_owner_name', 'biz_owner_nic',
-    'biz_premises_address', 'biz_tenure_type', 'biz_initial_capital'
-  ],
-  11: [ // Assessments for Ownership of Lands
-    'assessmentLandName', 'assessmentDsDivision', 'assessmentGnDivision',
-    'assessmentCurrentOwner', 'assessmentOwnershipType'
-  ]
-};
-
-// ============================================================
-// PDF GENERATION – with isBlank flag
-// ============================================================
-const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMembers, otherMembers, newVoters, deletedVoters, treeLogistics, timberGrid, t, fieldKeys, isBlank = false }) => {
+const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMembers, otherMembers, newVoters, deletedVoters, treeLogistics, timberGrid, t }) => {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-LK', { year: 'numeric', month: 'long', day: 'numeric' });
   const timeStr = now.toLocaleTimeString('en-LK', { hour: '2-digit', minute: '2-digit' });
@@ -358,32 +286,29 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
       .trim();
   };
 
-  // Applicant details – if isBlank, set all to empty string
-  const applicantName = isBlank ? '' : (userData?.fullName || inputs.applicantName || inputs.incFullName || inputs.treeFullName || inputs.lawFullName || currentUser?.displayName || '');
-  const applicantNic = isBlank ? '' : (userData?.nic || inputs.nicNumber || inputs.incNic || inputs.treeNic || inputs.voterChiefNic || '');
-  const applicantAddress = isBlank ? '' : (userData?.address || inputs.applicantAddress || inputs.incAddress || inputs.treePermanentAddress || inputs.nicPermAddress || '');
-  const applicantPhone = isBlank ? '' : (userData?.mobile || inputs.treePhone || inputs.voterChiefPhone || inputs.nicMobilePhone || '');
-  const applicantEmail = isBlank ? '' : (currentUser?.email || inputs.nicEmail || '');
-  const gnDiv = isBlank ? '' : (userData?.gnDiv || '');
+  // Get applicant details
+  const applicantName = userData?.fullName || inputs.applicantName || inputs.incFullName || inputs.treeFullName || inputs.lawFullName || currentUser?.displayName || '___________';
+  const applicantNic = userData?.nic || inputs.nicNumber || inputs.incNic || inputs.treeNic || inputs.voterChiefNic || '___________';
+  const applicantAddress = userData?.address || inputs.applicantAddress || inputs.incAddress || inputs.treePermanentAddress || inputs.nicPermAddress || '___________';
+  const applicantPhone = userData?.mobile || inputs.treePhone || inputs.voterChiefPhone || inputs.nicMobilePhone || '___________';
+  const applicantEmail = currentUser?.email || inputs.nicEmail || '___________';
 
-  // Build form data rows – using translation keys and no underscores
+  // Build form data rows
   let formDataRows = '';
-  const keysToDisplay = fieldKeys || Object.keys(inputs).filter(key => inputs[key] && typeof inputs[key] !== 'object' && inputs[key] !== '');
-  
-  if (keysToDisplay && keysToDisplay.length > 0) {
-    for (const key of keysToDisplay) {
-      const value = inputs[key] !== undefined ? inputs[key] : '';
-      const label = t('forms.fields.' + key, formatLabel(key));
-      formDataRows += `
-        <tr style="border-bottom: 1px solid #e8d5b7;">
-          <td style="padding: 10px 12px; font-weight: 600; color: #6A2301; background: #fdf6ee; width: 35%; font-size: 12px;">${label}</td>
-          <td style="padding: 10px 12px; font-size: 12px; color: #2d1a00;">${value}</td>
-        </tr>
-      `;
+  if (inputs && Object.keys(inputs).length > 0) {
+    for (const [key, value] of Object.entries(inputs)) {
+      if (value && typeof value !== 'object' && value !== '') {
+        formDataRows += `
+          <tr style="border-bottom: 1px solid #e8d5b7;">
+            <td style="padding: 10px 12px; font-weight: 600; color: #6A2301; background: #fdf6ee; width: 35%; font-size: 12px;">${formatLabel(key)}</td>
+            <td style="padding: 10px 12px; font-size: 12px; color: #2d1a00;">${String(value)}</td>
+          </tr>
+        `;
+      }
     }
   }
 
-  // Build table sections for arrays (unchanged)
+  // Build table sections for arrays – now with translated titles passed in
   const buildTableSection = (title, items) => {
     if (!items || items.length === 0) return '';
     const validItems = items.filter(item => item.name || item.species || Object.values(item).some(v => v && v !== ''));
@@ -565,7 +490,7 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
         <div class="header">
           <h1>${t('pdf.smartGramaSewa')}</h1>
           <p>${t('pdf.subtitle')}</p>
-          <p style="font-size: 11px; margin-top: 5px;">${t('pdf.gnDivisionLabel')} ${gnDiv || '_______________'}</p>
+          <p style="font-size: 11px; margin-top: 5px;">${t('pdf.gnDivisionLabel')} ${userData?.gnDiv || 'N/A'}</p>
         </div>
 
         <div class="form-banner">
@@ -584,7 +509,7 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
             <div class="info-item"><div class="info-label">${t('pdf.address')}</div><div class="info-value">${applicantAddress}</div></div>
             <div class="info-item"><div class="info-label">${t('pdf.phone')}</div><div class="info-value">${applicantPhone}</div></div>
             <div class="info-item"><div class="info-label">${t('pdf.email')}</div><div class="info-value">${applicantEmail}</div></div>
-            <div class="info-item"><div class="info-label">${t('pdf.gnDivision')}</div><div class="info-value">${gnDiv}</div></div>
+            <div class="info-item"><div class="info-label">${t('pdf.gnDivision')}</div><div class="info-value">${userData?.gnDiv || '—'}</div></div>
           </div>
         </div>
 
@@ -608,7 +533,7 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
           <div style="flex: 1;">
             <div class="signature-line"></div>
             <div style="font-size: 11px; font-weight: bold; margin-top: 5px;">${t('pdf.gnSignature')}</div>
-            <div style="font-size: 10px; color: #888;">${gnDiv || 'GN Office'}</div>
+            <div style="font-size: 10px; color: #888;">${userData?.gnDiv || 'GN Office'}</div>
           </div>
         </div>
 
@@ -743,6 +668,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
         if (form.id === 3) finalInputs.totalAnnualIncome = `Rs. ${totalCalculatedIncome.toLocaleString('en-LK', { minimumFractionDigits: 2 })}`;
         if (form.id === 7) finalInputs.selectedPurposeMode = voterPurpose;
 
+        // Pass the translation function t to the PDF generator
         await generateFormPDF({
           form,
           inputs: finalInputs,
@@ -754,9 +680,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
           deletedVoters,
           treeLogistics,
           timberGrid,
-          t,
-          fieldKeys: Object.keys(finalInputs), // Show only filled fields in modal PDF
-          isBlank: false, // modal fills data
+          t,  // <-- added
         });
         onSuccess?.(`${form.title} — ${t('toast.downloadSuccess')}`);
         onClose();
@@ -1906,7 +1830,7 @@ const Forms = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-  // No local currentLanguage – use i18n.language directly
+  // const [currentLanguage, setCurrentLanguage] = useState('en'); // REMOVED
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -1934,13 +1858,12 @@ const Forms = () => {
     { id: 11, title: t('forms.formList.10.title'), desc: t('forms.formList.10.desc'), cat: "Certificates", imgSrc: "/icons/land.png" },
   ];
 
-  // *** UPDATED: generate a completely blank PDF for "Download Form" ***
+  // *** UPDATED: generate filled PDF with user data ***
   const downloadBlankForm = async (form) => {
     try {
-      const fieldKeys = formFieldKeys[form.id] || [];
       await generateFormPDF({
         form,
-        inputs: {}, // all empty
+        inputs: {}, // no form-specific inputs – only user data will be used
         userData,
         currentUser,
         disabledMembers: [],
@@ -1950,8 +1873,6 @@ const Forms = () => {
         treeLogistics: [],
         timberGrid: [],
         t,
-        fieldKeys: fieldKeys, // show all fields
-        isBlank: true, // this tells PDF generator to leave all user data blank
       });
       showToast(`${form.title} — ${t('toast.downloadSuccess')}`);
     } catch (err) {
@@ -2013,7 +1934,7 @@ const Forms = () => {
   const handleLogout = async () => { await signOut(auth); navigate('/login'); };
   const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
 
-  // Language handling – directly call i18n
+  // *** UPDATED: no local state, just call i18n ***
   const handleLanguageChange = (langCode) => {
     i18n.changeLanguage(langCode);
   };

@@ -1458,7 +1458,7 @@
       "sex": "Sex",
       "age": "Age",
       "civilStatus": "Civil Status",
-      "isSriLankan": " Whether Sri Lankan?",
+      "sriLankan": "Whether Sri Lankan?",
       "religion": "Religion",
       "occupation": "Present Occupation",
       "villagePeriod": "Period of Residence in Village",
