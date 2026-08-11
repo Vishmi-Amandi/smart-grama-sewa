@@ -5,7 +5,6 @@ import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import gnDivisionsData from "../../user/data/gnDivisions.json";
-import { useTranslation } from "react-i18next";
 
 // ─── Shared Styles ────────────────────────────────────────────────────────────
 const inputClass =
@@ -20,47 +19,44 @@ const FieldError = ({ msg }) =>
   msg ? <p className="text-red-500 text-xs mt-1 font-medium">{msg}</p> : null;
 
 // ─── Derived lookup maps from gnDivisions.json ────────────────────────────────
+// gnDivisionsData shape: { "District": { "DS Division": ["GN Div", ...] } }
+
 const ALL_DISTRICTS = Object.keys(gnDivisionsData).sort();
 
+// district → sorted DS division names
 const getDsDivisions = (district) =>
   district && gnDivisionsData[district]
     ? Object.keys(gnDivisionsData[district]).sort()
     : [];
 
+// district + ds → sorted GN division names
 const getGnDivisions = (district, ds) =>
   district && ds && gnDivisionsData[district]?.[ds]
     ? [...gnDivisionsData[district][ds]].sort()
     : [];
 
 // ─── Step Tabs ────────────────────────────────────────────────────────────────
-const StepTabs = ({ current, t }) => {
-  const STEPS = [
-    t("step_personal_info"),
-    t("step_official_details"),
-    t("step_document_upload"),
-    t("step_account_setup"),
-  ];
+const STEPS = ["Personal Info", "Official Details", "Document Upload", "Account Setup"];
 
-  return (
-    <div className="flex border-b border-gray-200 mb-6 overflow-x-auto pb-1">
-      {STEPS.map((label, i) => {
-        const idx = i + 1;
-        const isActive = current === idx;
-        const isDone = current > idx;
-        return (
-          <div key={idx} className={`flex items-center gap-1.5 px-2 sm:px-4 py-2.5 text-[10px] sm:text-xs font-bold border-b-2 transition whitespace-nowrap
-            ${isActive ? "border-[#8B4513] text-[#8B4513]" : "border-transparent text-gray-400"}`}>
-            <span className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center text-[9px] sm:text-xs font-black
-              ${isActive ? "bg-[#8B4513] text-white" : isDone ? "bg-[#8B4513] text-white" : "bg-gray-200 text-gray-500"}`}>
-              {isDone ? "✓" : idx}
-            </span>
-            {label}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
+const StepTabs = ({ current }) => (
+  <div className="flex border-b border-gray-200 mb-6 overflow-x-auto pb-1">
+    {STEPS.map((label, i) => {
+      const idx = i + 1;
+      const isActive = current === idx;
+      const isDone = current > idx;
+      return (
+        <div key={idx} className={`flex items-center gap-1.5 px-2 sm:px-4 py-2.5 text-[10px] sm:text-xs font-bold border-b-2 transition whitespace-nowrap
+          ${isActive ? "border-[#8B4513] text-[#8B4513]" : "border-transparent text-gray-400"}`}>
+          <span className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center text-[9px] sm:text-xs font-black
+            ${isActive ? "bg-[#8B4513] text-white" : isDone ? "bg-[#8B4513] text-white" : "bg-gray-200 text-gray-500"}`}>
+            {isDone ? "✓" : idx}
+          </span>
+          {label}
+        </div>
+      );
+    })}
+  </div>
+);
 
 // ─── Section Card ─────────────────────────────────────────────────────────────
 const Section = ({ icon: Icon, title, children }) => (
@@ -76,82 +72,82 @@ const Section = ({ icon: Icon, title, children }) => (
 );
 
 // ─── STEP 1 — Personal Information ───────────────────────────────────────────
-const Step1 = ({ form, update, onNext, t }) => {
+const Step1 = ({ form, update, onNext }) => {
   const [errors, setErrors] = useState({});
 
   const validate = () => {
     const e = {};
-    if (!form.fullName.trim()) e.fullName = t("err_full_name_required");
-    if (!form.nic.trim())      e.nic = t("err_nic_required");
-    else if (!/^(\d{9}[VvXx]|\d{12})$/.test(form.nic.trim())) e.nic = t("err_nic_invalid");
-    if (!form.address.trim())  e.address = t("err_address_required");
-    if (!form.dob)             e.dob = t("err_dob_required");
-    if (!form.gender)          e.gender = t("err_gender_required");
-    if (!form.mobile.trim())   e.mobile = t("err_mobile_required");
-    else if (!/^\d{10}$/.test(form.mobile.trim())) e.mobile = t("err_mobile_invalid");
-    if (!form.email.trim())    e.email = t("err_email_required");
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = t("err_email_invalid");
+    if (!form.fullName.trim()) e.fullName = "Full name is required.";
+    if (!form.nic.trim())      e.nic = "NIC is required.";
+    else if (!/^(\d{9}[VvXx]|\d{12})$/.test(form.nic.trim())) e.nic = "Enter a valid NIC.";
+    if (!form.address.trim())  e.address = "Permanent address is required.";
+    if (!form.dob)             e.dob = "Date of birth is required.";
+    if (!form.gender)          e.gender = "Gender is required.";
+    if (!form.mobile.trim())   e.mobile = "Mobile number is required.";
+    else if (!/^\d{10}$/.test(form.mobile.trim())) e.mobile = "Enter a valid mobile number (10 digits).";
+    if (!form.email.trim())    e.email = "Email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   return (
     <>
-      <h2 className="text-lg font-black text-gray-800 mb-6">{t("personal_info_title")}</h2>
+      <h2 className="text-lg font-black text-gray-800 mb-6">Personal Information</h2>
 
-      <Section icon={BadgeCheck} title={t("identification_details")}>
+      <Section icon={BadgeCheck} title="Identification Details">
         <div className="mb-4">
-          <label className={labelClass}>{t("full_name_label")}</label>
+          <label className={labelClass}>Full Name</label>
           <input type="text" value={form.fullName} onChange={(e) => update("fullName", e.target.value)}
-            placeholder={t("full_name_placeholder")} className={inputClass} />
+            placeholder="Enter your full legal name" className={inputClass} />
           <FieldError msg={errors.fullName} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className={labelClass}>{t("permanent_address_label")}</label>
+            <label className={labelClass}>Permanent Address</label>
             <input type="text" value={form.address} onChange={(e) => update("address", e.target.value)}
-              placeholder={t("permanent_address_placeholder")} className={inputClass} />
+              placeholder="No. 45, Main Street, Colombo 07" className={inputClass} />
             <FieldError msg={errors.address} />
           </div>
           <div>
-            <label className={labelClass}>{t("nic_label")}</label>
+            <label className={labelClass}>NIC Number</label>
             <input type="text" value={form.nic} onChange={(e) => update("nic", e.target.value)}
-              placeholder={t("nic_placeholder")} className={inputClass} />
+              placeholder="984521369V or 199845213690" className={inputClass} />
             <FieldError msg={errors.nic} />
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className={labelClass}>{t("dob_label")}</label>
+            <label className={labelClass}>Date of Birth</label>
             <input type="date" value={form.dob} onChange={(e) => update("dob", e.target.value)} className={inputClass} />
             <FieldError msg={errors.dob} />
           </div>
           <div>
-            <label className={labelClass}>{t("gender_label")}</label>
+            <label className={labelClass}>Gender</label>
             <select value={form.gender} onChange={(e) => update("gender", e.target.value)} className={selectClass}>
-              <option value="">{t("gender_select")}</option>
-              <option value="Male">{t("gender_male")}</option>
-              <option value="Female">{t("gender_female")}</option>
-              <option value="Other">{t("gender_other")}</option>
+              <option value="">Select…</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
             </select>
             <FieldError msg={errors.gender} />
           </div>
         </div>
       </Section>
 
-      <Section icon={Phone} title={t("contact_details_label")}>
+      <Section icon={Phone} title="Contact Details">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className={labelClass}>{t("mobile_label")}</label>
+            <label className={labelClass}>Mobile Number</label>
             <input type="tel" value={form.mobile} onChange={(e) => update("mobile", e.target.value)}
-              placeholder={t("mobile_placeholder")} className={inputClass} />
+              placeholder="e.g. 0711234567" className={inputClass} />
             <FieldError msg={errors.mobile} />
           </div>
         </div>
         <div>
-          <label className={labelClass}>{t("email_label")}</label>
+          <label className={labelClass}>Email Address</label>
           <input type="email" value={form.email} onChange={(e) => update("email", e.target.value)}
-            placeholder={t("email_placeholder")} className={inputClass} />
+            placeholder="yourname@email.com" className={inputClass} />
           <FieldError msg={errors.email} />
         </div>
       </Section>
@@ -159,7 +155,7 @@ const Step1 = ({ form, update, onNext, t }) => {
       <div className="flex justify-end mt-2">
         <button onClick={() => { if (validate()) onNext(); }}
           className="bg-[#E5A800] hover:bg-[#cc9600] text-[#3d2a00] font-black px-4 sm:px-6 py-2.5 rounded-xl flex items-center gap-2 transition shadow text-sm">
-          {t("next_step_btn")} <ArrowRight size={15} />
+          Next Step <ArrowRight size={15} />
         </button>
       </div>
     </>
@@ -167,12 +163,14 @@ const Step1 = ({ form, update, onNext, t }) => {
 };
 
 // ─── STEP 2 — Official Details ────────────────────────────────────────────────
-const Step2 = ({ form, update, onNext, onBack, t }) => {
+const Step2 = ({ form, update, onNext, onBack }) => {
   const [errors, setErrors] = useState({});
 
+  // Cascading options derived from JSON
   const dsDivisions = useMemo(() => getDsDivisions(form.district), [form.district]);
   const gnDivisions = useMemo(() => getGnDivisions(form.district, form.divisionalSecretariat), [form.district, form.divisionalSecretariat]);
 
+  // Cascade resets
   const handleDistrictChange = (val) => {
     update("district", val);
     update("divisionalSecretariat", "");
@@ -185,41 +183,40 @@ const Step2 = ({ form, update, onNext, onBack, t }) => {
 
   const validate = () => {
     const e = {};
-    if (!form.province)               e.province = t("err_province_required");
-    if (!form.district)               e.district = t("err_district_required");
-    if (!form.divisionalSecretariat)  e.divisionalSecretariat = t("err_ds_required");
-    if (!form.gnDiv)                  e.gnDiv = t("err_gn_required");
-    if (!form.gnCode.trim())          e.gnCode = t("err_gn_code_required");
-    if (!form.officeAddress.trim())   e.officeAddress = t("err_office_address_required");
-    if (!form.officeMobile.trim())    e.officeMobile = t("err_office_mobile_required");
-    else if (!/^\d{10}$/.test(form.officeMobile.trim())) e.officeMobile = t("err_office_mobile_invalid");
-    if (!form.officialEmail.trim())   e.officialEmail = t("err_official_email_required");
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.officialEmail)) e.officialEmail = t("err_official_email_invalid");
+    if (!form.province)               e.province = "Province is required.";
+    if (!form.district)               e.district = "Please select a district.";
+    if (!form.divisionalSecretariat)  e.divisionalSecretariat = "Please select a DS Division.";
+    if (!form.gnDiv)                  e.gnDiv = "Please select a GN Division.";
+    if (!form.gnCode.trim())          e.gnCode = "GN Code is required.";
+    if (!form.officeAddress.trim())   e.officeAddress = "Office address is required.";
+    if (!form.officeMobile.trim())    e.officeMobile = "Office mobile is required.";
+    else if (!/^\d{10}$/.test(form.officeMobile.trim())) e.officeMobile = "Enter a valid mobile number (10 digits).";
+    if (!form.officialEmail.trim())   e.officialEmail = "Official email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.officialEmail)) e.officialEmail = "Enter a valid email.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  // Province list (static)
-  const provinces = ["Western","Central","Southern","Northern","Eastern","North Western","North Central","Uva","Sabaragamuwa"];
-
   return (
     <>
-      <h2 className="text-lg font-black text-gray-800 mb-6">{t("official_details_title")}</h2>
+      <h2 className="text-lg font-black text-gray-800 mb-6">Official Details</h2>
 
-      <Section icon={MapPin} title={t("administrative_area_label")}>
+      <Section icon={MapPin} title="Administrative Area">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className={labelClass}>{t("province_label")}</label>
+            <label className={labelClass}>Province</label>
             <select value={form.province} onChange={(e) => update("province", e.target.value)} className={selectClass}>
-              <option value="">{t("select_province_option")}</option>
-              {provinces.map((p) => <option key={p} value={p}>{p}</option>)}
+              <option value="">Select Province…</option>
+              {["Western","Central","Southern","Northern","Eastern","North Western","North Central","Uva","Sabaragamuwa"].map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
             </select>
             <FieldError msg={errors.province} />
           </div>
           <div>
-            <label className={labelClass}>{t("district_label")}</label>
+            <label className={labelClass}>District</label>
             <select value={form.district} onChange={(e) => handleDistrictChange(e.target.value)} className={selectClass}>
-              <option value="">{t("select_district_option")}</option>
+              <option value="">Select District…</option>
               {ALL_DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
             <FieldError msg={errors.district} />
@@ -228,7 +225,7 @@ const Step2 = ({ form, update, onNext, onBack, t }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>{t("ds_division_label")}</label>
+            <label className={labelClass}>Divisional Secretariat</label>
             <select
               value={form.divisionalSecretariat}
               onChange={(e) => handleDsChange(e.target.value)}
@@ -236,7 +233,7 @@ const Step2 = ({ form, update, onNext, onBack, t }) => {
               className={selectClass}
             >
               <option value="">
-                {form.district ? t("select_ds_option") : t("select_district_first")}
+                {form.district ? "Select DS Division…" : "Select District first"}
               </option>
               {dsDivisions.map((ds) => <option key={ds} value={ds}>{ds}</option>)}
             </select>
@@ -244,7 +241,7 @@ const Step2 = ({ form, update, onNext, onBack, t }) => {
           </div>
 
           <div>
-            <label className={labelClass}>{t("gn_division_label")}</label>
+            <label className={labelClass}>GN Division</label>
             <select
               value={form.gnDiv}
               onChange={(e) => update("gnDiv", e.target.value)}
@@ -253,10 +250,10 @@ const Step2 = ({ form, update, onNext, onBack, t }) => {
             >
               <option value="">
                 {!form.district
-                  ? t("select_district_first")
+                  ? "Select District first"
                   : !form.divisionalSecretariat
-                  ? t("select_ds_first")
-                  : t("select_gn_option")}
+                  ? "Select DS Division first"
+                  : "Select GN Division…"}
               </option>
               {gnDivisions.map((gn) => <option key={gn} value={gn}>{gn}</option>)}
             </select>
@@ -265,25 +262,26 @@ const Step2 = ({ form, update, onNext, onBack, t }) => {
         </div>
       </Section>
 
-      <Section icon={Building2} title={t("gn_division_details_label")}>
+      <Section icon={Building2} title="Grama Niladhari (GN) Division Details">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* GN Division shown as read-only confirmation + GN Code manual entry */}
           <div>
-            <label className={labelClass}>{t("selected_gn_division_label")}</label>
+            <label className={labelClass}>Selected GN Division</label>
             <input
               type="text"
               value={form.gnDiv}
               readOnly
-              placeholder={t("select_gn_from_dropdown")}
+              placeholder="Select from dropdown above"
               className={`${inputClass} bg-gray-100 cursor-not-allowed text-gray-500`}
             />
           </div>
           <div>
-            <label className={labelClass}>{t("gn_code_label")}</label>
+            <label className={labelClass}>GN Code</label>
             <input
               type="text"
               value={form.gnCode}
               onChange={(e) => update("gnCode", e.target.value)}
-              placeholder={t("gn_code_placeholder")}
+              placeholder="e.g. A123"
               className={inputClass}
             />
             <FieldError msg={errors.gnCode} />
@@ -291,29 +289,29 @@ const Step2 = ({ form, update, onNext, onBack, t }) => {
         </div>
       </Section>
 
-      <Section icon={Phone} title={t("office_contact_label")}>
+      <Section icon={Phone} title="Office Contact Details">
         <div className="mb-4">
-          <label className={labelClass}>{t("office_address_label")}</label>
+          <label className={labelClass}>Office Address</label>
           <textarea value={form.officeAddress} onChange={(e) => update("officeAddress", e.target.value)}
-            placeholder={t("office_address_placeholder")} rows={3} className={`${inputClass} resize-none`} />
+            placeholder="Enter full office address..." rows={3} className={`${inputClass} resize-none`} />
           <FieldError msg={errors.officeAddress} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>{t("office_mobile_label")}</label>
+            <label className={labelClass}>Office Mobile No.</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">📞</span>
               <input type="tel" value={form.officeMobile} onChange={(e) => update("officeMobile", e.target.value)}
-                placeholder={t("office_mobile_placeholder")} className={`${inputClass} pl-9`} />
+                placeholder="0112345678" className={`${inputClass} pl-9`} />
             </div>
             <FieldError msg={errors.officeMobile} />
           </div>
           <div>
-            <label className={labelClass}>{t("official_email_label")}</label>
+            <label className={labelClass}>Official Email Address</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">✉</span>
               <input type="email" value={form.officialEmail} onChange={(e) => update("officialEmail", e.target.value)}
-                placeholder={t("official_email_placeholder")} className={`${inputClass} pl-9`} />
+                placeholder="office@gramasewa.gov.lk" className={`${inputClass} pl-9`} />
             </div>
             <FieldError msg={errors.officialEmail} />
           </div>
@@ -323,11 +321,11 @@ const Step2 = ({ form, update, onNext, onBack, t }) => {
       <div className="flex justify-between mt-2">
         <button onClick={onBack}
           className="border-2 border-[#3B1F0A] text-[#3B1F0A] hover:bg-[#3B1F0A] hover:text-white font-bold px-4 sm:px-5 py-2.5 rounded-xl flex items-center gap-2 transition text-sm">
-          <ArrowLeft size={15} /> {t("previous_step_btn")}
+          <ArrowLeft size={15} /> Previous Step
         </button>
         <button onClick={() => { if (validate()) onNext(); }}
           className="bg-[#E5A800] hover:bg-[#cc9600] text-[#3d2a00] font-black px-4 sm:px-6 py-2.5 rounded-xl flex items-center gap-2 transition shadow text-sm">
-          {t("save_continue_btn")} <ArrowRight size={15} />
+          Save & Continue <ArrowRight size={15} />
         </button>
       </div>
     </>
@@ -335,16 +333,16 @@ const Step2 = ({ form, update, onNext, onBack, t }) => {
 };
 
 // ─── STEP 3 — Document Upload ─────────────────────────────────────────────────
-const Step3 = ({ form, update, onNext, onBack, t }) => {
+const Step3 = ({ form, update, onNext, onBack }) => {
   const [uploadProgress, setUploadProgress] = useState({});
   const [errors, setErrors] = useState({});
 
   const requiredFields = [
-    { fieldName: "appointmentLetter", label: t("doc_appointment_letter") },
-    { fieldName: "photograph",        label: t("doc_photograph") },
-    { fieldName: "nicFront",          label: t("doc_nic_front") },
-    { fieldName: "nicBack",           label: t("doc_nic_back") },
-    { fieldName: "signature",         label: t("doc_signature") },
+    { fieldName: "appointmentLetter", label: "Appointment Letter" },
+    { fieldName: "photograph",        label: "Recent Photograph" },
+    { fieldName: "nicFront",          label: "NIC Front Side" },
+    { fieldName: "nicBack",           label: "NIC Back Side" },
+    { fieldName: "signature",         label: "Signature" },
   ];
 
   const handleUpload = async (file, fieldName) => {
@@ -395,15 +393,15 @@ const Step3 = ({ form, update, onNext, onBack, t }) => {
           <input type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden"
             disabled={status === "uploading"}
             onChange={(e) => handleUpload(e.target.files[0], fieldName)} />
-          {status === "done" && (<><span className="text-2xl sm:text-3xl mb-2">✅</span><p className="text-xs font-semibold text-green-600">{t("uploaded_success")}</p><p className="text-xs text-gray-400 mt-1">{t("click_to_replace")}</p></>)}
-          {status === "uploading" && (<><span className="text-2xl sm:text-3xl mb-2">⏳</span><p className="text-xs font-semibold text-yellow-600">{t("uploading")}</p></>)}
-          {status === "error" && (<><span className="text-2xl sm:text-3xl mb-2">❌</span><p className="text-xs font-semibold text-red-500">{t("upload_failed_retry")}</p></>)}
+          {status === "done" && (<><span className="text-2xl sm:text-3xl mb-2">✅</span><p className="text-xs font-semibold text-green-600">Uploaded successfully!</p><p className="text-xs text-gray-400 mt-1">Click to replace</p></>)}
+          {status === "uploading" && (<><span className="text-2xl sm:text-3xl mb-2">⏳</span><p className="text-xs font-semibold text-yellow-600">Uploading...</p></>)}
+          {status === "error" && (<><span className="text-2xl sm:text-3xl mb-2">❌</span><p className="text-xs font-semibold text-red-500">Upload failed. Click to retry</p></>)}
           {!status && (<><span className="text-2xl sm:text-3xl mb-2">{errors[fieldName] ? "⚠️" : "📄"}</span>
             <p className={`text-xs font-semibold text-center ${errors[fieldName] ? "text-red-500" : "text-gray-600"}`}>
-              {errors[fieldName] ? t("doc_required") : t("click_to_upload_or_drag")}</p>
-            <p className="text-xs text-gray-400 mt-1 text-center">{t("file_requirements")}</p></>)}
+              {errors[fieldName] ? "This document is required" : "Click to upload or drag and drop"}</p>
+            <p className="text-xs text-gray-400 mt-1 text-center">PNG, JPG or PDF (Max. 5MB)</p></>)}
         </label>
-        {errors[fieldName] && <p className="text-xs text-red-500 font-semibold flex items-center gap-1">⚠️ {t("doc_required_msg", { label })}</p>}
+        {errors[fieldName] && <p className="text-xs text-red-500 font-semibold flex items-center gap-1">⚠️ Please upload your {label}</p>}
       </div>
     );
   };
@@ -412,39 +410,39 @@ const Step3 = ({ form, update, onNext, onBack, t }) => {
 
   return (
     <>
-      <h2 className="text-lg font-black text-gray-800 mb-6">{t("document_upload_title")}</h2>
+      <h2 className="text-lg font-black text-gray-800 mb-6">Document Upload</h2>
       {isAnyUploading && (
         <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-sm font-semibold text-yellow-700 flex items-center gap-2">
-          ⏳ {t("uploading_document_wait")}
+          ⏳ Uploading document... please wait
         </div>
       )}
       {Object.keys(errors).length > 0 && missingDocs.length > 0 && (
         <div className="mb-4 bg-red-50 border border-red-300 rounded-xl px-4 py-3 text-sm text-red-700">
-          <p className="font-bold mb-1">{t("doc_required_list_title")}</p>
+          <p className="font-bold mb-1">⚠️ Please upload the following documents before continuing:</p>
           <ul className="list-disc list-inside space-y-0.5">
             {missingDocs.map(({ label }) => <li key={label} className="text-xs font-medium">{label}</li>)}
           </ul>
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        <DocumentBox label={t("doc_appointment_letter")} fieldName="appointmentLetter" />
-        <DocumentBox label={t("doc_photograph")}  fieldName="photograph" />
+        <DocumentBox label="Appointment Letter" fieldName="appointmentLetter" />
+        <DocumentBox label="Recent Photograph"  fieldName="photograph" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        <DocumentBox label={t("doc_nic_front")} fieldName="nicFront" />
-        <DocumentBox label={t("doc_nic_back")}  fieldName="nicBack" />
+        <DocumentBox label="NIC Front Side" fieldName="nicFront" />
+        <DocumentBox label="NIC Back Side"  fieldName="nicBack" />
       </div>
       <div className="mb-6">
-        <DocumentBox label={t("doc_signature")} fieldName="signature" />
+        <DocumentBox label="Signature" fieldName="signature" />
       </div>
       <div className="flex justify-between mt-2">
         <button onClick={onBack}
           className="border-2 border-[#3B1F0A] text-[#3B1F0A] hover:bg-[#3B1F0A] hover:text-white font-bold px-4 sm:px-5 py-2.5 rounded-xl flex items-center gap-2 transition text-sm">
-          <ArrowLeft size={15} /> {t("previous_step_btn")}
+          <ArrowLeft size={15} /> Previous Step
         </button>
         <button onClick={handleNext} disabled={isAnyUploading}
           className="bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 text-[#3d2a00] font-black px-4 sm:px-6 py-2.5 rounded-xl flex items-center gap-2 transition shadow text-sm">
-          {t("save_continue_btn")} <ArrowRight size={15} />
+          Save & Continue <ArrowRight size={15} />
         </button>
       </div>
     </>
@@ -452,7 +450,7 @@ const Step3 = ({ form, update, onNext, onBack, t }) => {
 };
 
 // ─── STEP 4 — Account Setup ───────────────────────────────────────────────────
-const Step4 = ({ form, update, onBack, onSubmit, t }) => {
+const Step4 = ({ form, update, onBack, onSubmit }) => {
   const [showPw,   setShowPw]   = useState(false);
   const [showConf, setShowConf] = useState(false);
   const [errors,   setErrors]   = useState({});
@@ -461,21 +459,21 @@ const Step4 = ({ form, update, onBack, onSubmit, t }) => {
   const pw = form.password || "";
 
   const requirements = [
-    { label: t("req_min_length"),          met: pw.length >= 8 },
-    { label: t("req_uppercase"),            met: /[A-Z]/.test(pw) },
-    { label: t("req_lowercase"),            met: /[a-z]/.test(pw) },
-    { label: t("req_numeric"),              met: /[0-9]/.test(pw) },
-    { label: t("req_special"),              met: /[^A-Za-z0-9]/.test(pw) },
+    { label: "At least 8 characters long",                  met: pw.length >= 8 },
+    { label: "Include at least one uppercase letter (A-Z)", met: /[A-Z]/.test(pw) },
+    { label: "Include at least one lowercase letter (a-z)", met: /[a-z]/.test(pw) },
+    { label: "Include at least one numeric digit (0-9)",    met: /[0-9]/.test(pw) },
+    { label: "Include one special character (@#$%-&!)",     met: /[^A-Za-z0-9]/.test(pw) },
   ];
 
   const validate = () => {
     const e = {};
-    if (!form.username?.trim())   e.username = t("err_username_required");
-    else if (form.username.includes(" ")) e.username = t("err_username_no_spaces");
-    if (!pw)                      e.password = t("err_password_required");
-    else if (pw.length < 8)       e.password = t("err_password_min_length");
-    if (!form.confirm)            e.confirm  = t("err_confirm_required");
-    else if (pw !== form.confirm) e.confirm  = t("err_confirm_match");
+    if (!form.username?.trim())   e.username = "Username is required.";
+    else if (form.username.includes(" ")) e.username = "Username must not contain spaces.";
+    if (!pw)                      e.password = "Password is required.";
+    else if (pw.length < 8)       e.password = "Password must be at least 8 characters.";
+    if (!form.confirm)            e.confirm  = "Please confirm your password.";
+    else if (pw !== form.confirm) e.confirm  = "Passwords don't match.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -489,13 +487,13 @@ const Step4 = ({ form, update, onBack, onSubmit, t }) => {
 
       const nicSnap = await getDocs(query(collection(db, "gn_officers"), where("nic", "==", form.nic.trim())));
       if (!nicSnap.empty) {
-        setErrors((p) => ({ ...p, firebase: t("err_nic_already_exists") }));
+        setErrors((p) => ({ ...p, firebase: "An account with this NIC already exists. Please contact your divisional office." }));
         setLoading(false); return;
       }
 
       const emailSnap = await getDocs(query(collection(db, "gn_officers"), where("email", "==", form.email.trim())));
       if (!emailSnap.empty) {
-        setErrors((p) => ({ ...p, firebase: t("err_email_already_exists") }));
+        setErrors((p) => ({ ...p, firebase: "An account with this email already exists." }));
         setLoading(false); return;
       }
 
@@ -539,9 +537,9 @@ const Step4 = ({ form, update, onBack, onSubmit, t }) => {
       onSubmit();
     } catch (err) {
       const msg = {
-        "auth/email-already-in-use": t("err_email_already_in_use"),
-        "auth/invalid-email":        t("err_invalid_email"),
-        "auth/weak-password":        t("err_weak_password"),
+        "auth/email-already-in-use": "This email is already registered.",
+        "auth/invalid-email":        "The email address is not valid.",
+        "auth/weak-password":        "Password is too weak.",
       }[err.code] || err.message;
       setErrors((p) => ({ ...p, firebase: msg }));
     } finally {
@@ -551,7 +549,7 @@ const Step4 = ({ form, update, onBack, onSubmit, t }) => {
 
   return (
     <>
-      <h2 className="text-lg font-black text-gray-800 mb-6">{t("account_setup_title")}</h2>
+      <h2 className="text-lg font-black text-gray-800 mb-6">Account Setup</h2>
 
       {errors.firebase && (
         <div className="mb-4 bg-red-50 border border-red-300 rounded-xl px-4 py-3 text-sm font-semibold text-red-700 flex items-center gap-2">
@@ -559,27 +557,27 @@ const Step4 = ({ form, update, onBack, onSubmit, t }) => {
         </div>
       )}
 
-      <Section icon={Lock} title={t("account_credentials_label")}>
+      <Section icon={Lock} title="Account Credentials">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div>
-              <label className={labelClass}>{t("username_label")}</label>
+              <label className={labelClass}>Username</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">👤</span>
                 <input type="text" value={form.username || ""}
                   onChange={(e) => update("username", e.target.value)}
-                  placeholder={t("username_placeholder")}
+                  placeholder="Choose a unique username"
                   className={`${inputClass} pl-9`} />
               </div>
               <FieldError msg={errors.username} />
             </div>
             <div>
-              <label className={labelClass}>{t("password_label")}</label>
+              <label className={labelClass}>Password</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔒</span>
                 <input type={showPw ? "text" : "password"} value={form.password || ""}
                   onChange={(e) => update("password", e.target.value)}
-                  placeholder={t("password_placeholder")}
+                  placeholder="Create a strong password"
                   className={`${inputClass} pl-9 pr-10`} />
                 <button type="button" onClick={() => setShowPw((v) => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
@@ -589,12 +587,12 @@ const Step4 = ({ form, update, onBack, onSubmit, t }) => {
               <FieldError msg={errors.password} />
             </div>
             <div>
-              <label className={labelClass}>{t("confirm_password_label")}</label>
+              <label className={labelClass}>Confirm Password</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔒</span>
                 <input type={showConf ? "text" : "password"} value={form.confirm || ""}
                   onChange={(e) => update("confirm", e.target.value)}
-                  placeholder={t("confirm_password_placeholder")}
+                  placeholder="Repeat your password"
                   className={`${inputClass} pl-9 pr-10`} />
                 <button type="button" onClick={() => setShowConf((v) => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
@@ -602,14 +600,14 @@ const Step4 = ({ form, update, onBack, onSubmit, t }) => {
                 </button>
               </div>
               {form.confirm && form.confirm === pw && (
-                <p className="text-green-600 text-xs mt-1 font-semibold">✓ {t("passwords_match")}</p>
+                <p className="text-green-600 text-xs mt-1 font-semibold">✓ Passwords match</p>
               )}
               <FieldError msg={errors.confirm} />
             </div>
           </div>
 
           <div className="bg-white border border-gray-200 rounded-xl p-4 h-fit">
-            <p className="text-xs font-black text-gray-600 uppercase tracking-wider mb-3">{t("password_requirements_title")}</p>
+            <p className="text-xs font-black text-gray-600 uppercase tracking-wider mb-3">Password Requirements</p>
             <div className="space-y-2.5">
               {requirements.map(({ label, met }) => (
                 <div key={label} className="flex items-center gap-2">
@@ -625,13 +623,13 @@ const Step4 = ({ form, update, onBack, onSubmit, t }) => {
       <div className="flex justify-between mt-2">
         <button onClick={onBack}
           className="border-2 border-[#3B1F0A] text-[#3B1F0A] hover:bg-[#3B1F0A] hover:text-white font-bold px-4 sm:px-5 py-2.5 rounded-xl flex items-center gap-1 transition text-sm">
-          <ArrowLeft size={15} /> {t("previous_step_btn")}
+          <ArrowLeft size={15} /> Previous Step
         </button>
         <button onClick={handleSubmit} disabled={loading}
           className="bg-[#E5A800] hover:bg-[#cc9600] disabled:opacity-60 disabled:cursor-not-allowed text-[#3d2a00] font-black px-4 sm:px-4 py-2.5 rounded-xl flex items-center gap-1 transition shadow text-sm">
           {loading
-            ? <><Loader2 size={15} className="animate-spin" /> {t("submitting")}</>
-            : <>{t("submit_continue_btn")} <ArrowRight size={15} /></>}
+            ? <><Loader2 size={15} className="animate-spin" /> Submitting…</>
+            : <>Submit and Continue <ArrowRight size={15} /></>}
         </button>
       </div>
     </>
@@ -640,7 +638,6 @@ const Step4 = ({ form, update, onBack, onSubmit, t }) => {
 
 // ─── Main SignUp ──────────────────────────────────────────────────────────────
 const GNSignUp = () => {
-  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
 
@@ -656,74 +653,41 @@ const GNSignUp = () => {
 
   const update = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
-  // Language options (for the header dropdown)
-  const languageOptions = [
-    { code: "en", label: t("lang_en") },
-    { code: "si", label: t("lang_si") },
-    { code: "ta", label: t("lang_ta") },
-  ];
-  const [langOpen, setLangOpen] = useState(false);
-  const currentLangLabel = languageOptions.find(l => l.code === i18n.language)?.label || "English";
-
   return (
     <div className="min-h-screen flex flex-col bg-[#F5F0DC]">
       <header className="bg-[#8B4513] text-white px-4 sm:px-6 py-3 flex items-center justify-between shadow">
         <div className="flex items-center gap-2 sm:gap-3">
-          <img src="/logo.png" alt={t("app_name")} className="h-8 sm:h-10 w-auto" />
+          <img src="/logo.png" alt="logo" className="h-8 sm:h-10 w-auto" />
           <div>
-            <p className="text-white font-bold text-xs sm:text-sm leading-tight">{t("grama_niladhari")}</p>
-            <p className="text-[#E5A800] font-semibold text-[10px] sm:text-xs">{t("portal_label")}</p>
+            <p className="text-white font-bold text-xs sm:text-sm leading-tight">Grama Niladhari</p>
+            <p className="text-[#E5A800] font-semibold text-[10px] sm:text-xs">Portal</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 relative">
-          {/* Language dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setLangOpen(!langOpen)}
-              className="text-gray-300 text-[10px] sm:text-xs cursor-pointer flex items-center gap-1 hover:text-white transition"
-            >
-              🌐 {currentLangLabel} ▾
-            </button>
-            {langOpen && (
-              <div className="absolute right-0 top-full mt-1 bg-white text-gray-800 rounded-lg shadow-lg py-1 z-10 min-w-[100px]">
-                {languageOptions.map((lang) => (
-                  <button
-                    key={lang.code}
-                    onClick={() => {
-                      i18n.changeLanguage(lang.code);
-                      setLangOpen(false);
-                    }}
-                    className={`block w-full text-left px-4 py-2 text-xs hover:bg-gray-100 transition ${i18n.language === lang.code ? "font-bold text-[#8B4513]" : ""}`}
-                  >
-                    {lang.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="text-gray-300 text-[10px] sm:text-xs cursor-pointer">🌐 English ▾</span>
           <button onClick={() => navigate("/login")}
             className="bg-[#E5A800] text-[#3d2a00] font-bold px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs hover:bg-[#cc9600] transition">
-            {t("sign_in_btn")}
+            Sign In
           </button>
         </div>
       </header>
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-4 py-6 sm:py-8">
-        <h1 className="text-xl sm:text-2xl font-black text-[#8B4513] mb-1">{t("sign_up_title")}</h1>
-        <p className="text-[10px] sm:text-xs text-gray-500 mb-4 sm:mb-5">{t("sign_up_subtitle")}</p>
+        <h1 className="text-xl sm:text-2xl font-black text-[#8B4513] mb-1">Sign Up</h1>
+        <p className="text-[10px] sm:text-xs text-gray-500 mb-4 sm:mb-5">Register as a Grama Niladhari Officer</p>
 
-        <StepTabs current={step} t={t} />
+        <StepTabs current={step} />
 
         <div className="bg-white rounded-2xl shadow p-4 sm:p-6">
-          {step === 1 && <Step1 form={form} update={update} onNext={() => setStep(2)} t={t} />}
-          {step === 2 && <Step2 form={form} update={update} onNext={() => setStep(3)} onBack={() => setStep(1)} t={t} />}
-          {step === 3 && <Step3 form={form} update={update} onNext={() => setStep(4)} onBack={() => setStep(2)} t={t} />}
-          {step === 4 && <Step4 form={form} update={update} onBack={() => setStep(3)} onSubmit={() => navigate("/login")} t={t} />}
+          {step === 1 && <Step1 form={form} update={update} onNext={() => setStep(2)} />}
+          {step === 2 && <Step2 form={form} update={update} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
+          {step === 3 && <Step3 form={form} update={update} onNext={() => setStep(4)} onBack={() => setStep(2)} />}
+          {step === 4 && <Step4 form={form} update={update} onBack={() => setStep(3)} onSubmit={() => navigate("/login")} />}
         </div>
       </main>
 
       <footer className="bg-[#6A2301] text-white text-center py-3 sm:py-3.5 text-[10px] sm:text-xs font-semibold">
-        © 2026 {t("app_name")}. {t("all_rights_reserved")}
+        © 2026 Smart Grama Sewa. All rights reserved.
       </footer>
     </div>
   );

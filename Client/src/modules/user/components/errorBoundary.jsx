@@ -1,6 +1,4 @@
 import React from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
-
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -12,10 +10,9 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  // Silent error handling - no console logs
+  // Logs the error for debugging
   componentDidCatch(error, info) {
-    // Error is already in state, user sees fallback UI
-    // No console logs for production
+    console.error('ErrorBoundary caught:', error, info);
   }
 
   render() {
@@ -41,18 +38,7 @@ class ErrorBoundary extends React.Component {
             boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
           }}>
             {/* Icon */}
-            <div style={{
-              width: 64,
-              height: 64,
-              borderRadius: '50%',
-              backgroundColor: '#fde8e8',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px',
-            }}>
-              <AlertTriangle size={32} color="#dc2626" strokeWidth={2} />
-            </div>
+            <div style={{ fontSize: 56, marginBottom: 16 }}>⚠️</div>
 
             {/* Title */}
             <h2 style={{
@@ -100,15 +86,11 @@ class ErrorBoundary extends React.Component {
                   backgroundColor: '#F5C400', border: 'none',
                   fontSize: 14, fontWeight: 800, color: '#3d2a00',
                   cursor: 'pointer', transition: 'all .15s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
                 }}
                 onMouseOver={e => e.currentTarget.style.backgroundColor = '#d4a800'}
                 onMouseOut={e  => e.currentTarget.style.backgroundColor = '#F5C400'}
               >
-                <RefreshCw size={16} color="#3d2a00" strokeWidth={2.5} />
-                Refresh page
+                🔄 Refresh page
               </button>
 
               {/* Dashboard */}
@@ -120,15 +102,11 @@ class ErrorBoundary extends React.Component {
                   border: '1.5px solid #e8d5ac',
                   fontSize: 14, fontWeight: 800, color: '#3d2a00',
                   cursor: 'pointer', transition: 'all .15s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
                 }}
                 onMouseOver={e => e.currentTarget.style.borderColor = '#F5C400'}
                 onMouseOut={e  => e.currentTarget.style.borderColor = '#e8d5ac'}
               >
-                <Home size={16} color="#3d2a00" strokeWidth={2.5} />
-                Go to Dashboard
+                🏠 Go to Dashboard
               </button>
             </div>
           </div>

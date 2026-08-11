@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Moon, Sun } from 'lucide-react';
 
 const DarkModeToggle = () => {
   const [isDark, setIsDark] = useState(() => {
+    // Check localStorage and system preference
     const saved = localStorage.getItem('darkMode');
     if (saved !== null) return saved === 'true';
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -32,19 +32,12 @@ const DarkModeToggle = () => {
       aria-label="Toggle dark mode"
     >
       <div
-        className={`absolute top-0.5 w-5 h-5 rounded-full transition-transform duration-200 flex items-center justify-center ${
-          isDark ? 'translate-x-6' : 'translate-x-0.5'
+        className={`absolute top-0.5 w-5 h-5 rounded-full transition-transform duration-200 flex items-center justify-center text-xs ${
+          isDark ? 'translate-x-6 bg-user-primary' : 'translate-x-0.5 bg-user-secondary'
         }`}
-        style={{ 
-          backgroundColor: isDark ? '#F5C400' : '#8a6040',
-          color: isDark ? '#3d2a00' : '#ffffff'
-        }}
+        style={{ backgroundColor: isDark ? '#F5C400' : '#8a6040' }}
       >
-        {isDark ? (
-          <Moon size={12} strokeWidth={2.5} />
-        ) : (
-          <Sun size={12} strokeWidth={2.5} />
-        )}
+        {isDark ? '🌙' : '☀️'}
       </div>
     </button>
   );

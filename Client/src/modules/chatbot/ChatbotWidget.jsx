@@ -1,39 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { auth } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import './ChatbotWidget.css';
-
-const formList = [
-  { id: 1, title: "Residence Certificate", cat: "Certificates", desc: "Proof of residence for official use" },
-  { id: 2, title: "Character Certificate", cat: "Certificates", desc: "Proof of character for various purposes" },
-  { id: 3, title: "Income Certificate", cat: "Certificates", desc: "Proof of income for various purposes" },
-  { id: 4, title: "Valuation Certificate", cat: "Certificates", desc: "Property valuation for legal needs" },
-  { id: 5, title: "Identity Card Application", cat: "Applications", desc: "New or replacement NIC application" },
-  { id: 6, title: "Living Funds for Disabled Persons", cat: "Recommendations", desc: "Financial assistance application for persons with disabilities" },
-  { id: 7, title: "Voter Registration Form", cat: "Applications", desc: "Register or revise names on the local voting list" },
-  { id: 8, title: "Permit for Felling Trees", cat: "Recommendations", desc: "Approval to cut down Jack or protected trees" },
-  { id: 9, title: "Permit for Timber Transportation", cat: "Recommendations", desc: "Legal permit to move timber between areas" },
-  { id: 10, title: "Business Registration Recommendation", cat: "Recommendations", desc: "GN approval for new business starts" },
-  { id: 11, title: "Assessments for Ownership of Lands", cat: "Certificates", desc: "Verify land ownership and boundaries" },
-];
-
-const mapFormLinkToId = (formLink) => {
-  if (!formLink) return null;
-  const link = formLink.toLowerCase();
-  if (link.includes('residence')) return 1;
-  if (link.includes('character')) return 2;
-  if (link.includes('income') || link.includes('verification')) return 3;
-  if (link.includes('valuation')) return 4;
-  if (link.includes('nic') || link.includes('identity')) return 5;
-  if (link.includes('disabled') || link.includes('samurdhi')) return 6;
-  if (link.includes('voter')) return 7;
-  if (link.includes('felling') || link.includes('tree')) return 8;
-  if (link.includes('timber')) return 9;
-  if (link.includes('business')) return 10;
-  if (link.includes('ownership') || link.includes('land')) return 11;
-  return null;
-};
 
 const UI_TEXT = {
   en: { 
@@ -57,10 +26,8 @@ const UI_TEXT = {
 };
 
 const ChatbotWidget = () => {
-  const navigate = useNavigate();
   const [language, setLanguage] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('chat'); // 'chat' or 'forms'
   const [messages, setMessages] = useState([
     { 
       sender: 'bot', 
@@ -101,7 +68,6 @@ const ChatbotWidget = () => {
     // Reset to initial state when switching between customized (logged in & private page) and common views
     setLanguage(null);
     setHistoryLoaded(false);
-    setActiveTab('chat');
     setMessages([
       { 
         sender: 'bot', 
@@ -328,6 +294,7 @@ const ChatbotWidget = () => {
             </svg>
           </button>
         </header>
+        
         <main className="chat-box" ref={chatBoxRef}>
           {isCustomized && !historyLoaded && (
             <div className="chat-history-btn-container">
@@ -340,29 +307,14 @@ const ChatbotWidget = () => {
             <div key={idx} className={`chat-message chat-${msg.sender}-message`}>
               <div className="chat-message-content">
                 {msg.text}
-                {msg.formLink && (() => {
-                  const formId = mapFormLinkToId(msg.formLink);
-                  const matchedForm = formList.find(f => f.id === formId);
-                  const formTitle = matchedForm ? matchedForm.title : "Form";
-                  return (
-                    <>
-                      <br />
-                      <button 
-                        onClick={() => {
-                          setIsOpen(false);
-                          if (formId) {
-                            navigate(`/forms?select=${formId}`);
-                          } else {
-                            navigate('/forms');
-                          }
-                        }}
-                        className="chat-form-redirect-btn"
-                      >
-                        📝 Open {formTitle}
-                      </button>
-                    </>
-                  );
-                })()}
+                {msg.formLink && (
+                  <>
+                    <br />
+                    <a href={`/api/download/${msg.formLink}`} className="chat-form-link" download={msg.formLink}>
+                      📄 Download: {msg.formLink}
+                    </a>
+                  </>
+                )}
                 {msg.options && (
                   <div className="chat-options-container">
                     {msg.options.map(opt => (
