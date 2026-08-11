@@ -1,11 +1,142 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { LayoutDashboard, CalendarDays, Clock, Megaphone, Search, User, Settings, LogOut, ArrowRightLeft, Menu, X } from "lucide-react";
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, orderBy, limit, onSnapshot, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
+// ─── GN Officer Notification Bell ────────────────────────────────────────────
+const GNNotificationBell = ({ theme }) => {
+  const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [shaking, setShaking] = useState(false);
+  const isFirstLoad = useRef(true);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => { setCurrentUser(user || null); });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    isFirstLoad.current = true;
+    const q = query(
+      collection(db, 'gn_officers', currentUser.uid, 'notifications'),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const items = snap.docs.map(d => ({ id: d.id, ...d.data(), createdAt: d.data().createdAt?.toDate?.() || null }));
+      if (!isFirstLoad.current) {
+        const hasNew = snap.docChanges().some(c => c.type === 'added');
+        if (hasNew) { setShaking(true); setTimeout(() => setShaking(false), 700); }
+      } else { isFirstLoad.current = false; }
+      setNotifications(items);
+    });
+    return () => unsub();
+  }, [currentUser]);
+
+  useEffect(() => {
+    const handler = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false); };
+    if (isOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isOpen]);
+
+  const markAsRead = async (id) => {
+    if (!currentUser) return;
+    try { await updateDoc(doc(db, 'gn_officers', currentUser.uid, 'notifications', id), { read: true }); }
+    catch (e) { console.warn('GN mark read:', e.message); }
+  };
+
+  const unread = notifications.filter(n => !n.read).length;
+  const timeAgo = (date) => {
+    if (!date) return '';
+    const mins = Math.floor((Date.now() - date.getTime()) / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    if (mins < 1440) return `${Math.floor(mins/60)}h ago`;
+    return `${Math.floor(mins/1440)}d ago`;
+  };
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+        className={`relative p-2 rounded-full transition-colors ${shaking ? 'animate-bounce' : ''} ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+        aria-label="GN Notifications"
+      >
+        <span style={{ fontSize: '20px' }}>🔔</span>
+        {unread > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+            {unread > 99 ? '99+' : unread}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <div
+          className={`absolute right-0 mt-2 w-80 rounded-2xl shadow-2xl border z-50 overflow-hidden flex flex-col ${
+            theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'
+          }`}
+          style={{ maxHeight: '420px' }}
+        >
+          <div className={`px-4 py-3 border-b text-sm font-bold ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+            Notifications {unread > 0 && <span style={{ color: '#8B4513' }}>({unread})</span>}
+          </div>
+          <div className="overflow-y-auto flex-1">
+            {notifications.length === 0 ? (
+              <div className="px-4 py-8 text-center">
+                <div style={{ fontSize: '28px', marginBottom: '8px' }}>🔔</div>
+                <p className="text-sm text-gray-400 font-semibold">No notifications yet</p>
+                <p className="text-xs text-gray-400 mt-1">New appointment requests will appear here</p>
+              </div>
+            ) : (
+              notifications.slice(0, 10).map(n => (
+                <div
+                  key={n.id}
+                  onClick={() => { markAsRead(n.id); setIsOpen(false); navigate('/gn-appointments'); }}
+                  className={`flex gap-3 px-4 py-3 cursor-pointer border-b transition-colors ${
+                    theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-50 hover:bg-amber-50'
+                  } ${!n.read ? (theme === 'dark' ? 'bg-gray-700/50' : 'bg-amber-50/60') : ''}`}
+                  style={{ borderLeft: !n.read ? '3px solid #8B4513' : '3px solid transparent' }}
+                >
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-amber-100">
+                    <span style={{ fontSize: '15px' }}>📋</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-xs font-bold truncate ${!n.read ? 'text-[#8B4513]' : theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                      {n.title}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {(n.body || '').slice(0, 100)}
+                    </div>
+                    <div className="text-[10px] text-gray-400 mt-1">{timeAgo(n.createdAt)}</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          {notifications.length > 0 && (
+            <button
+              onClick={() => { setIsOpen(false); navigate('/gn-appointments'); }}
+              className="w-full py-2.5 text-xs font-bold text-[#8B4513] border-t hover:bg-amber-50 transition-colors"
+              style={{ borderColor: theme === 'dark' ? '#374151' : '#f0f0f0' }}
+            >
+              View All Appointments →
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+// ────────────────────────────────────────────────────────────────────────────
+
 export const getThemeClasses = (theme) => ({
+
   bg: theme === "dark" ? "bg-gray-900" : "bg-[#F5F0DC]",
   card: theme === "dark" ? "bg-gray-800 text-white" : "bg-white text-gray-800",
   text: theme === "dark" ? "text-white" : "text-gray-800",
@@ -330,8 +461,8 @@ const filteredPages = searchQuery.trim()
                 )}
               </div>
 
-              {/* Notification */}
-              <span className="text-gray-500 text-base sm:text-xl cursor-pointer">🔔</span>
+              {/* GN Notification Bell */}
+              <GNNotificationBell theme={theme} />
 
               {/* User Info - Hide name on mobile */}
 <Link to="/gn-profile" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">

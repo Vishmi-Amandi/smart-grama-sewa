@@ -187,6 +187,89 @@ async function sendAnnouncementNotification(gnDiv, announcement) {
   }
 }
 
+/**
+ * Write an in-app notification document to a sub-collection.
+ * @param {'users'|'gn_officers'} parentCollection - Parent Firestore collection.
+ * @param {string} docId - The parent document ID (uid).
+ * @param {object} notification - Notification payload.
+ */
+async function createNotification(parentCollection, docId, notification) {
+  try {
+    const ref = db.collection(parentCollection).doc(docId).collection('notifications').doc();
+    await ref.set({
+      ...notification,
+      read: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    console.log(`Notification written to ${parentCollection}/${docId}/notifications`);
+  } catch (error) {
+    console.error(`Error writing notification to ${parentCollection}/${docId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch GN officer document by their division name.
+ * Returns the officer's uid (doc ID) or null.
+ * @param {string} gnDivisionName
+ */
+async function getGNOfficerByDivision(gnDivisionName) {
+  try {
+    const snap = await db.collection('gn_officers')
+      .where('gnDivisionName', '==', gnDivisionName)
+      .limit(1)
+      .get();
+    if (snap.empty) return null;
+    const docSnap = snap.docs[0];
+    return { uid: docSnap.id, ...docSnap.data() };
+  } catch (error) {
+    console.error('Error fetching GN officer by division:', error);
+    return null;
+  }
+}
+
+/**
+ * Get all Confirmed appointments that are upcoming (within 49 hours from now)
+ * and have not yet had all reminders sent.
+ */
+async function getUpcomingConfirmedAppointments() {
+  try {
+    const now = new Date();
+    // Look at appointments from now up to 49 hours ahead
+    const windowEnd = new Date(now.getTime() + 49 * 60 * 60 * 1000);
+    // Format as YYYY-MM-DD for comparison
+    const todayStr = now.toISOString().split('T')[0];
+    const endStr = windowEnd.toISOString().split('T')[0];
+
+    const snap = await db.collection('appointments')
+      .where('status', '==', 'Confirmed')
+      .where('date', '>=', todayStr)
+      .where('date', '<=', endStr)
+      .get();
+
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (error) {
+    console.error('Error fetching upcoming appointments:', error);
+    return [];
+  }
+}
+
+/**
+ * Mark a reminder as sent on an appointment document.
+ * @param {string} appointmentId
+ * @param {'48h'|'24h'|'6h'} reminderType
+ */
+async function markReminderSent(appointmentId, reminderType) {
+  try {
+    const field = `reminderSent${reminderType}`;
+    await db.collection('appointments').doc(appointmentId).update({
+      [field]: true,
+    });
+  } catch (error) {
+    console.error(`Error marking reminder ${reminderType} for appointment ${appointmentId}:`, error);
+  }
+}
+
 module.exports = {
   db,
   registerUser,
@@ -195,5 +278,9 @@ module.exports = {
   saveAnnouncement,
   subscribeToTopic,
   unsubscribeFromTopic,
-  sendAnnouncementNotification
+  sendAnnouncementNotification,
+  createNotification,
+  getGNOfficerByDivision,
+  getUpcomingConfirmedAppointments,
+  markReminderSent,
 };

@@ -61,6 +61,21 @@ useEffect(() => {
     setAppointments((prev) =>
       prev.map((a) => a.id === appointment.id ? { ...a, status: "Confirmed" } : a)
     );
+
+    // Notify the citizen that their appointment is confirmed
+    fetch('/api/appointments/notify-confirmed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: appointment.uid,
+        service: appointment.service,
+        date: appointment.date,
+        slot: appointment.slot,
+        appointmentId: appointment.id,
+        gnDiv: appointment.gnDiv || '',
+      }),
+    }).catch(err => console.warn('notify-confirmed failed:', err));
+
   } catch (err) {
     console.error("Confirm error:", err);
   }

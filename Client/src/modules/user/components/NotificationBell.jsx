@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, orderBy, limit, onSnapshot, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import { auth, db, initializeMessaging, requestNotificationPermission, onForegroundMessage } from '../../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import './NotificationBell.css';
@@ -21,11 +21,19 @@ const ALERT_PATH = 'M12 9v4 M12 17h.01 M12 2a10 10 0 100 20 10 10 0 000-20z';
 const STAR_PATH = 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z';
 const INFO_PATH = 'M12 2a10 10 0 100 20 10 10 0 000-20z M12 8v4 M12 16h.01';
 
-// Priority config
+// Priority config for announcements
 const PRIORITY_CONFIG = {
   Urgent: { class: 'urgent', icon: ALERT_PATH, color: '#c0392b' },
   High: { class: 'high', icon: STAR_PATH, color: '#b45309' },
   Normal: { class: 'normal', icon: INFO_PATH, color: '#1a4a8a' },
+};
+
+// Appointment notification type config
+const APPT_TYPE_CONFIG = {
+  appointment_new:       { icon: '📋', color: '#b45309', label: 'Appointment' },
+  appointment_confirmed: { icon: '✅', color: '#1a7a3a', label: 'Confirmed' },
+  appointment_reminder:  { icon: '⏰', color: '#7c3aed', label: 'Reminder' },
+  new_appointment:       { icon: '🔔', color: '#1a4a8a', label: 'New Request' },
 };
 
 // Time ago helper
@@ -46,8 +54,10 @@ const timeAgo = (date) => {
 const NotificationBell = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState([]);       // announcements
+  const [apptNotifications, setApptNotifications] = useState([]); // appointment-specific
   const [readIds, setReadIds] = useState(new Set());
+  const [readApptIds, setReadApptIds] = useState(new Set());
   const [userData, setUserData] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [shaking, setShaking] = useState(false);
@@ -57,6 +67,7 @@ const NotificationBell = () => {
   const dropdownRef = useRef(null);
   const prevCountRef = useRef(0);
   const isFirstLoadRef = useRef(true);
+  const isFirstApptLoadRef = useRef(true);
 
   // Auth listener
   useEffect(() => {
@@ -69,6 +80,7 @@ const NotificationBell = () => {
             const data = snap.data();
             setUserData(data);
             setReadIds(new Set(data.readAnnouncements || []));
+            setReadApptIds(new Set(data.readApptNotifications || []));
           }
         } catch (e) {
           console.warn('NotificationBell: Error fetching user data:', e.message);
@@ -93,6 +105,51 @@ const NotificationBell = () => {
     };
     fetchGN();
   }, [userData?.gnDiv]);
+
+  // Real-time appointment notifications listener
+  useEffect(() => {
+    if (!currentUser) return;
+
+    isFirstApptLoadRef.current = true;
+
+    const apptQ = query(
+      collection(db, 'users', currentUser.uid, 'notifications'),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
+
+    const unsub = onSnapshot(apptQ, (snapshot) => {
+      const items = snapshot.docs.map(d => ({
+        id: d.id,
+        ...d.data(),
+        createdAt: d.data().createdAt?.toDate?.() || null,
+        isAppt: true,
+      }));
+
+      if (!isFirstApptLoadRef.current) {
+        const hasNew = snapshot.docChanges().some(c => c.type === 'added');
+        if (hasNew) {
+          setShaking(true);
+          setTimeout(() => setShaking(false), 700);
+          // Show toast for new appointment notification
+          const newest = items[0];
+          if (newest) {
+            setToast({ title: newest.title, body: newest.body });
+            setToastExiting(false);
+            setTimeout(() => { setToastExiting(true); setTimeout(() => setToast(null), 300); }, 5000);
+          }
+        }
+      } else {
+        isFirstApptLoadRef.current = false;
+      }
+
+      setApptNotifications(items);
+    }, (error) => {
+      console.error('NotificationBell: Appointment notifications listener error:', error);
+    });
+
+    return () => unsub();
+  }, [currentUser]);
 
   // Real-time announcements listener using onSnapshot
   useEffect(() => {
@@ -198,7 +255,7 @@ const NotificationBell = () => {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [isOpen]);
 
-  // Mark single notification as read
+  // Mark single announcement notification as read
   const markAsRead = useCallback(async (id) => {
     if (readIds.has(id)) return;
     setReadIds(prev => new Set([...prev, id]));
@@ -212,6 +269,19 @@ const NotificationBell = () => {
       }
     }
   }, [readIds, currentUser]);
+
+  // Mark single appointment notification as read
+  const markApptAsRead = useCallback(async (id) => {
+    if (readApptIds.has(id)) return;
+    setReadApptIds(prev => new Set([...prev, id]));
+    if (currentUser) {
+      try {
+        await updateDoc(doc(db, 'users', currentUser.uid, 'notifications', id), { read: true });
+      } catch (e) {
+        console.warn('Mark appt read error:', e.message);
+      }
+    }
+  }, [readApptIds, currentUser]);
 
   // Mark all as read
   const markAllAsRead = useCallback(async () => {
@@ -231,10 +301,16 @@ const NotificationBell = () => {
   }, [notifications, readIds, currentUser]);
 
   // Handle notification click
-  const handleNotificationClick = (notification) => {
-    markAsRead(notification.id);
-    setIsOpen(false);
-    navigate('/announcements');
+  const handleNotificationClick = (n) => {
+    if (n._kind === 'appt') {
+      markApptAsRead(n.id);
+      setIsOpen(false);
+      navigate('/appointments');
+    } else {
+      markAsRead(n.id);
+      setIsOpen(false);
+      navigate('/announcements');
+    }
   };
 
   // Dismiss toast
@@ -243,7 +319,19 @@ const NotificationBell = () => {
     setTimeout(() => setToast(null), 300);
   };
 
-  const unreadCount = notifications.filter(n => !readIds.has(n.id)).length;
+  const unreadAnnouncementCount = notifications.filter(n => !readIds.has(n.id)).length;
+  const unreadApptCount = apptNotifications.filter(n => !readApptIds.has(n.id)).length;
+  const unreadCount = unreadAnnouncementCount + unreadApptCount;
+
+  // Merged list sorted by date (appointment notifications first for prominence)
+  const allNotifications = [
+    ...apptNotifications.map(n => ({ ...n, _kind: 'appt' })),
+    ...notifications.map(n => ({ ...n, _kind: 'announcement' })),
+  ].sort((a, b) => {
+    const aTime = a.createdAt ? a.createdAt.getTime() : 0;
+    const bTime = b.createdAt ? b.createdAt.getTime() : 0;
+    return bTime - aTime;
+  }).slice(0, 15);
 
   return (
     <>
@@ -288,49 +376,75 @@ const NotificationBell = () => {
 
               {/* Notification List */}
               <div className="notification-list">
-                {notifications.length === 0 ? (
+                {allNotifications.length === 0 ? (
                   <div className="notification-empty">
                     <div className="notification-empty-icon">
                       <Icon d={BELL_PATH} size={24} color="#ccc" />
                     </div>
                     <h4>No notifications yet</h4>
-                    <p>Announcements from your GN officer will appear here</p>
+                    <p>Appointment updates and GN announcements will appear here</p>
                   </div>
                 ) : (
-                  notifications.slice(0, 10).map((n) => {
-                    const pConfig = PRIORITY_CONFIG[n.priority] || PRIORITY_CONFIG.Normal;
-                    const isUnread = !readIds.has(n.id);
-                    return (
-                      <div
-                        key={n.id}
-                        className={`notification-item ${isUnread ? 'unread' : ''}`}
-                        onClick={() => handleNotificationClick(n)}
-                        id={`notification-item-${n.id}`}
-                      >
-                        <div className={`notification-priority ${pConfig.class}`}>
-                          <Icon d={pConfig.icon} size={16} color={pConfig.color} strokeWidth={2} />
-                        </div>
-                        <div className="notification-content">
-                          <div className="notification-title">{n.title}</div>
-                          <div className="notification-body">
-                            {n.body.length > 80 ? n.body.slice(0, 80) + '…' : n.body}
+                  allNotifications.map((n) => {
+                    const isUnread = n._kind === 'appt' ? !readApptIds.has(n.id) : !readIds.has(n.id);
+                    if (n._kind === 'appt') {
+                      // Appointment notification styling
+                      const apptConfig = APPT_TYPE_CONFIG[n.type] || APPT_TYPE_CONFIG.appointment_new;
+                      return (
+                        <div
+                          key={`appt-${n.id}`}
+                          className={`notification-item ${isUnread ? 'unread' : ''}`}
+                          onClick={() => handleNotificationClick(n)}
+                          id={`notification-item-appt-${n.id}`}
+                          style={{ borderLeft: `3px solid ${apptConfig.color}` }}
+                        >
+                          <div className="notification-priority" style={{ background: `${apptConfig.color}18`, borderRadius: '8px', padding: '4px' }}>
+                            <span style={{ fontSize: '18px', lineHeight: 1 }}>{apptConfig.icon}</span>
                           </div>
-                          <div className="notification-time">{timeAgo(n.createdAt)}</div>
+                          <div className="notification-content">
+                            <div className="notification-title" style={{ color: apptConfig.color }}>{n.title}</div>
+                            <div className="notification-body">
+                              {(n.body || '').length > 90 ? (n.body || '').slice(0, 90) + '…' : (n.body || '')}
+                            </div>
+                            <div className="notification-time">{timeAgo(n.createdAt)}</div>
+                          </div>
                         </div>
-                      </div>
-                    );
+                      );
+                    } else {
+                      // Announcement notification styling
+                      const pConfig = PRIORITY_CONFIG[n.priority] || PRIORITY_CONFIG.Normal;
+                      return (
+                        <div
+                          key={`ann-${n.id}`}
+                          className={`notification-item ${isUnread ? 'unread' : ''}`}
+                          onClick={() => handleNotificationClick(n)}
+                          id={`notification-item-${n.id}`}
+                        >
+                          <div className={`notification-priority ${pConfig.class}`}>
+                            <Icon d={pConfig.icon} size={16} color={pConfig.color} strokeWidth={2} />
+                          </div>
+                          <div className="notification-content">
+                            <div className="notification-title">{n.title}</div>
+                            <div className="notification-body">
+                              {(n.body || '').length > 90 ? (n.body || '').slice(0, 90) + '…' : (n.body || '')}
+                            </div>
+                            <div className="notification-time">{timeAgo(n.createdAt)}</div>
+                          </div>
+                        </div>
+                      );
+                    }
                   })
                 )}
               </div>
 
               {/* View All */}
-              {notifications.length > 0 && (
+              {allNotifications.length > 0 && (
                 <button
                   className="notification-view-all"
-                  onClick={() => { setIsOpen(false); navigate('/announcements'); }}
+                  onClick={() => { setIsOpen(false); navigate('/appointments'); }}
                   id="view-all-notifications-btn"
                 >
-                  View All Announcements →
+                  View Appointments & Announcements →
                 </button>
               )}
 

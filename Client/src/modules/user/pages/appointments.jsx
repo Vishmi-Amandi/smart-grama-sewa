@@ -1563,12 +1563,31 @@ const Appointments = () => {
     if (!currentUser) return;
     setSubmitting(true);
     try {
-      await addDoc(collection(db, 'appointments'), {
+      const dateStr = `${booking.year}-${String(booking.month + 1).padStart(2, '0')}-${String(booking.day).padStart(2, '0')}`;
+      const docRef = await addDoc(collection(db, 'appointments'), {
         uid: currentUser.uid, fullName: userData?.fullName || currentUser.displayName || '', nic: userData?.nic || '', mobile: userData?.mobile || '',
         email: currentUser.email || '', service: booking.service?.name || '', serviceId: booking.service?.id || '',
-        date: `${booking.year}-${String(booking.month + 1).padStart(2, '0')}-${String(booking.day).padStart(2, '0')}`, slot: booking.slot, notes: booking.notes,
-        dsDiv: userData?.dsDiv || '', gnDiv: userData?.gnDiv || '', district: userData?.district || '', status: 'Pending', createdAt: serverTimestamp(),
+        date: dateStr, slot: booking.slot, notes: booking.notes,
+        dsDiv: userData?.dsDiv || '', gnDiv: userData?.gnDiv || '', district: userData?.district || '',
+        status: 'Pending', createdAt: serverTimestamp(),
+        reminderSent48h: false, reminderSent24h: false, reminderSent6h: false,
       });
+
+      // Notify citizen + GN officer about the new appointment (fire-and-forget)
+      fetch('/api/appointments/notify-new', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.uid,
+          gnDiv: userData?.gnDiv || '',
+          service: booking.service?.name || '',
+          date: dateStr,
+          slot: booking.slot,
+          fullName: userData?.fullName || currentUser.displayName || '',
+          appointmentId: docRef.id,
+        }),
+      }).catch(err => console.warn('notify-new failed:', err));
+
       setScreen('success');
       setRefreshKey(k => k + 1);
     } catch (e) { console.error('Submit error:', e.message); alert('Failed to submit. Please try again.'); } finally { setSubmitting(false); }
