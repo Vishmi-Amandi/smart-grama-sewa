@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, UserCheck, ArrowLeftRight, BarChart2,
   User, Activity, Megaphone, Calendar, Bell, LogOut, Search,
-  ChevronDown, CheckCircle, XCircle, Download, FileText, TrendingUp 
+  ChevronDown, CheckCircle, XCircle, Download, FileText
 } from 'lucide-react';
 import { db } from '../../firebase';
 import {

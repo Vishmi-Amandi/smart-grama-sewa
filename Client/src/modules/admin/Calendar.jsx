@@ -511,9 +511,9 @@ function Sidebar({ onLogout }) {
         <NavItem icon={BarChart2} label="System reports"
           onClick={() => navigate("/admin/reports/system")} />
         <NavItem icon={User}      label="Individual user access"
-          onClick={() => navigate("/admin/reports/useraccess")} />
+          onClick={() => navigate("/admin/reports/user-access")} />
         <NavItem icon={Activity}  label="GN activity reports"
-          onClick={() => navigate("/admin/reports/gnactivity")} />
+          onClick={() => navigate("/admin/reports/gn-activity")} />
 
         <li className="pt-4">
           <NavItem icon={Megaphone} label="Announcements" bold

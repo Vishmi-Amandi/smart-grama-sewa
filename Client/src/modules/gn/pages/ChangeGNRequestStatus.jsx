@@ -4,11 +4,9 @@ import { auth, db } from "../../firebase";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 
 const ChangeGNRequestStatus = ({ gnStatus, theme }) => {
-  const { t, i18n } = useTranslation();
-  const tTheme = getThemeClasses(theme);
+  const t = getThemeClasses(theme);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +16,6 @@ const ChangeGNRequestStatus = ({ gnStatus, theme }) => {
         const user = auth.currentUser;
         if (!user) return;
 
-        
         const q = query(
           collection(db, "transfer_requests"),
           where("uid", "==", user.uid),
@@ -36,29 +33,16 @@ const ChangeGNRequestStatus = ({ gnStatus, theme }) => {
     fetchRequests();
   }, []);
 
-  
-  const getStatusStyle = (status) => {
-    const map = {
-      Pending:  { bg: "bg-yellow-100", text: "text-yellow-700", icon: "⏳" },
-      Approved: { bg: "bg-green-100",  text: "text-green-700",  icon: "✅" },
-      Rejected: { bg: "bg-red-100",    text: "text-red-700",    icon: "❌" },
-    };
-    return map[status] || map.Pending;
-  };
-
-  const getStatusLabel = (status) => {
-    const map = {
-      Pending: t("status_pending"),
-      Approved: t("status_approved"),
-      Rejected: t("status_rejected"),
-    };
-    return map[status] || status;
+  const statusStyle = {
+    Pending:  { bg: "bg-yellow-100", text: "text-yellow-700", icon: "⏳" },
+    Approved: { bg: "bg-green-100",  text: "text-green-700",  icon: "✅" },
+    Rejected: { bg: "bg-red-100",    text: "text-red-700",    icon: "❌" },
   };
 
   const formatDate = (ts) => {
-    if (!ts) return t("na");
+    if (!ts) return "N/A";
     const d = ts?.toDate?.() || new Date(ts);
-    return d.toLocaleDateString(i18n.language || "en-US", {
+    return d.toLocaleDateString("en-US", {
       year: "numeric", month: "long", day: "numeric"
     });
   };
@@ -68,34 +52,34 @@ const ChangeGNRequestStatus = ({ gnStatus, theme }) => {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-[#8B4513]">{t("transfer_request_status_title")}</h1>
+        <h1 className="text-2xl font-bold text-[#8B4513]">Transfer Request Status</h1>
         <Link
           to="/transfer-request"
           className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition">
-          + {t("new_request_btn")}
+          + New Request
         </Link>
       </div>
 
       {/* Loading */}
       {loading ? (
-        <div className={`${tTheme.card} rounded-2xl shadow p-12 text-center`}>
-          <p className={`text-sm ${tTheme.subtext}`}>{t("loading_requests")}</p>
+        <div className={`${t.card} rounded-2xl shadow p-12 text-center`}>
+          <p className={`text-sm ${t.subtext}`}>Loading your requests...</p>
         </div>
 
       ) : requests.length === 0 ? (
         /* Empty State */
-        <div className={`${tTheme.card} rounded-2xl shadow p-12 text-center`}>
+        <div className={`${t.card} rounded-2xl shadow p-12 text-center`}>
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-3xl">📋</span>
           </div>
-          <h2 className={`text-lg font-bold mb-2 ${tTheme.text}`}>{t("no_requests_title")}</h2>
-          <p className={`text-sm mb-6 ${tTheme.subtext}`}>
-            {t("no_requests_desc")}
+          <h2 className={`text-lg font-bold mb-2 ${t.text}`}>No Transfer Requests</h2>
+          <p className={`text-sm mb-6 ${t.subtext}`}>
+            You haven't submitted any transfer requests yet.
           </p>
           <Link
             to="/transfer-request"
             className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-6 py-2 rounded-xl inline-flex items-center gap-2 transition">
-            {t("submit_request_btn")} <ArrowRight size={16} />
+            Submit a Request <ArrowRight size={16} />
           </Link>
         </div>
 
@@ -103,21 +87,20 @@ const ChangeGNRequestStatus = ({ gnStatus, theme }) => {
         /* Requests List */
         <div className="space-y-4">
           {requests.map((req) => {
-            const style = getStatusStyle(req.status);
-            const statusLabel = getStatusLabel(req.status);
+            const style = statusStyle[req.status] || statusStyle.Pending;
             return (
-              <div key={req.id} className={`${tTheme.card} rounded-2xl shadow p-6`}>
+              <div key={req.id} className={`${t.card} rounded-2xl shadow p-6`}>
                 <div className="flex items-start justify-between mb-4">
 
                   {/* Status Badge */}
                   <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${style.bg}`}>
                     <span>{style.icon}</span>
-                    <span className={`text-sm font-bold ${style.text}`}>{statusLabel}</span>
+                    <span className={`text-sm font-bold ${style.text}`}>{req.status}</span>
                   </div>
 
                   {/* Date */}
-                  <p className={`text-xs ${tTheme.subtext}`}>
-                    {t("submitted_label")}: {formatDate(req.createdAt)}
+                  <p className={`text-xs ${t.subtext}`}>
+                    Submitted: {formatDate(req.createdAt)}
                   </p>
 
                 </div>
@@ -125,35 +108,35 @@ const ChangeGNRequestStatus = ({ gnStatus, theme }) => {
                 {/* Transfer Details */}
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className={`p-4 rounded-xl ${theme === "dark" ? "bg-gray-700" : "bg-gray-50"}`}>
-                    <p className={`text-xs font-semibold uppercase mb-2 ${tTheme.subtext}`}>{t("from_label")}</p>
-                    <p className={`text-sm font-bold ${tTheme.text}`}>{req.fromDivision || t("na")}</p>
-                    <p className={`text-xs ${tTheme.subtext}`}>{req.fromDistrict || t("na")} {t("district_label")}</p>
+                    <p className={`text-xs font-semibold uppercase mb-2 ${t.subtext}`}>From</p>
+                    <p className={`text-sm font-bold ${t.text}`}>{req.fromDivision || "N/A"}</p>
+                    <p className={`text-xs ${t.subtext}`}>{req.fromDistrict || "N/A"} District</p>
                   </div>
                   <div className={`p-4 rounded-xl ${theme === "dark" ? "bg-gray-700" : "bg-gray-50"}`}>
-                    <p className={`text-xs font-semibold uppercase mb-2 ${tTheme.subtext}`}>{t("to_label")}</p>
-                    <p className={`text-sm font-bold ${tTheme.text}`}>{req.toDivision || t("na")}</p>
-                    <p className={`text-xs ${tTheme.subtext}`}>{req.toDistrict || t("na")} {t("district_label")}</p>
+                    <p className={`text-xs font-semibold uppercase mb-2 ${t.subtext}`}>To</p>
+                    <p className={`text-sm font-bold ${t.text}`}>{req.toDivision || "N/A"}</p>
+                    <p className={`text-xs ${t.subtext}`}>{req.toDistrict || "N/A"} District</p>
                   </div>
                 </div>
 
                 {/* Reason */}
                 <div className="mb-4">
-                  <p className={`text-xs font-semibold uppercase mb-1 ${tTheme.subtext}`}>{t("reason_label")}</p>
-                  <p className={`text-sm ${tTheme.text}`}>{req.reason || t("na")}</p>
+                  <p className={`text-xs font-semibold uppercase mb-1 ${t.subtext}`}>Reason</p>
+                  <p className={`text-sm ${t.text}`}>{req.reason || "N/A"}</p>
                 </div>
 
                 {/* Effective Date */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className={`text-xs font-semibold uppercase mb-1 ${tTheme.subtext}`}>{t("effective_date_label")}</p>
-                    <p className={`text-sm font-semibold ${tTheme.text}`}>{req.effectiveDate || t("na")}</p>
+                    <p className={`text-xs font-semibold uppercase mb-1 ${t.subtext}`}>Effective Date</p>
+                    <p className={`text-sm font-semibold ${t.text}`}>{req.effectiveDate || "N/A"}</p>
                   </div>
 
                   {/* Admin Response */}
                   {req.adminNote && (
-                    <div className={`p-3 rounded-xl border ${tTheme.border} max-w-xs`}>
-                      <p className={`text-xs font-semibold uppercase mb-1 ${tTheme.subtext}`}>{t("admin_response_label")}</p>
-                      <p className={`text-sm ${tTheme.text}`}>{req.adminNote}</p>
+                    <div className={`p-3 rounded-xl border ${t.border} max-w-xs`}>
+                      <p className={`text-xs font-semibold uppercase mb-1 ${t.subtext}`}>Admin Response</p>
+                      <p className={`text-sm ${t.text}`}>{req.adminNote}</p>
                     </div>
                   )}
                 </div>
@@ -166,7 +149,7 @@ const ChangeGNRequestStatus = ({ gnStatus, theme }) => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-[#E5A800] font-semibold hover:underline flex items-center gap-1">
-                      📄 {t("view_transfer_letter")}
+                      📄 View Transfer Letter
                     </a>
                   </div>
                 )}

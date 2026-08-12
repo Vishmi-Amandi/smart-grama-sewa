@@ -1,0 +1,14 @@
+{
+  "name": "smart-grama-sewa",
+  "version": "1.0.0",
+  "description": "Smart Grama Sewa - Digital platform for Grama Niladhari services",
+  "scripts": {
+    "dev": "concurrently --names \"CHATBOT,CLIENT\" --prefix-colors \"cyan,green\" \"npm run chatbot\" \"npm run client\"",
+    "chatbot": "node Chatbot/server.js",
+    "client": "cmd /c \"cd Client && npm run dev\"",
+    "install:all": "npm install && cd Client && npm install && cd ../Chatbot && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

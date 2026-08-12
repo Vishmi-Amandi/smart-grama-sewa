@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, updateEmail } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 import gnDivisionsData from '../data/gnDivisions.json';
-import emailjs from '@emailjs/browser';
 
 const StepIndicator = ({ current }) => {
-  const { t } = useTranslation();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
   useEffect(() => {
@@ -17,7 +14,7 @@ const StepIndicator = ({ current }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const steps = [t('step_about'), t('step_contact'), t('step_password')];
+  const steps = ['About You', 'Contact', 'Password'];
 
   return (
     <div style={{ 
@@ -123,14 +120,14 @@ const DarkBtn = ({ onClick, children, type = 'button', isMobile, disabled = fals
       border: 'none',
       borderRadius: '999px',
       padding: isMobile ? '12px 20px' : '13px 28px',
-      fontSize: '14px',
+      fontSize: isMobile ? '14px' : '14px',
       fontWeight: 700,
       cursor: disabled ? 'not-allowed' : 'pointer',
       display: 'inline-flex',
       alignItems: 'center',
       gap: '8px',
       transition: 'background-color 0.15s',
-      width: 'auto',
+      width: isMobile ? 'auto' : 'auto',
     }}
     onMouseOver={(e) => { if (!disabled) e.currentTarget.style.backgroundColor = '#5a3010'; }}
     onMouseOut={(e)  => { if (!disabled) e.currentTarget.style.backgroundColor = '#3d2000'; }}
@@ -151,14 +148,14 @@ const YellowBtn = ({ onClick, children, disabled = false, isMobile }) => (
       border: 'none',
       borderRadius: '999px',
       padding: isMobile ? '12px 20px' : '13px 28px',
-      fontSize: '14px',
+      fontSize: isMobile ? '14px' : '14px',
       fontWeight: 700,
       cursor: disabled ? 'not-allowed' : 'pointer',
       display: 'inline-flex',
       alignItems: 'center',
       gap: '8px',
       transition: 'background-color 0.15s',
-      width: 'auto',
+      width: isMobile ? 'auto' : 'auto',
     }}
     onMouseOver={(e) => { if (!disabled) e.currentTarget.style.backgroundColor = '#d4a800'; }}
     onMouseOut={(e)  => { if (!disabled) e.currentTarget.style.backgroundColor = disabled ? '#e0c060' : '#F5C400'; }}
@@ -168,24 +165,21 @@ const YellowBtn = ({ onClick, children, disabled = false, isMobile }) => (
 );
 
 // Privacy note
-const PrivacyNote = ({ isMobile }) => {
-  const { t } = useTranslation();
-  return (
-    <div style={{
-      backgroundColor: '#fdf8e1',
-      border: '1px solid #e8d87a',
-      borderRadius: '10px',
-      padding: isMobile ? '12px 14px' : '12px 18px',
-      marginTop: '20px',
-      fontSize: isMobile ? '12px' : '13px',
-      fontWeight: 500,
-      color: '#5a4a10',
-      textAlign: 'center',
-    }}>
-      {t('privacy_note')}
-    </div>
-  );
-};
+const PrivacyNote = ({ isMobile }) => (
+  <div style={{
+    backgroundColor: '#fdf8e1',
+    border: '1px solid #e8d87a',
+    borderRadius: '10px',
+    padding: isMobile ? '12px 14px' : '12px 18px',
+    marginTop: '20px',
+    fontSize: isMobile ? '12px' : '13px',
+    fontWeight: 500,
+    color: '#5a4a10',
+    textAlign: 'center',
+  }}>
+    We take your privacy seriously. Your data is encrypted and used only for official verification purposes.
+  </div>
+);
 
 const EyeIcon = ({ open }) => open ? (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -202,6 +196,7 @@ const EyeIcon = ({ open }) => open ? (
   </svg>
 );
 
+// COMPLETE DISTRICT_DS_MAP - All 25 Districts of Sri Lanka
 const DISTRICT_DS_MAP = {
   'Colombo': ['Colombo', 'Dehiwala', 'Homagama', 'Kaduwela', 'Kesbewa', 'Kolonnawa', 'Kotte', 'Maharagama', 'Moratuwa', 'Padukka', 'Seethawaka', 'Thimbirigasyaya'],
   'Gampaha': ['Attanagalla', 'Biyagama', 'Divulapitiya', 'Dompe', 'Gampaha', 'Ja-Ela', 'Katana', 'Kelaniya', 'Mahara', 'Minuwangoda', 'Mirigama', 'Negombo', 'Wattala'],
@@ -230,9 +225,8 @@ const DISTRICT_DS_MAP = {
   'Kegalle': ['Aranayaka', 'Bulathkohupitiya', 'Deraniyagala', 'Dehiovita', 'Galigamuwa', 'Kegalle', 'Mawanella', 'Rambukkana', 'Ruwanwella', 'Warakapola', 'Yatiyanthota'],
 };
 
-// STEP 1 — About You
+// STEP 1 — About You with NIC Uniqueness Check (Using Document ID - NO INDEX NEEDED)
 const Step1 = ({ data, onChange, onNext }) => {
-  const { t } = useTranslation();
   const [errors, setErrors] = useState({});
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [nicAvailable, setNicAvailable] = useState(true);
@@ -246,7 +240,7 @@ const Step1 = ({ data, onChange, onNext }) => {
   }, []);
 
   const checkNicUniqueness = async (nicValue) => {
-    const normalized = nicValue.trim().toUpperCase();
+    const normalized = nicValue.trim().toUpperCase(); // ← add this
     
     if (!normalized || normalized.length < 9) {
       setNicAvailable(true);
@@ -254,9 +248,9 @@ const Step1 = ({ data, onChange, onNext }) => {
       return;
     }
 
-    const isValidFormat = /^(\d{9}[VX]|\d{12})$/.test(normalized);
+    const isValidFormat = /^(\d{9}[VX]|\d{12})$/.test(normalized); // uppercase only
     if (!isValidFormat) {
-      setErrors(prev => ({ ...prev, nic: t('err_nic_invalid') }));
+      setErrors(prev => ({ ...prev, nic: 'Enter a valid NIC (9 digits+V/X or 12 digits).' }));
       setNicAvailable(false);
       return;
     }
@@ -268,11 +262,12 @@ const Step1 = ({ data, onChange, onNext }) => {
       const exists = !snapshot.empty;
       setNicAvailable(!exists);
       if (exists) {
-        setErrors(prev => ({ ...prev, nic: t('err_nic_taken') }));
+        setErrors(prev => ({ ...prev, nic: 'This NIC is already registered. Please contact support.' }));
       } else {
         setErrors(prev => ({ ...prev, nic: undefined }));
       }
     } catch (error) {
+      console.error('Error checking NIC:', error);
     } finally {
       setCheckingNic(false);
     }
@@ -293,13 +288,13 @@ const Step1 = ({ data, onChange, onNext }) => {
 
   const validate = () => {
     const e = {};
-    if (!data.fullName.trim())  e.fullName = t('err_fullname_req');
-    if (!data.nic.trim())       e.nic = t('err_nic_req');
-    else if (!/^(\d{9}[VvXx]|\d{12})$/.test(data.nic.trim())) e.nic = t('err_nic_invalid');
-    else if (!nicAvailable)     e.nic = t('err_nic_taken');
-    if (!data.sex)              e.sex = t('err_gender_req');
-    if (!data.dob)              e.dob = t('err_dob_req');
-    if (!data.address.trim())   e.address = t('err_address_req');
+    if (!data.fullName.trim())  e.fullName = 'Full name is required.';
+    if (!data.nic.trim())       e.nic = 'NIC number is required.';
+    else if (!/^(\d{9}[VvXx]|\d{12})$/.test(data.nic.trim()))
+      e.nic = 'Enter a valid NIC (9 digits+V/X or 12 digits).';
+    else if (!nicAvailable)     e.nic = 'This NIC is already registered. Please contact support.';
+    if (!data.dob)              e.dob = 'Date of birth is required.';
+    if (!data.address.trim())   e.address = 'Home address is required.';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -307,17 +302,16 @@ const Step1 = ({ data, onChange, onNext }) => {
   return (
     <div>
       <h2 style={{ fontSize: isMobile ? '16px' : '17px', fontWeight: 800, color: '#1a1a1a', marginBottom: '22px' }}>
-        {t('personal_details')}
+        Personal Details
       </h2>
 
-      {/* Full Name - Full Width */}
       <div style={{ marginBottom: '18px' }}>
-        <label style={labelStyle(isMobile)}>{t('full_name_label')}</label>
+        <label style={labelStyle(isMobile)}>Your Full Name</label>
         <input
           type="text"
           value={data.fullName}
           onChange={(e) => onChange('fullName', e.target.value)}
-          placeholder={t('full_name_placeholder')}
+          placeholder="Ruwan Sanjeewa Perera"
           style={inp(isMobile, errors.fullName)}
           onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
           onBlur={(e)  => (e.target.style.borderColor = errors.fullName ? '#e05050' : '#d4c9a8')}
@@ -327,25 +321,24 @@ const Step1 = ({ data, onChange, onNext }) => {
 
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', 
+        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
         gap: '16px', 
         marginBottom: '18px' 
       }}>
-        {/* NIC */}
         <div>
-          <label style={labelStyle(isMobile)}>{t('nic_label')}</label>
+          <label style={labelStyle(isMobile)}>NIC Number</label>
           <input
             type="text"
             value={data.nic}
             onChange={handleNicChange}
-            placeholder={t('nic_placeholder')}
+            placeholder="12 digits or 9 digits+V"
             style={inp(isMobile, errors.nic)}
             onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
             onBlur={(e)  => (e.target.style.borderColor = errors.nic ? '#e05050' : '#d4c9a8')}
           />
           {checkingNic && (
             <p style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>
-              {t('nic_checking')}
+              Checking NIC availability...
             </p>
           )}
           {errors.nic && (
@@ -355,40 +348,12 @@ const Step1 = ({ data, onChange, onNext }) => {
           )}
           {!errors.nic && data.nic && nicAvailable && data.nic.trim().length >= 9 && !checkingNic && (
             <p style={{ color: '#30a050', fontSize: '12px', marginTop: '4px' }}>
-              {t('nic_valid')}
+              ✓ NIC is valid and available
             </p>
           )}
         </div>
-
-        {/* Gender */}
         <div>
-          <label style={labelStyle(isMobile)}>{t('gender_label')}</label>
-          <select
-            value={data.sex || ''}
-            onChange={(e) => onChange('sex', e.target.value)}
-            style={{
-              ...inp(isMobile, errors.sex),
-              appearance: 'none',
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 12px center',
-              paddingRight: '36px',
-              cursor: 'pointer',
-            }}
-            onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
-            onBlur={(e)  => (e.target.style.borderColor = errors.sex ? '#e05050' : '#d4c9a8')}
-          >
-            <option value="">{t('gender_select')}</option>
-            <option value="Male">{t('gender_male')}</option>
-            <option value="Female">{t('gender_female')}</option>
-            <option value="Other">{t('gender_other')}</option>
-          </select>
-          {errors.sex && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.sex}</p>}
-        </div>
-
-        {/* Date of Birth */}
-        <div>
-          <label style={labelStyle(isMobile)}>{t('dob_label')}</label>
+          <label style={labelStyle(isMobile)}>Date of Birth</label>
           <input
             type="date"
             value={data.dob}
@@ -401,22 +366,6 @@ const Step1 = ({ data, onChange, onNext }) => {
         </div>
       </div>
 
-      {/* Address - Full Width */}
-      <div style={{ marginBottom: '18px' }}>
-        <label style={labelStyle(isMobile)}>{t('address_label')}</label>
-        <input
-          type="text"
-          value={data.address}
-          onChange={(e) => onChange('address', e.target.value)}
-          placeholder=""
-          style={inp(isMobile, errors.address)}
-          onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
-          onBlur={(e)  => (e.target.style.borderColor = errors.address ? '#e05050' : '#d4c9a8')}
-        />
-        {errors.address && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.address}</p>}
-      </div>
-
-      {/* Continue Button */}
       <div style={{ 
         display: 'flex', 
         flexDirection: isMobile ? 'column' : 'row',
@@ -424,7 +373,19 @@ const Step1 = ({ data, onChange, onNext }) => {
         gap: '16px', 
         marginBottom: '4px' 
       }}>
-        <div style={{ flex: 1 }} />
+        <div style={{ flex: 1 }}>
+          <label style={labelStyle(isMobile)}>Your Home Address</label>
+          <input
+            type="text"
+            value={data.address}
+            onChange={(e) => onChange('address', e.target.value)}
+            placeholder=""
+            style={inp(isMobile, errors.address)}
+            onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
+            onBlur={(e)  => (e.target.style.borderColor = errors.address ? '#e05050' : '#d4c9a8')}
+          />
+          {errors.address && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.address}</p>}
+        </div>
         <div style={{ flexShrink: 0 }}>
           <DarkBtn 
             onClick={() => { 
@@ -435,7 +396,7 @@ const Step1 = ({ data, onChange, onNext }) => {
             isMobile={isMobile}
             disabled={!nicAvailable || checkingNic}
           >
-            {t('continue')} →
+            Continue →
           </DarkBtn>
         </div>
       </div>
@@ -443,9 +404,9 @@ const Step1 = ({ data, onChange, onNext }) => {
       <PrivacyNote isMobile={isMobile} />
 
       <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: '#666' }}>
-        {t('already_have_account')}{' '}
+        Already have an account?{' '}
         <a href="/login" style={{ color: '#B46A02', fontWeight: 700, textDecoration: 'none' }}>
-          {t('sign_in')}
+          Sign in
         </a>
       </p>
     </div>
@@ -454,11 +415,11 @@ const Step1 = ({ data, onChange, onNext }) => {
 
 // STEP 2 — Contact Details
 const Step2 = ({ data, onChange, onNext, onBack }) => {
-  const { t } = useTranslation();
   const [errors, setErrors] = useState({});
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [gnDivisions, setGnDivisions] = useState([]);
   const [loadingGn, setLoadingGn] = useState(false);
+  // NEW: Email uniqueness states
   const [emailAvailable, setEmailAvailable] = useState(true);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const emailCheckTimeout = React.useRef(null);
@@ -486,6 +447,7 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         setGnDivisions([]);
       }
     } catch (error) {
+      console.error('Error loading GN divisions:', error);
       setGnDivisions([]);
     } finally {
       setLoadingGn(false);
@@ -503,6 +465,7 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
     onChange('gnDiv', '');
   };
 
+  // NEW: Email uniqueness check function
   const checkEmailUniqueness = async (emailValue) => {
     const normalized = emailValue.trim().toLowerCase();
     
@@ -523,6 +486,7 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
       const exists = !snapshot.empty;
       setEmailAvailable(!exists);
     } catch (error) {
+      console.error('Error checking email:', error);
     } finally {
       setCheckingEmail(false);
     }
@@ -553,23 +517,24 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
 
   const validate = () => {
     const e = {};
-    if (!data.email.trim()) e.email = t('err_email_req');
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) e.email = t('err_email_invalid');
-    else if (!emailAvailable) e.email = t('err_email_taken');
+    if (!data.email.trim()) e.email = 'Email is required.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
+      e.email = 'Enter a valid email.';
+    else if (!emailAvailable) e.email = 'This email is already registered. Please use a different email.'; // NEW
     if (!data.mobile.trim()) {
-      e.mobile = t('err_mobile_req');
+      e.mobile = 'Mobile number is required.';
     } else {
       const mobileDigits = data.mobile.replace(/\D/g, '');
       
       if (mobileDigits.length !== 10) {
-        e.mobile = t('err_mobile_digits');
+        e.mobile = 'Mobile number must be 10 digits (e.g., 0712345678).';
       } else if (!mobileDigits.startsWith('0')) {
-        e.mobile = t('err_mobile_start');
+        e.mobile = 'Mobile number must start with 0.';
       }
     }
-    if (!data.district) e.district = t('err_district_req');
-    if (!data.dsDiv) e.dsDiv = t('err_ds_req');
-    if (!data.gnDiv) e.gnDiv = t('err_gn_req');
+    if (!data.district) e.district = 'Please select your district.';
+    if (!data.dsDiv) e.dsDiv = 'Please select your DS Division.';
+    if (!data.gnDiv) e.gnDiv = 'Please select your GN Division.';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -577,7 +542,7 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
   return (
     <div>
       <h2 style={{ fontSize: isMobile ? '16px' : '17px', fontWeight: 800, color: '#1a1a1a', marginBottom: '22px' }}>
-        {t('contact_details')}
+        Contact Details
       </h2>
 
       <div style={{ 
@@ -587,39 +552,39 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         marginBottom: '18px' 
       }}>
         <div>
-          <label style={labelStyle(isMobile)}>{t('email_label')}</label>
+          <label style={labelStyle(isMobile)}>Email address</label>
           <input
             type="email"
             value={data.email}
-            onChange={handleEmailChange}
+            onChange={handleEmailChange}  // CHANGED: use new handler
             style={inp(isMobile, errors.email || (!emailAvailable && !checkingEmail ? 'Email already taken' : null))}
             onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
             onBlur={(e)  => (e.target.style.borderColor = errors.email ? '#e05050' : '#d4c9a8')}
           />
           {checkingEmail && (
             <p style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>
-              {t('email_checking')}
+              Checking email availability...
             </p>
           )}
           {errors.email && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.email}</p>}
           {!errors.email && data.email && !checkingEmail && !emailAvailable && (
             <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>
-              {t('err_email_taken')}
+              This email is already registered. Please use a different email.
             </p>
           )}
           {!errors.email && data.email && emailAvailable && !checkingEmail && (
             <p style={{ color: '#30a050', fontSize: '12px', marginTop: '4px' }}>
-              {t('email_valid')}
+              ✓ Email is available
             </p>
           )}
         </div>
         <div>
-          <label style={labelStyle(isMobile)}>{t('mobile_label')}</label>
+          <label style={labelStyle(isMobile)}>Mobile Number</label>
           <input
             type="tel"
             value={data.mobile}
             onChange={(e) => onChange('mobile', e.target.value)}
-            placeholder={t('mobile_placeholder')}
+            placeholder="0712345678"
             style={inp(isMobile, errors.mobile)}
             onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
             onBlur={(e)  => (e.target.style.borderColor = errors.mobile ? '#e05050' : '#d4c9a8')}
@@ -635,13 +600,13 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         marginBottom: '28px' 
       }}>
         <div>
-          <label style={labelStyle(isMobile)}>{t('district_label')}</label>
+          <label style={labelStyle(isMobile)}>Your District</label>
           <select
             value={data.district}
             onChange={(e) => handleDistrictChange(e.target.value)}
             style={selectStyle(errors.district)}
           >
-            <option value="">{t('district_select')}</option>
+            <option value="">Select district…</option>
             {Object.keys(DISTRICT_DS_MAP).sort().map((d) => (
               <option key={d} value={d}>{d}</option>
             ))}
@@ -650,7 +615,7 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         </div>
 
         <div>
-          <label style={labelStyle(isMobile)}>{t('ds_label')}</label>
+          <label style={labelStyle(isMobile)}>DS Division</label>
           <select
             value={data.dsDiv}
             onChange={(e) => handleDsDivChange(e.target.value)}
@@ -661,7 +626,7 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
               cursor: data.district ? 'pointer' : 'not-allowed',
             }}
           >
-            <option value="">{data.district ? t('ds_select') : t('ds_disabled')}</option>
+            <option value="">{data.district ? 'Select DS Division…' : 'Select district first'}</option>
             {dsDivisions.map((ds) => (
               <option key={ds} value={ds}>{ds}</option>
             ))}
@@ -670,27 +635,26 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         </div>
 
         <div>
-          <label style={labelStyle(isMobile)}>{t('gn_label')}</label>
+          <label style={labelStyle(isMobile)}>GN Division</label>
           <select
             value={data.gnDiv}
             onChange={(e) => onChange('gnDiv', e.target.value)}
             disabled={!data.dsDiv || loadingGn}
             style={{
-              ...selectStyle(errors.gnDiv),
+              ...selectStyle(false),
               opacity: (data.dsDiv && !loadingGn) ? 1 : 0.5,
               cursor: (data.dsDiv && !loadingGn) ? 'pointer' : 'not-allowed',
             }}
           >
             <option value="">
               {loadingGn 
-                ? t('gn_loading') 
-                : (data.dsDiv ? t('gn_select') : t('gn_disabled'))}
+                ? 'Loading GN Divisions...' 
+                : (data.dsDiv ? 'Select GN Division…' : 'Select DS Division first')}
             </option>
             {gnDivisions.map((gn) => (
               <option key={gn} value={gn}>{gn}</option>
             ))}
           </select>
-          {errors.gnDiv && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.gnDiv}</p>}
         </div>
       </div>
 
@@ -701,47 +665,36 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         alignItems: 'center',
         gap: isMobile ? '12px' : '0',
       }}>
-        <DarkBtn onClick={onBack} isMobile={isMobile}>← {t('back')}</DarkBtn>
-        <DarkBtn onClick={() => { if (validate()) onNext(); }} isMobile={isMobile}>{t('continue')} →</DarkBtn>
+        <DarkBtn onClick={onBack} isMobile={isMobile}>← Back</DarkBtn>
+        <DarkBtn onClick={() => { if (validate()) onNext(); }} isMobile={isMobile}>Continue →</DarkBtn>
       </div>
 
       <PrivacyNote isMobile={isMobile} />
 
       <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: '#666' }}>
-        {t('already_have_account')}{' '}
+        Already have an account?{' '}
         <a href="/login" style={{ color: '#B46A02', fontWeight: 700, textDecoration: 'none' }}>
-          {t('sign_in')}
+          Sign in
         </a>
       </p>
     </div>
   );
 };
 
-// STEP 3 — Password with Email Verification
+// STEP 3 — Password with Email Verification and NIC double-check (Using NIC as Document ID)
 const Step3 = ({ data, onChange, onSubmit, onBack }) => {
-  const { t } = useTranslation();
   const [showPw, setShowPw] = useState(false);
   const [showConf, setShowConf] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [verificationSent, setVerificationSent] = useState(false);
-  const EMAILJS_SERVICE_ID = 'service_ntuk948'; 
-  const EMAILJS_TEMPLATE_ID = 'template_pa4tg3a';
-  const EMAILJS_PUBLIC_KEY = 'G52ZRTYVvlqCkJ0x0';
-
+  
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  const generateVerificationLink = (uid, email) => {
-    const data = `${uid}:${email}`;
-    const token = btoa(data);
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/verify?token=${encodeURIComponent(token)}`;
-  };
 
   const pwStrength = (pw) => {
     let s = 0;
@@ -753,15 +706,15 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
   };
   const strength = pwStrength(data.password);
   const strengthColors = ['#e05050', '#e05050', '#f0a030', '#3090e0', '#30c060'];
-  const strengthLabels = ['', t('pw_weak'), t('pw_fair'), t('pw_good'), t('pw_strong')];
+  const strengthLabels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
 
   const validate = () => {
     const e = {};
-    if (!data.username.trim())  e.username = t('err_username_req');
-    if (!data.password) e.password = t('err_pw_req');
-    else if (data.password.length < 8) e.password = t('err_pw_len');
-    if (!data.confirm) e.confirm = t('err_confirm_req');
-    else if (data.password !== data.confirm) e.confirm = t('err_confirm_match');
+    if (!data.username.trim())  e.username = 'Username is required.';
+    if (!data.password) e.password = 'Password is required.';
+    else if (data.password.length < 8) e.password = 'Password must be at least 8 characters.';
+    if (!data.confirm) e.confirm = 'Please confirm your password.';
+    else if (data.password !== data.confirm) e.confirm = "Passwords don't match.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -780,7 +733,7 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       const nicQuery = query(collection(db, 'users'), where('nic', '==', nicNumber));
       const nicDocSnap = await getDocs(nicQuery);
       if (!nicDocSnap.empty) {
-        setErrors({ firebase: t('err_nic_taken') });
+        setErrors({ firebase: 'This NIC number is already registered. Please contact support.' });
         setLoading(false);
         return;
       }
@@ -789,7 +742,7 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       const emailQuery = query(collection(db, 'users'), where('email', '==', realEmail));
       const emailDocSnap = await getDocs(emailQuery);
       if (!emailDocSnap.empty) {
-        setErrors({ firebase: t('err_email_taken') });
+        setErrors({ firebase: 'This email is already registered. Please use a different email.' });
         setLoading(false);
         return;
       }
@@ -798,22 +751,20 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       const usernameQuery = query(collection(db, 'users'), where('username', '==', username));
       const usernameDocSnap = await getDocs(usernameQuery);
       if (!usernameDocSnap.empty) {
-        setErrors({ firebase: t('err_username_taken') });
+        setErrors({ firebase: 'This username is already taken. Please choose another one.' });
         setLoading(false);
         return;
       }
       
+      // Create account with real email
       const credential = await createUserWithEmailAndPassword(auth, realEmail, data.password);
       
-      try {
-        await updateProfile(credential.user, { displayName: data.username });
-      } catch (e) { 
-      }
-
+      // Send verification email
       if (realEmail) {
         try {
           await sendEmailVerification(credential.user);
         } catch (e) {
+          console.warn('Email verification failed:', e.message);
         }
       }
       
@@ -821,67 +772,44 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       try {
         await updateProfile(credential.user, { displayName: data.username });
       } catch (e) { 
+        console.warn('updateProfile failed:', e.message); 
       }
 
       // Store user data in Firestore
-      await setDoc(doc(db, 'users', credential.user.uid), {
-        uid: credential.user.uid,
-        username: data.username,
-        fullName: data.fullName,
-        nic: nicNumber,
-        sex: data.sex || '',
-        dob: data.dob,
-        address: data.address,
-        email: realEmail,
-        mobile: data.mobile,
-        district: data.district,
-        dsDiv: data.dsDiv,
-        gnDiv: data.gnDiv,
-        role: 'citizen',
-        createdAt: serverTimestamp(),
-        emailVerified: false,
-        verificationSentAt: serverTimestamp(),
-      });
-            
-      const verificationLink = generateVerificationLink(credential.user.uid, realEmail);
-      
       try {
-        await emailjs.send(
-          EMAILJS_SERVICE_ID,
-          EMAILJS_TEMPLATE_ID,
-          {
-            to_email: realEmail,
-            user_name: data.fullName,
-            verify_link: verificationLink,
-          },
-          EMAILJS_PUBLIC_KEY
-        );
-        
-        setVerificationSent(true);
-        
-      } catch (emailError) {
-        
-        // Fallback: Show link to user
-        const userConfirmed = window.confirm(
-          `We couldn't send the verification email automatically.\n\nPlease verify by clicking this link:\n\n${verificationLink}\n\nClick OK to open.`
-        );
-        
-        if (userConfirmed) {
-          window.open(verificationLink, '_blank');
-        }
-        
-        setVerificationSent(true);
+        await setDoc(doc(db, 'users', credential.user.uid), {
+          uid: credential.user.uid,
+          username: data.username,
+          fullName: data.fullName,
+          nic: nicNumber,
+          dob: data.dob,
+          address: data.address,
+          email: realEmail,
+          mobile: data.mobile,
+          district: data.district,
+          dsDiv: data.dsDiv,
+          gnDiv: data.gnDiv,
+          role: 'citizen',
+          createdAt: serverTimestamp(),
+          emailVerified: false,
+        });
+      } catch (firestoreErr) {
+        // Rollback: delete the Auth account
+        await credential.user.delete();
+        throw firestoreErr;
       }
+      
+      setVerificationSent(true);
       
     } catch (err) {
       let friendlyError;
       
       if (err.code === 'auth/email-already-in-use') {
-        friendlyError = t('err_email_taken');
+        friendlyError = 'This email is already registered. Please use a different email.';
       } else if (err.code === 'auth/invalid-email') {
-        friendlyError = t('err_email_invalid');
+        friendlyError = 'Invalid email address.';
       } else if (err.code === 'auth/weak-password') {
-        friendlyError = t('err_pw_len');
+        friendlyError = 'Password is too weak. Use at least 8 characters with letters and numbers.';
       } else if (err.code === 'auth/network-request-failed') {
         friendlyError = 'Network error. Please check your connection.';
       } else {
@@ -914,7 +842,7 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         </div>
 
         <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 800, color: '#1a1a1a', marginBottom: '12px' }}>
-          {t('success_title')}
+          Account Successfully Created!
         </h2>
         <p style={{ fontSize: isMobile ? '13px' : '14px', color: '#555', lineHeight: 1.6, marginBottom: '20px' }}>
           Your Smart Grama Sewa account is now active.<br />
@@ -922,12 +850,12 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         </p>
         <p style={{ fontSize: isMobile ? '12px' : '13px', color: '#888', marginBottom: '28px' }}>
           {data.email && data.email.includes('@') && (
-            <span>{t('verification_sent_msg')}</span>
+            <span> A verification email has been sent to <strong>{data.email}</strong>. Please verify your email to access all features.</span>
           )}
         </p>
 
         <YellowBtn onClick={() => { window.location.href = '/login'; }} isMobile={isMobile}>
-          {t('sign_in')}
+          Go to Login
         </YellowBtn>
       </div>
     );
@@ -940,7 +868,7 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
   return (
     <div>
       <h2 style={{ fontSize: isMobile ? '16px' : '17px', fontWeight: 800, color: '#1a1a1a', marginBottom: '22px' }}>
-        {t('secure_account')}
+        Secure Your Account
       </h2>
 
       {errors.firebase && (
@@ -963,12 +891,12 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       )}
 
       <div style={{ marginBottom: '18px' }}>
-        <label style={labelStyle(isMobile)}>{t('username_label')}</label>
+        <label style={labelStyle(isMobile)}>User name</label>
         <input
           type="text"
           value={data.username}
           onChange={(e) => onChange('username', e.target.value)}
-          placeholder={t('username_placeholder')}
+          placeholder="e.g. ruwan_perera92"
           style={{ ...inp(isMobile, errors.username), maxWidth: isMobile ? '100%' : '320px' }}
           onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
           onBlur={(e)  => (e.target.style.borderColor = errors.username ? '#e05050' : '#d4c9a8')}
@@ -983,13 +911,13 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         marginBottom: '8px' 
       }}>
         <div>
-          <label style={labelStyle(isMobile)}>{t('password_label')}</label>
+          <label style={labelStyle(isMobile)}>Create a strong password</label>
           <div style={{ position: 'relative' }}>
             <input
               type={showPw ? 'text' : 'password'}
               value={data.password}
               onChange={(e) => onChange('password', e.target.value)}
-              placeholder={t('password_placeholder')}
+              placeholder="Min 8 characters"
               style={{ ...inp(isMobile, errors.password), paddingRight: '44px' }}
               onFocus={(e) => (e.target.style.borderColor = '#B46A02')}
               onBlur={(e)  => (e.target.style.borderColor = errors.password ? '#e05050' : '#d4c9a8')}
@@ -1017,7 +945,7 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
           {errors.password && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.password}</p>}
         </div>
         <div>
-          <label style={labelStyle(isMobile)}>{t('confirm_password_label')}</label>
+          <label style={labelStyle(isMobile)}>Confirm password</label>
           <div style={{ position: 'relative' }}>
             <input
               type={showConf ? 'text' : 'password'}
@@ -1034,14 +962,14 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
             </button>
           </div>
           {data.confirm && data.confirm === data.password && (
-            <p style={{ color: '#30a050', fontSize: '12px', marginTop: '4px', fontWeight: 600 }}>{t('pw_match_valid')}</p>
+            <p style={{ color: '#30a050', fontSize: '12px', marginTop: '4px', fontWeight: 600 }}>✓ Passwords match</p>
           )}
           {errors.confirm && <p style={{ color: '#e05050', fontSize: '12px', marginTop: '4px' }}>{errors.confirm}</p>}
         </div>
       </div>
 
       <p style={{ fontSize: '12px', color: '#666', marginBottom: '24px' }}>
-        {t('password_match_hint')}
+        You will log in using your email address or username. Keep your password secure.
       </p>
 
       <div style={{ 
@@ -1051,26 +979,26 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         alignItems: 'center',
         gap: isMobile ? '12px' : '0',
       }}>
-        <DarkBtn onClick={onBack} isMobile={isMobile}>← {t('back')}</DarkBtn>
+        <DarkBtn onClick={onBack} isMobile={isMobile}>← Back</DarkBtn>
         <YellowBtn onClick={handleCreate} disabled={loading} isMobile={isMobile}>
-          {loading ? t('creating') : t('create_account')}
+          {loading ? 'Creating…' : 'Create Account'}
         </YellowBtn>
       </div>
 
       <PrivacyNote isMobile={isMobile} />
 
       <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: '#666' }}>
-        {t('already_have_account')}{' '}
+        Already have an account?{' '}
         <a href="/login" style={{ color: '#B46A02', fontWeight: 700, textDecoration: 'none' }}>
-          {t('sign_in')}
+          Sign in
         </a>
       </p>
     </div>
   );
 };
 
+// STEP 4 — Success 
 const StepSuccess = ({ onDashboard }) => {
-  const { t } = useTranslation();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
   useEffect(() => {
@@ -1080,7 +1008,7 @@ const StepSuccess = ({ onDashboard }) => {
   }, []);
 
   return (
-    <div style={{ textAlign: 'center', padding: '12px 0 8px' }}>
+    <div style={{ textAlign: 'center', padding: isMobile ? '12px 0 8px' : '12px 0 8px' }}>
       <div style={{
         width: isMobile ? '70px' : '80px',
         height: isMobile ? '70px' : '80px',
@@ -1098,7 +1026,7 @@ const StepSuccess = ({ onDashboard }) => {
       </div>
 
       <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 800, color: '#1a1a1a', marginBottom: '14px' }}>
-        {t('success_title')}
+        Account Successfully Created!
       </h2>
       <p style={{ fontSize: isMobile ? '13px' : '14px', color: '#444', lineHeight: 1.6, marginBottom: '28px' }}>
         Your Smart Grama Sewa account is now active.<br />
@@ -1106,14 +1034,14 @@ const StepSuccess = ({ onDashboard }) => {
         from your personal dashboard.
       </p>
 
-      <YellowBtn onClick={onDashboard} isMobile={isMobile}>{t('success_btn')}</YellowBtn>
+      <YellowBtn onClick={onDashboard} isMobile={isMobile}>Go to dashboard</YellowBtn>
     </div>
   );
 };
 
+// Main SignUp component
 const SignUp = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
@@ -1162,7 +1090,7 @@ const SignUp = () => {
           margin: '0 0 24px',
           textAlign: 'center',
         }}>
-          {t('signup')}
+          Sign Up
         </h1>
 
         <div style={{ width: '100%', maxWidth: '560px', marginBottom: '8px' }}>

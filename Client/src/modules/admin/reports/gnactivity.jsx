@@ -1001,7 +1001,7 @@ function Sidebar({ onLogout }) {
     <aside className="w-64 flex-shrink-0 flex flex-col py-6 px-3 gap-2 border-r"
       style={{ borderColor: C.border, background: C.bg }}>
       <div className="flex items-center gap-2 px-3 mb-6">
-        <img src="/logo2.png" alt="Smart Grama Sewa"  />
+        <img src="/logo2.png" alt="Smart Grama Sewa" className="h-10" />
       </div>
       <ul className="flex flex-col gap-1 flex-1">
         <NavItem icon={LayoutDashboard} label="Dashboard" bold onClick={() => navigate('/admin/dashboard')} />

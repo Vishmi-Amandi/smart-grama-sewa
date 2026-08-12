@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
 import { PageLoadingSkeleton, ProfileSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
-import NotificationBell from '../components/NotificationBell';
 
+// Icons
 const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
@@ -18,9 +17,9 @@ const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
 const IC = {
   dashboard:    'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10',
   announcement: 'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0',
-  appointments: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2 M9 5a2 2 0 002 2h2a2 2 0 002-2 M9 5a2 2 0 012-2h2a2 2 0 012 2',
+  appointments: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
   forms:        'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
-  ai:           'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
+  ai:           'M12 2a10 10 0 100 20A10 10 0 0012 2z M12 8v4l3 3',
   profile:      'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8z',
   settings:     'M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z',
   logout:       'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4 M16 17l5-5-5-5 M21 12H9',
@@ -38,17 +37,19 @@ const IC = {
   calendar:     'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
 };
 
-const PAGE_ACTIONS_KEYS = [
-  { key: 'dashboard', path: '/dashboard', icon: IC.dashboard },
-  { key: 'announcements', path: '/announcements', icon: IC.announcement },
-  { key: 'appointments', path: '/appointments', icon: IC.appointments },
-  { key: 'forms', path: '/forms', icon: IC.forms },
-  { key: 'ai_assistant', path: null, icon: IC.ai },
-  { key: 'profile', path: '/profile', icon: IC.profile },
-  { key: 'settings', path: '/settings', icon: IC.settings },
+// List of all pages/functions for search
+const PAGE_ACTIONS = [
+  { name: 'Dashboard', path: '/dashboard', icon: IC.dashboard },
+  { name: 'Announcements', path: '/announcements', icon: IC.announcement },
+  { name: 'Appointments', path: '/appointments', icon: IC.appointments },
+  { name: 'Forms', path: '/forms', icon: IC.forms },
+  { name: 'AI Assistant', path: null, icon: IC.ai },
+  { name: 'Profile', path: '/profile', icon: IC.profile },
+  { name: 'Settings', path: '/settings', icon: IC.settings },
 ];
 
-const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate, t }) => {
+// Search Results Dropdown Component
+const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate }) => {
   const [filteredPages, setFilteredPages] = useState([]);
 
   useEffect(() => {
@@ -57,12 +58,11 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
       return;
     }
     const query = searchQuery.toLowerCase();
-    const allPages = PAGE_ACTIONS_KEYS.map(p => ({
-      ...p,
-      name: p.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${p.key}`)
-    }));
-    setFilteredPages(allPages.filter(p => p.name.toLowerCase().includes(query)));
-  }, [searchQuery, t]);
+    const filtered = PAGE_ACTIONS.filter(page =>
+      page.name.toLowerCase().includes(query)
+    );
+    setFilteredPages(filtered);
+  }, [searchQuery]);
 
   if (!showResults || filteredPages.length === 0) return null;
 
@@ -81,7 +81,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
           <Icon d={page.icon} size={18} color="#B46A02" />
           <div>
             <div className="text-sm font-bold text-user-text">{page.name}</div>
-            <div className="text-[11px] text-user-text-lighter">{t('lbl_click_to_go_to', { page: page.name })}</div>
+            <div className="text-[11px] text-user-text-lighter">Click to go to {page.name}</div>
           </div>
         </button>
       ))}
@@ -89,6 +89,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
   );
 };
 
+// NavItem
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
@@ -102,14 +103,15 @@ const NavItem = ({ iconPath, label, active, onClick }) => (
   </button>
 );
 
-const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser, t }) => (
+// Desktop Topbar
+const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser }) => (
   <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
     <div className="flex-1 max-w-[400px] relative">
       <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-round px-4 py-2 transition-colors hover:border-user-primary">
         <Icon d={IC.search} size={16} color="#aaa" />
         <input
           type="text"
-          placeholder={t('lbl_search_page_function')}
+          placeholder="Search for a page or function..."
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -129,7 +131,6 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
         showResults={showResults}
         setShowResults={setShowResults}
         navigate={navigate}
-        t={t}
       />
     </div>
     <div className="flex-1" />
@@ -139,8 +140,12 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
       onLanguageChange={onLanguageChange}
     />
     
-    <NotificationBell />
+    <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
+      <Icon d={IC.bell} size={18} color="#5a3a00" />
+      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
+    </div>
     
+    {/* Profile Dropdown */}
     <div className="relative">
       <button 
         onClick={(e) => {
@@ -162,14 +167,14 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
             <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
           </div>
           <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
-            <Icon d={IC.profile} size={16} color="#B46A02" /> {t('lbl_my_profile')}
+            <Icon d={IC.profile} size={16} color="#B46A02" /> My Profile
           </button>
           <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
-            <Icon d={IC.settings} size={16} color="#B46A02" /> {t('lbl_settings')}
+            <Icon d={IC.settings} size={16} color="#B46A02" /> Settings
           </button>
           <div className="border-t border-user-border-light my-1"></div>
           <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
-            <Icon d={IC.logout} size={16} color="#ef4444" /> {t('lbl_sign_out')}
+            <Icon d={IC.logout} size={16} color="#ef4444" /> Sign Out
           </button>
         </div>
       )}
@@ -177,7 +182,8 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
   </div>
 );
 
-const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLanguageChange, t }) => (
+// Mobile Topbar
+const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLanguageChange }) => (
   <div className="mobile-topbar hidden h-16 bg-user-primary items-center px-4 gap-3 sticky top-0 z-40 shadow-md">
     <button onClick={onMenuClick} className="bg-none border-none cursor-pointer p-1.5 flex-shrink-0">
       <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
@@ -190,25 +196,29 @@ const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLang
       <img src="/logo2.png" alt="Smart Grama Sewa" className="h-10 w-auto" />
     </div>
     <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={onLanguageChange} />
-    <NotificationBell />
+    <div className="w-9 h-9 flex items-center justify-center relative">
+      <Icon d={IC.bell} size={22} color="#1e1200" />
+      <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
+    </div>
     <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
       <Icon d={IC.profile} size={20} color="#3d2a00" />
     </div>
   </div>
 );
 
-const MobileSidebar = ({ isOpen, onClose, navigate, onLogout, currentPath, t }) => {
+// Mobile Sidebar Overlay
+const MobileSidebar = ({ isOpen, onClose, navigate, onLogout, currentPath }) => {
   const navItems = [
-    { key: 'dashboard', icon: IC.dashboard, path: '/dashboard' },
-    { key: 'announcements', icon: IC.announcement, path: '/announcements' },
-    { key: 'appointments', icon: IC.appointments, path: '/appointments' },
-    { key: 'forms', icon: IC.forms, path: '/forms' },
-    { key: 'ai_assistant', icon: IC.ai, path: '/ai' },
+    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard', path: '/dashboard' },
+    { key: 'announcements', icon: IC.announcement, label: 'Announcements', path: '/announcements' },
+    { key: 'appointments', icon: IC.appointments, label: 'Appointments', path: '/appointments' },
+    { key: 'forms', icon: IC.forms, label: 'Forms', path: '/forms' },
+    { key: 'ai', icon: IC.ai, label: 'AI assistant', path: '/ai' },
   ];
   const bottomNav = [
-    { key: 'profile', icon: IC.profile, path: '/profile' },
-    { key: 'settings', icon: IC.settings, path: '/settings' },
-    { key: 'logout', icon: IC.logout, action: 'logout' },
+    { key: 'profile', icon: IC.profile, label: 'Profile', path: '/profile' },
+    { key: 'settings', icon: IC.settings, label: 'Settings', path: '/settings' },
+    { key: 'logout', icon: IC.logout, label: 'Sign out', action: 'logout' },
   ];
 
   if (!isOpen) return null;
@@ -227,7 +237,7 @@ const MobileSidebar = ({ isOpen, onClose, navigate, onLogout, currentPath, t }) 
           <NavItem 
             key={item.key} 
             iconPath={item.icon} 
-            label={item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`)}
+            label={item.label} 
             active={currentPath === item.path}
             onClick={() => { navigate(item.path); onClose(); }} 
           />
@@ -237,7 +247,7 @@ const MobileSidebar = ({ isOpen, onClose, navigate, onLogout, currentPath, t }) 
             <NavItem 
               key={item.key} 
               iconPath={item.icon} 
-              label={item.key === 'logout' ? t('lbl_sign_out') : t(`lbl_${item.key}`)}
+              label={item.label} 
               active={currentPath === item.path}
               onClick={() => { if (item.action === 'logout') onLogout(); else navigate(item.path); onClose(); }} 
             />
@@ -248,18 +258,19 @@ const MobileSidebar = ({ isOpen, onClose, navigate, onLogout, currentPath, t }) 
   );
 };
 
-const DesktopSidebar = ({ navigate, onLogout, currentPath, t }) => {
+// Desktop Sidebar
+const DesktopSidebar = ({ navigate, onLogout, currentPath }) => {
   const navItems = [
-    { key: 'dashboard', icon: IC.dashboard, path: '/dashboard' },
-    { key: 'announcements', icon: IC.announcement, path: '/announcements' },
-    { key: 'appointments', icon: IC.appointments, path: '/appointments' },
-    { key: 'forms', icon: IC.forms, path: '/forms' },
-    { key: 'ai_assistant', icon: IC.ai, path: '/ai' },
+    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard', path: '/dashboard' },
+    { key: 'announcements', icon: IC.announcement, label: 'Announcements', path: '/announcements' },
+    { key: 'appointments', icon: IC.appointments, label: 'Appointments', path: '/appointments' },
+    { key: 'forms', icon: IC.forms, label: 'Forms', path: '/forms' },
+    { key: 'ai', icon: IC.ai, label: 'AI assistant', path: '/ai' },
   ];
   const bottomNav = [
-    { key: 'profile', icon: IC.profile, path: '/profile' },
-    { key: 'settings', icon: IC.settings, path: '/settings' },
-    { key: 'logout', icon: IC.logout, action: 'logout' },
+    { key: 'profile', icon: IC.profile, label: 'Profile', path: '/profile' },
+    { key: 'settings', icon: IC.settings, label: 'Settings', path: '/settings' },
+    { key: 'logout', icon: IC.logout, label: 'Sign out', action: 'logout' },
   ];
 
   return (
@@ -272,7 +283,7 @@ const DesktopSidebar = ({ navigate, onLogout, currentPath, t }) => {
           <NavItem 
             key={item.key} 
             iconPath={item.icon} 
-            label={item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`)}
+            label={item.label} 
             active={currentPath === item.path}
             onClick={() => navigate(item.path)} 
           />
@@ -283,7 +294,7 @@ const DesktopSidebar = ({ navigate, onLogout, currentPath, t }) => {
           <NavItem 
             key={item.key} 
             iconPath={item.icon} 
-            label={item.key === 'logout' ? t('lbl_sign_out') : t(`lbl_${item.key}`)}
+            label={item.label} 
             active={currentPath === item.path}
             onClick={() => item.action === 'logout' ? onLogout() : navigate(item.path)} 
           />
@@ -293,21 +304,21 @@ const DesktopSidebar = ({ navigate, onLogout, currentPath, t }) => {
   );
 };
 
-// view mode
-const InfoRow = ({ label, value, t }) => {
+// Info row (view mode)
+const InfoRow = ({ label, value }) => {
   const isEmpty = !value || value === '—' || value === '--' || value.trim() === '';
   
   return (
     <div className="mb-4">
       <div className="text-xs font-extrabold text-user-warning mb-1.5">{label}</div>
       <div className={`text-sm font-semibold pb-2.5 border-b border-user-border-light ${isEmpty ? 'text-user-text-lighter italic' : 'text-user-text'}`}>
-        {isEmpty ? t('lbl_not_specified') : value}
+        {isEmpty ? 'Not specified' : value}
       </div>
     </div>
   );
 };
 
-// edit mode
+// Form field (edit mode)
 const Field = ({ label, value, onChange, type = 'text', placeholder = '', disabled = false }) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-xs font-extrabold text-user-warning">{label}</label>
@@ -322,24 +333,24 @@ const Field = ({ label, value, onChange, type = 'text', placeholder = '', disabl
   </div>
 );
 
-const GenderSelect = ({ value, onChange, t }) => (
+const GenderSelect = ({ value, onChange }) => (
   <div className="flex flex-col gap-1.5">
-    <label className="text-xs font-extrabold text-user-warning">{t('lbl_gender')}</label>
+    <label className="text-xs font-extrabold text-user-warning">Gender</label>
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="w-full py-3 px-3.5 text-sm font-semibold bg-white border border-user-border rounded-lg outline-none focus:border-user-primary"
     >
-      <option value="">{t('gender_select')}</option>
-      <option value="Male">{t('gender_male')}</option>
-      <option value="Female">{t('gender_female')}</option>
-      <option value="Other">{t('gender_other')}</option>
+      <option value="">Select…</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
     </select>
   </div>
 );
 
+// MAIN PROFILE COMPONENT
 const Profile = () => {
-  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -351,7 +362,7 @@ const Profile = () => {
   const [showSearchResults, setShowSearchResults] = useState(false);
 
   // LANGUAGE STATE
-  const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'en');
+  const [currentLanguage, setCurrentLanguage] = useState('en');
   
   // PROFILE DROPDOWN STATE
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -368,11 +379,6 @@ const Profile = () => {
     occupation: '', mobile: '', email: '', district: '', dsDiv: '', gnDiv: '',
   });
 
-  // Sync language with i18n
-  useEffect(() => {
-    setCurrentLanguage(i18n.language);
-  }, [i18n.language]);
-
   // Handle resize for mobile detection
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -386,6 +392,7 @@ const Profile = () => {
       const profileButton = document.querySelector('.profile-button');
       const profileMenu = document.querySelector('.profile-menu');
       
+      // Don't close if clicking on profile button or menu
       if (profileButton?.contains(event.target) || profileMenu?.contains(event.target)) {
         return;
       }
@@ -398,9 +405,10 @@ const Profile = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
+  // Handle language change
   const handleLanguageChange = (langCode) => {
     setCurrentLanguage(langCode);
-    i18n.changeLanguage(langCode);
+    console.log('Language changed to:', langCode);
   };
 
   useEffect(() => {
@@ -419,7 +427,7 @@ const Profile = () => {
               district: data.district || '', dsDiv: data.dsDiv || '', gnDiv: data.gnDiv || '',
             });
           }
-        } catch (e) {}
+        } catch (e) { console.warn(e); }
       } else { navigate('/login'); }
       setAuthLoading(false);
     });
@@ -441,9 +449,7 @@ const Profile = () => {
       setSaveSuccess(true);
       setIsEditing(false);
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (e) { 
-      setSaveError(t('lbl_save_error')); 
-    }
+    } catch (e) { setSaveError('Failed to save changes.'); }
     finally { setSaving(false); }
   };
 
@@ -468,13 +474,13 @@ const Profile = () => {
   if (authLoading) return <PageLoadingSkeleton />;
 
   return (
-    <div key={i18n.language} className="user-module min-h-screen flex flex-col font-sans bg-user-background">
+    <div className="user-module min-h-screen flex flex-col font-sans bg-user-background">
       <div className="flex-1 flex">
         {/* Desktop Sidebar */}
-        {!isMobile && <DesktopSidebar navigate={navigate} onLogout={handleLogout} currentPath={currentPath} t={t} />}
+        {!isMobile && <DesktopSidebar navigate={navigate} onLogout={handleLogout} currentPath={currentPath} />}
 
         {/* Mobile Sidebar Overlay */}
-        <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} navigate={navigate} onLogout={handleLogout} currentPath={currentPath} t={t} />
+        <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} navigate={navigate} onLogout={handleLogout} currentPath={currentPath} />
 
         {/* MAIN COLUMN */}
         <div className="flex-1 flex flex-col min-w-0">
@@ -494,7 +500,6 @@ const Profile = () => {
               handleLogout={handleLogout}
               userData={userData}
               currentUser={currentUser}
-              t={t}
             />
           )}
 
@@ -505,7 +510,6 @@ const Profile = () => {
             navigate={navigate}
             currentLanguage={currentLanguage}
             onLanguageChange={handleLanguageChange}
-            t={t}
           />
 
           {/* Mobile Search Bar */}
@@ -514,7 +518,7 @@ const Profile = () => {
               <Icon d={IC.search} size={16} color="#aaa" />
               <input
                 type="text"
-                placeholder={t('lbl_search_page')}
+                placeholder="Search for a page..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -535,7 +539,6 @@ const Profile = () => {
                 showResults={showSearchResults}
                 setShowResults={setShowSearchResults}
                 navigate={navigate}
-                t={t}
               />
             )}
           </div>
@@ -546,12 +549,12 @@ const Profile = () => {
             
             {!isEditing && userData && (
               <>
-                <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight">{t('lbl_my_profile')}</h1>
-                <p className="text-sm font-semibold text-user-text-lighter mb-6">{t('lbl_profile_desc')}</p>
+                <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight">My Profile</h1>
+                <p className="text-sm font-semibold text-user-text-lighter mb-6">View and manage personal information.</p>
                 {saveSuccess && (
                   <div className="flex items-center gap-2 bg-user-success-light border border-user-success rounded-xl p-3 mb-4">
                     <Icon d={IC.tick} size={14} color="#1a7a3a" strokeWidth={2.5} />
-                    <span className="text-sm font-semibold text-user-success">{t('lbl_profile_updated')}</span>
+                    <span className="text-sm font-semibold text-user-success">Profile updated successfully!</span>
                   </div>
                 )}
 
@@ -564,11 +567,11 @@ const Profile = () => {
                   </div>
                   <div className="flex-1 text-center md:text-left">
                     <div className="text-xl font-black text-user-text">{userData?.fullName || chipName}</div>
-                    <div className="text-sm text-user-text-lighter font-semibold mt-1">{t('lbl_citizen_id')} : {nicMasked}</div>
+                    <div className="text-sm text-user-text-lighter font-semibold mt-1">Citizen ID : {nicMasked}</div>
                     <div className="flex items-center justify-center md:justify-start gap-2 mt-2">
                       <div className="flex items-center gap-1 text-xs text-user-success">
                         <div className="w-2 h-2 rounded-full bg-user-success" />
-                        <span>{t('lbl_active_account')}</span>
+                        <span>Active Account</span>
                       </div>
                     </div>
                   </div>
@@ -576,29 +579,29 @@ const Profile = () => {
                     onClick={() => setIsEditing(true)} 
                     className="flex items-center justify-center gap-2 py-2.5 px-6 bg-user-primary rounded-round text-sm font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark"
                   >
-                    <Icon d={IC.edit} size={15} /> {t('lbl_edit_profile')}
+                    <Icon d={IC.edit} size={15} /> Edit Profile
                   </button>
                 </div>
 
                 {/* Info Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-user-surface border border-user-border rounded-xl p-5">
-                    <h3 className="text-base font-extrabold text-user-text mb-4 pb-2 border-b border-user-border-light">{t('lbl_personal_info')}</h3>
-                    <InfoRow label={t('lbl_full_name')} value={userData?.fullName} t={t} />
-                    <InfoRow label={t('lbl_nic_number')} value={userData?.nic} t={t} />
-                    <InfoRow label={t('lbl_date_of_birth')} value={userData?.dob} t={t} />
-                    <InfoRow label={t('lbl_gender')} value={userData?.gender} t={t} />
-                    <InfoRow label={t('lbl_home_address')} value={userData?.address} t={t} />
-                    <InfoRow label={t('lbl_occupation')} value={userData?.occupation} t={t} />
+                    <h3 className="text-base font-extrabold text-user-text mb-4 pb-2 border-b border-user-border-light">Personal Information</h3>
+                    <InfoRow label="Full Name" value={userData?.fullName} />
+                    <InfoRow label="NIC Number" value={userData?.nic} />
+                    <InfoRow label="Date Of Birth" value={userData?.dob} />
+                    <InfoRow label="Gender" value={userData?.gender} />
+                    <InfoRow label="Home Address" value={userData?.address} />
+                    <InfoRow label="Occupation" value={userData?.occupation} />
                   </div>
 
                   <div className="bg-user-surface border border-user-border rounded-xl p-5">
-                    <h3 className="text-base font-extrabold text-user-text mb-4 pb-2 border-b border-user-border-light">{t('lbl_contact_details')}</h3>
-                    <InfoRow label={t('lbl_mobile_number')} value={userData?.mobile} t={t} />
-                    <InfoRow label={t('lbl_email_address')} value={currentUser?.email} t={t} />
-                    <InfoRow label={t('lbl_district')} value={userData?.district} t={t} />
-                    <InfoRow label={t('lbl_ds_division')} value={userData?.dsDiv} t={t} />
-                    <InfoRow label={t('lbl_gn_division')} value={userData?.gnDiv} t={t} />
+                    <h3 className="text-base font-extrabold text-user-text mb-4 pb-2 border-b border-user-border-light">Contact Details</h3>
+                    <InfoRow label="Mobile Number" value={userData?.mobile} />
+                    <InfoRow label="Email Address" value={currentUser?.email} />
+                    <InfoRow label="District" value={userData?.district} />
+                    <InfoRow label="DS Division" value={userData?.dsDiv} />
+                    <InfoRow label="GN Division" value={userData?.gnDiv} />
                   </div>
                 </div>
               </>
@@ -606,8 +609,8 @@ const Profile = () => {
 
             {isEditing && (
               <>
-                <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-1">{t('lbl_edit_profile')}</h1>
-                <p className="text-sm text-user-text-lighter font-semibold mb-7">{t('lbl_edit_profile_desc')}</p>
+                <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-1">Edit Profile</h1>
+                <p className="text-sm text-user-text-lighter font-semibold mb-7">Update your personal information and contact details.</p>
 
                 {saveError && (
                   <div className="flex items-center gap-2 bg-user-error-light border border-user-error rounded-xl p-3 mb-4">
@@ -622,15 +625,15 @@ const Profile = () => {
 
                 <div className="bg-user-surface border border-user-border rounded-xl p-5 md:p-7 mb-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <Field label={t('lbl_full_name')} value={form.fullName} onChange={update('fullName')} />
-                    <Field label={t('lbl_date_of_birth')} value={form.dob} onChange={update('dob')} type="date" />
-                    <Field label={t('lbl_occupation')} value={form.occupation} onChange={update('occupation')} />
-                    <GenderSelect value={form.gender} onChange={update('gender')} t={t} />
+                    <Field label="Full Name" value={form.fullName} onChange={update('fullName')} />
+                    <Field label="Date Of Birth" value={form.dob} onChange={update('dob')} type="date" />
+                    <Field label="Occupation" value={form.occupation} onChange={update('occupation')} />
+                    <GenderSelect value={form.gender} onChange={update('gender')} />
                     <div className="md:col-span-2">
-                      <Field label={t('lbl_home_address')} value={form.address} onChange={update('address')} />
+                      <Field label="Home Address" value={form.address} onChange={update('address')} />
                     </div>
-                    <Field label={t('lbl_mobile_number')} value={form.mobile} onChange={update('mobile')} disabled={true} />
-                    <Field label={t('lbl_email_address')} value={form.email} onChange={update('email')} disabled={true} />
+                    <Field label="Mobile Number" value={form.mobile} onChange={update('mobile')} disabled={true} />
+                    <Field label="Email Address" value={form.email} onChange={update('email')} disabled={true} />
                   </div>
                 </div>
 
@@ -639,14 +642,14 @@ const Profile = () => {
                     onClick={handleCancel} 
                     className="py-3 px-8 bg-user-secondary rounded-round text-sm font-extrabold text-white cursor-pointer transition-all hover:bg-user-secondary-dark"
                   >
-                    {t('lbl_cancel')}
+                    Cancel
                   </button>
                   <button 
                     onClick={handleSave} 
                     disabled={saving}
                     className={`py-3 px-8 bg-user-primary rounded-round text-sm font-extrabold text-user-text cursor-pointer transition-all hover:bg-user-primary-dark ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    {saving ? t('lbl_saving') : t('lbl_save_changes')}
+                    {saving ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </>
@@ -685,4 +688,4 @@ const Profile = () => {
   );
 };
 
-export default Profile; 
+export default Profile;
