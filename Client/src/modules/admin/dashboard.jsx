@@ -276,26 +276,10 @@ function Topbar({ adminName }) {
           onChange={(e) => setSearchVal(e.target.value)}
         />
       </div>
-      
-      {/* Language Switcher Dropdown */}
-      {/* <div className="relative">
-        <button 
-          onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border transition-all active:scale-95"
-          style={{ borderColor: '#C8B89A', color: COLORS.text, background: '#FFF9F0' }}
-        >
-          {currentLanguageLabel()} <ChevronDown size={14} />
-        </button>
-        {dropdownOpen && (
-          <div className="absolute right-0 mt-2 w-32 rounded-xl border shadow-lg overflow-hidden z-50"
-               style={{ background: '#FFF9F0', borderColor: '#C8B89A' }}>
-            <button onClick={() => toggleLanguage('en')} className="w-full text-left px-4 py-2 text-sm text-[#2C1200] hover:bg-amber-100 font-semibold transition-colors">English</button>
-            <button onClick={() => toggleLanguage('si')} className="w-full text-left px-4 py-2 text-sm text-[#2C1200] hover:bg-amber-100 font-semibold transition-colors">සිංහල</button>
-            <button onClick={() => toggleLanguage('ta')} className="w-full text-left px-4 py-2 text-sm text-[#2C1200] hover:bg-amber-100 font-semibold transition-colors">தமிழ்</button>
-          </div>
-        )}
-      </div> */}
-
+      <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
+        style={{ borderColor: '#C8B89A', color: COLORS.text, background: '#FFF9F0' }}>
+        English <ChevronDown size={14} />
+      </button>
       <button className="relative w-10 h-10 rounded-full flex items-center justify-center border"
         style={{ borderColor: '#C8B89A', background: '#FFF9F0' }}>
         <Bell size={18} style={{ color: COLORS.primary }} />
