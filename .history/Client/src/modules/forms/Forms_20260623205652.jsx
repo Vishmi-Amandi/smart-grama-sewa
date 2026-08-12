@@ -270,81 +270,9 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
 };
 
 // ============================================================
-// MAPPING OF FORM FIELDS (for Download Form)
+// UPDATED PDF GENERATION – WITH FULL TRANSLATION SUPPORT
 // ============================================================
-const formFieldKeys = {
-  1: [ // Residence Certificate
-    'applicantName', 'applicantAddress', 'sex', 'age', 'civilStatus', 'isSriLankan', 'religion', 'occupation',
-    'villagePeriod', 'gnPeriod', 'residenceEvidence', 'nicNumber', 'electoralDetails',
-    'fatherName', 'fatherAddress', 'courtConviction', 'socialService', 'certificatePurpose'
-  ],
-  2: [ // Character Certificate – same fields as Residence (they are similar)
-    'applicantName', 'applicantAddress', 'sex', 'age', 'civilStatus', 'isSriLankan', 'religion', 'occupation',
-    'villagePeriod', 'gnPeriod', 'residenceEvidence', 'nicNumber', 'electoralDetails',
-    'fatherName', 'fatherAddress', 'courtConviction', 'socialService', 'certificatePurpose'
-  ],
-  3: [ // Income Certificate
-    'incFullName', 'incAddress', 'incNic', 'incPurpose',
-    'incomeJobAmt', 'incomeLandAmt', 'incomeBizAmt',
-    'summaryEmployment', 'summaryLand', 'summaryBusiness', 'summaryOther',
-    'reliefName', 'incomeAccuracyEvidence', 'submissionTargetInstitution'
-  ],
-  4: [ // Valuation Certificate
-    'valRefNo', 'valRequestDate', 'valDsDivision', 'valGnDivision', 'valLandName',
-    'boundNorth', 'boundEast', 'boundSouth', 'boundWest',
-    'sizeAcres', 'sizeRoods', 'sizePerches',
-    'valLandType', 'possessionYears', 'possessionMonths'
-  ],
-  5: [ // Identity Card Application
-    'nicFamilyName', 'nicOtherNames', 'nicSurname', 'nicPreferredName',
-    'nicSex', 'nicCivilStatus', 'nicDob', 'nicBirthCertNo',
-    'nicBirthPlace', 'nicBirthDistrict', 'nicOccupation',
-    'nicPermAddress', 'nicPostalAddress', 'nicMobilePhone', 'nicEmail'
-  ],
-  6: [ // Living Funds for Disabled Persons
-    'lawDistrict', 'lawDsOffice', 'lawGnDivision',
-    'lawFullName', 'lawDisabilityNature', 'lawDisabilityCause',
-    'lawAccidentYear', 'lawOtherCauseDetails', 'lawVocationalOrEducation',
-    'lawBankAccountNo', 'lawBankNameBranch'
-  ],
-  7: [ // Voter Registration
-    'voterElectoralDistrict', 'voterPollingDivision', 'voterPollingDistrictNo',
-    'voterGnDivision', 'voterVillageStreet', 'voterHouseholdNo',
-    'ycFullName', 'ycNicNo', 'ycDob', 'ycGender', 'ycCivilStatus', 'ycRelationToChief',
-    'voterChiefName', 'voterChiefNic', 'voterChiefPhone', 'voterChiefWhatsApp'
-  ],
-  8: [ // Permit for Felling Trees
-    'treeApplicantStatus', 'treeFullName', 'treeNic', 'treePhone',
-    'treePermanentAddress', 'treeWhatsApp',
-    'treeLandName', 'treeDistrict', 'treeDsDivision', 'treeGnDivision',
-    'treeLandAcres', 'treeLandRoods', 'treeLandPerches',
-    'treeOwnershipType', 'treeDeedNoDate', 'treeLegalDisputesExist',
-    'treeBoundNorth', 'treeBoundEast', 'treeBoundSouth', 'treeBoundWest'
-  ],
-  9: [ // Permit for Timber Transportation
-    'removalGnDiv', 'removalDsOffice',
-    'voterChiefName', 'voterChiefNic', 'voterChiefPhone',
-    'removalLandownerName', 'treeCuttingReason',
-    'removalLandName', 'removalVillageLocalArea',
-    'removalOwnershipType',
-    'remBoundNorth', 'remBoundEast', 'remBoundSouth', 'remBoundWest',
-    'removalDeedNumber', 'removalDeedDate', 'removalDisputeStatus'
-  ],
-  10: [ // Business Registration
-    'biz_prop_name', 'biz_nature_type', 'biz_legal_structure',
-    'biz_owner_name', 'biz_owner_nic',
-    'biz_premises_address', 'biz_tenure_type', 'biz_initial_capital'
-  ],
-  11: [ // Assessments for Ownership of Lands
-    'assessmentLandName', 'assessmentDsDivision', 'assessmentGnDivision',
-    'assessmentCurrentOwner', 'assessmentOwnershipType'
-  ]
-};
-
-// ============================================================
-// PDF GENERATION – with isBlank flag
-// ============================================================
-const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMembers, otherMembers, newVoters, deletedVoters, treeLogistics, timberGrid, t, fieldKeys, isBlank = false }) => {
+const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMembers, otherMembers, newVoters, deletedVoters, treeLogistics, timberGrid, t }) => {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-LK', { year: 'numeric', month: 'long', day: 'numeric' });
   const timeStr = now.toLocaleTimeString('en-LK', { hour: '2-digit', minute: '2-digit' });
@@ -358,48 +286,75 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
       .trim();
   };
 
-  // Applicant details – if isBlank, set all to empty string
-  const applicantName = isBlank ? '' : (userData?.fullName || inputs.applicantName || inputs.incFullName || inputs.treeFullName || inputs.lawFullName || currentUser?.displayName || '');
-  const applicantNic = isBlank ? '' : (userData?.nic || inputs.nicNumber || inputs.incNic || inputs.treeNic || inputs.voterChiefNic || '');
-  const applicantAddress = isBlank ? '' : (userData?.address || inputs.applicantAddress || inputs.incAddress || inputs.treePermanentAddress || inputs.nicPermAddress || '');
-  const applicantPhone = isBlank ? '' : (userData?.mobile || inputs.treePhone || inputs.voterChiefPhone || inputs.nicMobilePhone || '');
-  const applicantEmail = isBlank ? '' : (currentUser?.email || inputs.nicEmail || '');
-  const gnDiv = isBlank ? '' : (userData?.gnDiv || '');
+  // Mapping from field key (as stored in objects) to translation key
+  const fieldKeyToTranslationKey = {
+    name: 'pdf.name',
+    relation: 'pdf.relation',
+    gender: 'pdf.gender',
+    civilStatus: 'pdf.civilStatus',
+    dob: 'pdf.dob',
+    nic: 'pdf.nic',
+    nature: 'pdf.nature',
+    incomeSourceAmt: 'pdf.incomeSource',
+    prevAddress: 'pdf.prevAddress',
+    prevDistrict: 'pdf.prevDistrict',
+    prevYear: 'pdf.prevYear',
+    reason: 'pdf.reason',
+    deathDate: 'pdf.deathDate',
+    newAddress: 'pdf.newAddress',
+    newPhone: 'pdf.newPhone',
+    species: 'pdf.species',
+    girth: 'pdf.girth',
+    height: 'pdf.height',
+    middleGirth: 'pdf.middleGirth',
+    proximityDanger: 'pdf.proximityDanger',
+    woodVol: 'pdf.woodVol',
+    firewoodVol: 'pdf.firewoodVol',
+    infraImpact: 'pdf.infraImpact',
+    selectedPurposeMode: 'pdf.selectedPurposeMode',
+  };
 
-  // Build form data rows – using translation keys and no underscores
+  // Applicant details (unchanged)
+  const applicantName = userData?.fullName || inputs.applicantName || inputs.incFullName || inputs.treeFullName || inputs.lawFullName || currentUser?.displayName || '___________';
+  const applicantNic = userData?.nic || inputs.nicNumber || inputs.incNic || inputs.treeNic || inputs.voterChiefNic || '___________';
+  const applicantAddress = userData?.address || inputs.applicantAddress || inputs.incAddress || inputs.treePermanentAddress || inputs.nicPermAddress || '___________';
+  const applicantPhone = userData?.mobile || inputs.treePhone || inputs.voterChiefPhone || inputs.nicMobilePhone || '___________';
+  const applicantEmail = currentUser?.email || inputs.nicEmail || '___________';
+
+  // Build form data rows (main inputs) – using translation for labels
   let formDataRows = '';
-  const keysToDisplay = fieldKeys || Object.keys(inputs).filter(key => inputs[key] && typeof inputs[key] !== 'object' && inputs[key] !== '');
-  
-  if (keysToDisplay && keysToDisplay.length > 0) {
-    for (const key of keysToDisplay) {
-      const value = inputs[key] !== undefined ? inputs[key] : '';
-      const label = t('forms.fields.' + key, formatLabel(key));
-      formDataRows += `
-        <tr style="border-bottom: 1px solid #e8d5b7;">
-          <td style="padding: 10px 12px; font-weight: 600; color: #6A2301; background: #fdf6ee; width: 35%; font-size: 12px;">${label}</td>
-          <td style="padding: 10px 12px; font-size: 12px; color: #2d1a00;">${value}</td>
-        </tr>
-      `;
+  if (inputs && Object.keys(inputs).length > 0) {
+    for (const [key, value] of Object.entries(inputs)) {
+      if (value && typeof value !== 'object' && value !== '') {
+        const label = t(fieldKeyToTranslationKey[key]) || formatLabel(key);
+        formDataRows += `
+          <tr style="border-bottom: 1px solid #e8d5b7;">
+            <td style="padding: 10px 12px; font-weight: 600; color: #6A2301; background: #fdf6ee; width: 35%; font-size: 12px;">${label}</td>
+            <td style="padding: 10px 12px; font-size: 12px; color: #2d1a00;">${String(value)}</td>
+          </tr>
+        `;
+      }
     }
   }
 
-  // Build table sections for arrays (unchanged)
+  // Build table sections for arrays – with translated field labels
   const buildTableSection = (title, items) => {
     if (!items || items.length === 0) return '';
     const validItems = items.filter(item => item.name || item.species || Object.values(item).some(v => v && v !== ''));
     if (validItems.length === 0) return '';
-   
+
     let html = `<div style="margin-top: 25px;"><div style="font-weight: 800; font-size: 14px; color: #6A2301; margin-bottom: 12px; border-left: 4px solid #B46A02; padding-left: 12px;">${title}</div>`;
-   
+
     validItems.forEach((item, idx) => {
       html += `<div style="margin-bottom: 12px; padding: 12px; background: #fdf6ee; border: 1px solid #e8d5b7; border-radius: 8px;">
         <div style="font-size: 11px; font-weight: 700; color: #B46A02; margin-bottom: 8px;">${t('pdf.entry')} ${idx + 1}</div>
         <table style="width: 100%; border-collapse: collapse;">`;
-     
+
       for (const [key, value] of Object.entries(item)) {
         if (value && typeof value !== 'object' && value !== '') {
+          const label = t(fieldKeyToTranslationKey[key]) || formatLabel(key);
           html += `<tr style="border-bottom: 1px solid #e8d5b7;">
-            <td style="padding: 8px 10px; font-weight: 600; color: #6A2301; width: 35%; font-size: 11px;">${formatLabel(key)}</td>
+            <td style="padding: 8px 10px; font-weight: 600; color: #6A2301; width: 35%; font-size: 11px;">${label}</td>
             <td style="padding: 8px 10px; font-size: 11px; color: #2d1a00;">${String(value)}</td>
           </tr>`;
         }
@@ -426,7 +381,7 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
     extraSections += buildTableSection(t('pdf.timberDetails'), timberGrid);
   }
 
-  // Create complete HTML for print – using translated strings
+  // Full HTML with translation for all static text
   const printContent = `
     <!DOCTYPE html>
     <html>
@@ -434,130 +389,27 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
       <meta charset="UTF-8">
       <title>${form.title} - ${t('pdf.filledApplication')}</title>
       <style>
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        body {
-          font-family: 'Segoe UI', Arial, sans-serif;
-          background: white;
-          padding: 20px;
-        }
-        .print-container {
-          max-width: 1000px;
-          margin: 0 auto;
-          background: white;
-        }
-        .header {
-          background: linear-gradient(135deg, #6A2301 0%, #B46A02 100%);
-          color: white;
-          padding: 25px 30px;
-          border-radius: 0;
-        }
-        .header h1 {
-          font-size: 24px;
-          margin-bottom: 5px;
-        }
-        .form-banner {
-          background: #FFF8EE;
-          border-bottom: 3px solid #B46A02;
-          padding: 15px 30px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .form-banner h2 {
-          font-size: 18px;
-          color: #6A2301;
-        }
-        .citizen-badge {
-          background: #6A2301;
-          color: white;
-          padding: 5px 15px;
-          border-radius: 20px;
-          font-size: 11px;
-          font-weight: bold;
-        }
-        .info-box {
-          background: #fdf6ee;
-          border: 1px solid #e8d5b7;
-          border-radius: 10px;
-          padding: 20px 25px;
-          margin: 20px 30px;
-        }
-        .section-title {
-          font-weight: 800;
-          font-size: 16px;
-          color: #6A2301;
-          margin-bottom: 15px;
-          border-left: 4px solid #B46A02;
-          padding-left: 12px;
-        }
-        .form-table {
-          margin: 20px 30px;
-        }
-        .info-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 15px;
-        }
-        .info-item {
-          border-bottom: 1px dashed #e8d5b7;
-          padding-bottom: 8px;
-        }
-        .info-label {
-          font-size: 10px;
-          color: #B46A02;
-          font-weight: 700;
-          text-transform: uppercase;
-          margin-bottom: 4px;
-        }
-        .info-value {
-          font-size: 13px;
-          font-weight: 600;
-          color: #2d1a00;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-        .signatures {
-          margin: 30px 30px 20px 30px;
-          display: flex;
-          justify-content: space-between;
-          gap: 50px;
-        }
-        .signature-line {
-          border-top: 1.5px solid #6A2301;
-          padding-top: 8px;
-          margin-top: 40px;
-        }
-        .declaration {
-          margin: 0 30px 20px 30px;
-          padding: 15px 20px;
-          background: #FFF8EE;
-          border: 1px solid #e8d5b7;
-          border-radius: 8px;
-        }
-        .footer {
-          background: #6A2301;
-          color: white;
-          padding: 12px 30px;
-          font-size: 10px;
-          display: flex;
-          justify-content: space-between;
-          margin-top: 30px;
-        }
-        @media print {
-          body {
-            padding: 0;
-            margin: 0;
-          }
-          .no-print {
-            display: none;
-          }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: white; padding: 20px; }
+        .print-container { max-width: 1000px; margin: 0 auto; background: white; }
+        .header { background: linear-gradient(135deg, #6A2301 0%, #B46A02 100%); color: white; padding: 25px 30px; border-radius: 0; }
+        .header h1 { font-size: 24px; margin-bottom: 5px; }
+        .form-banner { background: #FFF8EE; border-bottom: 3px solid #B46A02; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .form-banner h2 { font-size: 18px; color: #6A2301; }
+        .citizen-badge { background: #6A2301; color: white; padding: 5px 15px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+        .info-box { background: #fdf6ee; border: 1px solid #e8d5b7; border-radius: 10px; padding: 20px 25px; margin: 20px 30px; }
+        .section-title { font-weight: 800; font-size: 16px; color: #6A2301; margin-bottom: 15px; border-left: 4px solid #B46A02; padding-left: 12px; }
+        .form-table { margin: 20px 30px; }
+        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .info-item { border-bottom: 1px dashed #e8d5b7; padding-bottom: 8px; }
+        .info-label { font-size: 10px; color: #B46A02; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+        .info-value { font-size: 13px; font-weight: 600; color: #2d1a00; }
+        table { width: 100%; border-collapse: collapse; }
+        .signatures { margin: 30px 30px 20px 30px; display: flex; justify-content: space-between; gap: 50px; }
+        .signature-line { border-top: 1.5px solid #6A2301; padding-top: 8px; margin-top: 40px; }
+        .declaration { margin: 0 30px 20px 30px; padding: 15px 20px; background: #FFF8EE; border: 1px solid #e8d5b7; border-radius: 8px; }
+        .footer { background: #6A2301; color: white; padding: 12px 30px; font-size: 10px; display: flex; justify-content: space-between; margin-top: 30px; }
+        @media print { body { padding: 0; margin: 0; } .no-print { display: none; } }
       </style>
     </head>
     <body>
@@ -565,7 +417,7 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
         <div class="header">
           <h1>${t('pdf.smartGramaSewa')}</h1>
           <p>${t('pdf.subtitle')}</p>
-          <p style="font-size: 11px; margin-top: 5px;">${t('pdf.gnDivisionLabel')} ${gnDiv || '_______________'}</p>
+          <p style="font-size: 11px; margin-top: 5px;">${t('pdf.gnDivisionLabel')} ${userData?.gnDiv || 'N/A'}</p>
         </div>
 
         <div class="form-banner">
@@ -584,7 +436,7 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
             <div class="info-item"><div class="info-label">${t('pdf.address')}</div><div class="info-value">${applicantAddress}</div></div>
             <div class="info-item"><div class="info-label">${t('pdf.phone')}</div><div class="info-value">${applicantPhone}</div></div>
             <div class="info-item"><div class="info-label">${t('pdf.email')}</div><div class="info-value">${applicantEmail}</div></div>
-            <div class="info-item"><div class="info-label">${t('pdf.gnDivision')}</div><div class="info-value">${gnDiv}</div></div>
+            <div class="info-item"><div class="info-label">${t('pdf.gnDivision')}</div><div class="info-value">${userData?.gnDiv || '—'}</div></div>
           </div>
         </div>
 
@@ -608,7 +460,7 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
           <div style="flex: 1;">
             <div class="signature-line"></div>
             <div style="font-size: 11px; font-weight: bold; margin-top: 5px;">${t('pdf.gnSignature')}</div>
-            <div style="font-size: 10px; color: #888;">${gnDiv || 'GN Office'}</div>
+            <div style="font-size: 10px; color: #888;">${userData?.gnDiv || 'GN Office'}</div>
           </div>
         </div>
 
@@ -630,22 +482,17 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
       </div>
      
       <script>
-        // Auto-trigger print dialog
         window.onload = function() {
-          setTimeout(function() {
-            window.print();
-          }, 500);
+          setTimeout(function() { window.print(); }, 500);
         }
       </script>
     </body>
     </html>
   `;
 
-  // Open new window with content and trigger print
   const printWindow = window.open('', '_blank');
   printWindow.document.write(printContent);
   printWindow.document.close();
- 
   return true;
 };
 
@@ -754,9 +601,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
           deletedVoters,
           treeLogistics,
           timberGrid,
-          t,
-          fieldKeys: Object.keys(finalInputs), // Show only filled fields in modal PDF
-          isBlank: false, // modal fills data
+          t,  // pass the translation function
         });
         onSuccess?.(`${form.title} — ${t('toast.downloadSuccess')}`);
         onClose();
@@ -772,7 +617,6 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
 
   const isResidenceOrCharacter = form.id === 1 || form.id === 2;
 
-  // Helper to get step indicator labels based on form id
   const getStepLabels = () => {
     const steps = [];
     if (isResidenceOrCharacter) {
@@ -1906,7 +1750,7 @@ const Forms = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-  // No local currentLanguage – use i18n.language directly
+  const [currentLanguage, setCurrentLanguage] = useState('en');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -1919,7 +1763,6 @@ const Forms = () => {
 
   const catTabs = ['All', 'Certificates', 'Applications', 'Recommendations'];
 
-  // Build form list with translated titles and descriptions
   const formList = [
     { id: 1, title: t('forms.formList.0.title'), desc: t('forms.formList.0.desc'), cat: "Certificates", imgSrc: "/icons/residence.png" },
     { id: 2, title: t('forms.formList.1.title'), desc: t('forms.formList.1.desc'), cat: "Certificates", imgSrc: "/icons/character.png" },
@@ -1934,30 +1777,9 @@ const Forms = () => {
     { id: 11, title: t('forms.formList.10.title'), desc: t('forms.formList.10.desc'), cat: "Certificates", imgSrc: "/icons/land.png" },
   ];
 
-  // *** UPDATED: generate a completely blank PDF for "Download Form" ***
-  const downloadBlankForm = async (form) => {
-    try {
-      const fieldKeys = formFieldKeys[form.id] || [];
-      await generateFormPDF({
-        form,
-        inputs: {}, // all empty
-        userData,
-        currentUser,
-        disabledMembers: [],
-        otherMembers: [],
-        newVoters: [],
-        deletedVoters: [],
-        treeLogistics: [],
-        timberGrid: [],
-        t,
-        fieldKeys: fieldKeys, // show all fields
-        isBlank: true, // this tells PDF generator to leave all user data blank
-      });
-      showToast(`${form.title} — ${t('toast.downloadSuccess')}`);
-    } catch (err) {
-      console.error('PDF generation error:', err);
-      alert(t('validation.pdfError'));
-    }
+  const downloadBlankForm = (form) => {
+    const url = `/blank_forms/form_${form.id}.pdf`;
+    window.open(url, '_blank');
   };
 
   useEffect(() => {
@@ -2013,8 +1835,8 @@ const Forms = () => {
   const handleLogout = async () => { await signOut(auth); navigate('/login'); };
   const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
 
-  // Language handling – directly call i18n
   const handleLanguageChange = (langCode) => {
+    setCurrentLanguage(langCode);
     i18n.changeLanguage(langCode);
   };
 
@@ -2046,7 +1868,7 @@ const Forms = () => {
               showResults={showSearchResults}
               setShowResults={setShowSearchResults}
               navigate={navigate}
-              currentLanguage={i18n.language}
+              currentLanguage={currentLanguage}
               onLanguageChange={handleLanguageChange}
               showProfileMenu={showProfileMenu}
               setShowProfileMenu={setShowProfileMenu}
@@ -2054,16 +1876,8 @@ const Forms = () => {
               t={t}
             />
           )}
-          <MobileTopbar 
-            chipName={chipName} 
-            onMenuClick={() => setMobileMenuOpen(true)} 
-            navigate={navigate} 
-            currentLanguage={i18n.language}
-            onLanguageChange={handleLanguageChange} 
-            t={t} 
-          />
+          <MobileTopbar chipName={chipName} onMenuClick={() => setMobileMenuOpen(true)} navigate={navigate} currentLanguage={currentLanguage} onLanguageChange={handleLanguageChange} t={t} />
 
-          {/* Mobile Search Bar */}
           <div className="md:hidden pt-3 px-3.5 relative">
             <div className="flex items-center gap-2.5 bg-white border border-user-border rounded-3xl px-4 py-2.5">
               <Icon d={IC.search} size={16} color="#aaa" />
@@ -2073,7 +1887,6 @@ const Forms = () => {
             <SearchResultsDropdown searchQuery={searchQuery} showResults={showSearchResults} setShowResults={setShowSearchResults} navigate={navigate} t={t} />
           </div>
 
-          {/* Content Area */}
           <div className="flex-1 p-4 md:p-6 overflow-y-auto">
             <div>
               <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-1">{t('forms.pageTitle')}</h1>

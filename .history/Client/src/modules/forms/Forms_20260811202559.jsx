@@ -342,7 +342,7 @@ const formFieldKeys = {
 };
 
 // ============================================================
-// PDF GENERATION – with isBlank flag
+// PDF GENERATION – FIXED WITH PRINT COLOR ADJUST
 // ============================================================
 const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMembers, otherMembers, newVoters, deletedVoters, treeLogistics, timberGrid, t, fieldKeys, isBlank = false }) => {
   const now = new Date();
@@ -427,6 +427,7 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
   }
 
   // Create complete HTML for print – using translated strings
+  // FIX APPLIED BELOW: Added -webkit-print-color-adjust: exact !important; 
   const printContent = `
     <!DOCTYPE html>
     <html>
@@ -550,12 +551,17 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
           margin-top: 30px;
         }
         @media print {
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           body {
             padding: 0;
             margin: 0;
+            background: white;
           }
           .no-print {
-            display: none;
+            display: none !important;
           }
         }
       </style>
