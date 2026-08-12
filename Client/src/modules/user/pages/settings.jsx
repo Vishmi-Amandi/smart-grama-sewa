@@ -1,9 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
+import { 
+  getAuth, 
+  signInWithPhoneNumber, 
+  RecaptchaVerifier, 
+  PhoneAuthProvider,
+  linkWithCredential,
+} from 'firebase/auth';
 import LanguageSwitcher from '../components/languageSwitcher';
+import NotificationBell from '../components/NotificationBell';
 
 // Icons
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
@@ -29,7 +38,6 @@ const IC = {
   globe:     'M12 2a10 10 0 100 20 10 10 0 000-20z M12 2c2 2 3 4.5 3 10s-1 8-3 10 M12 2c-2 2-3 4.5-3 10s1 8 3 10 M22 12h-4 M2 12H6',  
   palette:   'M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 011.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z',
   shield:    'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
-  user:      'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8z',
   sun:       'M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41M12 6a6 6 0 100 12 6 6 0 000-12z',
   moon:      'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z',
   check:     'M20 6L9 17l-5-5',
@@ -39,21 +47,28 @@ const IC = {
   mail:      'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6',
   trash:     'M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2',
   alertTriangle: 'M12 9v4M12 17h.01M12 2a10 10 0 100 20 10 10 0 000-20z',
+  lock: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
+  eye: 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 9a3 3 0 100 6 3 3 0 000-6z',
+  eyeOff: 'M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22',
+  mobile: 'M20 2H4a2 2 0 00-2 2v16a2 2 0 002 2h16a2 2 0 002-2V4a2 2 0 00-2-2z M8 18h8',
+  send: 'M22 2L11 13 M22 2l-7 20-4-9-9-4 20-7z',
+  refresh: 'M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15',
+  x: 'M18 6L6 18M6 6l12 12',
 };
 
-// List of all pages/functions for search
-const PAGE_ACTIONS = [
-  { name: 'Dashboard', path: '/dashboard', icon: IC.dashboard },
-  { name: 'Announcements', path: '/announcements', icon: IC.announce },
-  { name: 'Appointments', path: '/appointments', icon: IC.appts },
-  { name: 'Forms', path: '/forms', icon: IC.forms },
-  { name: 'AI Assistant', path: null, icon: IC.ai },
-  { name: 'Profile', path: '/profile', icon: IC.profile },
-  { name: 'Settings', path: '/settings', icon: IC.settings },
+// ---------- Page Actions (translated) ----------
+const PAGE_ACTIONS_KEYS = [
+  { key: 'dashboard', path: '/dashboard', icon: IC.dashboard },
+  { key: 'announcements', path: '/announcements', icon: IC.announce },
+  { key: 'appointments', path: '/appointments', icon: IC.appts },
+  { key: 'forms', path: '/forms', icon: IC.forms },
+  { key: 'ai_assistant', path: null, icon: IC.ai },
+  { key: 'profile', path: '/profile', icon: IC.profile },
+  { key: 'settings', path: '/settings', icon: IC.settings },
 ];
 
-// Search Results Dropdown Component
-const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate }) => {
+// ---------- Search Results Dropdown (translated) ----------
+const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate, t }) => {
   const [filteredPages, setFilteredPages] = useState([]);
 
   useEffect(() => {
@@ -62,11 +77,12 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
       return;
     }
     const query = searchQuery.toLowerCase();
-    const filtered = PAGE_ACTIONS.filter(page =>
-      page.name.toLowerCase().includes(query)
-    );
-    setFilteredPages(filtered);
-  }, [searchQuery]);
+    const allPages = PAGE_ACTIONS_KEYS.map(p => ({
+      ...p,
+      name: p.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${p.key}`)
+    }));
+    setFilteredPages(allPages.filter(p => p.name.toLowerCase().includes(query)));
+  }, [searchQuery, t]);
 
   if (!showResults || filteredPages.length === 0) return null;
 
@@ -85,7 +101,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
           <Icon d={page.icon} size={18} color="#B46A02" />
           <div>
             <div className="text-sm font-bold text-user-text">{page.name}</div>
-            <div className="text-[11px] text-user-text-lighter">Click to go to {page.name}</div>
+            <div className="text-[11px] text-user-text-lighter">{t('lbl_click_to_go_to', { page: page.name })}</div>
           </div>
         </button>
       ))}
@@ -93,12 +109,12 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
   );
 };
 
-// NavItem for sidebar
+// ---------- NavItem ----------
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
-      ? 'bg-user-background text-white font-extrabold shadow-md' 
-      : 'bg-transparent text-gray-700 font-semibold hover:bg-yellow-100'
+      ? 'bg-yellow-100 text-user-primary font-extrabold shadow-md' 
+      : 'bg-transparent text-gray-700 font-semibold hover:bg-yellow-50'
   }`}
     style={{ color: active ? '#B46A02' : '#5a3a00' }}
   >
@@ -107,19 +123,19 @@ const NavItem = ({ iconPath, label, active, onClick }) => (
   </button>
 );
 
-// Desktop Sidebar
-const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
+// ---------- Desktop Sidebar (translated) ----------
+const DesktopSidebar = ({ activePage, navigate, onLogout, t }) => {
   const navItems = [
-    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard' },
-    { key: 'announcements', icon: IC.announce, label: 'Announcements' },
-    { key: 'appointments', icon: IC.appts, label: 'Appointments' },
-    { key: 'forms', icon: IC.forms, label: 'Forms' },
-    { key: 'ai', icon: IC.ai, label: 'AI assistant' },
+    { key: 'dashboard', icon: IC.dashboard },
+    { key: 'announcements', icon: IC.announce },
+    { key: 'appointments', icon: IC.appts },
+    { key: 'forms', icon: IC.forms },
+    { key: 'ai_assistant', icon: IC.ai },
   ];
   const bottomNav = [
-    { key: 'profile', icon: IC.profile, label: 'Profile' },
-    { key: 'settings', icon: IC.settings, label: 'Settings' },
-    { key: 'logout', icon: IC.logout, label: 'Sign out' },
+    { key: 'profile', icon: IC.profile },
+    { key: 'settings', icon: IC.settings },
+    { key: 'logout', icon: IC.logout },
   ];
 
   return (
@@ -128,15 +144,20 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
         <img src="/logo2.png" alt="Smart Grama Sewa" className="h-20 w-auto" />
       </div>
       <div className="flex-1 p-3">
-        {navItems.map((item) => (
-          <NavItem key={item.key} iconPath={item.icon} label={item.label}
-            active={activePage === item.key}
-            onClick={() => item.key === 'ai' ? window.openChatbot?.() : navigate(`/${item.key}`)} />
-        ))}
+        {navItems.map((item) => {
+          const label = item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`);
+          const activeKey = item.key === 'ai_assistant' ? 'ai' : item.key;
+          return (
+            <NavItem key={item.key} iconPath={item.icon} label={label}
+              active={activePage === activeKey}
+              onClick={() => item.key === 'ai_assistant' ? window.openChatbot?.() : navigate(`/${item.key}`)} />
+          );
+        })}
       </div>
       <div className="p-3 pt-2 border-t border-black/10">
         {bottomNav.map((item) => (
-          <NavItem key={item.key} iconPath={item.icon} label={item.label}
+          <NavItem key={item.key} iconPath={item.icon} 
+            label={item.key === 'logout' ? t('lbl_sign_out') : t(`lbl_${item.key}`)}
             active={activePage === item.key}
             onClick={() => item.key === 'logout' ? onLogout() : navigate(`/${item.key}`)} />
         ))}
@@ -145,15 +166,15 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
   );
 };
 
-// Desktop Topbar
-const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser }) => (
+// ---------- Desktop Topbar (email removed) ----------
+const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser, t }) => (
   <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
     <div className="flex-1 max-w-[400px] relative">
       <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-round px-4 py-2 transition-colors hover:border-user-primary">
         <Icon d={IC.search} size={16} color="#aaa" />
         <input
           type="text"
-          placeholder="Search for a page or function..."
+          placeholder={t('lbl_search_page_function')}
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -173,6 +194,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
         showResults={showResults}
         setShowResults={setShowResults}
         navigate={navigate}
+        t={t}
       />
     </div>
     <div className="flex-1" />
@@ -182,12 +204,8 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
       onLanguageChange={onLanguageChange}
     />
     
-    <div className="w-9 h-9 rounded-full bg-user-secondary-light border border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
-      <Icon d={IC.bell} size={18} color="#5a3a00" />
-      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
-    </div>
+    <NotificationBell />
     
-    {/* Profile Dropdown */}
     <div className="relative">
       <button 
         onClick={(e) => {
@@ -206,17 +224,17 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
         <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-user-border z-50 overflow-hidden animate-fade-in">
           <div className="p-3 border-b border-user-border-light">
             <p className="text-sm font-bold text-user-text">{userData?.fullName || currentUser?.displayName || 'User'}</p>
-            <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
+            {/* EMAIL LINE REMOVED */}
           </div>
           <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
-            <Icon d={IC.profile} size={16} color="#B46A02" /> My Profile
+            <Icon d={IC.profile} size={16} color="#B46A02" /> {t('lbl_my_profile')}
           </button>
           <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
-            <Icon d={IC.settings} size={16} color="#B46A02" /> Settings
+            <Icon d={IC.settings} size={16} color="#B46A02" /> {t('lbl_settings')}
           </button>
           <div className="border-t border-user-border-light my-1"></div>
           <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
-            <Icon d={IC.logout} size={16} color="#ef4444" /> Sign Out
+            <Icon d={IC.logout} size={16} color="#ef4444" /> {t('lbl_sign_out')}
           </button>
         </div>
       )}
@@ -224,8 +242,8 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
   </div>
 );
 
-// Mobile Topbar
-const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLanguageChange }) => (
+// ---------- Mobile Topbar ----------
+const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLanguageChange, t }) => (
   <div className="mobile-topbar hidden h-16 bg-user-primary items-center px-4 gap-3 sticky top-0 z-40 shadow-md">
     <button onClick={onMenuClick} className="bg-none border-none cursor-pointer p-1.5 flex-shrink-0">
       <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
@@ -238,29 +256,26 @@ const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLang
       <img src="/logo2.png" alt="Smart Grama Sewa" className="h-10 w-auto" />
     </div>
     <LanguageSwitcher currentLanguage={currentLanguage} onLanguageChange={onLanguageChange} />
-    <div className="w-9 h-9 flex items-center justify-center relative">
-      <Icon d={IC.bell} size={22} color="#1e1200" />
-      <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 border border-user-primary" />
-    </div>
+    <NotificationBell />
     <div className="w-9 h-9 rounded-full bg-white/85 flex items-center justify-center cursor-pointer" onClick={() => navigate('/profile')}>
       <Icon d={IC.profile} size={20} color="#3d2a00" />
     </div>
   </div>
 );
 
-// Mobile Sidebar Overlay
-const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
+// ---------- Mobile Sidebar (translated) ----------
+const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout, t }) => {
   const navItems = [
-    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard' },
-    { key: 'announcements', icon: IC.announce, label: 'Announcements' },
-    { key: 'appointments', icon: IC.appts, label: 'Appointments' },
-    { key: 'forms', icon: IC.forms, label: 'Forms' },
-    { key: 'ai', icon: IC.ai, label: 'AI assistant' },
+    { key: 'dashboard', icon: IC.dashboard },
+    { key: 'announcements', icon: IC.announce },
+    { key: 'appointments', icon: IC.appts },
+    { key: 'forms', icon: IC.forms },
+    { key: 'ai_assistant', icon: IC.ai },
   ];
   const bottomNav = [
-    { key: 'profile', icon: IC.profile, label: 'Profile' },
-    { key: 'settings', icon: IC.settings, label: 'Settings' },
-    { key: 'logout', icon: IC.logout, label: 'Sign out' },
+    { key: 'profile', icon: IC.profile },
+    { key: 'settings', icon: IC.settings },
+    { key: 'logout', icon: IC.logout },
   ];
 
   if (!isOpen) return null;
@@ -275,14 +290,19 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
         <div className="px-5 pb-5 border-b border-white/20 mb-2 flex justify-center">
           <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
         </div>
-        {navItems.map((item) => (
-          <NavItem key={item.key} iconPath={item.icon} label={item.label}
-            active={activePage === item.key}
-            onClick={() => { if (item.key === 'ai') { window.openChatbot?.(); onClose(); return; } navigate(`/${item.key}`); onClose(); }} />
-        ))}
+        {navItems.map((item) => {
+          const label = item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`);
+          const activeKey = item.key === 'ai_assistant' ? 'ai' : item.key;
+          return (
+            <NavItem key={item.key} iconPath={item.icon} label={label}
+              active={activePage === activeKey}
+              onClick={() => { if (item.key === 'ai_assistant') { window.openChatbot?.(); onClose(); return; } navigate(`/${item.key}`); onClose(); }} />
+          );
+        })}
         <div className="border-t border-white/20 my-3 pt-3">
           {bottomNav.map((item) => (
-            <NavItem key={item.key} iconPath={item.icon} label={item.label}
+            <NavItem key={item.key} iconPath={item.icon} 
+              label={item.key === 'logout' ? t('lbl_sign_out') : t(`lbl_${item.key}`)}
               active={activePage === item.key}
               onClick={() => { if (item.key === 'logout') onLogout(); else navigate(`/${item.key}`); onClose(); }} />
           ))}
@@ -292,9 +312,8 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
   );
 };
 
-// Apply settings to the whole application
+// ---------- Apply settings (unchanged) ----------
 const applySettings = (s) => {
-  // Apply Theme (Light/Dark)
   if (s.theme === 'dark') {
     document.documentElement.classList.add('dark');
     document.body.classList.add('dark-mode');
@@ -305,7 +324,6 @@ const applySettings = (s) => {
     document.body.classList.remove('dark-mode');
   }
 
-  // Apply Text Size - affects the entire page (html element)
   if (s.textSize === 'small') {
     document.documentElement.style.fontSize = '14px';
   } else if (s.textSize === 'large') {
@@ -314,15 +332,12 @@ const applySettings = (s) => {
     document.documentElement.style.fontSize = '16px';
   }
   
-  // Set data attributes for CSS targeting
   document.documentElement.setAttribute('data-theme', s.theme || 'light');
   document.documentElement.setAttribute('data-textsize', s.textSize || 'normal');
-  
-  // Store in localStorage
   localStorage.setItem('userSettings', JSON.stringify(s));
 };
 
-// Radio option row
+// ---------- Radio option ----------
 const RadioOption = ({ selected, onClick, label, sub }) => (
   <div 
     onClick={onClick} 
@@ -340,7 +355,7 @@ const RadioOption = ({ selected, onClick, label, sub }) => (
   </div>
 );
 
-// Horizontal tab
+// ---------- Horizontal tab ----------
 const HTab = ({ icon, label, active, onClick }) => (
   <button 
     onClick={onClick} 
@@ -354,24 +369,24 @@ const HTab = ({ icon, label, active, onClick }) => (
   </button>
 );
 
-// Toast
-const Toast = ({ show }) => (
+// ---------- Toast ----------
+const Toast = ({ show, t }) => (
   <div className={`fixed bottom-7 right-7 z-[999] bg-green-600 text-white py-3 px-5 rounded-xl text-sm font-bold shadow-xl transition-all duration-300 pointer-events-none ${
     show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
   }`}>
-    ✓ Settings saved
+    {t('lbl_toast_settings_saved')}
   </div>
 );
 
-// Content Card
+// ---------- Content Card ----------
 const ContentCard = ({ children }) => (
   <div className="bg-user-primary-light border border-user-warning rounded-xl p-6 md:p-7">
     {children}
   </div>
 );
 
-// SECURITY TAB COMPONENT
-const SecurityTab = ({ currentUser, userData, db }) => {
+// ---------- SECURITY TAB ----------
+const SecurityTab = ({ currentUser, userData, db, t }) => {
   // Password states
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
@@ -432,11 +447,11 @@ const SecurityTab = ({ currentUser, userData, db }) => {
     if (/[^A-Za-z0-9]/.test(password)) strength++;
     
     const strengthMap = {
-      0: { label: 'Very Weak', color: '#ef4444', width: '25%' },
-      1: { label: 'Weak', color: '#f59e0b', width: '50%' },
-      2: { label: 'Fair', color: '#f59e0b', width: '75%' },
-      3: { label: 'Good', color: '#10b981', width: '100%' },
-      4: { label: 'Strong', color: '#10b981', width: '100%' },
+      0: { label: t('lbl_pw_very_weak'), color: '#ef4444', width: '25%' },
+      1: { label: t('lbl_pw_weak'), color: '#f59e0b', width: '50%' },
+      2: { label: t('lbl_pw_fair'), color: '#f59e0b', width: '75%' },
+      3: { label: t('lbl_pw_good'), color: '#10b981', width: '100%' },
+      4: { label: t('lbl_pw_strong'), color: '#10b981', width: '100%' },
     };
     return strengthMap[strength] || strengthMap[0];
   };
@@ -444,11 +459,11 @@ const SecurityTab = ({ currentUser, userData, db }) => {
   // Password validation
   const getPasswordErrors = () => {
     const errors = [];
-    if (newPw && newPw.length < 8) errors.push('At least 8 characters');
-    if (newPw && !/[A-Z]/.test(newPw)) errors.push('One uppercase letter');
-    if (newPw && !/[0-9]/.test(newPw)) errors.push('One number');
-    if (newPw && !/[^A-Za-z0-9]/.test(newPw)) errors.push('One special character');
-    if (newPw && newPw === currentPw) errors.push('Must be different from current password');
+    if (newPw && newPw.length < 8) errors.push(t('lbl_pw_err_len'));
+    if (newPw && !/[A-Z]/.test(newPw)) errors.push(t('lbl_pw_err_upper'));
+    if (newPw && !/[0-9]/.test(newPw)) errors.push(t('lbl_pw_err_number'));
+    if (newPw && !/[^A-Za-z0-9]/.test(newPw)) errors.push(t('lbl_pw_err_special'));
+    if (newPw && newPw === currentPw) errors.push(t('lbl_pw_err_same'));
     return errors;
   };
 
@@ -486,16 +501,17 @@ const SecurityTab = ({ currentUser, userData, db }) => {
       setPwStrength({ label: '', color: '', width: '0%' });
       
       setTimeout(() => {
-        alert('Password changed successfully! You will be logged out. Please log in again with your new password.');
-        signOut(auth);
+        alert(t('lbl_pw_changed_alert'));
+        const authInstance = getAuth();
+        signOut(authInstance);
       }, 2000);
       
       setTimeout(() => setPwSuccess(false), 3000);
     } catch (e) {
       if (e.code === 'auth/wrong-password') {
-        setPwError('Current password is incorrect.');
+        setPwError(t('lbl_pw_err_wrong_current'));
       } else {
-        setPwError('Failed to change password. Please try again.');
+        setPwError(t('lbl_pw_err_general'));
       }
     } finally {
       setPwLoading(false);
@@ -507,29 +523,108 @@ const SecurityTab = ({ currentUser, userData, db }) => {
     return /^(\+94|0)?[0-9]{9,10}$/.test(mobile.replace(/\s/g, ''));
   };
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     setMobError('');
     if (!newMobile.trim()) {
-      setMobError('Please enter a new mobile number.');
+      setMobError(t('lbl_mob_err_empty'));
       return;
     }
     if (!isValidMobile(newMobile)) {
-      setMobError('Please enter a valid Sri Lanka mobile number (e.g., 0712345678 or +94712345678).');
+      setMobError(t('lbl_mob_err_invalid'));
       return;
     }
     if (otpAttempts >= 3) {
-      setMobError('Too many OTP attempts. Please try again later.');
+      setMobError(t('lbl_mob_err_attempts'));
       return;
     }
+        
+    let raw = newMobile.trim().replace(/\s/g, '');
     
+    // Remove leading 0 if present
+    if (raw.startsWith('0')) {
+      raw = raw.slice(1);
+    }
+    
+    // Add +94 for real SMS (no spaces)
+    const formattedPhone = '+94' + raw;
+        
     setMobLoading(true);
-    setTimeout(() => {
-      setMobLoading(false);
+    setMobError('');
+    
+    try {
+      const authInstance = getAuth();
+      
+      // Ensure container exists
+      let container = document.getElementById('recaptcha-container-security');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'recaptcha-container-security';
+        container.style.display = 'none';
+        document.body.appendChild(container);
+      }
+      
+      // Clear existing verifier
+      if (window.recaptchaVerifier) {
+        try {
+          await window.recaptchaVerifier.clear();
+        } catch (e) {
+        }
+        window.recaptchaVerifier = null;
+      }
+      
+      // Create new verifier
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        authInstance,
+        'recaptcha-container-security',
+        {
+          size: 'invisible',
+          callback: () => {},
+          'expired-callback': () => {
+            window.recaptchaVerifier = null;
+          }
+        }
+      );
+      
+      await window.recaptchaVerifier.render();
+            
+      const confirmationResult = await signInWithPhoneNumber(
+        authInstance,
+        formattedPhone,
+        window.recaptchaVerifier
+      );
+      
+      window.confirmationResultSecurity = confirmationResult;
       setOtpSent(true);
       setTimer(60);
       setOtpAttempts(prev => prev + 1);
-      setMobError('');
-    }, 1000);
+      setMobLoading(false);
+            
+    } catch (error) {
+      setMobLoading(false);
+      
+      if (window.recaptchaVerifier) {
+        try {
+          await window.recaptchaVerifier.clear();
+        } catch (e) {}
+        window.recaptchaVerifier = null;
+      }
+      
+      if (error.code === 'auth/too-many-requests') {
+        setMobError(t('lbl_mob_err_too_many'));
+      } else if (error.code === 'auth/invalid-phone-number') {
+        setMobError(t('lbl_mob_err_invalid_format'));
+      } else if (error.code === 'auth/network-request-failed') {
+        setMobError(t('lbl_mob_err_network'));
+      } else if (error.code === 'auth/captcha-check-failed') {
+        setMobError(t('lbl_mob_err_captcha'));
+      } else if (error.code === 'auth/quota-exceeded') {
+        setMobError(t('lbl_mob_err_quota'));
+      } else if (error.code === 'auth/operation-not-allowed') {
+        setMobError(t('lbl_mob_err_region'));
+      } else {
+        setMobError(t('lbl_mob_err_general', { message: error.message }));
+      }
+    }
   };
 
   const handleOtpChange = (index, value) => {
@@ -550,46 +645,74 @@ const SecurityTab = ({ currentUser, userData, db }) => {
     }
   };
 
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     const otpValue = otp.join('');
     if (otpValue.length !== 6) {
-      setMobError('Please enter the complete 6-digit OTP.');
-      return;
-    }
-    if (otpValue !== '123456') {
-      setMobError('Incorrect OTP. Please try again.');
+      setMobError(t('lbl_mob_err_otp_incomplete'));
       return;
     }
     
-    setPendingMobile(newMobile);
-    setShowConfirmModal(true);
-  };
-
-  const confirmMobileUpdate = async () => {
+    if (!window.confirmationResultSecurity) {
+      setMobError(t('lbl_mob_err_otp_resend'));
+      return;
+    }
+    
     setMobLoading(true);
+    setMobError('');
+    
     try {
-      if (currentUser) {
-        await updateDoc(doc(db, 'users', currentUser.uid), { mobile: pendingMobile });
-      }
-      setMobSuccess(true);
-      setNewMobile('');
+      const credential = PhoneAuthProvider.credential(
+        window.confirmationResultSecurity.verificationId,
+        otpValue
+      );
+      
+      await linkWithCredential(currentUser, credential);
+      
+      const formattedPhone = newMobile.startsWith('+94') ? newMobile : '+94' + newMobile.replace(/^0/, '');
+      await updateDoc(doc(db, 'users', currentUser.uid), { 
+        mobile: formattedPhone,
+        phoneNumber: formattedPhone
+      });
+      
+      // Clear OTP state
       setOtp(['', '', '', '', '', '']);
       setOtpSent(false);
       setTimer(0);
-      setShowConfirmModal(false);
+      setMobSuccess(true);
+      setNewMobile('');
+      setMobLoading(false);
+      
+      // Clear confirmation result
+      window.confirmationResultSecurity = null;
       
       setTimeout(() => setMobSuccess(false), 5000);
-    } catch (e) {
-      setMobError('Failed to update mobile. Please try again.');
-    } finally {
+      
+    } catch (error) {
       setMobLoading(false);
+      
+      if (error.code === 'auth/invalid-verification-code') {
+        setMobError(t('lbl_mob_err_otp_invalid'));
+        setOtpAttempts(prev => prev + 1);
+      } else if (error.code === 'auth/too-many-requests') {
+        setMobError(t('lbl_mob_err_too_many'));
+      } else if (error.code === 'auth/provider-already-linked') {
+        setMobError(t('lbl_mob_err_already_linked'));
+      } else if (error.code === 'auth/credential-already-in-use') {
+        setMobError(t('lbl_mob_err_in_use'));
+      } else {
+        setMobError(t('lbl_mob_err_verify_general', { message: error.message }));
+      }
     }
   };
+
+  const confirmMobileUpdate = async () => {
+    setShowConfirmModal(false);
+  }; 
 
   const handleResendOtp = () => {
     if (timer > 0) return;
     if (otpAttempts >= 3) {
-      setMobError('Maximum OTP attempts reached. Please try again later.');
+      setMobError(t('lbl_mob_err_attempts'));
       return;
     }
     handleSendOtp();
@@ -597,11 +720,41 @@ const SecurityTab = ({ currentUser, userData, db }) => {
 
   const passwordErrors = getPasswordErrors();
   const passwordsMatch = confirmPw && newPw === confirmPw;
-  const currentMobile = userData?.mobile || 'Not set';
+  const currentMobile = userData?.mobile || t('lbl_not_set');
+
+  useEffect(() => {
+    const initRecaptcha = async () => {
+      try {
+        const authInstance = getAuth();
+        
+        let container = document.getElementById('recaptcha-container-security');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'recaptcha-container-security';
+          container.style.display = 'none';
+          document.body.appendChild(container);
+        }
+      } catch (error) {
+      }
+    };
+    
+    initRecaptcha();
+    
+    return () => {
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+          window.recaptchaVerifier = null;
+        } catch (e) {
+          console.warn();
+        }
+      }
+    };
+  }, []);
 
   return (
     <div className="bg-user-primary-light border border-user-warning rounded-xl p-5 md:p-6">
-      <div className="text-sm font-extrabold text-user-secondary mb-5">Privacy & Security</div>
+      <div className="text-sm font-extrabold text-user-secondary mb-5">{t('lbl_privacy_security')}</div>
       
       <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-4`}>
         
@@ -609,12 +762,12 @@ const SecurityTab = ({ currentUser, userData, db }) => {
         <div className="flex-1 bg-white rounded-xl p-5 md:p-5 shadow-sm">
           <div className="text-sm md:text-sm font-extrabold text-user-text mb-4 flex items-center gap-2">
             <Icon d={IC.lock} size={16} />
-            Change password
+            {t('lbl_change_password')}
           </div>
           
           {pwSuccess && (
             <div className="flex items-center gap-2 bg-green-50 border border-green-400 rounded-lg p-3 mb-3.5 text-sm font-bold text-green-700">
-              <Icon d={IC.check} size={14} color="#1a5c1a" /> Password changed successfully! You will be logged out shortly.
+              <Icon d={IC.check} size={14} color="#1a5c1a" /> {t('lbl_pw_changed_success')}
             </div>
           )}
           
@@ -630,7 +783,7 @@ const SecurityTab = ({ currentUser, userData, db }) => {
               type={showCurrentPw ? 'text' : 'password'} 
               value={currentPw} 
               onChange={e => { setCurrentPw(e.target.value); setPwError(''); setPwTouched(p => ({ ...p, current: true })); }} 
-              placeholder="Current Password" 
+              placeholder={t('lbl_current_password')} 
               className={`w-full py-3 px-4 text-sm font-semibold bg-user-secondary-light border rounded-lg outline-none transition-colors focus:border-user-primary pr-12 ${
                 pwTouched.current && currentPw && !pwError ? 'border-green-500' : ''
               } ${pwError ? 'border-red-500' : 'border-user-border'}`}
@@ -650,7 +803,7 @@ const SecurityTab = ({ currentUser, userData, db }) => {
               type={showNewPw ? 'text' : 'password'} 
               value={newPw} 
               onChange={e => { handleNewPwChange(e.target.value); setPwTouched(p => ({ ...p, new: true })); }} 
-              placeholder="New Password (min. 8 characters)" 
+              placeholder={t('lbl_new_password')} 
               className={`w-full py-3 px-4 text-sm font-semibold bg-user-secondary-light border rounded-lg outline-none transition-colors focus:border-user-primary pr-12 ${
                 pwTouched.new && newPw && isPasswordValid() ? 'border-green-500' : ''
               } ${pwTouched.new && passwordErrors.length > 0 ? 'border-red-500' : 'border-user-border'}`}
@@ -680,7 +833,7 @@ const SecurityTab = ({ currentUser, userData, db }) => {
           {/* Password Requirements Checklist */}
           {pwTouched.new && newPw && passwordErrors.length > 0 && (
             <div className="mb-2.5 p-2 bg-gray-50 rounded-lg">
-              <div className="text-[10px] font-semibold text-gray-500 mb-1">Password requires:</div>
+              <div className="text-[10px] font-semibold text-gray-500 mb-1">{t('lbl_pw_requires')}</div>
               <div className="flex flex-wrap gap-2">
                 {passwordErrors.map(err => (
                   <span key={err} className="text-[10px] text-red-500 flex items-center gap-1">
@@ -697,7 +850,7 @@ const SecurityTab = ({ currentUser, userData, db }) => {
               type={showConfirmPw ? 'text' : 'password'} 
               value={confirmPw} 
               onChange={e => { setConfirmPw(e.target.value); setPwError(''); setPwTouched(p => ({ ...p, confirm: true })); }} 
-              placeholder="Confirm New Password" 
+              placeholder={t('lbl_confirm_new_password')} 
               className={`w-full py-3 px-4 text-sm font-semibold bg-user-secondary-light border rounded-lg outline-none transition-colors focus:border-user-primary pr-12 ${
                 pwTouched.confirm && confirmPw && passwordsMatch ? 'border-green-500' : ''
               } ${pwTouched.confirm && confirmPw && !passwordsMatch ? 'border-red-500' : 'border-user-border'}`}
@@ -715,7 +868,7 @@ const SecurityTab = ({ currentUser, userData, db }) => {
           {pwTouched.confirm && confirmPw && (
             <div className={`text-xs font-semibold mb-3 flex items-center gap-1 ${passwordsMatch ? 'text-green-600' : 'text-red-500'}`}>
               {passwordsMatch ? <Icon d={IC.check} size={12} /> : <Icon d={IC.x} size={12} />}
-              {passwordsMatch ? 'Passwords match!' : 'Passwords do not match'}
+              {passwordsMatch ? t('lbl_pw_match_ok') : t('lbl_pw_match_fail')}
             </div>
           )}
           
@@ -723,7 +876,7 @@ const SecurityTab = ({ currentUser, userData, db }) => {
           <div className="bg-red-400 dark:bg-orange-400 border border-red-200 rounded-lg p-2.5 mb-4">
             <div className="text-[11px] font-semibold text-white dark:text-black flex items-center gap-1.5">
               <Icon d={IC.alertTriangle} size={12} color="currentColor" />
-              You will be logged out after changing your password. Please log in again with your new password.
+              {t('lbl_pw_logout_warning')}
             </div>
           </div>
           
@@ -733,8 +886,8 @@ const SecurityTab = ({ currentUser, userData, db }) => {
             className="w-full py-3 rounded-lg bg-user-text dark:bg-amber-900 text-white text-sm font-extrabold flex items-center justify-center gap-2 transition-all hover:bg-user-secondary-dark disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {pwLoading ? (
-              <><div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" /> Updating…</>
-            ) : 'Update Password'}
+              <><div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" /> {t('lbl_updating')}</>
+            ) : t('lbl_update_password')}
           </button>
         </div>
 
@@ -742,18 +895,18 @@ const SecurityTab = ({ currentUser, userData, db }) => {
         <div className="flex-1 bg-white rounded-xl p-5 md:p-5 shadow-sm">
           <div className="text-sm md:text-sm font-extrabold text-user-text mb-4 flex items-center gap-2">
             <Icon d={IC.mobile} size={16} />
-            Update Mobile Number
+            {t('lbl_update_mobile')}
           </div>
           
           {/* Current Mobile Number Display */}
           <div className="bg-gray-50 dark:bg-transparent border border-gray-600 rounded-lg p-3 mb-4">
-            <div className="text-xs font-semibold text-gray-500 mb-0.5">Current Mobile Number</div>
+            <div className="text-xs font-semibold text-gray-500 mb-0.5">{t('lbl_current_mobile')}</div>
             <div className="text-sm font-bold text-user-text">{currentMobile}</div>
           </div>
           
           {mobSuccess && (
             <div className="flex items-center gap-2 bg-green-50 border border-green-400 rounded-lg p-3 mb-3.5 text-sm font-bold text-green-700">
-              <Icon d={IC.check} size={14} color="#1a5c1a" /> Mobile number updated successfully! SMS sent to your new number.
+              <Icon d={IC.check} size={14} color="#1a5c1a" /> {t('lbl_mob_updated_success')}
             </div>
           )}
           
@@ -774,7 +927,7 @@ const SecurityTab = ({ currentUser, userData, db }) => {
               setOtp(['', '', '', '', '', '']);
               setTimer(0);
             }} 
-            placeholder="New Mobile Number (e.g., 0712345678)" 
+            placeholder={t('lbl_new_mobile_placeholder')} 
             className={`w-full py-3 px-4 text-sm font-semibold bg-user-secondary-light border rounded-lg outline-none transition-colors focus:border-user-primary mb-2.5 ${
               newMobile && isValidMobile(newMobile) ? 'border-green-500' : ''
             } ${newMobile && !isValidMobile(newMobile) ? 'border-red-500' : 'border-user-border'}`}
@@ -784,7 +937,7 @@ const SecurityTab = ({ currentUser, userData, db }) => {
           {newMobile && isValidMobile(newMobile) && !otpSent && (
             <div className="text-xs font-semibold text-gray-500 mb-2.5 flex items-center gap-1">
               <Icon d={IC.send} size={12} />
-              We will send a 6-digit code to {newMobile}. Standard SMS rates may apply.
+              {t('lbl_sms_preview', { mobile: newMobile })}
             </div>
           )}
           
@@ -795,10 +948,10 @@ const SecurityTab = ({ currentUser, userData, db }) => {
             className="w-full py-3 rounded-lg bg-user-primary text-user-text text-sm font-extrabold flex items-center justify-center gap-2 transition-all hover:bg-user-primary-dark disabled:opacity-50 disabled:cursor-not-allowed mb-3"
           >
             {mobLoading && !otpSent ? (
-              <><div className="w-3.5 h-3.5 rounded-full border-2 border-user-text border-t-transparent animate-spin" /> Sending OTP…</>
+              <><div className="w-3.5 h-3.5 rounded-full border-2 border-user-text border-t-transparent animate-spin" /> {t('lbl_sending_otp')}</>
             ) : otpSent ? (
-              <><Icon d={IC.check} size={12} /> OTP Sent {timer > 0 && `(${timer}s)`}</>
-            ) : 'Send OTP'}
+              <><Icon d={IC.check} size={12} /> {t('lbl_otp_sent', { timer: timer > 0 ? `(${timer}s)` : '' })}</>
+            ) : t('lbl_send_otp')}
           </button>
           
           {/* OTP Input Boxes */}
@@ -824,7 +977,7 @@ const SecurityTab = ({ currentUser, userData, db }) => {
               <div className="text-center mb-3">
                 {timer > 0 ? (
                   <span className="text-xs text-gray-400 flex items-center justify-center gap-1">
-                    <Icon d={IC.refresh} size={12} /> Resend OTP in {timer} seconds
+                    <Icon d={IC.refresh} size={12} /> {t('lbl_resend_otp_timer', { seconds: timer })}
                   </span>
                 ) : (
                   <button 
@@ -832,7 +985,7 @@ const SecurityTab = ({ currentUser, userData, db }) => {
                     disabled={otpAttempts >= 3}
                     className="text-xs font-semibold text-user-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 mx-auto"
                   >
-                    <Icon d={IC.refresh} size={12} /> Resend OTP {otpAttempts >= 3 && '(Limit reached)'}
+                    <Icon d={IC.refresh} size={12} /> {t('lbl_resend_otp')} {otpAttempts >= 3 && `(${t('lbl_limit_reached')})`}
                   </button>
                 )}
               </div>
@@ -843,7 +996,7 @@ const SecurityTab = ({ currentUser, userData, db }) => {
                 disabled={mobLoading || otp.some(d => !d)} 
                 className="w-full py-3 rounded-lg bg-user-text text-white text-sm font-extrabold flex items-center justify-center gap-2 transition-all hover:bg-user-secondary-dark disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {mobLoading ? (<><div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" /> Verifying…</>) : 'Verify & Update'}
+                {mobLoading ? (<><div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" /> {t('lbl_verifying')}</>) : t('lbl_verify_update')}
               </button>
             </>
           )}
@@ -852,7 +1005,7 @@ const SecurityTab = ({ currentUser, userData, db }) => {
           <div className="bg-red-400 dark:bg-orange-400 border border-red-200 rounded-lg p-2.5 mt-3">
             <div className="text-[11px] font-semibold text-white dark:text-black flex items-center gap-1.5">
               <Icon d={IC.alertTriangle} size={14} color="currentColor" />
-              Updating your mobile number will be used for all future communications including appointment reminders and OTP verification.
+              {t('lbl_mob_warning')}
             </div>
           </div>
         </div>
@@ -864,30 +1017,26 @@ const SecurityTab = ({ currentUser, userData, db }) => {
           <div className="fixed inset-0 bg-black/50 z-[1000]" onClick={() => setShowConfirmModal(false)} />
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1001] w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
             <div className="bg-user-secondary-dark p-5">
-              <h3 className="text-lg font-black text-white">Confirm Mobile Number Change</h3>
+              <h3 className="text-lg font-black text-white">{t('lbl_confirm_mobile_title')}</h3>
             </div>
             <div className="p-6">
-              <p className="text-sm text-gray-600 mb-4">
-                Are you sure you want to change your mobile number from
-              </p>
+              <p className="text-sm text-gray-600 mb-4">{t('lbl_confirm_mobile_desc')}</p>
               <p className="text-center font-bold text-gray-800 mb-2">
                 {currentMobile} → {pendingMobile}
               </p>
-              <p className="text-xs text-gray-500 mb-6">
-                This change will take effect immediately and will be used for all future communications.
-              </p>
+              <p className="text-xs text-gray-500 mb-6">{t('lbl_confirm_mobile_note')}</p>
               <div className="flex gap-3">
                 <button 
                   onClick={() => setShowConfirmModal(false)}
                   className="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-bold flex items-center justify-center gap-1"
                 >
-                  <Icon d={IC.x} size={14} /> Cancel
+                  <Icon d={IC.x} size={14} /> {t('lbl_cancel')}
                 </button>
                 <button 
                   onClick={confirmMobileUpdate}
                   className="flex-1 py-2.5 rounded-lg bg-user-text text-white font-bold flex items-center justify-center gap-1"
                 >
-                  <Icon d={IC.check} size={14} /> Confirm
+                  <Icon d={IC.check} size={14} /> {t('lbl_confirm')}
                 </button>
               </div>
             </div>
@@ -898,8 +1047,8 @@ const SecurityTab = ({ currentUser, userData, db }) => {
   );
 };
 
-// ACCOUNT TAB COMPONENT
-const AccountTab = ({ currentUser, userData, navigate }) => {
+// ---------- ACCOUNT TAB ----------
+const AccountTab = ({ currentUser, userData, navigate, t }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -919,7 +1068,7 @@ const AccountTab = ({ currentUser, userData, navigate }) => {
 
   const gnDivLabel = userData?.gnDiv && userData?.dsDiv
     ? `${userData.dsDiv} - ${userData.gnDiv}`
-    : userData?.gnDiv || userData?.dsDiv || '[GN Division not set]';
+    : userData?.gnDiv || userData?.dsDiv || t('lbl_gn_not_set');
 
   const handleSignOutEverywhere = async () => {
     setSignOutLoading(true);
@@ -927,7 +1076,6 @@ const AccountTab = ({ currentUser, userData, navigate }) => {
       await signOut(auth);
       navigate('/login');
     } catch (e) {
-      console.error(e.message);
     } finally {
       setSignOutLoading(false);
     }
@@ -944,7 +1092,6 @@ const AccountTab = ({ currentUser, userData, navigate }) => {
       await signOut(auth);
       navigate('/login');
     } catch (e) {
-      console.error(e.message);
     } finally {
       setDeleting(false);
     }
@@ -952,25 +1099,25 @@ const AccountTab = ({ currentUser, userData, navigate }) => {
 
   return (
     <div className="bg-user-primary-light border border-user-warning rounded-xl p-5 md:p-6">
-      <div className="text-sm md:text-sm font-extrabold text-user-secondary mb-5">Account</div>
+      <div className="text-sm md:text-sm font-extrabold text-user-secondary mb-5">{t('lbl_account')}</div>
 
       <div className="bg-white rounded-xl p-5 md:p-6 mb-4 shadow-sm">
         <div className={`flex items-center justify-between mb-5 ${isMobile ? 'flex-col gap-3' : 'flex-row'}`}>
-          <div className="text-sm md:text-sm font-extrabold text-user-text">Account Summary</div>
+          <div className="text-sm md:text-sm font-extrabold text-user-text">{t('lbl_account_summary')}</div>
           <button onClick={() => navigate('/profile')} className="py-2.5 px-5 bg-user-text dark:bg-gray-700 rounded-round text-xs font-extrabold text-white cursor-pointer transition-all hover:bg-user-secondary-dark flex items-center justify-center gap-1.5 w-full md:w-auto">
-            Edit profile →
+            {t('lbl_edit_profile')} →
           </button>
         </div>
         <div className="pb-3.5 mb-3.5 border-b border-user-border-light">
-          <div className="text-xs font-extrabold text-user-warning mb-1">Citizen</div>
-          <div className="text-sm font-bold text-user-text">{userData?.fullName || currentUser?.displayName || 'N/A'}</div>
+          <div className="text-xs font-extrabold text-user-warning mb-1">{t('lbl_role')}</div>
+          <div className="text-sm font-bold text-user-text">{userData?.role || t('lbl_citizen')}</div>
         </div>
         <div className="pb-3.5 mb-3.5 border-b border-user-border-light">
-          <div className="text-xs font-extrabold text-user-warning mb-1">Member since</div>
+          <div className="text-xs font-extrabold text-user-warning mb-1">{t('lbl_member_since')}</div>
           <div className="text-sm font-bold text-user-text">{createdAt}</div>
         </div>
         <div>
-          <div className="text-xs font-extrabold text-user-warning mb-1">GN division</div>
+          <div className="text-xs font-extrabold text-user-warning mb-1">{t('lbl_gn_division')}</div>
           <div className="text-sm font-bold text-user-text">{gnDivLabel}</div>
         </div>
       </div>
@@ -979,27 +1126,27 @@ const AccountTab = ({ currentUser, userData, navigate }) => {
       <div className="bg-white rounded-xl p-5 md:p-6 shadow-sm border-2 border-user-error">
         <div className="flex items-center gap-2 mb-1.5">
           <Icon d={IC.alertTriangle} size={18} color="#c0392b" />
-          <span className="text-sm md:text-sm font-black text-user-error">Danger Zone</span>
+          <span className="text-sm md:text-sm font-black text-user-error">{t('lbl_danger_zone')}</span>
         </div>
-        <p className="text-xs md:text-xs font-semibold text-user-error mb-5">These actions are permanent and cannot be undone</p>
+        <p className="text-xs md:text-xs font-semibold text-user-error mb-5">{t('lbl_danger_zone_desc')}</p>
 
         <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row'} justify-between items-start pb-5 mb-5 border-b border-user-border-light`}>
           <div>
-            <div className="text-sm md:text-sm font-extrabold text-user-text mb-1">Sign Out of All Devices</div>
-            <div className="text-xs md:text-xs font-semibold text-user-text-lighter">Immediately ends all active sessions across every device.</div>
+            <div className="text-sm md:text-sm font-extrabold text-user-text mb-1">{t('lbl_sign_out_all')}</div>
+            <div className="text-xs md:text-xs font-semibold text-user-text-lighter">{t('lbl_sign_out_all_desc')}</div>
           </div>
           <button onClick={handleSignOutEverywhere} disabled={signOutLoading} className="py-2.5 px-5 bg-user-error-light border border-user-error rounded-round text-xs font-extrabold text-user-error cursor-pointer flex items-center justify-center gap-1.5 transition-all hover:bg-user-error/20 disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto">
-            {signOutLoading ? 'Signing out…' : <><Icon d={IC.logout} size={14} color="#c0392b" /> Sign Out everywhere</>}
+            {signOutLoading ? t('lbl_signing_out') : <><Icon d={IC.logout} size={14} color="#c0392b" /> {t('lbl_sign_out_everywhere')}</>}
           </button>
         </div>
 
         <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row'} justify-between items-start`}>
           <div>
-            <div className="text-sm md:text-sm font-extrabold text-user-text mb-1">Delete My Account</div>
-            <div className="text-xs md:text-xs font-semibold text-user-text-lighter">Permanently deletes your account and all data. This requires GN Officer approval and cannot be reversed.</div>
+            <div className="text-sm md:text-sm font-extrabold text-user-text mb-1">{t('lbl_delete_account')}</div>
+            <div className="text-xs md:text-xs font-semibold text-user-text-lighter">{t('lbl_delete_account_desc')}</div>
           </div>
           <button onClick={() => setShowDeleteConfirm(true)} className="py-2.5 px-5 bg-user-error-light border border-user-error rounded-round text-xs font-extrabold text-user-error cursor-pointer flex items-center justify-center gap-1.5 transition-all hover:bg-user-error/20 w-full md:w-auto">
-            <Icon d={IC.trash} size={14} color="#c0392b" /> Request Deletion
+            <Icon d={IC.trash} size={14} color="#c0392b" /> {t('lbl_request_deletion')}
           </button>
         </div>
       </div>
@@ -1012,24 +1159,23 @@ const AccountTab = ({ currentUser, userData, navigate }) => {
             <div className="text-center mb-2.5">
               <Icon d={IC.alertTriangle} size={isMobile ? 48 : 44} color="#c0392b" />
             </div>
-            <h2 className="text-lg md:text-lg font-black text-user-text text-center mb-2">Request Account Deletion?</h2>
+            <h2 className="text-lg md:text-lg font-black text-user-text text-center mb-2">{t('lbl_delete_confirm_title')}</h2>
             <p className="text-sm md:text-sm text-user-text-lighter font-semibold text-center leading-relaxed mb-5">
-              This will submit a deletion request to your GN Officer.<br />Your account will remain active until approved.<br />
-              <strong className="text-user-error">This cannot be undone.</strong>
+              {t('lbl_delete_confirm_desc')}
             </p>
-            <p className="text-xs md:text-xs font-bold text-gray-500 mb-2">Type <strong className="text-user-error">DELETE</strong> to confirm:</p>
+            <p className="text-xs md:text-xs font-bold text-gray-500 mb-2">{t('lbl_delete_confirm_type')}</p>
             <input 
               type="text" value={deleteInput} onChange={e => setDeleteInput(e.target.value)} 
-              placeholder="Type DELETE here" 
+              placeholder={t('lbl_delete_confirm_placeholder')} 
               className="w-full py-3.5 px-4 rounded-lg border border-user-border text-sm font-bold text-user-text text-center bg-user-secondary-light outline-none focus:border-user-primary mb-5"
               style={{ letterSpacing: deleteInput === 'DELETE' ? '2px' : '0' }}
             />
             <div className={`flex gap-3 ${isMobile ? 'flex-col' : 'flex-row'}`}>
-              <button onClick={() => { setShowDeleteConfirm(false); setDeleteInput(''); }} className="flex-1 py-3 rounded-round border border-user-border bg-white text-sm font-extrabold text-gray-500 cursor-pointer">Cancel</button>
+              <button onClick={() => { setShowDeleteConfirm(false); setDeleteInput(''); }} className="flex-1 py-3 rounded-round border border-user-border bg-white text-sm font-extrabold text-gray-500 cursor-pointer">{t('lbl_cancel')}</button>
               <button onClick={handleRequestDeletion} disabled={deleteInput !== 'DELETE' || deleting} className={`flex-1 py-3 rounded-round border-none text-sm font-extrabold text-white cursor-pointer transition-all ${
                 deleteInput === 'DELETE' ? 'bg-user-error hover:bg-red-700' : 'bg-user-error/50 cursor-not-allowed'
               }`}>
-                {deleting ? 'Submitting…' : 'Request Deletion'}
+                {deleting ? t('lbl_submitting') : t('lbl_request_deletion')}
               </button>
             </div>
           </div>
@@ -1039,8 +1185,9 @@ const AccountTab = ({ currentUser, userData, navigate }) => {
   );
 };
 
-// MAIN SETTINGS COMPONENT
+// ---------- MAIN SETTINGS COMPONENT ----------
 const Settings = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768); 
@@ -1050,7 +1197,7 @@ const Settings = () => {
   const [showSearchResults, setShowSearchResults] = useState(false);
 
   // LANGUAGE STATE
-  const [currentLanguage, setCurrentLanguage] = useState('en');
+  const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'en');
   
   // PROFILE DROPDOWN STATE
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -1061,18 +1208,32 @@ const Settings = () => {
 
   const [activeTab, setActiveTab] = useState('language');
   const [settings, setSettings] = useState({
-    language: 'en', theme: 'light', textSize: 'normal',
-    notifReminders: true, notifUpdates: false, notifAnnouncements: true,
-    deliveryEmail: true, deliveryBrowser: true, deliverySMS: false,
+    language: i18n.language || 'en',
+    theme: 'light',
+    textSize: 'normal',
+    notifReminders: true,
+    notifUpdates: false,
+    notifAnnouncements: true,
+    deliveryEmail: true,
+    deliveryBrowser: true,
+    deliverySMS: false,
   });
   const [showToast, setShowToast] = useState(false);
 
-  // Handle language change
+  // 🔥 SYNC LANGUAGE: Keep settings.language in sync with i18n.language
+  useEffect(() => {
+    setCurrentLanguage(i18n.language);
+    setSettings(prev => ({ ...prev, language: i18n.language }));
+  }, [i18n.language]);
+
+  // Handle language change from dropdown
   const handleLanguageChange = (langCode) => {
     setCurrentLanguage(langCode);
-    console.log('Language changed to:', langCode);
+    i18n.changeLanguage(langCode);
+    // The useEffect above will update settings.language automatically
   };
 
+  // Auth listener
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -1080,7 +1241,7 @@ const Settings = () => {
         try {
           const snap = await getDoc(doc(db, 'users', user.uid));
           if (snap.exists()) setUserData(snap.data());
-        } catch (e) { console.warn(e.message); }
+        } catch (e) {}
       } else {
         navigate('/login');
       }
@@ -1089,13 +1250,14 @@ const Settings = () => {
     return () => unsub();
   }, [navigate]);
 
+  // Handle resize
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Click outside to close search results and profile menu
+  // Click outside
   useEffect(() => {
     const handleClickOutside = () => {
       setShowSearchResults(false);
@@ -1105,23 +1267,31 @@ const Settings = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
   
-  // Load saved settings on mount
+  // Load saved settings on mount, but override language with i18n
   useEffect(() => {
     const saved = localStorage.getItem('userSettings');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        parsed.language = i18n.language || parsed.language || 'en';
         setSettings(parsed);
         applySettings(parsed);
       } catch (e) { }
+    } else {
+      setSettings(prev => ({ ...prev, language: i18n.language || 'en' }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update setting function
+  // 🔥 UPDATE SETTING: Now also changes i18n for language
   const updateSetting = (key, value) => {
     const next = { ...settings, [key]: value };
     setSettings(next);
     applySettings(next);
+    if (key === 'language') {
+      i18n.changeLanguage(value);
+      setCurrentLanguage(value);
+    }
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2000);
   };
@@ -1136,31 +1306,27 @@ const Settings = () => {
   );
 
   const TABS = [
-    { id: 'language', icon: <Icon d={IC.globe} size={16} color="#B46A02" />, label: 'Language' },
-    { id: 'appearance', icon: <Icon d={IC.palette} size={16} color="#B46A02" />, label: 'Appearance' },
-    { id: 'notif', icon: <Icon d={IC.bell} size={16} color="#B46A02" />, label: 'Notifications' },
-    { id: 'security', icon: <Icon d={IC.shield} size={16} color="#B46A02" />, label: 'Privacy & Security' },
-    { id: 'account', icon: <Icon d={IC.profile} size={16} color="#B46A02" />, label: 'Account' },
+    { id: 'language', icon: <Icon d={IC.globe} size={16} color="#B46A02" />, label: t('lbl_tab_language') },
+    { id: 'appearance', icon: <Icon d={IC.palette} size={16} color="#B46A02" />, label: t('lbl_tab_appearance') },
+    { id: 'notif', icon: <Icon d={IC.bell} size={16} color="#B46A02" />, label: t('lbl_tab_notifications') },
+    { id: 'security', icon: <Icon d={IC.shield} size={16} color="#B46A02" />, label: t('lbl_tab_security') },
+    { id: 'account', icon: <Icon d={IC.profile} size={16} color="#B46A02" />, label: t('lbl_tab_account') },
   ];
 
   return (
-    <div className="user-module min-h-screen flex flex-col font-sans bg-user-background">
+    <div key={i18n.language} className="user-module min-h-screen flex flex-col font-sans bg-user-background">
       <div className="flex-1 flex">
-        {/* Desktop Sidebar */}
-        <DesktopSidebar activePage="settings" navigate={navigate} onLogout={handleLogout} />
-
-        {/* Mobile Sidebar Overlay */}
+        <DesktopSidebar activePage="settings" navigate={navigate} onLogout={handleLogout} t={t} />
         <MobileSidebar
           isOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
           activePage="settings"
           navigate={navigate}
           onLogout={handleLogout}
+          t={t}
         />
 
-        {/* Main Column */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Desktop Topbar */}
           <DesktopTopbar 
             chipName={chipName}
             searchQuery={searchQuery}
@@ -1175,15 +1341,16 @@ const Settings = () => {
             handleLogout={handleLogout}
             userData={userData}
             currentUser={currentUser}
+            t={t}
           />
 
-          {/* Mobile Topbar */}
           <MobileTopbar 
             chipName={chipName}
             onMenuClick={() => setMobileMenuOpen(true)}
             navigate={navigate}
             currentLanguage={currentLanguage}
             onLanguageChange={handleLanguageChange}
+            t={t}
           />
 
           {/* Mobile Search Bar */}
@@ -1192,7 +1359,7 @@ const Settings = () => {
               <Icon d={IC.search} size={16} color="#aaa" />
               <input
                 type="text"
-                placeholder="Search for a page..."
+                placeholder={t('lbl_search_page')}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -1212,28 +1379,44 @@ const Settings = () => {
               showResults={showSearchResults}
               setShowResults={setShowSearchResults}
               navigate={navigate}
+              t={t}
             />
           </div>
 
           {/* Content Area */}
           <div className="p-6 md:p-7 flex-1">
-            <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-1">Settings</h1>
-            <p className="text-sm font-semibold text-user-text-lighter mb-6">Manage your account preferences and accessibility options</p>
+            <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-1">{t('lbl_settings')}</h1>
+            <p className="text-sm font-semibold text-user-text-lighter mb-6">{t('lbl_settings_desc')}</p>
 
             {/* Horizontal tabs */}
             <div className="flex border-b-2 border-user-border-light mb-7 overflow-x-auto scrollbar-hide">
-              {TABS.map(t => (
-                <HTab key={t.id} icon={t.icon} label={t.label} active={activeTab === t.id} onClick={() => setActiveTab(t.id)} />
+              {TABS.map(tab => (
+                <HTab key={tab.id} icon={tab.icon} label={tab.label} active={activeTab === tab.id} onClick={() => setActiveTab(tab.id)} />
               ))}
             </div>
 
             {/* LANGUAGE */}
             {activeTab === 'language' && (
               <ContentCard>
-                <div className="text-sm font-extrabold text-user-secondary mb-4">Portal Language</div>
-                <RadioOption selected={settings.language === 'si'} onClick={() => updateSetting('language', 'si')} label="Sinhala" sub="Use the system in Sinhala" />
-                <RadioOption selected={settings.language === 'ta'} onClick={() => updateSetting('language', 'ta')} label="Tamil" sub="Use the system in Tamil" />
-                <RadioOption selected={settings.language === 'en'} onClick={() => updateSetting('language', 'en')} label="English" sub="Use the system in English" />
+                <div className="text-sm font-extrabold text-user-secondary mb-4">{t('lbl_portal_language')}</div>
+                <RadioOption 
+                  selected={settings.language === 'si'} 
+                  onClick={() => updateSetting('language', 'si')} 
+                  label={t('lbl_lang_si')} 
+                  sub={t('lbl_lang_si_sub')} 
+                />
+                <RadioOption 
+                  selected={settings.language === 'ta'} 
+                  onClick={() => updateSetting('language', 'ta')} 
+                  label={t('lbl_lang_ta')} 
+                  sub={t('lbl_lang_ta_sub')} 
+                />
+                <RadioOption 
+                  selected={settings.language === 'en'} 
+                  onClick={() => updateSetting('language', 'en')} 
+                  label={t('lbl_lang_en')} 
+                  sub={t('lbl_lang_en_sub')} 
+                />
               </ContentCard>
             )}
 
@@ -1241,16 +1424,16 @@ const Settings = () => {
             {activeTab === 'appearance' && (
               <div className="flex flex-col gap-6">
                 <ContentCard>
-                  <div className="text-sm font-extrabold text-user-secondary mb-4">Theme</div>
-                  <RadioOption selected={settings.theme === 'light'} onClick={() => updateSetting('theme', 'light')} label={<><Icon d={IC.sun} size={16} color="#f59e0b" /> Light Mode</>} sub="Bright and clean interface — default" />
-                  <RadioOption selected={settings.theme === 'dark'} onClick={() => updateSetting('theme', 'dark')} label={<><Icon d={IC.moon} size={16} color="#8b5cf6" /> Dark Mode</>} sub="Dark background, easy on the eyes at night" />
+                  <div className="text-sm font-extrabold text-user-secondary mb-4">{t('lbl_theme')}</div>
+                  <RadioOption selected={settings.theme === 'light'} onClick={() => updateSetting('theme', 'light')} label={<><Icon d={IC.sun} size={16} color="#f59e0b" /> {t('lbl_theme_light')}</>} sub={t('lbl_theme_light_sub')} />
+                  <RadioOption selected={settings.theme === 'dark'} onClick={() => updateSetting('theme', 'dark')} label={<><Icon d={IC.moon} size={16} color="#8b5cf6" /> {t('lbl_theme_dark')}</>} sub={t('lbl_theme_dark_sub')} />
                 </ContentCard>
 
                 <ContentCard>
-                  <div className="text-sm font-extrabold text-user-secondary mb-4">Text Size</div>
-                  <RadioOption selected={settings.textSize === 'small'} onClick={() => updateSetting('textSize', 'small')} label="Small" sub="Compact text — 14px" />
-                  <RadioOption selected={settings.textSize === 'normal'} onClick={() => updateSetting('textSize', 'normal')} label="Normal" sub="Default text size — 16px" />
-                  <RadioOption selected={settings.textSize === 'large'} onClick={() => updateSetting('textSize', 'large')} label="Large" sub="Larger text for better readability — 18px" />
+                  <div className="text-sm font-extrabold text-user-secondary mb-4">{t('lbl_text_size')}</div>
+                  <RadioOption selected={settings.textSize === 'small'} onClick={() => updateSetting('textSize', 'small')} label={t('lbl_text_small')} sub={t('lbl_text_small_sub')} />
+                  <RadioOption selected={settings.textSize === 'normal'} onClick={() => updateSetting('textSize', 'normal')} label={t('lbl_text_normal')} sub={t('lbl_text_normal_sub')} />
+                  <RadioOption selected={settings.textSize === 'large'} onClick={() => updateSetting('textSize', 'large')} label={t('lbl_text_large')} sub={t('lbl_text_large_sub')} />
                 </ContentCard>
               </div>
             )}
@@ -1258,13 +1441,13 @@ const Settings = () => {
             {/* NOTIFICATIONS */}
             {activeTab === 'notif' && (
               <ContentCard>
-                <div className="text-sm font-extrabold text-user-secondary mb-5">Notifications</div>
+                <div className="text-sm font-extrabold text-user-secondary mb-5">{t('lbl_notifications')}</div>
                 <div className="bg-white rounded-xl p-5 mb-4 shadow-sm">
-                  <div className="text-sm font-extrabold text-user-text mb-4">Updates and Announcements</div>
+                  <div className="text-sm font-extrabold text-user-text mb-4">{t('lbl_updates_announcements')}</div>
                   {[
-                    { key: 'notifReminders', label: 'Appointment reminders', sub: 'Get notified 24 hours before your GN meeting' },
-                    { key: 'notifUpdates', label: 'Appointment updates', sub: 'Instant alerts when your appointments are processed' },
-                    { key: 'notifAnnouncements', label: 'New announcements', sub: 'Important notices and events' },
+                    { key: 'notifReminders', label: t('lbl_notif_reminders'), sub: t('lbl_notif_reminders_sub') },
+                    { key: 'notifUpdates', label: t('lbl_notif_updates'), sub: t('lbl_notif_updates_sub') },
+                    { key: 'notifAnnouncements', label: t('lbl_notif_announcements'), sub: t('lbl_notif_announcements_sub') },
                   ].map((item, i, arr) => (
                     <div key={item.key} className={`flex items-center justify-between ${i < arr.length - 1 ? 'pb-4 mb-4 border-b border-user-border-light' : ''}`}>
                       <div>
@@ -1278,12 +1461,12 @@ const Settings = () => {
                   ))}
                 </div>
                 <div className="bg-white rounded-xl p-5 shadow-sm">
-                  <div className="text-sm font-extrabold text-user-text mb-4">Delivery Methods</div>
+                  <div className="text-sm font-extrabold text-user-text mb-4">{t('lbl_delivery_methods')}</div>
                   <div className="flex flex-wrap gap-6">
                     {[
-                      { key: 'deliveryEmail', label: 'Email notifications' },
-                      { key: 'deliveryBrowser', label: 'Browser Push notifications' },
-                      { key: 'deliverySMS', label: 'SMS notifications (message rates may apply)' },
+                      { key: 'deliveryEmail', label: t('lbl_delivery_email') },
+                      { key: 'deliveryBrowser', label: t('lbl_delivery_browser') },
+                      { key: 'deliverySMS', label: t('lbl_delivery_sms') },
                     ].map(item => (
                       <div key={item.key} onClick={() => updateSetting(item.key, !settings[item.key])} className="flex items-center gap-2 cursor-pointer select-none">
                         <div className={`w-5.5 h-5.5 rounded-full flex items-center justify-center transition-all ${settings[item.key] ? 'bg-user-primary border-2 border-user-primary-dark' : 'bg-white border-2 border-gray-300'}`}>
@@ -1298,10 +1481,10 @@ const Settings = () => {
             )}
 
             {/* SECURITY */}
-            {activeTab === 'security' && <SecurityTab currentUser={currentUser} userData={userData} db={db} />}
+            {activeTab === 'security' && <SecurityTab currentUser={currentUser} userData={userData} db={db} t={t} />}
 
             {/* ACCOUNT */}
-            {activeTab === 'account' && <AccountTab currentUser={currentUser} userData={userData} navigate={navigate} />}
+            {activeTab === 'account' && <AccountTab currentUser={currentUser} userData={userData} navigate={navigate} t={t} />}
 
           </div>
         </div>
@@ -1311,7 +1494,7 @@ const Settings = () => {
         © 2026 Smart Grama Sewa. All rights reserved.
       </footer>
 
-      <Toast show={showToast} />
+      <Toast show={showToast} t={t} />
       
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -1319,7 +1502,6 @@ const Settings = () => {
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .rounded-round { border-radius: 999px; }
 
-        /* Smooth transitions */
         * {
           transition: background-color 0.2s ease, 
                       color 0.2s ease, 

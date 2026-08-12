@@ -1,13 +1,12 @@
-// Client/src/modules/admin/dashboard.jsx
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../../firebase';
 
 import {
   collection, query, orderBy, limit,
-  onSnapshot, getDocs, where, doc, getDoc, setDoc,
+  onSnapshot, getDocs, where, doc, getDoc, updateDoc, serverTimestamp
 } from 'firebase/firestore';
 
 import {
@@ -65,7 +64,6 @@ function fmtNumber(n) {
   return Number(n).toLocaleString();
 }
 
-// Get today's date as a "YYYY-MM-DD" string for comparing appointment.date field
 function todayDateString() {
   const d = new Date();
   return d.toISOString().split('T')[0];
@@ -90,8 +88,7 @@ function ErrorBanner({ message }) {
   );
 }
 
-// ─── Simple Number Card (no donut) — supports an optional secondary stat ──
-// secondaryValue / secondaryLabel show a smaller stat in the lower space.
+// ─── Simple Number Card ──────────────────────────────────────────────────
 function SimpleStatCard({ label, value, sub, icon: Icon, loading,
   secondaryValue, secondaryLabel, secondaryLoading }) {
   return (
@@ -113,7 +110,7 @@ function SimpleStatCard({ label, value, sub, icon: Icon, loading,
         </>
       )}
 
-      {/* Secondary stat — divider + smaller row */}
+      {/* Secondary stat row */}
       {(secondaryLabel !== undefined) && (
         <div className="mt-1 pt-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.15)' }}>
           {secondaryLoading ? (
@@ -201,48 +198,51 @@ function NavItem({ icon: Icon, label, active, bold, onClick }) {
 // ─── Sidebar ──────────────────────────────────────────────────────────────
 function Sidebar({ onLogout }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
   return (
     <aside className="w-64 flex-shrink-0 flex flex-col py-6 px-3 gap-2 border-r"
       style={{ borderColor: '#DDD0BC', background: COLORS.bg }}>
 
       {/* Logo */}
       <div className="flex items-center gap-2 px-3 mb-6">
-        <img src="/logo2.png"></img>
+        <img src="/logo2.png" alt="Logo" />
       </div>
 
       {/* Nav links */}
       <ul className="flex flex-col gap-1 flex-1">
-        <NavItem icon={LayoutDashboard} label="Dashboard" active 
-        onClick={() => navigate('/admin/dashboard')} />
+        <NavItem icon={LayoutDashboard} label={t('nav_admin_dashboard')} active 
+          onClick={() => navigate('/admin/dashboard')} />
 
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
-          GN management
+          {t('nav_gn_management_heading')}
         </li>
-        <NavItem icon={UserCheck}      label="Registration Requests"
+        <NavItem icon={UserCheck}       label={t('nav_reg_requests')}
           onClick={() => navigate('/admin/registrationrequestapproval')} />
-        <NavItem icon={ArrowLeftRight} label="Transfer Request"
+        <NavItem icon={ArrowLeftRight} label={t('nav_trans_requests')}
           onClick={() => navigate('/admin/transferrequestapproval')} />
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
-          Reports
+          {t('nav_reports_heading')}
         </li>
-        <NavItem icon={BarChart2} label="System reports"
+        <NavItem icon={BarChart2} label={t('nav_sys_reports')}
           onClick={() => navigate('/admin/reports/system')} />
-        <NavItem icon={User}      label="Individual user access"
+        <NavItem icon={User}      label={t('nav_ind_user_access')}
           onClick={() => navigate('/admin/reports/useraccess')} />
-        <NavItem icon={Activity}  label="GN activity reports"
+        <NavItem icon={Activity}  label={t('nav_gn_activity_reports')}
           onClick={() => navigate('/admin/reports/gnactivity')} />
 
         <li className="pt-4">
-          <NavItem icon={Megaphone} label="Announcements" bold
+          <NavItem icon={Megaphone} label={t('nav_announcements')} bold
             onClick={() => navigate('/admin/announcements')} />
         </li>
         <li className="pt-4">
-          <NavItem icon={Calendar} label="Appointment Calendar"bold
+          <NavItem icon={Calendar} label={t('nav_appointment_calendar')} bold
             onClick={() => navigate("/admin/calendar")} />
         </li>
         <li className="pt-2">
-          <NavItem icon={TrendingUp} label="Statistical Changes" bold active
-            onClick={() => navigate('/admin/statistical-changes')} />
+          {/* UPDATED KEY: Changed nav_statistical_changes to nav_stat_changes */}
+          <NavItem icon={TrendingUp} label={t('nav_stat_changes')} bold
+            onClick={() => navigate('/admin/staticalchanges')} />
         </li>
       </ul>
 
@@ -252,7 +252,7 @@ function Sidebar({ onLogout }) {
           className="flex items-center gap-3 w-full px-4 py-2 rounded-lg text-sm font-bold transition-all hover:bg-red-50"
           style={{ color: '#991B1B' }}>
           <LogOut size={16} />
-          <span>Logout</span>
+          <span>{t('btn_logout')}</span>
         </button>
       </div>
     </aside>
@@ -261,7 +261,21 @@ function Sidebar({ onLogout }) {
 
 // ─── Topbar ───────────────────────────────────────────────────────────────
 function Topbar({ adminName }) {
+  const { t, i18n } = useTranslation();
   const [searchVal, setSearchVal] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const toggleLanguage = (lang) => {
+    i18n.changeLanguage(lang);
+    setDropdownOpen(false);
+  };
+
+  const currentLanguageLabel = () => {
+    if (i18n.language === 'si') return 'සිංහල';
+    if (i18n.language === 'ta') return 'தமிழ்';
+    return 'English';
+  };
+
   return (
     <header className="flex items-center gap-4 px-6 py-4 border-b"
       style={{ borderColor: '#DDD0BC', background: COLORS.bg }}>
@@ -271,14 +285,14 @@ function Topbar({ adminName }) {
         <input
           className="w-full pl-10 pr-4 py-2.5 rounded-full border text-sm focus:outline-none"
           style={{ borderColor: '#C8B89A', background: '#FFF9F0', color: COLORS.text }}
-          placeholder="search..."
+          placeholder={t('search_placeholder')}
           value={searchVal}
           onChange={(e) => setSearchVal(e.target.value)}
         />
       </div>
       
       {/* Language Switcher Dropdown */}
-      {/* <div className="relative">
+      <div className="relative">
         <button 
           onClick={() => setDropdownOpen(!dropdownOpen)}
           className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border transition-all active:scale-95"
@@ -294,7 +308,7 @@ function Topbar({ adminName }) {
             <button onClick={() => toggleLanguage('ta')} className="w-full text-left px-4 py-2 text-sm text-[#2C1200] hover:bg-amber-100 font-semibold transition-colors">தமிழ்</button>
           </div>
         )}
-      </div> */}
+      </div>
 
       <button className="relative w-10 h-10 rounded-full flex items-center justify-center border"
         style={{ borderColor: '#C8B89A', background: '#FFF9F0' }}>
@@ -319,6 +333,7 @@ function Topbar({ adminName }) {
 
 // ─── Main Admin Dashboard ─────────────────────────────────────────────────
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [adminName, setAdminName] = useState('');
@@ -345,20 +360,16 @@ export default function AdminDashboard() {
   // Data states
   const [totalUsers,          setTotalUsers]          = useState(0);
   const [totalGnOfficers,     setTotalGnOfficers]     = useState(0);
-  const [loginsToday,         setLoginsToday]         = useState(0);   // Card 3 — GN logins
-  const [citizenLoginsToday,  setCitizenLoginsToday]  = useState(0);   // Card 3 — Citizen logins
-  const [appointmentsDone,    setAppointmentsDone]    = useState(0);   // Card 4 — done today
-  const [appointmentsToday,   setAppointmentsToday]   = useState(0);   // Card 4 — created today
+  const [loginsToday,         setLoginsToday]         = useState(0);   
+  const [citizenLoginsToday,  setCitizenLoginsToday]  = useState(0);   
+  const [appointmentsDone,    setAppointmentsDone]    = useState(0);   
+  const [appointmentsToday,   setAppointmentsToday]   = useState(0);   
   const [chartData,           setChartData]           = useState([]);
   const [activityLogs,        setActivityLogs]        = useState([]);
 
-  // Stats config — loaded from Firestore doc 'system_stats/config'
-  // Fields: totalPopulation (number), totalWorkingGnOfficers (number)
-  // This doc is managed by the Statistical Changes interface (to be built).
   const [totalPopulation,          setTotalPopulation]          = useState(0);
   const [totalWorkingGnOfficers,   setTotalWorkingGnOfficers]   = useState(0);
 
-  // ── Get logged-in admin's fullName from gn_officers ───────────────────
   useEffect(() => {
     const unsubAuth = auth.onAuthStateChanged(async (user) => {
       if (!user) { navigate('/login'); return; }
@@ -373,9 +384,6 @@ export default function AdminDashboard() {
     return () => unsubAuth();
   }, [navigate]);
 
-  // ── 0. Load stats config from Firestore → totalPopulation, totalWorkingGnOfficers
-  // Stored in 'system_stats' collection, document ID 'config'.
-  // The Statistical Changes interface (to be built) writes to this same doc.
   useEffect(() => {
     (async () => {
       try {
@@ -393,7 +401,6 @@ export default function AdminDashboard() {
     })();
   }, []);
 
-
   useEffect(() => {
     (async () => {
       try {
@@ -407,7 +414,6 @@ export default function AdminDashboard() {
     })();
   }, []);
 
-  // ── 2. Count `gn_officers` → Total registered GN Officers ────────────
   useEffect(() => {
     (async () => {
       try {
@@ -421,7 +427,6 @@ export default function AdminDashboard() {
     })();
   }, []);
 
-  // ── 3a. Count today's GN officer logins → gn_officers.lastLogin ─────────
   useEffect(() => {
     (async () => {
       try {
@@ -442,8 +447,6 @@ export default function AdminDashboard() {
     })();
   }, []);
 
-  // ── 3b. Count today's citizen logins → users.lastLogin ───────────────
-  // users collection has the same lastLogin Timestamp field set on sign-in.
   useEffect(() => {
     (async () => {
       try {
@@ -457,7 +460,6 @@ export default function AdminDashboard() {
         const snap = await getDocs(q);
         setCitizenLoginsToday(snap.size);
       } catch (err) {
-        // Silently fail — don't block the card, just show 0
         console.error('Citizen login count failed:', err.message);
       } finally {
         setCitizenLoginsLoading(false);
@@ -465,7 +467,6 @@ export default function AdminDashboard() {
     })();
   }, []);
 
-  // ── 4a. Count today's completed appointments (status === 'done') ────────
   useEffect(() => {
     (async () => {
       try {
@@ -492,8 +493,6 @@ export default function AdminDashboard() {
     })();
   }, []);
 
-  // ── 4b. Count all appointments created today (any status) ────────────
-  // Uses createdAt Timestamp field for "created within today" logic.
   useEffect(() => {
     (async () => {
       try {
@@ -514,7 +513,6 @@ export default function AdminDashboard() {
     })();
   }, []);
 
-  // ── 5. Weekly chart from `appointments.createdAt` ─────────────────────
   useEffect(() => {
     (async () => {
       try {
@@ -530,7 +528,6 @@ export default function AdminDashboard() {
         );
         const snap = await getDocs(q);
 
-        // Build last-7-days buckets
         const buckets = {};
         for (let i = 6; i >= 0; i--) {
           const d   = new Date();
@@ -557,9 +554,6 @@ export default function AdminDashboard() {
     })();
   }, []);
 
-  // ── 6. Real-time listener on `activity_logs` → Recent activities ──────
-  // Uses only orderBy + limit (no 'where') to avoid needing a composite index.
-  // type/title/description/action fields may be missing — all handled gracefully.
   useEffect(() => {
     const q = query(
       collection(db, 'activity_logs'),
@@ -580,7 +574,6 @@ export default function AdminDashboard() {
     return () => unsub();
   }, []);
 
-  // ── Logout ────────────────────────────────────────────────────────────
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -590,13 +583,10 @@ export default function AdminDashboard() {
     }
   };
 
-  // ── Meaningful donut percentages ─────────────────────────────────────
-  // Card 1: registered citizens vs total population (from stats config)
   const citizenPct = totalPopulation > 0
     ? Math.min(100, Math.round((totalUsers / totalPopulation) * 100))
     : 0;
 
-  // Card 2: registered GN officers vs total working GN officers (from stats config)
   const gnPct = totalWorkingGnOfficers > 0
     ? Math.min(100, Math.round((totalGnOfficers / totalWorkingGnOfficers) * 100))
     : 0;
@@ -612,71 +602,71 @@ export default function AdminDashboard() {
 
         <div className="flex-1 p-6 flex flex-col gap-6">
 
-          {/* Stat Cards */}
+          {/* Stat Cards Row */}
           <div className="flex gap-4 flex-wrap">
 
-            {/* Card 1 — Total registered Citizens (donut vs totalPopulation) */}
+            {/* Card 1 — Total Citizens */}
             <div className="flex-1 min-w-[180px] flex flex-col gap-1">
               {usersError && <ErrorBanner message={usersError} />}
               <StatCard
-                label="Total registered Citizens"
+                label={t('lbl_total_citizens')}
                 value={fmtNumber(totalUsers)}
                 pct={statsConfigLoading ? 0 : citizenPct}
                 sub={
                   statsConfigLoading
-                    ? 'Loading target population…'
+                    ? t('lbl_loading_population')
                     : totalPopulation > 0
-                      ? `${citizenPct}% of total population (${fmtNumber(totalPopulation)})`
-                      : 'Target population not set — update in Statistical Changes'
+                      ? t('lbl_pop_pct_sub', { pct: citizenPct, pop: fmtNumber(totalPopulation) })
+                      : t('lbl_pop_not_set')
                 }
                 loading={usersLoading}
               />
             </div>
 
-            {/* Card 2 — Total registered GN Officers (donut vs totalWorkingGnOfficers) */}
+            {/* Card 2 — Total GN Officers */}
             <div className="flex-1 min-w-[180px] flex flex-col gap-1">
               {gnOfficersError && <ErrorBanner message={gnOfficersError} />}
               <StatCard
-                label="Total registered Grama Niladhari"
+                label={t('lbl_total_gn')}
                 value={fmtNumber(totalGnOfficers)}
                 pct={statsConfigLoading ? 0 : gnPct}
                 sub={
                   statsConfigLoading
-                    ? 'Loading target count…'
+                    ? t('lbl_loading_target')
                     : totalWorkingGnOfficers > 0
-                      ? `${gnPct}% of ${fmtNumber(totalWorkingGnOfficers)} working GN positions`
-                      : 'Working GN count not set — update in Statistical Changes'
+                      ? t('lbl_gn_pct_sub', { pct: gnPct, count: fmtNumber(totalWorkingGnOfficers) })
+                      : t('lbl_gn_not_set')
                 }
                 loading={gnOfficersLoading}
               />
             </div>
 
-            {/* Card 3 — System logins today: GN officers (primary) + Citizens (secondary) */}
+            {/* Card 3 — Logins today */}
             <div className="flex-1 min-w-[180px] flex flex-col gap-1">
               {loginsError && <ErrorBanner message={loginsError} />}
               <SimpleStatCard
-                label="System logins today"
+                label={t('lbl_sys_logins')}
                 value={fmtNumber(loginsToday)}
-                sub="GN officers logged in today"
+                sub={t('lbl_gn_logged_sub')}
                 icon={UserCheck}
                 loading={loginsLoading}
                 secondaryValue={fmtNumber(citizenLoginsToday)}
-                secondaryLabel="Citizens logged in today"
+                secondaryLabel={t('lbl_citizen_logged_sub')}
                 secondaryLoading={citizenLoginsLoading}
               />
             </div>
 
-            {/* Card 4 — Appointments done today (primary) + created today (secondary) */}
+            {/* Card 4 — Appointments */}
             <div className="flex-1 min-w-[180px] flex flex-col gap-1">
               {appointmentsDoneError && <ErrorBanner message={appointmentsDoneError} />}
               <SimpleStatCard
-                label="Appointments today"
+                label={t('lbl_appointments_today')}
                 value={fmtNumber(appointmentsDone)}
-                sub="Completed (status: done)"
+                sub={t('lbl_completed_sub')}
                 icon={CheckCircle}
                 loading={appointmentsDoneLoading}
                 secondaryValue={fmtNumber(appointmentsToday)}
-                secondaryLabel="Created today (all statuses)"
+                secondaryLabel={t('lbl_created_today_sub')}
                 secondaryLoading={appointmentsTodayLoading}
               />
             </div>
@@ -687,38 +677,38 @@ export default function AdminDashboard() {
             onClick={() => navigate('/admin/staticalchanges')}
             className="flex-1 py-5 rounded-2xl text-sm font-bold tracking-wider uppercase transition-all hover:opacity-90 active:scale-[0.98]"
             style={{ background: '#6a2a0070', color: COLORS.cardBrown }}>
-            Statical changes
+            {t('btn_statical_changes')}
           </button>
 
-          {/* Approval Buttons */}
+          {/* Approval Action Grid */}
           <div className="flex gap-4">
             <button
               onClick={() => navigate('/admin/registrationrequestapproval')}
               className="flex-1 py-5 rounded-2xl text-sm font-bold tracking-wider uppercase transition-all hover:opacity-90 active:scale-[0.98]"
               style={{ background: COLORS.cardBrown, color: COLORS.white }}>
-              registration approval
+              {t('btn_reg_approval')}
             </button>
             <button
               onClick={() => navigate('/admin/gn-management/transfers')}
               className="flex-1 py-5 rounded-2xl text-sm font-bold tracking-wider uppercase transition-all hover:opacity-90 active:scale-[0.98]"
               style={{ background: COLORS.cardBrown, color: COLORS.white }}>
-              transfer approval
+              {t('btn_trans_approval')}
             </button>
           </div>
 
-          {/* Chart + Activities */}
+          {/* Graphs Grid */}
           <div className="flex gap-4 flex-wrap">
 
-            {/* Weekly Appointments Chart */}
+            {/* Appointment Flow */}
             <div className="flex-1 min-w-[300px] rounded-2xl p-5"
               style={{ background: COLORS.white, border: '1px solid #E8DDD0' }}>
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <h3 className="font-bold text-sm" style={{ color: COLORS.primary }}>
-                    Appointments rate
+                    {t('rate_appointments')}
                   </h3>
                   <p className="text-xs" style={{ color: COLORS.textMuted }}>
-                    appointments per week
+                    {t('rate_sub')}
                   </p>
                 </div>
                 <TrendingUp size={18} style={{ color: COLORS.accent }} />
@@ -754,18 +744,18 @@ export default function AdminDashboard() {
               )}
             </div>
 
-            {/* Recent Activities */}
+            {/* Live Activities Logger */}
             <div className="flex-1 min-w-[280px] rounded-2xl p-5 flex flex-col gap-3"
               style={{ background: COLORS.white, border: '1px solid #E8DDD0' }}>
               <div className="flex items-center gap-2 mb-1">
                 <Clock size={16} style={{ color: COLORS.primary }} />
                 <h3 className="font-bold text-sm" style={{ color: COLORS.primary }}>
-                  Recent activities
+                  {t('recent_activities_title')}
                 </h3>
                 <span className="ml-auto flex items-center gap-1 text-xs"
                   style={{ color: COLORS.textMuted }}>
                   <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block" />
-                  live
+                  {t('live_indicator')}
                 </span>
               </div>
               {activityError && <ErrorBanner message={activityError} />}
@@ -775,16 +765,14 @@ export default function AdminDashboard() {
                 </div>
               ) : activityLogs.length === 0 ? (
                 <p className="text-xs text-center py-8" style={{ color: COLORS.textMuted }}>
-                  No recent activities found.
+                  {t('no_activities')}
                 </p>
               ) : (
                 activityLogs.map((log) => {
-                  // Safely resolve meta — fall back to default for unknown/missing types
                   const rawType = (log.type || '').toLowerCase().trim();
                   const meta = ACTIVITY_META[rawType] ?? DEFAULT_ACTIVITY_META;
                   const Icon = meta.icon;
 
-                  // Derive a display label from available fields
                   const displayTitle = log.title || log.action || log.type || 'Activity';
                   const displayDesc  = log.description || null;
 
