@@ -310,7 +310,9 @@ const formFieldKeys = {
   7: [ // Voter Registration
     'voterElectoralDistrict', 'voterPollingDivision', 'voterPollingDistrictNo',
     'voterGnDivision', 'voterVillageStreet', 'voterHouseholdNo',
+    // Option A fields
     'ycFullName', 'ycNicNo', 'ycDob', 'ycGender', 'ycCivilStatus', 'ycRelationToChief',
+    // Option B fields are dynamic (newVoters, deletedVoters) – handled separately in PDF generation
     'voterChiefName', 'voterChiefNic', 'voterChiefPhone', 'voterChiefWhatsApp'
   ],
   8: [ // Permit for Felling Trees
@@ -320,6 +322,7 @@ const formFieldKeys = {
     'treeLandAcres', 'treeLandRoods', 'treeLandPerches',
     'treeOwnershipType', 'treeDeedNoDate', 'treeLegalDisputesExist',
     'treeBoundNorth', 'treeBoundEast', 'treeBoundSouth', 'treeBoundWest'
+    // treeLogistics matrix is handled separately
   ],
   9: [ // Permit for Timber Transportation
     'removalGnDiv', 'removalDsOffice',
@@ -329,6 +332,7 @@ const formFieldKeys = {
     'removalOwnershipType',
     'remBoundNorth', 'remBoundEast', 'remBoundSouth', 'remBoundWest',
     'removalDeedNumber', 'removalDeedDate', 'removalDisputeStatus'
+    // timberGrid matrix is handled separately
   ],
   10: [ // Business Registration
     'biz_prop_name', 'biz_nature_type', 'biz_legal_structure',
@@ -341,10 +345,146 @@ const formFieldKeys = {
   ]
 };
 
+// Helper to build default inputs for a form using user data
+const getDefaultFormInputs = (form, userData, currentUser) => {
+  const fields = formFieldKeys[form.id] || [];
+  const inputs = {};
+
+  // Map user data to form fields (if field name matches a userData property)
+  const userMap = {
+    applicantName: userData?.fullName || '',
+    applicantAddress: userData?.address || '',
+    sex: userData?.gender || '',
+    age: userData?.dob ? new Date().getFullYear() - new Date(userData.dob).getFullYear() : '',
+    civilStatus: userData?.civilStatus || '',
+    isSriLankan: 'Yes', // default
+    religion: userData?.religion || '',
+    occupation: userData?.occupation || '',
+    villagePeriod: '',
+    gnPeriod: '',
+    residenceEvidence: '',
+    nicNumber: userData?.nic || '',
+    electoralDetails: '',
+    fatherName: '',
+    fatherAddress: '',
+    courtConviction: 'No',
+    socialService: '',
+    certificatePurpose: '',
+    incFullName: userData?.fullName || '',
+    incAddress: userData?.address || '',
+    incNic: userData?.nic || '',
+    incPurpose: '',
+    incomeJobAmt: '',
+    incomeLandAmt: '',
+    incomeBizAmt: '',
+    summaryEmployment: '',
+    summaryLand: '',
+    summaryBusiness: '',
+    summaryOther: '',
+    reliefName: '',
+    incomeAccuracyEvidence: '',
+    submissionTargetInstitution: '',
+    valRefNo: '',
+    valRequestDate: '',
+    valDsDivision: userData?.dsDiv || '',
+    valGnDivision: userData?.gnDiv || '',
+    valLandName: '',
+    boundNorth: '', boundEast: '', boundSouth: '', boundWest: '',
+    sizeAcres: '', sizeRoods: '', sizePerches: '',
+    valLandType: '',
+    possessionYears: '', possessionMonths: '',
+    nicFamilyName: '', nicOtherNames: '', nicSurname: '', nicPreferredName: '',
+    nicSex: userData?.gender || '',
+    nicCivilStatus: userData?.civilStatus || '',
+    nicDob: userData?.dob || '',
+    nicBirthCertNo: '',
+    nicBirthPlace: '',
+    nicBirthDistrict: userData?.district || '',
+    nicOccupation: userData?.occupation || '',
+    nicPermAddress: userData?.address || '',
+    nicPostalAddress: '',
+    nicMobilePhone: userData?.mobile || '',
+    nicEmail: currentUser?.email || '',
+    lawDistrict: userData?.district || '',
+    lawDsOffice: userData?.dsDiv || '',
+    lawGnDivision: userData?.gnDiv || '',
+    lawFullName: userData?.fullName || '',
+    lawDisabilityNature: '',
+    lawDisabilityCause: '',
+    lawAccidentYear: '',
+    lawOtherCauseDetails: '',
+    lawVocationalOrEducation: '',
+    lawBankAccountNo: '',
+    lawBankNameBranch: '',
+    voterElectoralDistrict: userData?.district || '',
+    voterPollingDivision: '',
+    voterPollingDistrictNo: '',
+    voterGnDivision: userData?.gnDiv || '',
+    voterVillageStreet: '',
+    voterHouseholdNo: '',
+    ycFullName: '',
+    ycNicNo: '',
+    ycDob: '',
+    ycGender: '',
+    ycCivilStatus: '',
+    ycRelationToChief: '',
+    voterChiefName: userData?.fullName || '',
+    voterChiefNic: userData?.nic || '',
+    voterChiefPhone: userData?.mobile || '',
+    voterChiefWhatsApp: userData?.mobile || '',
+    treeApplicantStatus: 'Land Owner',
+    treeFullName: userData?.fullName || '',
+    treeNic: userData?.nic || '',
+    treePhone: userData?.mobile || '',
+    treePermanentAddress: userData?.address || '',
+    treeWhatsApp: userData?.mobile || '',
+    treeLandName: '',
+    treeDistrict: userData?.district || '',
+    treeDsDivision: userData?.dsDiv || '',
+    treeGnDivision: userData?.gnDiv || '',
+    treeLandAcres: '', treeLandRoods: '', treeLandPerches: '',
+    treeOwnershipType: '',
+    treeDeedNoDate: '',
+    treeLegalDisputesExist: 'No',
+    treeBoundNorth: '', treeBoundEast: '', treeBoundSouth: '', treeBoundWest: '',
+    removalGnDiv: userData?.gnDiv || '',
+    removalDsOffice: userData?.dsDiv || '',
+    removalLandownerName: userData?.fullName || '',
+    treeCuttingReason: '',
+    removalLandName: '',
+    removalVillageLocalArea: '',
+    removalOwnershipType: '',
+    remBoundNorth: '', remBoundEast: '', remBoundSouth: '', remBoundWest: '',
+    removalDeedNumber: '',
+    removalDeedDate: '',
+    removalDisputeStatus: 'No',
+    biz_prop_name: '',
+    biz_nature_type: '',
+    biz_legal_structure: 'Sole Proprietorship',
+    biz_owner_name: userData?.fullName || '',
+    biz_owner_nic: userData?.nic || '',
+    biz_premises_address: userData?.address || '',
+    biz_tenure_type: '',
+    biz_initial_capital: '',
+    assessmentLandName: '',
+    assessmentDsDivision: userData?.dsDiv || '',
+    assessmentGnDivision: userData?.gnDiv || '',
+    assessmentCurrentOwner: userData?.fullName || '',
+    assessmentOwnershipType: ''
+  };
+
+  // For each field in the form's list, set the value from userMap or empty string
+  fields.forEach(key => {
+    inputs[key] = userMap[key] !== undefined ? userMap[key] : '';
+  });
+
+  return inputs;
+};
+
 // ============================================================
-// PDF GENERATION – with isBlank flag
+// SIMPLE PDF GENERATION – NOW WITH TRANSLATED LABELS
 // ============================================================
-const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMembers, otherMembers, newVoters, deletedVoters, treeLogistics, timberGrid, t, fieldKeys, isBlank = false }) => {
+const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMembers, otherMembers, newVoters, deletedVoters, treeLogistics, timberGrid, t, fieldKeys }) => {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-LK', { year: 'numeric', month: 'long', day: 'numeric' });
   const timeStr = now.toLocaleTimeString('en-LK', { hour: '2-digit', minute: '2-digit' });
@@ -358,32 +498,32 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
       .trim();
   };
 
-  // Applicant details – if isBlank, set all to empty string
-  const applicantName = isBlank ? '' : (userData?.fullName || inputs.applicantName || inputs.incFullName || inputs.treeFullName || inputs.lawFullName || currentUser?.displayName || '');
-  const applicantNic = isBlank ? '' : (userData?.nic || inputs.nicNumber || inputs.incNic || inputs.treeNic || inputs.voterChiefNic || '');
-  const applicantAddress = isBlank ? '' : (userData?.address || inputs.applicantAddress || inputs.incAddress || inputs.treePermanentAddress || inputs.nicPermAddress || '');
-  const applicantPhone = isBlank ? '' : (userData?.mobile || inputs.treePhone || inputs.voterChiefPhone || inputs.nicMobilePhone || '');
-  const applicantEmail = isBlank ? '' : (currentUser?.email || inputs.nicEmail || '');
-  const gnDiv = isBlank ? '' : (userData?.gnDiv || '');
+  // Get applicant details (always from userData or fallback)
+  const applicantName = userData?.fullName || inputs.applicantName || inputs.incFullName || inputs.treeFullName || inputs.lawFullName || currentUser?.displayName || '___________';
+  const applicantNic = userData?.nic || inputs.nicNumber || inputs.incNic || inputs.treeNic || inputs.voterChiefNic || '___________';
+  const applicantAddress = userData?.address || inputs.applicantAddress || inputs.incAddress || inputs.treePermanentAddress || inputs.nicPermAddress || '___________';
+  const applicantPhone = userData?.mobile || inputs.treePhone || inputs.voterChiefPhone || inputs.nicMobilePhone || '___________';
+  const applicantEmail = currentUser?.email || inputs.nicEmail || '___________';
 
-  // Build form data rows – using translation keys and no underscores
+  // Build form data rows – now using translation keys
   let formDataRows = '';
   const keysToDisplay = fieldKeys || Object.keys(inputs).filter(key => inputs[key] && typeof inputs[key] !== 'object' && inputs[key] !== '');
   
   if (keysToDisplay && keysToDisplay.length > 0) {
     for (const key of keysToDisplay) {
       const value = inputs[key] !== undefined ? inputs[key] : '';
+      // 🔥 KEY CHANGE: use translation for the label, fallback to formatted key
       const label = t('forms.fields.' + key, formatLabel(key));
       formDataRows += `
         <tr style="border-bottom: 1px solid #e8d5b7;">
           <td style="padding: 10px 12px; font-weight: 600; color: #6A2301; background: #fdf6ee; width: 35%; font-size: 12px;">${label}</td>
-          <td style="padding: 10px 12px; font-size: 12px; color: #2d1a00;">${value}</td>
+          <td style="padding: 10px 12px; font-size: 12px; color: #2d1a00;">${String(value) || '_________________________'}</td>
         </tr>
       `;
     }
   }
 
-  // Build table sections for arrays (unchanged)
+  // Build table sections for arrays – now with translated titles passed in
   const buildTableSection = (title, items) => {
     if (!items || items.length === 0) return '';
     const validItems = items.filter(item => item.name || item.species || Object.values(item).some(v => v && v !== ''));
@@ -565,7 +705,7 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
         <div class="header">
           <h1>${t('pdf.smartGramaSewa')}</h1>
           <p>${t('pdf.subtitle')}</p>
-          <p style="font-size: 11px; margin-top: 5px;">${t('pdf.gnDivisionLabel')} ${gnDiv || '_______________'}</p>
+          <p style="font-size: 11px; margin-top: 5px;">${t('pdf.gnDivisionLabel')} ${userData?.gnDiv || 'N/A'}</p>
         </div>
 
         <div class="form-banner">
@@ -584,7 +724,7 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
             <div class="info-item"><div class="info-label">${t('pdf.address')}</div><div class="info-value">${applicantAddress}</div></div>
             <div class="info-item"><div class="info-label">${t('pdf.phone')}</div><div class="info-value">${applicantPhone}</div></div>
             <div class="info-item"><div class="info-label">${t('pdf.email')}</div><div class="info-value">${applicantEmail}</div></div>
-            <div class="info-item"><div class="info-label">${t('pdf.gnDivision')}</div><div class="info-value">${gnDiv}</div></div>
+            <div class="info-item"><div class="info-label">${t('pdf.gnDivision')}</div><div class="info-value">${userData?.gnDiv || '—'}</div></div>
           </div>
         </div>
 
@@ -608,7 +748,7 @@ const generateFormPDF = async ({ form, inputs, userData, currentUser, disabledMe
           <div style="flex: 1;">
             <div class="signature-line"></div>
             <div style="font-size: 11px; font-weight: bold; margin-top: 5px;">${t('pdf.gnSignature')}</div>
-            <div style="font-size: 10px; color: #888;">${gnDiv || 'GN Office'}</div>
+            <div style="font-size: 10px; color: #888;">${userData?.gnDiv || 'GN Office'}</div>
           </div>
         </div>
 
@@ -743,6 +883,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
         if (form.id === 3) finalInputs.totalAnnualIncome = `Rs. ${totalCalculatedIncome.toLocaleString('en-LK', { minimumFractionDigits: 2 })}`;
         if (form.id === 7) finalInputs.selectedPurposeMode = voterPurpose;
 
+        // Pass the translation function t and the field keys to the PDF generator
         await generateFormPDF({
           form,
           inputs: finalInputs,
@@ -755,8 +896,7 @@ const DynamicFormModal = ({ form, onClose, inputs, setInputs, currentUser, userD
           treeLogistics,
           timberGrid,
           t,
-          fieldKeys: Object.keys(finalInputs), // Show only filled fields in modal PDF
-          isBlank: false, // modal fills data
+          fieldKeys: Object.keys(finalInputs) // Show only filled fields in modal PDF
         });
         onSuccess?.(`${form.title} — ${t('toast.downloadSuccess')}`);
         onClose();
@@ -1934,13 +2074,17 @@ const Forms = () => {
     { id: 11, title: t('forms.formList.10.title'), desc: t('forms.formList.10.desc'), cat: "Certificates", imgSrc: "/icons/land.png" },
   ];
 
-  // *** UPDATED: generate a completely blank PDF for "Download Form" ***
+  // *** UPDATED: generate filled PDF with user data AND all form fields ***
   const downloadBlankForm = async (form) => {
     try {
+      // Build default inputs for the form using the helper
+      const defaultInputs = getDefaultFormInputs(form, userData, currentUser);
+      // Also get the list of field keys for this form
       const fieldKeys = formFieldKeys[form.id] || [];
+
       await generateFormPDF({
         form,
-        inputs: {}, // all empty
+        inputs: defaultInputs,
         userData,
         currentUser,
         disabledMembers: [],
@@ -1950,8 +2094,7 @@ const Forms = () => {
         treeLogistics: [],
         timberGrid: [],
         t,
-        fieldKeys: fieldKeys, // show all fields
-        isBlank: true, // this tells PDF generator to leave all user data blank
+        fieldKeys: fieldKeys, // this ensures all fields are shown, even if empty
       });
       showToast(`${form.title} — ${t('toast.downloadSuccess')}`);
     } catch (err) {

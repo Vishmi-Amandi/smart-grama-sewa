@@ -292,7 +292,7 @@ function Topbar({ adminName }) {
       </div>
       
       {/* Language Switcher Dropdown */}
-      <div className="relative">
+      {/* <div className="relative">
         <button 
           onClick={() => setDropdownOpen(!dropdownOpen)}
           className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border transition-all active:scale-95"
@@ -308,7 +308,7 @@ function Topbar({ adminName }) {
             <button onClick={() => toggleLanguage('ta')} className="w-full text-left px-4 py-2 text-sm text-[#2C1200] hover:bg-amber-100 font-semibold transition-colors">தமிழ்</button>
           </div>
         )}
-      </div>
+      </div> */}
 
       <button className="relative w-10 h-10 rounded-full flex items-center justify-center border"
         style={{ borderColor: '#C8B89A', background: '#FFF9F0' }}>
