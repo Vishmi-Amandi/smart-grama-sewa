@@ -273,7 +273,6 @@ const Step1 = ({ data, onChange, onNext }) => {
         setErrors(prev => ({ ...prev, nic: undefined }));
       }
     } catch (error) {
-      console.error('Error checking NIC:', error);
     } finally {
       setCheckingNic(false);
     }
@@ -487,7 +486,6 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
         setGnDivisions([]);
       }
     } catch (error) {
-      console.error('Error loading GN divisions:', error);
       setGnDivisions([]);
     } finally {
       setLoadingGn(false);
@@ -525,7 +523,6 @@ const Step2 = ({ data, onChange, onNext, onBack }) => {
       const exists = !snapshot.empty;
       setEmailAvailable(!exists);
     } catch (error) {
-      console.error('Error checking email:', error);
     } finally {
       setCheckingEmail(false);
     }
@@ -806,22 +803,17 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         return;
       }
       
-      // Create account with real email
       const credential = await createUserWithEmailAndPassword(auth, realEmail, data.password);
       
-      // Update display name
       try {
         await updateProfile(credential.user, { displayName: data.username });
       } catch (e) { 
-        console.warn('updateProfile failed:', e.message); 
       }
 
-      // Send verification email
       if (realEmail) {
         try {
           await sendEmailVerification(credential.user);
         } catch (e) {
-          console.warn('Email verification failed:', e.message);
         }
       }
       
@@ -829,7 +821,6 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
       try {
         await updateProfile(credential.user, { displayName: data.username });
       } catch (e) { 
-        console.warn('updateProfile failed:', e.message); 
       }
 
       // Store user data in Firestore
@@ -852,10 +843,8 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
         verificationSentAt: serverTimestamp(),
       });
             
-      // GENERATE VERIFICATION LINK
       const verificationLink = generateVerificationLink(credential.user.uid, realEmail);
       
-      // SEND EMAIL VIA EMAILJS
       try {
         await emailjs.send(
           EMAILJS_SERVICE_ID,
@@ -868,11 +857,9 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
           EMAILJS_PUBLIC_KEY
         );
         
-        console.log('✅ Verification email sent successfully!');
         setVerificationSent(true);
         
       } catch (emailError) {
-        console.error('❌ Email sending failed:', emailError);
         
         // Fallback: Show link to user
         const userConfirmed = window.confirm(
@@ -1082,7 +1069,6 @@ const Step3 = ({ data, onChange, onSubmit, onBack }) => {
   );
 };
 
-// STEP 4 — Success 
 const StepSuccess = ({ onDashboard }) => {
   const { t } = useTranslation();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -1125,7 +1111,6 @@ const StepSuccess = ({ onDashboard }) => {
   );
 };
 
-// Main SignUp component
 const SignUp = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();

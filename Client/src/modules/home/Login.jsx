@@ -141,7 +141,6 @@ const Login = () => {
       }
 
     } catch (err) {
-      console.log("Error:", err.code, err.message);
       if (!navigator.onLine || err.code === "unavailable") {
         setError(t("err_no_internet"));
       } else {

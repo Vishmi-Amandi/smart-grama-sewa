@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next'; // 1. Import i18n hook
+import { useTranslation } from 'react-i18next';
 
 const SignUpSelect = () => {
     const navigate = useNavigate();
-    const { t } = useTranslation(); // 2. Initialize translation context
+    const { t } = useTranslation();
     const [selected, setSelected] = useState(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -17,7 +17,7 @@ const SignUpSelect = () => {
 
     const handleContinue = (role) => {
         if (role === 'citizen') {
-            navigate('/user-signup'); // Fixed double slash bug cleanly
+            navigate('/user-signup');
         } else if (role === 'gn') {
             navigate('/gn-signup');
         }

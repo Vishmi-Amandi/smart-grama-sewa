@@ -8,7 +8,6 @@ import { PageLoadingSkeleton, ProfileSkeleton } from '../components/skeleton';
 import LanguageSwitcher from '../components/languageSwitcher';
 import NotificationBell from '../components/NotificationBell';
 
-// Icons
 const Icon = ({ d, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
@@ -39,7 +38,6 @@ const IC = {
   calendar:     'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
 };
 
-// ---------- Page Actions (translated keys) ----------
 const PAGE_ACTIONS_KEYS = [
   { key: 'dashboard', path: '/dashboard', icon: IC.dashboard },
   { key: 'announcements', path: '/announcements', icon: IC.announcement },
@@ -50,7 +48,6 @@ const PAGE_ACTIONS_KEYS = [
   { key: 'settings', path: '/settings', icon: IC.settings },
 ];
 
-// ---------- Search Results Dropdown (translated) ----------
 const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate, t }) => {
   const [filteredPages, setFilteredPages] = useState([]);
 
@@ -92,7 +89,6 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
   );
 };
 
-// ---------- NavItem (accepts translated label) ----------
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
@@ -106,7 +102,6 @@ const NavItem = ({ iconPath, label, active, onClick }) => (
   </button>
 );
 
-// ---------- Desktop Topbar ----------
 const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser, t }) => (
   <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
     <div className="flex-1 max-w-[400px] relative">
@@ -182,7 +177,6 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
   </div>
 );
 
-// ---------- Mobile Topbar ----------
 const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLanguageChange, t }) => (
   <div className="mobile-topbar hidden h-16 bg-user-primary items-center px-4 gap-3 sticky top-0 z-40 shadow-md">
     <button onClick={onMenuClick} className="bg-none border-none cursor-pointer p-1.5 flex-shrink-0">
@@ -203,7 +197,6 @@ const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLang
   </div>
 );
 
-// ---------- Mobile Sidebar (translated labels) ----------
 const MobileSidebar = ({ isOpen, onClose, navigate, onLogout, currentPath, t }) => {
   const navItems = [
     { key: 'dashboard', icon: IC.dashboard, path: '/dashboard' },
@@ -255,7 +248,6 @@ const MobileSidebar = ({ isOpen, onClose, navigate, onLogout, currentPath, t }) 
   );
 };
 
-// ---------- Desktop Sidebar (translated labels) ----------
 const DesktopSidebar = ({ navigate, onLogout, currentPath, t }) => {
   const navItems = [
     { key: 'dashboard', icon: IC.dashboard, path: '/dashboard' },
@@ -301,7 +293,7 @@ const DesktopSidebar = ({ navigate, onLogout, currentPath, t }) => {
   );
 };
 
-// ---------- Info row (view mode) ----------
+// view mode
 const InfoRow = ({ label, value, t }) => {
   const isEmpty = !value || value === '—' || value === '--' || value.trim() === '';
   
@@ -315,7 +307,7 @@ const InfoRow = ({ label, value, t }) => {
   );
 };
 
-// ---------- Form field (edit mode) ----------
+// edit mode
 const Field = ({ label, value, onChange, type = 'text', placeholder = '', disabled = false }) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-xs font-extrabold text-user-warning">{label}</label>
@@ -330,7 +322,6 @@ const Field = ({ label, value, onChange, type = 'text', placeholder = '', disabl
   </div>
 );
 
-// ---------- Gender Select ----------
 const GenderSelect = ({ value, onChange, t }) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-xs font-extrabold text-user-warning">{t('lbl_gender')}</label>
@@ -347,7 +338,6 @@ const GenderSelect = ({ value, onChange, t }) => (
   </div>
 );
 
-// ---------- MAIN PROFILE COMPONENT ----------
 const Profile = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -408,7 +398,6 @@ const Profile = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Handle language change
   const handleLanguageChange = (langCode) => {
     setCurrentLanguage(langCode);
     i18n.changeLanguage(langCode);
@@ -430,7 +419,7 @@ const Profile = () => {
               district: data.district || '', dsDiv: data.dsDiv || '', gnDiv: data.gnDiv || '',
             });
           }
-        } catch (e) { console.warn(e); }
+        } catch (e) {}
       } else { navigate('/login'); }
       setAuthLoading(false);
     });
@@ -452,7 +441,9 @@ const Profile = () => {
       setSaveSuccess(true);
       setIsEditing(false);
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (e) { setSaveError(t('lbl_save_error')); }
+    } catch (e) { 
+      setSaveError(t('lbl_save_error')); 
+    }
     finally { setSaving(false); }
   };
 

@@ -568,7 +568,6 @@ const SecurityTab = ({ currentUser, userData, db, t }) => {
         try {
           await window.recaptchaVerifier.clear();
         } catch (e) {
-          console.warn('Error clearing reCAPTCHA:', e);
         }
         window.recaptchaVerifier = null;
       }
@@ -601,7 +600,6 @@ const SecurityTab = ({ currentUser, userData, db, t }) => {
       setMobLoading(false);
             
     } catch (error) {
-      console.error('SMS error:', error);
       setMobLoading(false);
       
       if (window.recaptchaVerifier) {
@@ -690,7 +688,6 @@ const SecurityTab = ({ currentUser, userData, db, t }) => {
       setTimeout(() => setMobSuccess(false), 5000);
       
     } catch (error) {
-      console.error('OTP verification error:', error);
       setMobLoading(false);
       
       if (error.code === 'auth/invalid-verification-code') {
@@ -738,7 +735,6 @@ const SecurityTab = ({ currentUser, userData, db, t }) => {
           document.body.appendChild(container);
         }
       } catch (error) {
-        console.error('reCAPTCHA init error:', error);
       }
     };
     
@@ -750,7 +746,7 @@ const SecurityTab = ({ currentUser, userData, db, t }) => {
           window.recaptchaVerifier.clear();
           window.recaptchaVerifier = null;
         } catch (e) {
-          console.warn('reCAPTCHA cleanup error:', e);
+          console.warn();
         }
       }
     };
@@ -1080,7 +1076,6 @@ const AccountTab = ({ currentUser, userData, navigate, t }) => {
       await signOut(auth);
       navigate('/login');
     } catch (e) {
-      console.error(e.message);
     } finally {
       setSignOutLoading(false);
     }
@@ -1097,7 +1092,6 @@ const AccountTab = ({ currentUser, userData, navigate, t }) => {
       await signOut(auth);
       navigate('/login');
     } catch (e) {
-      console.error(e.message);
     } finally {
       setDeleting(false);
     }
@@ -1247,7 +1241,7 @@ const Settings = () => {
         try {
           const snap = await getDoc(doc(db, 'users', user.uid));
           if (snap.exists()) setUserData(snap.data());
-        } catch (e) { console.warn(e.message); }
+        } catch (e) {}
       } else {
         navigate('/login');
       }

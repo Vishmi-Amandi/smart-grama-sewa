@@ -612,7 +612,7 @@ const Announcements = () => {
             setUserData(data);
             setReadIds(new Set(data.readAnnouncements || []));
           }
-        } catch (e) { console.warn(e.message); }
+        } catch (e) {}
       } else {
         navigate('/login');
       }
@@ -698,7 +698,6 @@ const Announcements = () => {
           setAnnouncements([]);
         }
       } catch (error) {
-        console.error('Error fetching announcements:', error);
         setAnnouncements([]);
       } finally {
         setLoading(false);
@@ -724,7 +723,7 @@ const Announcements = () => {
           readAnnouncements: arrayUnion(annId),
         });
       } catch (e) { 
-        console.warn('Mark read error:', e.message); 
+        console.warn(); 
       }
     }
   };
@@ -761,7 +760,7 @@ const Announcements = () => {
           readAnnouncements: allIds,
         });
       } catch (e) {
-        console.warn('Mark all read error:', e.message);
+        console.warn();
       }
     }
   };
@@ -770,7 +769,6 @@ const Announcements = () => {
 
   if (authLoading) return <PageLoadingSkeleton />;
 
-  // 🔥 Force re‑render when language changes via the `key` prop
   return (
     <div key={i18n.language} className="user-module min-h-screen flex flex-col font-sans bg-user-background">
       <div className="flex-1 flex">

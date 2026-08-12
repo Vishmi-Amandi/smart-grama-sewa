@@ -8,7 +8,6 @@ import { PageLoadingSkeleton, AppointmentsListSkeleton } from '../components/ske
 import LanguageSwitcher from '../components/languageSwitcher';
 import NotificationBell from '../components/NotificationBell';
 
-// Icons
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -56,7 +55,6 @@ const IC = {
   unread:       'M21 12a9 9 0 11-9-9 M21 3v6h-6 M3 3l18 18',
 };
 
-// ---------- PAGE ACTIONS (translated keys) ----------
 const PAGE_ACTIONS_KEYS = [
   { key: 'dashboard', path: '/dashboard', icon: IC.dashboard },
   { key: 'announcements', path: '/announcements', icon: IC.announce },
@@ -67,7 +65,6 @@ const PAGE_ACTIONS_KEYS = [
   { key: 'settings', path: '/settings', icon: IC.settings },
 ];
 
-// ---------- SERVICE CATEGORIES (with translation keys) ----------
 const SERVICE_CATS_KEYS = [
   {
     key: 'personal', labelKey: 'lbl_cat_personal', services: [
@@ -116,7 +113,6 @@ const SERVICE_CATS_KEYS = [
   },
 ];
 
-// ---------- NavItem ----------
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
@@ -130,7 +126,6 @@ const NavItem = ({ iconPath, label, active, onClick }) => (
   </button>
 );
 
-// ---------- Desktop Sidebar ----------
 const DesktopSidebar = ({ activePage, navigate, onLogout, t }) => {
   const navItems = [
     { key: 'dashboard', icon: IC.dashboard },
@@ -173,7 +168,6 @@ const DesktopSidebar = ({ activePage, navigate, onLogout, t }) => {
   );
 };
 
-// ---------- Search Results Dropdown ----------
 const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate, t }) => {
   const [filteredPages, setFilteredPages] = useState([]);
 
@@ -215,7 +209,6 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
   );
 };
 
-// ---------- Desktop Topbar ----------
 const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser, t }) => (
   <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
     <div className="flex-1 max-w-[400px] relative">
@@ -291,7 +284,6 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
   </div>
 );
 
-// ---------- Mobile Topbar ----------
 const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLanguageChange, t }) => (
   <div className="mobile-topbar hidden h-16 bg-user-primary items-center px-4 gap-3 sticky top-0 z-40 shadow-md">
     <button onClick={onMenuClick} className="bg-none border-none cursor-pointer p-1.5 flex-shrink-0">
@@ -312,7 +304,6 @@ const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLang
   </div>
 );
 
-// ---------- Mobile Sidebar ----------
 const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout, t }) => {
   const navItems = [
     { key: 'dashboard', icon: IC.dashboard },
@@ -361,7 +352,6 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout, t }) =
   );
 };
 
-// ---------- Step Bar ----------
 const StepBar = ({ step, t }) => {
   const steps = [
     t('lbl_select_service'),
@@ -396,26 +386,22 @@ const StepBar = ({ step, t }) => {
   );
 };
 
-// ---------- Brown Button ----------
 const BrownBtn = ({ onClick, children, disabled, isMobile }) => (
   <button onClick={onClick} disabled={disabled} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round font-extrabold text-white transition-all duration-150 ${disabled ? 'bg-user-secondary/50 cursor-not-allowed' : 'bg-user-secondary hover:bg-user-secondary-dark cursor-pointer'} ${isMobile ? 'w-full' : ''}`}>
     {children}
   </button>
 );
 
-// ---------- Yellow Button ----------
 const YellowBtn = ({ onClick, children, disabled, isMobile }) => (
   <button onClick={onClick} disabled={disabled} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round font-extrabold text-user-text transition-all duration-150 ${disabled ? 'bg-user-primary/50 cursor-not-allowed' : 'bg-user-primary hover:bg-user-primary-dark cursor-pointer'} ${isMobile ? 'w-full' : ''}`}>
     {children}
   </button>
 );
 
-// ---------- Constants ----------
 const MONTHS_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-// ---------- Cancel Confirmation Modal ----------
 const CancelConfirmModal = ({ isOpen, onClose, onConfirm, appointment, t }) => {
   if (!isOpen) return null;
 
@@ -445,7 +431,6 @@ const CancelConfirmModal = ({ isOpen, onClose, onConfirm, appointment, t }) => {
   );
 };
 
-// ---------- Details Modal ----------
 const DetailsModal = ({ appt, onClose, onCancel, cancelling, setPendingCancelAppt, setShowCancelConfirm, t }) => {
   if (!appt) return null;
 
@@ -529,7 +514,6 @@ const DetailsModal = ({ appt, onClose, onCancel, cancelling, setPendingCancelApp
   );
 };
 
-// ---------- Appointments List ----------
 const AppointmentsList = ({ currentUser, refreshKey = 0, onBook, t }) => {
   const [tab, setTab] = useState('All');
   const [appts, setAppts] = useState([]);
@@ -581,7 +565,6 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook, t }) => {
         list.sort((a, b) => b.date.localeCompare(a.date));
         setAppts(list);
       } catch (e) {
-        console.error('Fetch appointments error:', e.code, e.message);
         setAppts([]);
       } finally {
         setLoading(false);
@@ -600,7 +583,6 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook, t }) => {
       setShowCancelConfirm(false);
       setPendingCancelAppt(null);
     } catch (e) {
-      console.error('Cancel error:', e.message);
       alert(t('lbl_cancel_error'));
     } finally {
       setCancelling(false);
@@ -752,7 +734,6 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook, t }) => {
   );
 };
 
-// ---------- Generate Time Slots ----------
 const generateAllTimeSlots = () => {
   const slots = [];
   for (let hour = 9; hour <= 11; hour++) {
@@ -791,7 +772,6 @@ const groupSlotsByHour = (slots) => {
   return sortedGrouped;
 };
 
-// ---------- Book Step 1: Select Service ----------
 const BookStep1 = ({ booking, setBooking, onNext, onCancel, t }) => {
   const [openCats, setOpenCats] = useState({ personal: true });
   const [notes, setNotes] = useState(booking.notes || '');
@@ -919,7 +899,6 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel, t }) => {
   );
 };
 
-// ---------- Book Step 2: Date & Time ----------
 const BookStep2 = ({ booking, setBooking, onNext, onBack, t }) => {
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -958,7 +937,7 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack, t }) => {
         setBooking(p => ({ ...p, slot: null }));
       }
     } catch (error) {
-      console.error('Error fetching booked slots:', error);
+      console.error();
     } finally {
       setLoadingSlots(false);
     }
@@ -1214,7 +1193,6 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack, t }) => {
   );
 };
 
-// ---------- Book Step 3: Review & Submit ----------
 const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submitting, t }) => {
   const [isAgreed, setIsAgreed] = useState(false); 
   const [isMobile, setIsMobile] = useState(false);
@@ -1368,7 +1346,6 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
   );
 };
 
-// ---------- Book Success ----------
 const BookSuccess = ({ onBack, t }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
@@ -1397,7 +1374,6 @@ const BookSuccess = ({ onBack, t }) => {
   );
 };
 
-// ---------- MAIN COMPONENT ----------
 const Appointments = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -1416,7 +1392,6 @@ const Appointments = () => {
   const [filteredPages, setFilteredPages] = useState([]);
   const [booking, setBooking] = useState({ service: null, notes: '', day: null, month: null, year: null, slot: null });
 
-  // 🔥 Sync language dropdown with i18n
   useEffect(() => {
     setCurrentLanguage(i18n.language);
   }, [i18n.language]);
@@ -1475,7 +1450,6 @@ const Appointments = () => {
       setScreen('success');
       setRefreshKey(k => k + 1);
     } catch (e) { 
-      console.error('Submit error:', e.message); 
       alert(t('lbl_submit_error')); 
     } finally { 
       setSubmitting(false); 
