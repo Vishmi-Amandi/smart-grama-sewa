@@ -151,7 +151,7 @@ const GNCitizenSearch = ({ gnStatus, theme }) => {
           <button onClick={handleSearch} disabled={loading}
             className="bg-[#3B1F0A] text-white font-semibold px-6 py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-[#2a1506] disabled:opacity-60 transition">
             {loading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-            {loading ? "Searching..." : "Search"}
+            {loading ? t('searching') : t('btn_search')}
           </button>
 
         </div>

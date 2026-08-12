@@ -187,8 +187,8 @@ function Sidebar({ onLogout }) {
           <NavItem icon={Calendar} label="Appointment Calendar" bold onClick={() => navigate("/admin/calendar")} />
         </li>
         <li className="pt-2">
-          <NavItem icon={TrendingUp} label="Statistical Changes" bold active
-            onClick={() => navigate('/admin/statistical-changes')} />
+          <NavItem icon={TrendingUp} label="Statistical Changes" bold 
+            onClick={() => navigate('/admin/staticalchanges')} />
         </li>
       </ul>
 
@@ -218,10 +218,10 @@ function Topbar() {
           style={{ borderColor: '#C8B89A', background: COLORS.inputBg, color: COLORS.text }}
           placeholder="search..." value={searchVal} onChange={(e) => setSearchVal(e.target.value)} />
       </div>
-      <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
+      {/* <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
         style={{ borderColor: '#C8B89A', color: COLORS.text, background: COLORS.inputBg }}>
         English <ChevronDown size={14} />
-      </button>
+      </button> */}
       <button className="relative w-10 h-10 rounded-full flex items-center justify-center border"
         style={{ borderColor: '#C8B89A', background: COLORS.inputBg }}>
         <Icon.Bell size={18} color={COLORS.primary} />
@@ -1023,7 +1023,7 @@ export default function AdminSystemPerformanceReports() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: COLORS.bg, fontFamily: "'Segoe UI',sans-serif" }}>
+    <div className="flex min-h-screen" style={{ background: COLORS.bg, fontFamily: "'Segoe UI',sans-serif" }}>
       <style>{`@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}`}</style>
       <Sidebar onLogout={() => { }} />
 

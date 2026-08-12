@@ -110,7 +110,7 @@ function Sidebar({ onLogout }) {
         </li>
         <li className="pt-2">
           <NavItem icon={TrendingUp} label="Statistical Changes" bold active
-            onClick={() => navigate('/admin/statistical-changes')} />
+            onClick={() => navigate('/admin/staticalchanges')} />
         </li>
       </ul>
 
@@ -143,10 +143,10 @@ function Topbar({ adminName }) {
           onChange={(e) => setSearchVal(e.target.value)}
         />
       </div>
-      <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
+      {/* <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
         style={{ borderColor: COLORS.inputBorder, color: COLORS.text, background: COLORS.inputBg }}>
         English <ChevronDown size={14} />
-      </button>
+      </button> */}
       <button className="relative w-10 h-10 rounded-full flex items-center justify-center border"
         style={{ borderColor: COLORS.inputBorder, background: COLORS.inputBg }}>
         <Bell size={18} style={{ color: COLORS.primary }} />
@@ -618,6 +618,19 @@ export default function AdminStatisticalChanges() {
                     <p className="text-xs opacity-50 mt-3">Last updated by {lastUpdatedBy}</p>
                   )}
                 </div>
+                <hr></hr>
+                <h1 className="text-lg font-bold" style={{ fontFamily: 'Georgia, serif', color: COLORS.primary }}>
+                Manage Forms
+              </h1>
+                <p className="text-xs" style={{ color: COLORS.textMuted }}>
+                Manage the forms for user accounts
+              </p>
+                <button
+            onClick={() => navigate('/admin/#')} //this will navigate to edit forms
+            className="flex-1 py-5 rounded-2xl text-sm font-bold tracking-wider uppercase transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: COLORS.cardBrown, color: COLORS.white }}>
+            {/* {t('btn_statical_changes')} */} Manage Forms
+          </button>
               </div>
 
               {/* ── Right column: live preview + history ───────────────── */}

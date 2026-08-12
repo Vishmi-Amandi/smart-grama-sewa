@@ -50,7 +50,7 @@ function Sidebar({ onLogout }) {
       </div>
 
       <ul className="flex flex-col gap-1 flex-1">
-        <NavItem icon={LayoutDashboard} label="Dashboard"
+        <NavItem icon={LayoutDashboard} label="Dashboard"bold
           onClick={() => navigate('/admin/dashboard')} />
 
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
@@ -80,8 +80,8 @@ function Sidebar({ onLogout }) {
             onClick={() => navigate('/admin/calendar')} />
         </li>
         <li className="pt-2">
-          <NavItem icon={TrendingUp} label="Statistical Changes" bold active
-            onClick={() => navigate('/admin/statistical-changes')} />
+          <NavItem icon={TrendingUp} label="Statistical Changes" bold 
+            onClick={() => navigate('/admin/staticalchanges')} />
         </li>
       </ul>
 
@@ -114,10 +114,10 @@ function Topbar({ adminName }) {
           onChange={(e) => setSearchVal(e.target.value)}
         />
       </div>
-      <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
+      {/* <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
         style={{ borderColor: '#C8B89A', color: COLORS.text, background: '#FFF9F0' }}>
         English <ChevronDown size={14} />
-      </button>
+      </button> */}
       <button className="relative w-10 h-10 rounded-full flex items-center justify-center border"
         style={{ borderColor: '#C8B89A', background: '#FFF9F0' }}>
         <Bell size={18} style={{ color: COLORS.primary }} />
