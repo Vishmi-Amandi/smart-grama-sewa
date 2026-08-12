@@ -116,7 +116,7 @@ function Sidebar({ onLogout }) {
         </li>
         <li className="pt-2">
           <NavItem icon={TrendingUp} label="Statistical Changes" bold 
-            onClick={() => navigate('/admin/statistical-changes')} />
+            onClick={() => navigate('/admin/staticalchanges')} />
         </li>
         {/* <li className="px-4 pt-1">
           <NavItem icon={Bell} label="Notifications" bold
@@ -162,12 +162,12 @@ function Topbar() {
       </div>
 
       {/* Language */}
-      <button
+      {/* <button
         className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
         style={{ borderColor: "#C8B89A", color: COLORS.text, background: "#FFF9F0" }}
       >
         English <ChevronDown size={14} />
-      </button>
+      </button> */}
 
       {/* Bell */}
       <button

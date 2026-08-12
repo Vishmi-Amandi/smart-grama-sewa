@@ -48,7 +48,7 @@ function Sidebar({ onLogout }) {
       </div>
 
       <ul className="flex flex-col gap-1 flex-1">
-        <NavItem icon={LayoutDashboard} label="Dashboard"
+        <NavItem icon={LayoutDashboard} label="Dashboard"bold
           onClick={() => navigate('/admin/dashboard')} />
 
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
@@ -79,7 +79,7 @@ function Sidebar({ onLogout }) {
         </li>
         <li className="pt-2">
           <NavItem icon={TrendingUp} label="Statistical Changes" bold 
-            onClick={() => navigate('/admin/statistical-changes')} />
+            onClick={() => navigate('/admin/staticalchanges')} />
         </li>
       </ul>
 
@@ -112,10 +112,10 @@ function Topbar({ adminName }) {
           onChange={(e) => setSearchVal(e.target.value)}
         />
       </div>
-      <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
+      {/* <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
         style={{ borderColor: '#C8B89A', color: COLORS.text, background: '#FFF9F0' }}>
         English <ChevronDown size={14} />
-      </button>
+      </button> */}
       <button className="relative w-10 h-10 rounded-full flex items-center justify-center border"
         style={{ borderColor: '#C8B89A', background: '#FFF9F0' }}>
         <Bell size={18} style={{ color: COLORS.primary }} />
@@ -249,16 +249,16 @@ export default function RegistrationRequestApproval() {
 
   const TABLE_COLS = [
     { label: 'User id',        key: 'uid',                   render: o => o.uid || o._docId || '—' },
-    { label: 'user name',      key: 'fullName',              render: o => o.fullName || '—' },
-    { label: 'gender',         key: 'gender',                render: o => o.gender || '—' },
-    { label: 'gn division',    key: 'gnDivision',            render: o => o.gnDivision || o.gnDivisionName || '—' },
-    { label: 'ds division',    key: 'divisionalSecretariat', render: o => o.divisionalSecretariat || o.dsDiv || '—' },
-    { label: 'district',       key: 'district',              render: o => o.district || '—' },
-    { label: 'province',       key: 'province',              render: o => o.province || '—' },
-    { label: 'contact number', key: 'mobile',                render: o => o.mobile || '—' },
-    { label: 'email',          key: 'email',                 render: o => o.email || '—' },
-    { label: 'requested date', key: 'createdAt',             render: o => formatDate(o.createdAt) },
-    { label: 'status',         key: 'status',                render: o => <StatusBadge status={o.status} /> },
+    { label: 'User name',      key: 'fullName',              render: o => o.fullName || '—' },
+    { label: 'Gender',         key: 'gender',                render: o => o.gender || '—' },
+    { label: 'GN division',    key: 'gnDivision',            render: o => o.gnDiv || o.gnDivision || '—' },
+    { label: 'DS division',    key: 'divisionalSecretariat', render: o => o.divisionalSecretariat || o.dsDiv || '—' },
+    { label: 'District',       key: 'district',              render: o => o.district || '—' },
+    { label: 'Province',       key: 'province',              render: o => o.province || '—' },
+    { label: 'Contact number', key: 'mobile',                render: o => o.mobile || '—' },
+    { label: 'Email',          key: 'email',                 render: o => o.email || '—' },
+    { label: 'Requested date', key: 'createdAt',             render: o => formatDate(o.createdAt) },
+    { label: 'Status',         key: 'status',                render: o => <StatusBadge status={o.status} /> },
   ];
 
   return (
@@ -332,7 +332,7 @@ export default function RegistrationRequestApproval() {
                       ))}
                       <th className="px-4 py-3 text-left font-semibold text-white"
                         style={{ fontSize: 12 }}>
-                        action
+                        Action
                       </th>
                     </tr>
                   </thead>
