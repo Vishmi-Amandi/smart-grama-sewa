@@ -38,7 +38,7 @@ import AdminDashboard from './modules/admin/dashboard';
 import AdminAnnouncementPage from './modules/admin/announcementpage';
 import AdminRegistrationRequestApproval from './modules/admin/registrationrequestapproval';
 import AdminTransferRequestApproval from './modules/admin/transferrequestapproval';
-import AdminCalendar from './modules/admin/Calendar';
+import AdminCalendar from './modules/admin/calendar';
 import AdminSystemPerformanceReports from './modules/admin/reports/system';
 import AdminGNActivityReports from './modules/admin/reports/gnactivity';
 import AdminIndividualGNUserAccessReports from './modules/admin/reports/useraccess';
