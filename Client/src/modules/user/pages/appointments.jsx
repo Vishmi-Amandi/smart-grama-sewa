@@ -879,7 +879,7 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel, t }) => {
           }} 
           placeholder={t('lbl_notes_placeholder')} 
           rows={4} 
-          className="w-full p-3 text-sm font-semibold text-white bg-user-surface border border-gray-200 rounded-lg outline-none resize-vertical transition-colors focus:border-yellow-500" 
+          className="w-full p-3 text-sm font-semibold text-gray-600 bg-user-surface border border-gray-200 rounded-lg outline-none resize-vertical transition-colors focus:border-yellow-500" 
         />
       </div>
 
@@ -927,6 +927,7 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack, t }) => {
       const q = query(
         collection(db, 'appointments'),
         where('date', '==', dateStr),
+        where('gnDiv', '==', userData?.gnDiv),
         where('status', 'in', ['Pending', 'Confirmed'])
       );
       const snapshot = await getDocs(q);
