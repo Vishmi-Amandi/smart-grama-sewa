@@ -185,10 +185,9 @@ const Login = () => {
             className="relative group inline-flex items-center justify-center text-[#6A2301] bg-white/60 w-10 h-10 rounded-full transition shadow-sm hover:bg-white hover:shadow-md"
           >
             <ArrowLeft size={20} />
-            
             {/* Tooltip */}
             <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap bg-[#6A2301] text-white text-xs font-semibold px-3 py-1 rounded-full">
-              {t("back to home")}
+              {t("back_to_home")}
             </span>
           </Link>
         </div>
