@@ -20,6 +20,8 @@ import {
 } from "recharts";
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
@@ -74,6 +76,52 @@ function daysBetween(a, b) {
 function daysAgo(d) {
   if (!d) return 9999;
   return Math.floor((Date.now() - new Date(d).getTime()) / 864e5);
+}
+
+// ─── Export Button ─────────────────────────────────────────────────────────────────
+function exportToPDF(data, filename = "report.pdf", title = "Report") {
+  if (!data || data.length === 0) {
+    alert("No data to export");
+    return;
+  }
+
+  const doc = new jsPDF();
+
+  // Title
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text(title, 14, 15);
+
+  // Date
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(
+    `Generated: ${new Date().toLocaleDateString("en-LK")}`,
+    14,
+    22
+  );
+
+  const headers = Object.keys(data[0]);
+
+  const rows = data.map(row =>
+    headers.map(field => row[field] ?? "")
+  );
+
+  autoTable(doc, {
+    head: [headers],
+    body: rows,
+    startY: 28,
+    theme: "grid",
+    styles: {
+      fontSize: 8,
+      cellPadding: 3,
+    },
+    headStyles: {
+      fontStyle: "bold",
+    },
+  });
+
+  doc.save(filename);
 }
 
 // ─── Shared UI: StatCard ─────────────────────────────────────────────────────
@@ -282,8 +330,39 @@ function GNLoginActivityReport({ start, end, sort }) {
     { name: 'Inactive (>30d)', value: data.inactive, color: '#C8A882' },
   ];
 
+  // Export function
+  function handleExport() {
+    if (!data) return;
+
+    const exportData = data.gnRows.map(g => ({
+      Name: g.fullName || '',
+      Division: g.gnDivisionName || g.gnDiv || '',
+      District: g.district || '',
+      LastLogin: fmtDate(g.lastLogin),
+      DaysSinceLogin: g.daysAgo === 9999 ? 'Never' : `${g.daysAgo} days ago`,
+      TotalLogins: g.totalLogins,
+      LoginFreqPerDay: g.freq,
+      Status: g.status
+    }));
+
+    exportToPDF(
+      exportData,
+      "gn_login_activity_report.pdf",
+      "GN Login Activity Report"
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
+      {/*Export Button*/}
+      <div className="flex justify-between items-center">
+        <SectionHead title="GN Login Activity Report" subtitle="Login frequency and recency across all GN officers" />
+        <button onClick={handleExport}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
+          style={{ background: C.primary, color: C.white }}>
+          <Download size={14} /> Export Report
+        </button>
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="Total GN Officers" value={data.total} icon={Users} accent="#fdf0e0" />
         <StatCard label="Active (≤7 days)" value={data.active} icon={CheckCircle} accent={C.successBg} sub="Logged in this week" trend="up" />
@@ -415,8 +494,43 @@ function GNAppointmentHandlingReport({ start, end, sort }) {
   if (loading) return <div className="flex flex-col gap-4"><div className="grid grid-cols-4 gap-4">{[1, 2, 3, 4].map(i => <Sk key={i} h={110} />)}</div><Sk h={260} /><Sk h={240} /></div>;
   if (!data) return <p style={{ color: C.textMuted }}>No data.</p>;
 
+  // Export function
+  function handleExport() {
+    if (!data) return;
+
+    const exportData = data.gnRows.map(g => {
+      const perf = g.rate >= 80 ? 'excellent' : g.rate >= 50 ? 'good' : g.rate >= 20 ? 'average' : 'poor';
+      return {
+        GNOfficer: g.fullName || '',
+        Division: g.gnDivisionName || g.gnDiv || '',
+        District: g.district || '',
+        Total: g.total,
+        Completed: g.completed,
+        Cancelled: g.cancelled,
+        Pending: g.pending,
+        CompletionRate: `${g.rate}%`,
+        Performance: perf
+      };
+    });
+
+    exportToPDF(
+      exportData,
+      "gn_appointment_handling_report.pdf",
+      "GN Appointment Handling Report"
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
+      {/*Export Button*/}
+      <div className="flex justify-between items-center">
+        <SectionHead title="GN Appointment Handling Report" subtitle="How each GN division is handling its appointment load" />
+        <button onClick={handleExport}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
+          style={{ background: C.primary, color: C.white }}>
+          <Download size={14} /> Export Report
+        </button>
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="Total Appointments" value={data.totals.all} icon={Calendar} accent="#fdf0e0" />
         <StatCard label="Completed" value={data.totals.comp} icon={CheckCircle} accent={C.successBg} sub="Successfully handled" trend="up" />
@@ -551,8 +665,39 @@ function GNAvailabilityReport({ start, end, sort }) {
   if (loading) return <div className="flex flex-col gap-4"><div className="grid grid-cols-3 gap-4">{[1, 2, 3].map(i => <Sk key={i} h={110} />)}</div><Sk h={260} /><Sk h={240} /></div>;
   if (!data) return <p style={{ color: C.textMuted }}>No data.</p>;
 
+  // Export function
+  function handleExport() {
+    if (!data) return;
+
+    const exportData = data.gnRows.map(g => ({
+      GNOfficer: g.fullName || '',
+      Division: g.gnDivisionName || g.gnDiv || '',
+      District: g.district || '',
+      AvailableDaysPerWeek: `${g.availDays}/7`,
+      EstSlotsPerWeek: g.slots,
+      SlotDuration: `${g.slotDur} min`,
+      LastUpdated: fmtDate(g.lastUpdate),
+      Consistency: g.consistency
+    }));
+
+    exportToPDF(
+      exportData,
+      "gn_availability_report.pdf",
+      "GN Availability Report"
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
+      {/*Export Button*/}
+      <div className="flex justify-between items-center">
+        <SectionHead title="GN Availability Report" subtitle="Working schedule coverage across all GN officers" />
+        <button onClick={handleExport}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
+          style={{ background: C.primary, color: C.white }}>
+          <Download size={14} /> Export Report
+        </button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard label="Total GN Officers" value={data.gnRows.length} icon={Users} accent="#fdf0e0" />
         <StatCard label="Avg. Available Days" value={data.avgDays} icon={Calendar} accent="#fdf0e0" sub="Days per week (avg)" />
@@ -700,8 +845,41 @@ function GNPerformanceComparisonReport({ start, end, sort }) {
 
   const radarColors = [C.primary, C.accent, '#C8A882', '#B05A00'];
 
+  // Export function
+  function handleExport() {
+    if (!data) return;
+
+    const exportData = data.ranked.map(g => ({
+      Rank: g.rank,
+      GNOfficer: g.fullName || '',
+      Division: g.gnDivisionName || g.gnDiv || '',
+      District: g.district || '',
+      Appointments: g.appts,
+      Completed: g.completed,
+      CompletionRate: `${g.compRate}%`,
+      Activity: g.activity,
+      AvailDays: `${g.availDays}/7`,
+      OverallScore: g.overallScore
+    }));
+
+    exportToPDF(
+      exportData,
+      "gn_performance_comparison_report.pdf",
+      "GN Performance Comparison Report"
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
+      {/*Export Button*/}
+      <div className="flex justify-between items-center">
+        <SectionHead title="GN Performance Comparison Report" subtitle="Ranking GN officers by appointments, activity, and availability" />
+        <button onClick={handleExport}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
+          style={{ background: C.primary, color: C.white }}>
+          <Download size={14} /> Export Report
+        </button>
+      </div>
       {/* Top 3 podium */}
       <div className="rounded-xl p-5" style={{ background: C.white, border: `1px solid ${C.border}` }}>
         <SectionHead title="Top Performing GN Officers" subtitle="Ranked by overall performance score (appointments + activity + availability)" />
@@ -882,8 +1060,40 @@ function InactiveGNReport({ start, end, sort }) {
   if (loading) return <div className="flex flex-col gap-4"><div className="grid grid-cols-3 gap-4">{[1, 2, 3].map(i => <Sk key={i} h={110} />)}</div><Sk h={260} /><Sk h={280} /></div>;
   if (!data) return <p style={{ color: C.textMuted }}>No data.</p>;
 
+  // Export function
+  function handleExport() {
+    if (!data) return;
+
+    const exportData = data.inactive.map(g => ({
+      GNOfficer: g.fullName || '',
+      Division: g.gnDivisionName || g.gnDiv || '',
+      District: g.district || '',
+      LastLogin: fmtDate(g.lastLogin),
+      DaysInactive: g.loginDays === 9999 ? 'Never' : `${g.loginDays} days`,
+      LastAppointment: fmtDate(g.lastAppt),
+      TotalAppts: g.totalAppts,
+      RiskLevel: g.riskLevel,
+      ActionNeeded: g.riskLevel === 'critical' ? 'Urgent review' : g.riskLevel === 'high' ? 'Send reminder' : 'Monitor'
+    }));
+
+    exportToPDF(
+      exportData,
+      `inactive_gn_report_over_${threshold}_days.pdf`,
+      `Inactive GN Report (threshold: >${threshold} days)`
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
+      {/*Export Button*/}
+      <div className="flex justify-between items-center">
+        <SectionHead title="Inactive GN Report" subtitle="GN officers with no recent login or appointment activity" />
+        <button onClick={handleExport}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
+          style={{ background: C.primary, color: C.white }}>
+          <Download size={14} /> Export Report
+        </button>
+      </div>
       {/* Threshold selector */}
       <div className="flex items-center gap-4 px-5 py-3 rounded-xl"
         style={{ background: C.dangerBg, border: `1px solid #fca5a5` }}>
@@ -1021,7 +1231,7 @@ function Sidebar({ onLogout }) {
         </li>
         <li className="pt-2">
           <NavItem icon={TrendingUp} label="Statistical Changes" bold 
-            onClick={() => navigate('/admin/statistical-changes')} />
+            onClick={() => navigate('/admin/staticalchanges')} />
         </li>
       </ul>
       <div className="px-3 pt-4 border-t" style={{ borderColor: C.border }}>
@@ -1111,20 +1321,13 @@ export default function AdminGNActivityReports() {
           </div>
 
           {/* Page header */}
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-extrabold" style={{ color: C.darkest }}>
-                📊 GN Activity Reports
-              </h1>
-              <p className="text-sm mt-0.5" style={{ color: C.textMuted }}>
-                Compare and evaluate all Grama Niladhari officers across login, appointments, availability and performance
-              </p>
-            </div>
-            <button
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90"
-              style={{ background: C.dark, color: C.white }}>
-              <Download size={14} /> Export Report
-            </button>
+          <div className="mb-6">
+            <h1 className="text-2xl font-extrabold" style={{ color: C.darkest }}>
+              GN Activity Reports
+            </h1>
+            <p className="text-sm mt-0.5" style={{ color: C.textMuted }}>
+              Compare and evaluate all Grama Niladhari officers across login, appointments, availability and performance
+            </p>
           </div>
 
           {/* Sub-report selector */}

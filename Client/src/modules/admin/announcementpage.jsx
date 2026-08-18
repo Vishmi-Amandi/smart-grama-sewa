@@ -116,7 +116,7 @@ function Sidebar({ onLogout }) {
         </li>
         <li className="pt-2">
           <NavItem icon={TrendingUp} label="Statistical Changes" bold 
-            onClick={() => navigate('/admin/statistical-changes')} />
+            onClick={() => navigate('/admin/staticalchanges')} />
         </li>
         {/* <li className="px-4 pt-1">
           <NavItem icon={Bell} label="Notifications" bold
@@ -263,7 +263,7 @@ function AnnouncementForm({ initial, onSubmit, onCancel, submitting }) {
             className="appearance-none pl-3 pr-8 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 min-w-[220px]"
             style={{ borderColor: "#C8B89A", color: COLORS.text }}
           >
-            <option value="">Choose the user category ▾</option>
+            <option value="">Choose the user category </option>
             {CATEGORIES.map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}

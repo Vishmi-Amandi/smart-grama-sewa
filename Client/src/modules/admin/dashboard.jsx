@@ -650,9 +650,9 @@ export default function AdminDashboard() {
                 sub={t('lbl_gn_logged_sub')}
                 icon={UserCheck}
                 loading={loginsLoading}
-                secondaryValue={fmtNumber(citizenLoginsToday)}
-                secondaryLabel={t('lbl_citizen_logged_sub')}
-                secondaryLoading={citizenLoginsLoading}
+                // secondaryValue={fmtNumber(citizenLoginsToday)}
+                // secondaryLabel={t('lbl_citizen_logged_sub')}
+                // secondaryLoading={citizenLoginsLoading}
               />
             </div>
 
