@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
+import { Eye, EyeOff, LogIn, Loader2, ArrowLeft } from "lucide-react";
 import {
   signInWithEmailAndPassword,
   setPersistence,
@@ -57,7 +57,7 @@ const Login = () => {
 
       if (!isEmail) {
         try {
-          // 1️⃣ Try gn_officers first
+          // 1️ Try gn_officers first
           const gnQuery = query(
             collection(db, "gn_officers"),
             where("username", "==", username.trim())
@@ -77,7 +77,7 @@ const Login = () => {
               return;
             }
           } else {
-            // 2️⃣ Try users collection for citizens
+            // 2️ Try users collection for citizens
             const citizenQuery = query(
               collection(db, "users"),
               where("username", "==", username.trim()),
@@ -179,6 +179,17 @@ const Login = () => {
         {/* Logo */}
         <div className="relative z-10 p-5">
           <img src="/logo2.png" alt="Smart Grama Sewa" className="h-24 w-auto" />
+          {/* Back Button */}
+          <Link 
+            to="/" 
+            className="relative group inline-flex items-center justify-center text-[#6A2301] bg-white/60 w-10 h-10 rounded-full transition shadow-sm hover:bg-white hover:shadow-md"
+          >
+            <ArrowLeft size={20} />
+            {/* Tooltip */}
+            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap bg-[#6A2301] text-white text-xs font-semibold px-3 py-1 rounded-full">
+              {t("back_to_home")}
+            </span>
+          </Link>
         </div>
 
         {/* Centered Card */}
@@ -202,7 +213,7 @@ const Login = () => {
               </div>
             )}
 
-            {/* ── Rejected Screen ── */}
+            {/*  Rejected Screen  */}
             {error === "rejected" && (
               <div className="text-center py-4">
                 <div className="text-5xl mb-4">❌</div>
