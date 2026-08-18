@@ -1085,7 +1085,7 @@ function Sidebar({ onLogout }) {
         <aside className="w-64 flex-shrink-0 flex flex-col py-6 px-3 gap-2 border-r"
             style={{ borderColor: COLORS.border, background: COLORS.bg }}>
             <div className="flex items-center gap-2 px-3 mb-6">
-                <img src="/logo2.png" alt="Smart Grama Sewa" className="h-10" />
+                <img src="/logo2.png" alt="Smart Grama Sewa" />
             </div>
             <ul className="flex flex-col gap-1 flex-1">
                 <NavItem icon={LayoutDashboard} label="Dashboard" bold onClick={() => navigate('/admin/dashboard')} />
@@ -1104,7 +1104,7 @@ function Sidebar({ onLogout }) {
                         onClick={() => navigate("/admin/calendar")} />
                 </li>
                 <li className="pt-2">
-                    <NavItem icon={TrendingUp} label="Statistical Changes" bold active
+                    <NavItem icon={TrendingUp} label="Statistical Changes" bold 
                         onClick={() => navigate('/admin/statistical-changes')} />
                 </li>
             </ul>

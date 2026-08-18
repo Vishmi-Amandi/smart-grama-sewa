@@ -1458,7 +1458,7 @@
       "sex": "Sex",
       "age": "Age",
       "civilStatus": "Civil Status",
-      "sriLankan": "Whether Sri Lankan?",
+      "isSriLankan": " Whether Sri Lankan?",
       "religion": "Religion",
       "occupation": "Present Occupation",
       "villagePeriod": "Period of Residence in Village",
@@ -1736,7 +1736,42 @@
   },
   "assessment": {
     "supportingDocs": "Supporting Documents (Title Deed / Grant Copy)"
+  },
+
+  
+  "pdf": {
+    "smartGramaSewa": "Smart Grama Sewa",
+    "subtitle": "Sri Lanka Local Government Services Portal",
+    "gnDivisionLabel": "Grama Niladhari Division:",
+    "filledApplication": "Filled Application",
+    "formId": "Form ID:",
+    "citizenCopy": "CITIZEN COPY",
+    "applicantInfo": "APPLICANT INFORMATION",
+    "fullName": "Full Name",
+    "nic": "NIC Number",
+    "address": "Address",
+    "phone": "Contact Number",
+    "email": "Email",
+    "gnDivision": "GN Division",
+    "formDetails": "FORM DETAILS",
+    "applicantSignature": "Applicant's Signature",
+    "gnSignature": "GN Officer's Signature & Stamp",
+    "declarationTitle": "DECLARATION",
+    "declarationText": "I hereby declare that the information provided in this form is true and accurate to the best of my knowledge. I understand that providing false information is a punishable offence under applicable Sri Lankan law.",
+    "footer": "© {{year}} Smart Grama Sewa — All Rights Reserved",
+    "reference": "Reference:",
+    "generated": "Generated:",
+    "saveButton": "Save as PDF",
+    "saveInstruction": "Click the button above, then choose 'Save as PDF' as the destination.",
+    "entry": "Entry",
+    "familyMembersWithDisabilities": "Family Members with Disabilities",
+    "otherFamilyMembers": "Other Family Members",
+    "newVoters": "Newly Added Voters",
+    "votersToBeRemoved": "Voters to be Removed",
+    "treesToBeFelled": "Trees to be Felled",
+    "timberDetails": "Timber Details"
   }
+
 
 
 

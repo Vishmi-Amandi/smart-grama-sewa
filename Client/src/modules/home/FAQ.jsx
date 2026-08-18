@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronUp, HelpCircle, ArrowLeft } from 'lucide-react';
+import { ChevronDown, ChevronUp, HelpCircle, ArrowLeft, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const FAQ = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [openIndex, setOpenIndex] = useState(null);
 
   // FAQ data with translation keys
@@ -25,13 +25,63 @@ const FAQ = () => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
+  const changeLanguage = (langCode) => {
+    i18n.changeLanguage(langCode);
+  };
+
+  // Get current language display name
+  const getCurrentLanguageLabel = () => {
+    const langMap = {
+      en: 'EN',
+      si: 'සිං',
+      ta: 'த'
+    };
+    return langMap[i18n.language] || 'EN';
+  };
+
   return (
     <div className="min-h-screen bg-[#FFFBF0] py-12 px-4 md:px-8">
       <div className="max-w-3xl mx-auto">
-        {/* Back Button */}
-        <Link to="/" className="inline-flex items-center gap-2 text-[#6A2301] font-semibold hover:underline mb-6">
-          <ArrowLeft size={18} /> {t("faq_back_home")}
-        </Link>
+        {/* Header with Language Switcher */}
+        <div className="flex items-center justify-between mb-6">
+          <Link to="/" className="inline-flex items-center gap-2 text-[#6A2301] font-semibold hover:underline">
+            <ArrowLeft size={18} /> {t("faq_back_home")}
+          </Link>
+          
+          {/* Language Switcher */}
+          <div className="flex items-center gap-1 bg-white border border-[#f0e8d0] rounded-full p-1 shadow-sm">
+            <button
+              onClick={() => changeLanguage('si')}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                i18n.language === 'si' 
+                  ? 'bg-[#6A2301] text-white' 
+                  : 'text-[#5a3e00] hover:bg-[#f0e8d0]'
+              }`}
+            >
+              සිං
+            </button>
+            <button
+              onClick={() => changeLanguage('ta')}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                i18n.language === 'ta' 
+                  ? 'bg-[#6A2301] text-white' 
+                  : 'text-[#5a3e00] hover:bg-[#f0e8d0]'
+              }`}
+            >
+              த
+            </button>
+            <button
+              onClick={() => changeLanguage('en')}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                i18n.language === 'en' 
+                  ? 'bg-[#6A2301] text-white' 
+                  : 'text-[#5a3e00] hover:bg-[#f0e8d0]'
+              }`}
+            >
+              EN
+            </button>
+          </div>
+        </div>
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-2">
