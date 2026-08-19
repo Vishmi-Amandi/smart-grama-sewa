@@ -17,6 +17,8 @@ import {
 } from "recharts";
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 // ─── Firebase ────────────────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -82,6 +84,52 @@ function fmtDateTime(d) {
 function daysAgo(d) {
     if (!d) return 9999;
     return Math.floor((Date.now() - new Date(d).getTime()) / 864e5);
+}
+
+// ─── Export Button ─────────────────────────────────────────────────────────────────
+function exportToPDF(data, filename = "report.pdf", title = "Report") {
+    if (!data || data.length === 0) {
+        alert("No data to export");
+        return;
+    }
+
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(title, 14, 15);
+
+    // Date
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(
+        `Generated: ${new Date().toLocaleDateString("en-LK")}`,
+        14,
+        22
+    );
+
+    const headers = Object.keys(data[0]);
+
+    const rows = data.map(row =>
+        headers.map(field => row[field] ?? "")
+    );
+
+    autoTable(doc, {
+        head: [headers],
+        body: rows,
+        startY: 28,
+        theme: "grid",
+        styles: {
+            fontSize: 8,
+            cellPadding: 3,
+        },
+        headStyles: {
+            fontStyle: "bold",
+        },
+    });
+
+    doc.save(filename);
 }
 
 // ─── Shared: StatCard ─────────────────────────────────────────────────────────
@@ -366,8 +414,40 @@ function LoginHistoryReport({ gn, startDate, endDate, sort }) {
     if (loading) return <div className="flex flex-col gap-4"><div className="grid grid-cols-3 gap-4">{[1, 2, 3].map(i => <Sk key={i} h={110} />)}</div><Sk h={260} /><Sk h={240} /></div>;
     if (!data) return <p style={{ color: COLORS.textMuted }}>No data.</p>;
 
+    // Export function
+    function handleExport() {
+        if (!data) return;
+
+        const exportData = data.loginLogs.map(l => {
+            const isFail = (l.action || l.type || '').toLowerCase().includes('fail') || (l.description || '').toLowerCase().includes('fail');
+            return {
+                Title: l.title || 'Login Event',
+                Action: l.action || '',
+                Type: l.type || '',
+                Description: l.description || '',
+                DateTime: fmtDateTime(toDate(l.createdAt)),
+                Status: isFail ? 'failed' : 'success'
+            };
+        });
+
+        exportToPDF(
+            exportData,
+            `login_history_report_${(gn.fullName || 'gn').replace(/\s+/g, '_')}.pdf`,
+            `Login History Report — ${gn.fullName || ''}`
+        );
+    }
+
     return (
         <div className="flex flex-col gap-6">
+            {/*Export Button*/}
+            <div className="flex justify-between items-center">
+                <SectionHead title="Login History Report" subtitle={`Login activity for ${gn.fullName || 'selected GN officer'}`} />
+                <button onClick={handleExport}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
+                    style={{ background: COLORS.primary, color: COLORS.white }}>
+                    <Download size={14} /> Export Report
+                </button>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard label="Total Login Sessions" value={data.total} icon={LogIn} accent="#fdf0e0" sub="All login events recorded" />
                 <StatCard label="Failed Attempts" value={data.failed} icon={Shield} accent={COLORS.dangerBg} sub="Authentication failures" trend="down" />
@@ -502,8 +582,39 @@ function AppointmentHistoryReport({ gn, startDate, endDate, sort }) {
     if (loading) return <div className="flex flex-col gap-4"><div className="grid grid-cols-4 gap-4">{[1, 2, 3, 4].map(i => <Sk key={i} h={110} />)}</div><Sk h={260} /><Sk h={240} /></div>;
     if (!data) return <p style={{ color: COLORS.textMuted }}>No data.</p>;
 
+    // Export function
+    function handleExport() {
+        if (!data) return;
+
+        const exportData = data.appts.map(a => ({
+            Citizen: a.fullName || '',
+            NIC: a.nic || '',
+            Mobile: a.mobile || '',
+            Service: a.service || '',
+            Date: a.date || '',
+            Slot: a.slot || '',
+            Notes: a.notes || '',
+            Status: a.status || ''
+        }));
+
+        exportToPDF(
+            exportData,
+            `appointment_history_report_${(gn.fullName || 'gn').replace(/\s+/g, '_')}.pdf`,
+            `Appointment History Report — ${gn.fullName || ''}`
+        );
+    }
+
     return (
         <div className="flex flex-col gap-6">
+            {/*Export Button*/}
+            <div className="flex justify-between items-center">
+                <SectionHead title="Appointment History Report" subtitle={`Appointments handled by ${gn.fullName || 'selected GN officer'}`} />
+                <button onClick={handleExport}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
+                    style={{ background: COLORS.primary, color: COLORS.white }}>
+                    <Download size={14} /> Export Report
+                </button>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard label="Total Appointments" value={data.total} icon={Calendar} accent="#fdf0e0" />
                 <StatCard label="Completed" value={data.completed} icon={CheckCircle} accent={COLORS.successBg} sub={`${data.compRate}% completion rate`} trend="up" />
@@ -651,8 +762,37 @@ function ActionLogReport({ gn, startDate, endDate, sort }) {
     if (loading) return <div className="flex flex-col gap-4"><div className="grid grid-cols-3 gap-4">{[1, 2, 3].map(i => <Sk key={i} h={110} />)}</div><Sk h={260} /><Sk h={240} /></div>;
     if (!data) return <p style={{ color: COLORS.textMuted }}>No data.</p>;
 
+    // Export function
+    function handleExport() {
+        if (!data) return;
+
+        const exportData = data.logs.map(l => ({
+            Title: l.title || '',
+            Action: l.action || '',
+            Type: l.type || '',
+            Description: l.description || '',
+            Timestamp: fmtDateTime(toDate(l.createdAt)),
+            Category: l.category || ''
+        }));
+
+        exportToPDF(
+            exportData,
+            `action_log_report_${(gn.fullName || 'gn').replace(/\s+/g, '_')}.pdf`,
+            `Action Log Report — ${gn.fullName || ''}`
+        );
+    }
+
     return (
         <div className="flex flex-col gap-6">
+            {/*Export Button*/}
+            <div className="flex justify-between items-center">
+                <SectionHead title="Action Log Report" subtitle={`Full audit trail for ${gn.fullName || 'selected GN officer'}`} />
+                <button onClick={handleExport}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
+                    style={{ background: COLORS.primary, color: COLORS.white }}>
+                    <Download size={14} /> Export Report
+                </button>
+            </div>
             {/* Action category summary tiles */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 {['appointment', 'schedule', 'announcement', 'auth', 'profile', 'other'].map(cat => {
@@ -827,8 +967,38 @@ function DailyActivityReport({ gn, startDate, endDate, sort }) {
         return '#F5C87A';
     };
 
+    // Export function
+    function handleExport() {
+        if (!data) return;
+
+        const exportData = data.sorted.filter(d => d.total > 0).map(d => {
+            const level = d.total >= 10 ? 'high' : d.total >= 4 ? 'moderate' : 'low';
+            return {
+                Date: fmtDate(new Date(d.fullDate)),
+                Actions: d.actions,
+                Appointments: d.appts,
+                ActivityLevel: level
+            };
+        });
+
+        exportToPDF(
+            exportData,
+            `daily_activity_report_${(gn.fullName || 'gn').replace(/\s+/g, '_')}.pdf`,
+            `Daily Activity Report — ${gn.fullName || ''}`
+        );
+    }
+
     return (
         <div className="flex flex-col gap-6">
+            {/*Export Button*/}
+            <div className="flex justify-between items-center">
+                <SectionHead title="Daily Activity Report" subtitle={`Day-by-day activity for ${gn.fullName || 'selected GN officer'}`} />
+                <button onClick={handleExport}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
+                    style={{ background: COLORS.primary, color: COLORS.white }}>
+                    <Download size={14} /> Export Report
+                </button>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard label="Total Actions" value={data.totalActions} icon={Activity} accent="#fdf0e0" sub="All logged events" />
                 <StatCard label="Total Appointments" value={data.totalAppts} icon={Calendar} accent="#fdf0e0" sub="Handled in period" />
@@ -976,8 +1146,36 @@ function AvailabilityHistoryReport({ gn, startDate, endDate, sort }) {
 
     const consistencyType = { consistent: 'success', irregular: 'warn', outdated: 'danger', unknown: 'neutral' }[data.consistency];
 
+    // Export function
+    function handleExport() {
+        if (!data) return;
+
+        const exportData = data.logs.map(l => ({
+            Title: l.title || 'Schedule Update',
+            Action: l.action || '',
+            Type: l.type || '',
+            Description: l.description || '',
+            Timestamp: fmtDateTime(toDate(l.createdAt))
+        }));
+
+        exportToPDF(
+            exportData,
+            `availability_history_report_${(gn.fullName || 'gn').replace(/\s+/g, '_')}.pdf`,
+            `Availability History Report — ${gn.fullName || ''}`
+        );
+    }
+
     return (
         <div className="flex flex-col gap-6">
+            {/*Export Button*/}
+            <div className="flex justify-between items-center">
+                <SectionHead title="Availability History Report" subtitle={`Working schedule history for ${gn.fullName || 'selected GN officer'}`} />
+                <button onClick={handleExport}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
+                    style={{ background: COLORS.primary, color: COLORS.white }}>
+                    <Download size={14} /> Export Report
+                </button>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard label="Available Days/Week" value={`${data.availCount}/7`} icon={Calendar} accent="#fdf0e0" sub="Current working schedule" />
                 <StatCard label="Schedule Changes" value={data.totalChanges} icon={History} accent="#fdf0e0" sub="In selected period" />
@@ -1085,7 +1283,7 @@ function Sidebar({ onLogout }) {
         <aside className="w-64 flex-shrink-0 flex flex-col py-6 px-3 gap-2 border-r"
             style={{ borderColor: COLORS.border, background: COLORS.bg }}>
             <div className="flex items-center gap-2 px-3 mb-6">
-                <img src="/logo2.png" alt="Smart Grama Sewa" className="h-10" />
+                <img src="/logo2.png" alt="Smart Grama Sewa" />
             </div>
             <ul className="flex flex-col gap-1 flex-1">
                 <NavItem icon={LayoutDashboard} label="Dashboard" bold onClick={() => navigate('/admin/dashboard')} />
@@ -1104,8 +1302,8 @@ function Sidebar({ onLogout }) {
                         onClick={() => navigate("/admin/calendar")} />
                 </li>
                 <li className="pt-2">
-                    <NavItem icon={TrendingUp} label="Statistical Changes" bold active
-                        onClick={() => navigate('/admin/statistical-changes')} />
+                    <NavItem icon={TrendingUp} label="Statistical Changes" bold 
+                        onClick={() => navigate('/admin/staticalchanges')} />
                 </li>
             </ul>
             <div className="px-3 pt-4 border-t" style={{ borderColor: COLORS.border }}>
@@ -1204,20 +1402,13 @@ export default function AdminIndividualGNUserAccessReports() {
                     </div>
 
                     {/* Page header */}
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h1 className="text-2xl font-extrabold" style={{ color: COLORS.darkest }}>
-                                📊 Individual GN (User Access) Reports
-                            </h1>
-                            <p className="text-sm mt-0.5" style={{ color: COLORS.textMuted }}>
-                                Deep analysis of a single GN officer — login history, appointments, actions and availability
-                            </p>
-                        </div>
-                        <button
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-all"
-                            style={{ background: COLORS.dark, color: COLORS.white }}>
-                            <Download size={14} /> Export Report
-                        </button>
+                    <div className="mb-6">
+                        <h1 className="text-2xl font-extrabold" style={{ color: COLORS.darkest }}>
+                            Individual GN (User Access) Reports
+                        </h1>
+                        <p className="text-sm mt-0.5" style={{ color: COLORS.textMuted }}>
+                            Deep analysis of a single GN officer — login history, appointments, actions and availability
+                        </p>
                     </div>
 
                     {/* Sub-Report Dropdown + pills  — same layout as SystemPerformanceReports */}

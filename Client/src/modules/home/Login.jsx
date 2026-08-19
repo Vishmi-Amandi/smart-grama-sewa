@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Eye, EyeOff, LogIn, Loader2, ArrowLeft } from "lucide-react";
 import {
   signInWithEmailAndPassword,
   setPersistence,
-  browserLocalPersistence,
   browserSessionPersistence,
 } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
 const Login = () => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+
   const [username, setUsername] = useState(
     localStorage.getItem("rememberedUsername") || ""
   );
@@ -22,8 +25,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const navigate = useNavigate();
-
   const inputClass =
     "w-full bg-white text-[#1e1200] border-2 border-transparent rounded-xl px-4 py-3 text-sm font-semibold outline-none transition focus:border-[#E5A800] placeholder:text-gray-400";
 
@@ -32,18 +33,18 @@ const Login = () => {
     setError("");
 
     if (!username.trim()) {
-      setError("Please enter your username or email.");
+      setError(t("err_enter_username"));
       return;
     }
     if (!password) {
-      setError("Please enter your password.");
+      setError(t("err_enter_password"));
       return;
     }
 
     setLoading(true);
 
     if (!navigator.onLine) {
-      setError("No proper internet connection. Please check your network and try again.");
+      setError(t("err_no_internet"));
       setLoading(false);
       return;
     }
@@ -56,7 +57,7 @@ const Login = () => {
 
       if (!isEmail) {
         try {
-          // 1️⃣ Try gn_officers first
+          // 1️ Try gn_officers first
           const gnQuery = query(
             collection(db, "gn_officers"),
             where("username", "==", username.trim())
@@ -76,7 +77,7 @@ const Login = () => {
               return;
             }
           } else {
-            // 2️⃣ Try users collection for citizens
+            // 2️ Try users collection for citizens
             const citizenQuery = query(
               collection(db, "users"),
               where("username", "==", username.trim()),
@@ -87,7 +88,7 @@ const Login = () => {
             if (!citizenSnapshot.empty) {
               userEmail = citizenSnapshot.docs[0].data().email;
             } else {
-              setError("No account found with this username.");
+              setError(t("err_no_account"));
               setLoading(false);
               return;
             }
@@ -98,9 +99,9 @@ const Login = () => {
             firestoreErr.message?.includes("network") ||
             !navigator.onLine
           ) {
-            setError("No proper internet connection. Please check your network and try again.");
+            setError(t("err_no_internet"));
           } else {
-            setError("Unable to connect. Please try again.");
+            setError(t("err_network_fail"));
           }
           setLoading(false);
           return;
@@ -125,10 +126,10 @@ const Login = () => {
         } else if (role === "citizen") {
           navigate("/dashboard");
         } else {
-          setError("Unknown role. Please contact support.");
+          setError(t("err_unknown_role"));
         }
       } else {
-        setError("User role not found. Please contact support.");
+        setError(t("err_no_role"));
       }
 
       await setPersistence(auth, browserSessionPersistence);
@@ -140,31 +141,31 @@ const Login = () => {
       }
 
     } catch (err) {
-      console.log("Error:", err.code, err.message);
       if (!navigator.onLine || err.code === "unavailable") {
-        setError("No proper internet connection. Please check your network and try again.");
+        setError(t("err_no_internet"));
       } else {
         switch (err.code) {
           case "auth/invalid-email":
-            setError("Invalid email format.");
+            setError(t("err_invalid_email"));
             break;
           case "auth/user-not-found":
-            setError("No account found with this email.");
+            setError(t("err_user_not_found"));
             break;
           case "auth/wrong-password":
-            setError("Incorrect password.");
+            setError(t("err_wrong_password"));
             break;
           case "auth/too-many-requests":
-            setError("Too many failed attempts. Try again later.");
+            setError(t("err_too_many_requests"));
             break;
           default:
-            setError("Incorrect credentials. Please try again.");
+            setError(t("err_default_creds"));
         }
       }
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <div className="min-h-screen flex flex-col">
 
@@ -178,12 +179,23 @@ const Login = () => {
         {/* Logo */}
         <div className="relative z-10 p-5">
           <img src="/logo2.png" alt="Smart Grama Sewa" className="h-24 w-auto" />
+          {/* Back Button */}
+          <Link 
+            to="/" 
+            className="relative group inline-flex items-center justify-center text-[#6A2301] bg-white/60 w-10 h-10 rounded-full transition shadow-sm hover:bg-white hover:shadow-md"
+          >
+            <ArrowLeft size={20} />
+            {/* Tooltip */}
+            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap bg-[#6A2301] text-white text-xs font-semibold px-3 py-1 rounded-full">
+              {t("back_to_home")}
+            </span>
+          </Link>
         </div>
 
         {/* Centered Card */}
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pb-12">
 
-          <h1 className="text-5xl font-black text-[#332421] tracking-tight mb-7">Sign in</h1>
+          <h1 className="text-5xl font-black text-[#332421] tracking-tight mb-7">{t("signin_header")}</h1>
 
           <div className="w-full max-w-md rounded-3xl p-8 shadow-2xl"
             style={{ backgroundColor: "rgba(106, 35, 1, 0.6)" }}>
@@ -192,28 +204,24 @@ const Login = () => {
             {error === "pending" && (
               <div className="text-center py-4">
                 <div className="text-5xl mb-4">⏳</div>
-                <p className="text-[#fdf0dc] font-black text-lg mb-2">Account Pending Approval</p>
-                <p className="text-[#fdf0dc] text-sm mb-4">
-                  Your account is awaiting admin approval. You will be able to log in once approved.
-                </p>
+                <p className="text-[#fdf0dc] font-black text-lg mb-2">{t("pending_title")}</p>
+                <p className="text-[#fdf0dc] text-sm mb-4">{t("pending_desc")}</p>
                 <button onClick={() => setError("")}
                   className="text-xs text-[#fdf0dc] underline hover:text-white transition">
-                  ← Try again
+                  ← {t("try_again")}
                 </button>
               </div>
             )}
 
-            {/* ── Rejected Screen ── */}
+            {/*  Rejected Screen  */}
             {error === "rejected" && (
               <div className="text-center py-4">
                 <div className="text-5xl mb-4">❌</div>
-                <p className="text-[#fdf0dc] font-black text-lg mb-2">Account Rejected</p>
-                <p className="text-[#fdf0dc] text-sm mb-4">
-                  Your account request was rejected. Please contact the administrator.
-                </p>
+                <p className="text-[#fdf0dc] font-black text-lg mb-2">{t("rejected_title")}</p>
+                <p className="text-[#fdf0dc] text-sm mb-4">{t("rejected_desc")}</p>
                 <button onClick={() => setError("")}
                   className="text-xs text-[#fdf0dc] underline hover:text-white transition">
-                  ← Try again
+                  ← {t("try_again")}
                 </button>
               </div>
             )}
@@ -231,14 +239,14 @@ const Login = () => {
                 {/* Username */}
                 <div className="mb-4">
                   <label className="block text-[#fdf0dc] text-xs font-bold mb-1.5 uppercase tracking-wide">
-                    Username or Email
+                    {t("username_or_email")}
                   </label>
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => { setUsername(e.target.value); setError(""); }}
                     autoComplete="username"
-                    placeholder="Enter your username or email"
+                    placeholder={t("signin_username_placeholder")}
                     className={inputClass}
                   />
                 </div>
@@ -246,13 +254,13 @@ const Login = () => {
                 {/* Password */}
                 <div className="mb-4">
                   <label className="block text-[#fdf0dc] text-xs font-bold mb-1.5 uppercase tracking-wide">
-                    Password
+                    {t("password")}
                   </label>
                   <div className="relative">
                     <input type={showPassword ? "text" : "password"} value={password}
                       onChange={(e) => { setPassword(e.target.value); setError(""); }}
                       autoComplete="current-password"
-                      placeholder="Enter your password"
+                      placeholder={t("signin_password_placeholder")}
                       className={`${inputClass} pr-11`} />
                     <button type="button" onClick={() => setShowPassword((v) => !v)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
@@ -270,10 +278,10 @@ const Login = () => {
                       onChange={(e) => setRememberUsername(e.target.checked)}
                       className="w-4 h-4 rounded cursor-pointer accent-[#E5A800]"
                     />
-                    Remember my username
+                    {t("remember_username")}
                   </label>
                   <a href="/gn-forgot-password" className="text-sm font-bold text-[#fdf0dc] hover:text-white transition">
-                    Forgot password?
+                    {t("forgot_password")}
                   </a>
                 </div>
 
@@ -281,19 +289,19 @@ const Login = () => {
                 <button onClick={handleSubmit} disabled={loading}
                   className="w-full bg-[#3B1F0A] hover:bg-[#2a1506] disabled:opacity-60 disabled:cursor-not-allowed text-[#E5A800] font-black text-base py-3.5 rounded-xl flex items-center justify-center gap-2 transition shadow-lg mb-5">
                   {loading
-                    ? <><Loader2 size={18} className="animate-spin" /> Signing in…</>
-                    : <><LogIn size={18} /> Sign in</>
+                    ? <><Loader2 size={18} className="animate-spin" /> {t("signing_in")}</>
+                    : <><LogIn size={18} /> {t("signin_header")}</>
                   }
                 </button>
 
                 {/* New here */}
-                <p className="text-center text-[#fdf0dc] text-sm font-semibold mb-4">New here?</p>
+                <p className="text-center text-[#fdf0dc] text-sm font-semibold mb-4">{t("new_here")}</p>
 
                 <Link
                   to="/signup-select"
                   className="block w-full text-center bg-[#E5A800] hover:bg-[#cc9600] text-[#3d2a00] font-black text-base py-3.5 rounded-xl transition shadow-lg"
                 >
-                  Create your account
+                  {t("create_your_account")}
                 </Link>
               </>
             )}

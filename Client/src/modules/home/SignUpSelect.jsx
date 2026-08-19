@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const SignUpSelect = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [selected, setSelected] = useState(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -14,12 +16,12 @@ const SignUpSelect = () => {
     }, []);
 
     const handleContinue = (role) => {
-  if (role === 'citizen') {
-    navigate('//user-signup');
-  } else if (role === 'gn') {
-    navigate('/gn-signup');
-  }
-};
+        if (role === 'citizen') {
+            navigate('/user-signup');
+        } else if (role === 'gn') {
+            navigate('/gn-signup');
+        }
+    };
 
     const RoleCard = ({ role, label }) => {
         const isSelected = selected === role;
@@ -56,6 +58,7 @@ const SignUpSelect = () => {
                     backgroundColor: role === 'citizen' ? '#fff8dc' : '#f0ece4',
                     display: 'flex',
                     alignItems: 'center',
+                    justify: 'center',
                     justifyContent: 'center',
                 }}>
                     <svg width={isMobile ? 56 : 72} height={isMobile ? 56 : 72} viewBox="0 0 24 24" fill="#1e1200">
@@ -131,7 +134,7 @@ const SignUpSelect = () => {
                     padding: isMobile ? '0 16px 30px' : '0 16px 40px',
                 }}>
 
-                    {/* "Sign up" Title */}
+                    {/* Dynamic Title */}
                     <h1 style={{
                         fontSize: isMobile ? '36px' : '48px',
                         fontWeight: 900,
@@ -140,7 +143,7 @@ const SignUpSelect = () => {
                         marginBottom: isMobile ? '24px' : '32px',
                         textAlign: 'center',
                     }}>
-                        Sign Up
+                        {t('signup_title')}
                     </h1>
 
                     {/* Brown card */}
@@ -161,7 +164,7 @@ const SignUpSelect = () => {
                             textAlign: 'left',
                             letterSpacing: '0.2px',
                         }}>
-                            You are a :
+                            {t('signup_prompt')}
                         </p>
 
                         {/* Role cards row */}
@@ -173,8 +176,8 @@ const SignUpSelect = () => {
                             alignItems: 'center',
                             flexWrap: 'wrap', 
                         }}>
-                            <RoleCard role="gn" label="GN Officer" />
-                            <RoleCard role="citizen" label="Citizen" />
+                            <RoleCard role="gn" label={t('role_gn')} />
+                            <RoleCard role="citizen" label={t('role_citizen')} />
                         </div>
                     </div>
                 </div>

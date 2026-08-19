@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, collection, addDoc, query, where, getDocs, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase';
@@ -7,7 +8,6 @@ import { PageLoadingSkeleton, AppointmentsListSkeleton } from '../components/ske
 import LanguageSwitcher from '../components/languageSwitcher';
 import NotificationBell from '../components/NotificationBell';
 
-// Icons
 const Icon = ({ d, size = 20, color = 'currentColor', sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -55,67 +55,64 @@ const IC = {
   unread:       'M21 12a9 9 0 11-9-9 M21 3v6h-6 M3 3l18 18',
 };
 
-// List of all pages/functions for search
-const PAGE_ACTIONS = [
-  { name: 'Dashboard', path: '/dashboard', icon: IC.dashboard },
-  { name: 'Announcements', path: '/announcements', icon: IC.announce },
-  { name: 'Appointments', path: '/appointments', icon: IC.appts },
-  { name: 'Forms', path: '/forms', icon: IC.forms },
-  { name: 'AI Assistant', path: null, icon: IC.ai },
-  { name: 'Profile', path: '/profile', icon: IC.profile },
-  { name: 'Settings', path: '/settings', icon: IC.settings },
+const PAGE_ACTIONS_KEYS = [
+  { key: 'dashboard', path: '/dashboard', icon: IC.dashboard },
+  { key: 'announcements', path: '/announcements', icon: IC.announce },
+  { key: 'appointments', path: '/appointments', icon: IC.appts },
+  { key: 'forms', path: '/forms', icon: IC.forms },
+  { key: 'ai_assistant', path: null, icon: IC.ai },
+  { key: 'profile', path: '/profile', icon: IC.profile },
+  { key: 'settings', path: '/settings', icon: IC.settings },
 ];
 
-// Service categories
-const SERVICE_CATS = [
+const SERVICE_CATS_KEYS = [
   {
-    key: 'personal', label: 'Personal Documents', services: [
-      { id: 'residence', name: 'Residence/Character Certificate', desc: 'Proof of residency for official and legal purposes.' },
-      { id: 'nic', name: 'National Identity Card (NIC)', desc: 'Apply for new or duplicate NIC documents.' },
-      { id: 'death', name: 'Death Report', desc: 'Formal report for legal registration of passing.' },
-      { id: 'birth', name: 'Late Birth Registration', desc: 'Registering births after the standard grace period.' },
+    key: 'personal', labelKey: 'lbl_cat_personal', services: [
+      { id: 'residence', nameKey: 'lbl_service_residence', descKey: 'lbl_service_residence_desc' },
+      { id: 'nic', nameKey: 'lbl_service_nic', descKey: 'lbl_service_nic_desc' },
+      { id: 'death', nameKey: 'lbl_service_death', descKey: 'lbl_service_death_desc' },
+      { id: 'birth', nameKey: 'lbl_service_birth', descKey: 'lbl_service_birth_desc' },
     ]
   },
   {
-    key: 'property', label: 'Home & Property', services: [
-      { id: 'land', name: 'Land Ownership Assessment', desc: 'For proving land ownership.' },
-      { id: 'valuation', name: 'Valuation Certificate', desc: 'For property valuation purposes.' },
-      { id: 'water', name: 'Electricity / Water Connection', desc: 'GN recommendation for utility connections.' },
-      { id: 'crown', name: 'Crown Land Matters', desc: 'Report unauthorized residents or other matters.' },
+    key: 'property', labelKey: 'lbl_cat_property', services: [
+      { id: 'land', nameKey: 'lbl_service_land', descKey: 'lbl_service_land_desc' },
+      { id: 'valuation', nameKey: 'lbl_service_valuation', descKey: 'lbl_service_valuation_desc' },
+      { id: 'water', nameKey: 'lbl_service_water', descKey: 'lbl_service_water_desc' },
+      { id: 'crown', nameKey: 'lbl_service_crown', descKey: 'lbl_service_crown_desc' },
     ]
   },
   {
-    key: 'permits', label: 'Permits & Approvals', services: [
-      { id: 'tree', name: 'Jack Tree Cutting Permit', desc: '1 tree: 1 day. Multiple trees: 3 days.' },
-      { id: 'timber', name: 'Timber Transport Permit', desc: 'GN recommends to Divisional Secretary.' },
-      { id: 'animal', name: 'Animal Transport Permit', desc: 'GN recommends to Divisional Secretary.' },
-      { id: 'mining', name: 'Stone / Sand Mining Permit', desc: 'GN recommends to Divisional Secretary.' },
+    key: 'permits', labelKey: 'lbl_cat_permits', services: [
+      { id: 'tree', nameKey: 'lbl_service_tree', descKey: 'lbl_service_tree_desc' },
+      { id: 'timber', nameKey: 'lbl_service_timber', descKey: 'lbl_service_timber_desc' },
+      { id: 'animal', nameKey: 'lbl_service_animal', descKey: 'lbl_service_animal_desc' },
+      { id: 'mining', nameKey: 'lbl_service_mining', descKey: 'lbl_service_mining_desc' },
     ]
   },
   {
-    key: 'business', label: 'Livelihood & Business', services: [
-      { id: 'income', name: 'Income Certificate Recommendation', desc: 'GN recommends to Divisional Secretary.' },
-      { id: 'biz', name: 'Business Registration', desc: 'GN recommends to Divisional Secretary.' },
-      { id: 'gun', name: 'Gun License Recommendation', desc: 'GN recommends to Divisional Secretary.' },
+    key: 'business', labelKey: 'lbl_cat_business', services: [
+      { id: 'income', nameKey: 'lbl_service_income', descKey: 'lbl_service_income_desc' },
+      { id: 'biz', nameKey: 'lbl_service_biz', descKey: 'lbl_service_biz_desc' },
+      { id: 'gun', nameKey: 'lbl_service_gun', descKey: 'lbl_service_gun_desc' },
     ]
   },
   {
-    key: 'community', label: 'Community Support', services: [
-      { id: 'welfare', name: 'Public Aid / Welfare Assistance', desc: 'GN recommends your application.' },
-      { id: 'president', name: 'Presidential Fund Assistance', desc: 'GN recommends to Divisional Secretary.' },
-      { id: 'scholar', name: 'Scholarship Application', desc: 'GN recommends to Divisional Secretary.' },
+    key: 'community', labelKey: 'lbl_cat_community', services: [
+      { id: 'welfare', nameKey: 'lbl_service_welfare', descKey: 'lbl_service_welfare_desc' },
+      { id: 'president', nameKey: 'lbl_service_president', descKey: 'lbl_service_president_desc' },
+      { id: 'scholar', nameKey: 'lbl_service_scholar', descKey: 'lbl_service_scholar_desc' },
     ]
   },
   {
-    key: 'disputes', label: 'Complaints & Disputes', services: [
-      { id: 'complaint', name: 'Complaint Report', desc: 'This year: 1 day. Older: 3 days.' },
-      { id: 'urgent', name: 'Urgent Report', desc: 'Emergency to DS: 6 hours. Detailed: 3 days.' },
-      { id: 'dispute', name: 'Dispute Resolution', desc: 'GN helps settle community disputes.' },
+    key: 'disputes', labelKey: 'lbl_cat_disputes', services: [
+      { id: 'complaint', nameKey: 'lbl_service_complaint', descKey: 'lbl_service_complaint_desc' },
+      { id: 'urgent', nameKey: 'lbl_service_urgent', descKey: 'lbl_service_urgent_desc' },
+      { id: 'dispute', nameKey: 'lbl_service_dispute', descKey: 'lbl_service_dispute_desc' },
     ]
   },
 ];
 
-// NavItem for sidebar
 const NavItem = ({ iconPath, label, active, onClick }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-none cursor-pointer transition-all duration-150 text-left mb-0.5 ${
     active 
@@ -129,19 +126,18 @@ const NavItem = ({ iconPath, label, active, onClick }) => (
   </button>
 );
 
-// Desktop Sidebar
-const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
+const DesktopSidebar = ({ activePage, navigate, onLogout, t }) => {
   const navItems = [
-    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard' },
-    { key: 'announcements', icon: IC.announce, label: 'Announcements' },
-    { key: 'appointments', icon: IC.appts, label: 'Appointments' },
-    { key: 'forms', icon: IC.forms, label: 'Forms' },
-    { key: 'ai', icon: IC.ai, label: 'AI assistant' },
+    { key: 'dashboard', icon: IC.dashboard },
+    { key: 'announcements', icon: IC.announce },
+    { key: 'appointments', icon: IC.appts },
+    { key: 'forms', icon: IC.forms },
+    { key: 'ai_assistant', icon: IC.ai },
   ];
   const bottomNav = [
-    { key: 'profile', icon: IC.profile, label: 'Profile' },
-    { key: 'settings', icon: IC.settings, label: 'Settings' },
-    { key: 'logout', icon: IC.logout, label: 'Sign out' },
+    { key: 'profile', icon: IC.profile },
+    { key: 'settings', icon: IC.settings },
+    { key: 'logout', icon: IC.logout },
   ];
 
   return (
@@ -150,15 +146,20 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
         <img src="/logo2.png" alt="Smart Grama Sewa" className="h-20 w-auto" />
       </div>
       <div className="flex-1 p-3">
-        {navItems.map((item) => (
-          <NavItem key={item.key} iconPath={item.icon} label={item.label}
-            active={activePage === item.key}
-            onClick={() => item.key === 'ai' ? window.openChatbot?.() : navigate(`/${item.key}`)} />
-        ))}
+        {navItems.map((item) => {
+          const label = item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`);
+          const activeKey = item.key === 'ai_assistant' ? 'ai' : item.key;
+          return (
+            <NavItem key={item.key} iconPath={item.icon} label={label}
+              active={activePage === activeKey}
+              onClick={() => item.key === 'ai_assistant' ? window.openChatbot?.() : navigate(`/${item.key}`)} />
+          );
+        })}
       </div>
       <div className="p-3 pt-2 border-t border-black/10">
         {bottomNav.map((item) => (
-          <NavItem key={item.key} iconPath={item.icon} label={item.label}
+          <NavItem key={item.key} iconPath={item.icon} 
+            label={item.key === 'logout' ? t('lbl_sign_out') : t(`lbl_${item.key}`)}
             active={activePage === item.key}
             onClick={() => item.key === 'logout' ? onLogout() : navigate(`/${item.key}`)} />
         ))}
@@ -167,8 +168,7 @@ const DesktopSidebar = ({ activePage, navigate, onLogout }) => {
   );
 };
 
-// Search Results Dropdown Component
-const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate }) => {
+const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate, t }) => {
   const [filteredPages, setFilteredPages] = useState([]);
 
   useEffect(() => {
@@ -177,11 +177,12 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
       return;
     }
     const query = searchQuery.toLowerCase();
-    const filtered = PAGE_ACTIONS.filter(page =>
-      page.name.toLowerCase().includes(query)
-    );
-    setFilteredPages(filtered);
-  }, [searchQuery]);
+    const allPages = PAGE_ACTIONS_KEYS.map(p => ({
+      ...p,
+      name: p.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${p.key}`)
+    }));
+    setFilteredPages(allPages.filter(p => p.name.toLowerCase().includes(query)));
+  }, [searchQuery, t]);
 
   if (!showResults || filteredPages.length === 0) return null;
 
@@ -200,7 +201,7 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
           <Icon d={page.icon} size={18} color="#B46A02" />
           <div>
             <div className="text-sm font-bold text-user-text">{page.name}</div>
-            <div className="text-[11px] text-user-text-lighter">Click to go to {page.name}</div>
+            <div className="text-xs text-user-text-lighter">{t('lbl_click_to_go_to', { page: page.name })}</div>
           </div>
         </button>
       ))}
@@ -208,15 +209,14 @@ const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navig
   );
 };
 
-// Desktop Topbar
-const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser }) => (
+const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, setShowResults, navigate, currentLanguage, onLanguageChange, showProfileMenu, setShowProfileMenu, handleLogout, userData, currentUser, t }) => (
   <div className="desktop-topbar h-16 bg-white border-b border-user-border-light flex items-center px-7 gap-3.5 sticky top-0 z-40 shadow-sm">
     <div className="flex-1 max-w-[400px] relative">
       <div className="flex items-center gap-2.5 bg-user-secondary-light border border-user-border rounded-round px-4 py-2 transition-colors hover:border-user-primary">
         <Icon d={IC.search} size={16} color="#aaa" />
         <input
           type="text"
-          placeholder="Search for a page or function..."
+          placeholder={t('lbl_search_page_function')}
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -236,6 +236,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
         showResults={showResults}
         setShowResults={setShowResults}
         navigate={navigate}
+        t={t}
       />
     </div>
     <div className="flex-1" />
@@ -247,7 +248,6 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
     
     <NotificationBell />
     
-    {/* Profile Dropdown */}
     <div className="relative">
       <button 
         onClick={(e) => {
@@ -269,14 +269,14 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
             <p className="text-xs text-user-text-lighter mt-1">{currentUser?.email}</p>
           </div>
           <button onClick={() => { navigate('/profile'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
-            <Icon d={IC.profile} size={16} color="#B46A02" /> My Profile
+            <Icon d={IC.profile} size={16} color="#B46A02" /> {t('lbl_my_profile')}
           </button>
           <button onClick={() => { navigate('/settings'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-user-text hover:bg-user-background transition-colors">
-            <Icon d={IC.settings} size={16} color="#B46A02" /> Settings
+            <Icon d={IC.settings} size={16} color="#B46A02" /> {t('lbl_settings')}
           </button>
           <div className="border-t border-user-border-light my-1"></div>
           <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
-            <Icon d={IC.logout} size={16} color="#ef4444" /> Sign Out
+            <Icon d={IC.logout} size={16} color="#ef4444" /> {t('lbl_sign_out')}
           </button>
         </div>
       )}
@@ -284,8 +284,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
   </div>
 );
 
-// Mobile Topbar
-const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLanguageChange }) => (
+const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLanguageChange, t }) => (
   <div className="mobile-topbar hidden h-16 bg-user-primary items-center px-4 gap-3 sticky top-0 z-40 shadow-md">
     <button onClick={onMenuClick} className="bg-none border-none cursor-pointer p-1.5 flex-shrink-0">
       <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#3d2a00" strokeWidth={2.2}>
@@ -305,19 +304,18 @@ const MobileTopbar = ({ chipName, onMenuClick, navigate, currentLanguage, onLang
   </div>
 );
 
-// Mobile Sidebar Overlay
-const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
+const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout, t }) => {
   const navItems = [
-    { key: 'dashboard', icon: IC.dashboard, label: 'Dashboard' },
-    { key: 'announcements', icon: IC.announce, label: 'Announcements' },
-    { key: 'appointments', icon: IC.appts, label: 'Appointments' },
-    { key: 'forms', icon: IC.forms, label: 'Forms' },
-    { key: 'ai', icon: IC.ai, label: 'AI assistant' },
+    { key: 'dashboard', icon: IC.dashboard },
+    { key: 'announcements', icon: IC.announce },
+    { key: 'appointments', icon: IC.appts },
+    { key: 'forms', icon: IC.forms },
+    { key: 'ai_assistant', icon: IC.ai },
   ];
   const bottomNav = [
-    { key: 'profile', icon: IC.profile, label: 'Profile' },
-    { key: 'settings', icon: IC.settings, label: 'Settings' },
-    { key: 'logout', icon: IC.logout, label: 'Sign out' },
+    { key: 'profile', icon: IC.profile },
+    { key: 'settings', icon: IC.settings },
+    { key: 'logout', icon: IC.logout },
   ];
 
   if (!isOpen) return null;
@@ -332,14 +330,19 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
         <div className="px-5 pb-5 border-b border-white/20 mb-2 flex justify-center">
           <img src="/logo2.png" alt="Smart Grama Sewa" className="h-12 w-auto" />
         </div>
-        {navItems.map((item) => (
-          <NavItem key={item.key} iconPath={item.icon} label={item.label}
-            active={activePage === item.key}
-            onClick={() => { navigate(`/${item.key}`); onClose(); }} />
-        ))}
+        {navItems.map((item) => {
+          const label = item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`);
+          const activeKey = item.key === 'ai_assistant' ? 'ai' : item.key;
+          return (
+            <NavItem key={item.key} iconPath={item.icon} label={label}
+              active={activePage === activeKey}
+              onClick={() => { if (item.key === 'ai_assistant') { window.openChatbot?.(); onClose(); return; } navigate(`/${item.key}`); onClose(); }} />
+          );
+        })}
         <div className="border-t border-white/20 my-3 pt-3">
           {bottomNav.map((item) => (
-            <NavItem key={item.key} iconPath={item.icon} label={item.label}
+            <NavItem key={item.key} iconPath={item.icon} 
+              label={item.key === 'logout' ? t('lbl_sign_out') : t(`lbl_${item.key}`)}
               active={activePage === item.key}
               onClick={() => { if (item.key === 'logout') onLogout(); else navigate(`/${item.key}`); onClose(); }} />
           ))}
@@ -349,9 +352,12 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout }) => {
   );
 };
 
-// Step Indicator 
-const StepBar = ({ step }) => {
-  const steps = ['Select Service', 'Date & Time', 'Review & Submit'];
+const StepBar = ({ step, t }) => {
+  const steps = [
+    t('lbl_select_service'),
+    t('lbl_date_time'),
+    t('lbl_review_submit')
+  ];
   return (
     <div className="flex items-start justify-center gap-0 mb-7">
       {steps.map((label, i) => {
@@ -380,27 +386,52 @@ const StepBar = ({ step }) => {
   );
 };
 
-// Brown pill button 
-const BrownBtn = ({ onClick, children, disabled }) => (
-  <button onClick={onClick} disabled={disabled} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round font-extrabold text-white transition-all duration-150 ${disabled ? 'bg-user-secondary/50 cursor-not-allowed' : 'bg-user-secondary hover:bg-user-secondary-dark cursor-pointer'}`}>
+const BrownBtn = ({ onClick, children, disabled, isMobile }) => (
+  <button onClick={onClick} disabled={disabled} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round font-extrabold text-white transition-all duration-150 ${disabled ? 'bg-user-secondary/50 cursor-not-allowed' : 'bg-user-secondary hover:bg-user-secondary-dark cursor-pointer'} ${isMobile ? 'w-full' : ''}`}>
     {children}
   </button>
 );
 
-// Yellow pill button 
-const YellowBtn = ({ onClick, children, disabled }) => (
-  <button onClick={onClick} disabled={disabled} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round font-extrabold text-user-text transition-all duration-150 ${disabled ? 'bg-user-primary/50 cursor-not-allowed' : 'bg-user-primary hover:bg-user-primary-dark cursor-pointer'}`}>
+const YellowBtn = ({ onClick, children, disabled, isMobile }) => (
+  <button onClick={onClick} disabled={disabled} className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round font-extrabold text-user-text transition-all duration-150 ${disabled ? 'bg-user-primary/50 cursor-not-allowed' : 'bg-user-primary hover:bg-user-primary-dark cursor-pointer'} ${isMobile ? 'w-full' : ''}`}>
     {children}
   </button>
 );
 
-// SCREEN — MY APPOINTMENTS LIST
 const MONTHS_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const DAY_NAMES_SHORT = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-// Details Modal
-const DetailsModal = ({ appt, onClose, onCancel, cancelling, setPendingCancelAppt, setShowCancelConfirm}) => {
+const CancelConfirmModal = ({ isOpen, onClose, onConfirm, appointment, t }) => {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div onClick={onClose} className="fixed inset-0 bg-black/45 z-[200]" />
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[201] w-full max-w-[400px] bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="p-6 text-center">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-black text-user-text mb-2">{t('lbl_cancel_appointment')}</h3>
+          <p className="text-sm text-user-text-lighter mb-6">{t('lbl_cancel_confirm_msg')}</p>
+          <div className="flex gap-3">
+            <button onClick={onClose} className="flex-1 py-3 rounded-round border border-user-border bg-white text-sm font-bold cursor-pointer">
+              {t('lbl_no_keep')}
+            </button>
+            <button onClick={onConfirm} className="flex-1 py-3 rounded-round bg-red-500 text-sm font-bold text-white cursor-pointer hover:bg-red-600">
+              {t('lbl_yes_cancel')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+const DetailsModal = ({ appt, onClose, onCancel, cancelling, setPendingCancelAppt, setShowCancelConfirm, t }) => {
   if (!appt) return null;
 
   const statusColor = {
@@ -411,36 +442,35 @@ const DetailsModal = ({ appt, onClose, onCancel, cancelling, setPendingCancelApp
   };
   const sc = statusColor[appt.status] || statusColor.Pending;
   const canCancel = appt.status === 'Pending' || appt.status === 'Confirmed';
+  const statusLabel = t(`status_${appt.status.toLowerCase()}`);
 
   return (
     <>
       <div onClick={onClose} className="fixed inset-0 bg-black/45 z-[100] animate-fade-in" />
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-full max-w-[520px] bg-user-surface rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
         
-        {/* Header */}
         <div className="bg-user-secondary-dark p-5 flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-extrabold text-yellow-200 uppercase tracking-wider mb-0.5">Appointment Details</div>
+            <div className="text-[10px] font-extrabold text-yellow-200 uppercase tracking-wider mb-0.5">{t('lbl_appointment_details')}</div>
             <div className="text-base font-black text-white">{appt.title}</div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/15 border-none cursor-pointer text-white flex items-center justify-center text-lg font-bold">×</button>
         </div>
 
-        {/* Body */}
         <div className="p-6 bg-user-primary-light">
           <div className="flex items-center gap-2.5 mb-4">
-            <span className="text-sm font-bold text-user-text-lighter">Status:</span>
+            <span className="text-sm font-bold text-user-text-lighter">{t('lbl_status')}:</span>
             <span className="px-3.5 py-1 rounded-full text-xs font-extrabold border"
               style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
-              {appt.status}
+              {statusLabel}
             </span>
           </div>
 
           {[
-            { icon: <Icon d={IC.calendar} size={16} color="#B46A02" />, label: 'Date', value: `${DAY_NAMES_SHORT[new Date(appt.date).getDay()]}, ${appt.day} ${MONTHS_FULL[parseInt(appt.mon_num) - 1] || appt.mon} ${appt.year}` },
-            { icon: <Icon d={IC.clock} size={16} color="#B46A02" />, label: 'Time', value: appt.time },
-            { icon: <Icon d={IC.doc} size={16} color="#B46A02" />, label: 'Service', value: appt.title },
-            { icon: <Icon d={IC.location} size={16} color="#B46A02" />, label: 'Location', value: appt.location || 'Grama Niladhari Office' },
+            { icon: <Icon d={IC.calendar} size={16} color="#B46A02" />, label: t('lbl_date'), value: `${DAY_NAMES[new Date(appt.date).getDay()]}, ${appt.day} ${MONTHS[parseInt(appt.mon_num) - 1] || appt.mon} ${appt.year}` },
+            { icon: <Icon d={IC.clock} size={16} color="#B46A02" />, label: t('lbl_time'), value: appt.time },
+            { icon: <Icon d={IC.doc} size={16} color="#B46A02" />, label: t('lbl_service'), value: appt.title },
+            { icon: <Icon d={IC.location} size={16} color="#B46A02" />, label: t('lbl_location'), value: appt.location || t('lbl_gn_office') },
           ].map(row => (
             <div key={row.label} className="flex items-start gap-3 py-2.5 border-b border-user-border">
               <span className="flex-shrink-0">{row.icon}</span>
@@ -451,43 +481,40 @@ const DetailsModal = ({ appt, onClose, onCancel, cancelling, setPendingCancelApp
             </div>
           ))}
 
-          {/* Notes */}
           {appt.notes && (
             <div className="flex items-start gap-3 py-2.5 border-b border-user-border">
               <Icon d={IC.message} size={16} color="#B46A02" />
               <div>
-                <div className="text-[11px] font-extrabold text-user-warning uppercase tracking-wider mb-0.5">Notes</div>
+                <div className="text-[11px] font-extrabold text-user-warning uppercase tracking-wider mb-0.5">{t('lbl_notes')}</div>
                 <div className="text-sm font-semibold text-user-text-lighter italic">"{appt.notes}"</div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer */}
         <div className="p-4 bg-user-surface flex justify-between items-center border-t border-user-border">
           <button onClick={onClose} className="px-6 py-2.5 rounded-round border border-user-border bg-user-surface text-sm font-bold text-user-text-lighter cursor-pointer transition-all hover:border-user-warning">
-            Close
+            {t('lbl_close')}
           </button>
           {canCancel && (
-          <button 
-            onClick={() => {
-              setPendingCancelAppt(appt);
-              setShowCancelConfirm(true);
-            }} 
-            disabled={cancelling}
-            className="px-6 py-2.5 rounded-round border border-user-border bg-user-surface text-sm font-bold text-user-text-lighter cursor-pointer transition-all hover:border-user-warning"
-          >
-            Cancel Appointment
-          </button>
-        )}
+            <button 
+              onClick={() => {
+                setPendingCancelAppt(appt);
+                setShowCancelConfirm(true);
+              }} 
+              disabled={cancelling}
+              className="px-6 py-2.5 rounded-round border border-user-border bg-user-surface text-sm font-bold text-user-text-lighter cursor-pointer transition-all hover:border-user-warning"
+            >
+              {t('lbl_cancel_appointment')}
+            </button>
+          )}
         </div>
       </div>
     </>
   );
 };
 
-// Appointments List
-const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
+const AppointmentsList = ({ currentUser, refreshKey = 0, onBook, t }) => {
   const [tab, setTab] = useState('All');
   const [appts, setAppts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -495,7 +522,6 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
   const [cancelling, setCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [pendingCancelAppt, setPendingCancelAppt] = useState(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
@@ -528,9 +554,9 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
             mon: MONTHS_SHORT[(m - 1)] || '---',
             mon_num: m,
             year: y,
-            dow: isNaN(dateObj) ? '' : DAY_NAMES_SHORT[dateObj.getDay()],
+            dow: isNaN(dateObj) ? '' : DAY_NAMES[dateObj.getDay()],
             time: data.slot || '',
-            title: data.service || 'Appointment',
+            title: data.service || t('lbl_appointment_fallback'),
             status: data.status || 'Pending',
             date: data.date || '',
             notes: data.notes || '',
@@ -539,14 +565,13 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
         list.sort((a, b) => b.date.localeCompare(a.date));
         setAppts(list);
       } catch (e) {
-        console.error('Fetch appointments error:', e.code, e.message);
         setAppts([]);
       } finally {
         setLoading(false);
       }
     };
     fetchAppts();
-  }, [currentUser, refreshKey]);
+  }, [currentUser, refreshKey, t]);
 
   const handleCancel = async () => {
     if (!pendingCancelAppt) return;
@@ -572,8 +597,7 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
       setShowCancelConfirm(false);
       setPendingCancelAppt(null);
     } catch (e) {
-      console.error('Cancel error:', e.message);
-      alert('Could not cancel appointment. Please try again.');
+      alert(t('lbl_cancel_error'));
     } finally {
       setCancelling(false);
     }
@@ -594,6 +618,11 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
     Completed: '#3b82f6', Cancelled: '#ccc',
   };
 
+  const translatedTabs = tabs.map(tabKey => ({
+    key: tabKey,
+    label: t(`tab_${tabKey.toLowerCase()}`)
+  }));
+
   return (
     <>
       {selAppt && <DetailsModal 
@@ -603,6 +632,7 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
         cancelling={cancelling}
         setPendingCancelAppt={setPendingCancelAppt}
         setShowCancelConfirm={setShowCancelConfirm}
+        t={t}
       />}
 
       <CancelConfirmModal 
@@ -613,42 +643,43 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
         }}
         onConfirm={handleCancel}
         appointment={pendingCancelAppt}
+        t={t}
       />
 
       <div className="p-4 md:p-6 flex-1">
         <div className="flex items-start justify-between flex-wrap gap-3 mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-1">My Appointments</h1>
-            <p className="text-sm font-semibold text-user-text-lighter">Manage your scheduled meetings with Grama Niladhari.</p>
+            <h1 className="text-2xl md:text-3xl font-black text-user-text tracking-tight mb-1">{t('lbl_my_appointments')}</h1>
+            <p className="text-sm font-semibold text-user-text-lighter">{t('lbl_appointments_desc')}</p>
           </div>
           <button onClick={onBook} className="flex items-center gap-2 py-3 px-5 bg-user-primary border-none rounded-round text-sm font-extrabold text-user-text cursor-pointer transition-all shadow-md hover:bg-user-primary-dark">
-            <Icon d={IC.plus} size={16} color="#3d2a00" sw={2.5} /> Book New Appointment
+            <Icon d={IC.plus} size={16} color="#3d2a00" sw={2.5} /> {t('lbl_book_new')}
           </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mb-7">
           <div className="bg-[#f0a060] rounded-xl p-5">
             <div className="text-4xl font-black text-white leading-tight">{pendingCount}</div>
-            <div className="text-base font-extrabold text-white mt-1.5">Pending Appointments</div>
-            <div className="text-xs font-semibold text-white/80 mt-0.5">Awaiting GN Officer approval</div>
+            <div className="text-base font-extrabold text-white mt-1.5">{t('lbl_pending_appts')}</div>
+            <div className="text-xs font-semibold text-white/80 mt-0.5">{t('lbl_pending_desc')}</div>
           </div>
           <div className="bg-[#60b880] rounded-xl p-5">
             <div className="text-4xl font-black text-white leading-tight">{confirmedCount}</div>
-            <div className="text-base font-extrabold text-white mt-1.5">Confirmed Appointments</div>
-            <div className="text-xs font-semibold text-white/80 mt-0.5">Ready for your visit</div>
+            <div className="text-base font-extrabold text-white mt-1.5">{t('lbl_confirmed_appts')}</div>
+            <div className="text-xs font-semibold text-white/80 mt-0.5">{t('lbl_confirmed_desc')}</div>
           </div>
         </div>
 
         <div className={`flex gap-5 md:gap-7 mb-5 border-b-2 border-user-border-light overflow-x-auto ${isMobile ? 'flex-nowrap' : 'flex-wrap'}`}>
-          {tabs.map(t => {
-            const isActive = tab === t;
+          {translatedTabs.map(tabItem => {
+            const isActive = tab === tabItem.key;
             return (
               <button
-                key={t}
-                onClick={() => setTab(t)}
+                key={tabItem.key}
+                onClick={() => setTab(tabItem.key)}
                 className={`py-2.5 border-none bg-transparent text-base md:text-base font-semibold cursor-pointer transition-all whitespace-nowrap flex-shrink-0 ${isActive ? 'text-user-text font-extrabold border-b-3 border-user-primary' : 'text-gray-400 hover:text-user-text'}`}
               >
-                {t}
+                {tabItem.label}
               </button>
             );
           })}
@@ -657,7 +688,7 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
         {isMobile && (
           <div className="text-center -mt-2 mb-4 text-[10px] text-gray-300 flex items-center justify-center gap-1.5">
             <Icon d={IC.chevL} size={10} color="#ccc" />
-            <span>scroll</span>
+            <span>{t('lbl_scroll')}</span>
             <Icon d={IC.chevR} size={10} color="#ccc" />
           </div>
         )}
@@ -674,18 +705,18 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
                     <div className="text-sm font-extrabold text-warning uppercase tracking-wider">{a.mon}</div>
                   </div>
                   <div className={`px-4 py-1.5 rounded-full text-sm font-extrabold border`} style={{ backgroundColor: (statusColor[a.status] || statusColor.Pending).bg, color: (statusColor[a.status] || statusColor.Pending).text, borderColor: (statusColor[a.status] || statusColor.Pending).border }}>
-                    {a.status}
+                    {t(`status_${a.status.toLowerCase()}`)}
                   </div>
                 </div>
                 <div className="text-sm font-semibold text-gray-500 mb-2.5">{a.dow} - {a.time}</div>
                 <div className="text-base font-extrabold text-user-text mb-5">{a.title}</div>
                 <div className="flex gap-2.5 flex-wrap">
                   <button onClick={() => setSelAppt(a)} className="flex-1 min-w-[100px] py-2.5 px-4 rounded-round bg-blue-50 border border-blue-200 text-blue-800 text-sm font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-all hover:bg-blue-100">
-                    <Icon d={IC.details} size={14} color="#2c4c7c" /> Details
+                    <Icon d={IC.details} size={14} color="#2c4c7c" /> {t('lbl_details')}
                   </button>
                   {(a.status === 'Pending' || a.status === 'Confirmed') && (
                     <button onClick={() => setSelAppt(a)} className="flex-1 min-w-[100px] py-2.5 px-4 rounded-round bg-red-50 border border-red-200 text-red-700 text-sm font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-all hover:bg-red-100">
-                      <Icon d={IC.x} size={14} color="#bc3f2e" sw={2} /> Cancel
+                      <Icon d={IC.x} size={14} color="#bc3f2e" sw={2} /> {t('lbl_cancel')}
                     </button>
                   )}
                 </div>
@@ -697,11 +728,15 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
                 <div className="flex justify-center mb-4">
                   <Icon d={IC.calendar} size={48} color="#ccc" strokeWidth={1.2} />
                 </div>
-                <div className="text-base font-extrabold text-user-text mb-2">{tab === 'All' ? 'No appointments yet' : `No ${tab.toLowerCase()} appointments`}</div>
-                <div className="text-sm font-semibold text-gray-400 mb-5">{tab === 'All' ? 'Book your first appointment with your GN Officer.' : `You have no ${tab.toLowerCase()} appointments at the moment.`}</div>
+                <div className="text-base font-extrabold text-user-text mb-2">
+                  {tab === 'All' ? t('lbl_no_appointments') : t('lbl_no_appointments_tab', { tab: t(`tab_${tab.toLowerCase()}`) })}
+                </div>
+                <div className="text-sm font-semibold text-gray-400 mb-5">
+                  {tab === 'All' ? t('lbl_book_first_appointment') : t('lbl_no_appointments_tab_desc', { tab: t(`tab_${tab.toLowerCase()}`) })}
+                </div>
                 {tab === 'All' && (
                   <button onClick={onBook} className="py-2.5 px-5 bg-user-primary border-none rounded-round text-sm font-extrabold text-user-text cursor-pointer flex items-center justify-center gap-2 mx-auto">
-                    <Icon d={IC.plus} size={14} color="#3d2a00" sw={2.5} /> Book New Appointment
+                    <Icon d={IC.plus} size={14} color="#3d2a00" sw={2.5} /> {t('lbl_book_new')}
                   </button>
                 )}
               </div>
@@ -713,8 +748,45 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook }) => {
   );
 };
 
-// BOOK STEP 1: SELECT SERVICE
-const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
+const generateAllTimeSlots = () => {
+  const slots = [];
+  for (let hour = 9; hour <= 11; hour++) {
+    for (let minute of [0, 15, 30, 45]) {
+      slots.push(`${hour}:${minute.toString().padStart(2, '0')} AM`);
+    }
+  }
+  for (let minute of [0, 15, 30, 45]) {
+    slots.push(`12:${minute.toString().padStart(2, '0')} PM`);
+  }
+  for (let hour = 1; hour <= 3; hour++) {
+    for (let minute of [0, 15, 30, 45]) {
+      slots.push(`${hour}:${minute.toString().padStart(2, '0')} PM`);
+    }
+  }
+  return slots;
+};
+
+const ALL_TIME_SLOTS = generateAllTimeSlots();
+
+const groupSlotsByHour = (slots) => {
+  const grouped = {};
+  slots.forEach(slot => {
+    let hourNum = parseInt(slot.split(':')[0]);
+    const isPM = slot.includes('PM');
+    let period = isPM ? 'PM' : 'AM';
+    const hourKey = `${hourNum} ${period}`;
+    if (!grouped[hourKey]) grouped[hourKey] = [];
+    grouped[hourKey].push(slot);
+  });
+  const hourOrder = ['9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM'];
+  const sortedGrouped = {};
+  hourOrder.forEach(hour => {
+    if (grouped[hour]) sortedGrouped[hour] = grouped[hour];
+  });
+  return sortedGrouped;
+};
+
+const BookStep1 = ({ booking, setBooking, onNext, onCancel, t }) => {
   const [openCats, setOpenCats] = useState({ personal: true });
   const [notes, setNotes] = useState(booking.notes || '');
   const [isMobile, setIsMobile] = useState(false);
@@ -728,69 +800,60 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
 
   const toggleCat = key => setOpenCats(p => ({ ...p, [key]: !p[key] }));
 
+  // Build translated service categories
+  const serviceCats = SERVICE_CATS_KEYS.map(cat => ({
+    ...cat,
+    label: t(cat.labelKey),
+    services: cat.services.map(svc => ({
+      ...svc,
+      name: t(svc.nameKey),
+      desc: t(svc.descKey)
+    }))
+  }));
+
   const selectService = (svc) => {
     setBooking(p => ({ ...p, service: svc }));
   };
 
   return (
     <div className="p-4 md:p-6 flex-1">
-      <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">Book an appointment</h1>
-      <StepBar step={1} />
+      <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">{t('lbl_book_appointment')}</h1>
+      <StepBar step={1} t={t} />
 
       <div className="bg-user-primary-light border border-user-border rounded-xl p-6 md:p-7 mb-4">
-        <h2 className="text-lg font-extrabold text-user-text-light mb-5">What is this appointment for?</h2>
+        <h2 className="text-lg font-extrabold text-user-text-light mb-5">{t('lbl_what_for')}</h2>
 
-        {SERVICE_CATS.map(cat => (
+        {serviceCats.map(cat => (
           <div key={cat.key} className="mb-2.5">
-            {/* Category Header Button */}
             <button 
               onClick={() => toggleCat(cat.key)} 
-              className={`w-full flex items-center gap-2.5 p-3.5 border border-gray-200 dark:border-gray-600
+              className={`w-full flex items-center gap-2.5 p-3.5 border border-gray-200
                 ${openCats[cat.key] ? 'rounded-t-xl' : 'rounded-xl'}
-                bg-user-secondary
-                cursor-pointer transition-all hover:bg-user-background`}
+                bg-user-secondary cursor-pointer transition-all hover:bg-user-background`}
             >
-              <Icon 
-                d={openCats[cat.key] ? IC.chevDown : IC.chevR} 
-                size={16} 
-                color="currentColor" 
-              />
-              <span className="text-sm font-extrabold text-user-text">
-                {cat.label}
-              </span>
+              <Icon d={openCats[cat.key] ? IC.chevDown : IC.chevR} size={16} color="currentColor" />
+              <span className="text-sm font-extrabold text-user-text">{cat.label}</span>
             </button>
 
-            {/* Service Items */}
             {openCats[cat.key] && (
-              <div className="border border-gray-200 dark:border-gray-600 border-t-0 rounded-b-xl overflow-hidden">                {cat.services.map((svc, i) => {
+              <div className="border border-gray-200 border-t-0 rounded-b-xl overflow-hidden">
+                {cat.services.map((svc, i) => {
                   const selected = booking.service?.id === svc.id;
                   return (
                     <div 
                       key={svc.id} 
                       onClick={() => selectService(svc)} 
-                      className={`p-4 cursor-pointer border-b border-gray-100 dark:border-gray-600 transition-all 
+                      className={`p-4 cursor-pointer border-b border-gray-100 transition-all 
                         ${selected 
                           ? 'bg-yellow-100' 
                           : 'bg-user-secondary-light hover:bg-user-primary-light'
                         }`} 
-                      style={{ 
-                        borderLeft: selected ? '4px solid #F5C400' : '4px solid transparent' 
-                      }}
+                      style={{ borderLeft: selected ? '4px solid #F5C400' : '4px solid transparent' }}
                     >
-                      <div className={`text-sm font-extrabold mb-0.5 
-                        ${selected 
-                          ? 'text-gray-700' 
-                          : 'user-text-lighter'
-                        }`}
-                      >
+                      <div className={`text-sm font-extrabold mb-0.5 ${selected ? 'text-gray-700' : 'user-text-lighter'}`}>
                         {svc.name}
                       </div>
-                      <div className={`text-xs font-semibold 
-                        ${selected 
-                          ? 'text-gray-600' 
-                          : 'text-gray-500 dark:text-gray-400'
-                      }`}
-                      >
+                      <div className={`text-xs font-semibold ${selected ? 'text-gray-600' : 'text-gray-500'}`}>
                         {svc.desc}
                       </div>
                     </div>
@@ -801,142 +864,56 @@ const BookStep1 = ({ booking, setBooking, onNext, onCancel }) => {
           </div>
         ))}
 
-        {/* Selected Service Summary */}
         {booking.service && (
-          <div className="mt-4 p-3.5 bg-gray-800 dark:bg-yellow-100 border border-yellow-400 dark:border-yellow-600 rounded-xl flex items-center gap-3">
+          <div className="mt-4 p-3.5 bg-gray-800 border border-yellow-400 rounded-xl flex items-center gap-3">
             <div className="w-7 h-7 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
               <Icon d={IC.check} size={14} color="#fff" sw={2.5} />
             </div>
             <div className="flex-1">
-              <div className="text-[10px] font-extrabold text-yellow-700 dark:text-yellow-400 uppercase tracking-wider mb-0.5">
-                Selected Service
-              </div>
-              <div className="text-sm font-black text-white dark:text-gray-800">
-                {booking.service.name}
-              </div>
+              <div className="text-[10px] font-extrabold text-yellow-700 uppercase tracking-wider mb-0.5">{t('lbl_selected_service')}</div>
+              <div className="text-sm font-black text-white">{booking.service.name}</div>
             </div>
             <button 
               onClick={() => setBooking(p => ({ ...p, service: null }))} 
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 dark:bg-white border border-gray-200 dark:border-gray-600 rounded-round text-xs font-bold text-gray-300 dark:text-gray-500 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 border border-gray-200 rounded-round text-xs font-bold text-gray-300 cursor-pointer hover:bg-gray-50"
             >
-              <Icon d={IC.x} size={12} color="#888" /> CHANGE
+              <Icon d={IC.x} size={12} color="#888" /> {t('lbl_change')}
             </button>
           </div>
         )}
       </div>
 
-      {/* Additional Notes */}
       <div className="bg-user-primary-light border border-user-border rounded-xl p-5 md:p-7 mb-6">
-        <h2 className="text-base font-extrabold text-user-text-light mb-3">
-          Additional notes (optional)
-        </h2>
+        <h2 className="text-base font-extrabold text-user-text-light mb-3">{t('lbl_additional_notes')}</h2>
         <textarea 
           value={notes} 
           onChange={e => { 
             setNotes(e.target.value); 
             setBooking(p => ({ ...p, notes: e.target.value })); 
           }} 
-          placeholder="Please provide any specific details or requirements for your request..." 
+          placeholder={t('lbl_notes_placeholder')} 
           rows={4} 
-          className="w-full p-3 text-sm font-semibold text-white dark:text-zinc-500 bg-user-surface border border-gray-200 dark:border-gray-600 rounded-lg outline-none resize-vertical transition-colors focus:border-yellow-500 dark:focus:border-yellow-400" 
+          className="w-full p-3 text-sm font-semibold text-gray-600 bg-user-surface border border-gray-200 rounded-lg outline-none resize-vertical transition-colors focus:border-yellow-500" 
         />
       </div>
 
-      {/* Buttons */}
       <div className={`flex justify-between gap-3 ${isMobile ? 'flex-col' : 'flex-row'}`}>
-        <button 
-          onClick={onCancel} 
-          className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round border-2 border-gray-300 dark:border-gray-600 bg-neutral-600 dark:bg-neutral-100 text-sm font-extrabold text-gray-200 dark:text-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-700 ${isMobile ? 'w-full' : ''}`}
-        >
-          Cancel
-        </button>
-        <button 
+        <BrownBtn onClick={onCancel} isMobile={isMobile}>
+          {t('lbl_cancel')}
+        </BrownBtn>
+        <BrownBtn 
           onClick={onNext} 
           disabled={!booking.service} 
-          className={`flex items-center justify-center gap-2 py-3.5 px-7 rounded-round text-sm font-extrabold text-white transition-all ${!booking.service ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed' : 'bg-yellow-600 dark:bg-yellow-600 hover:bg-yellow-700 dark:hover:bg-yellow-500 cursor-pointer'} ${isMobile ? 'w-full' : ''}`}
+          isMobile={isMobile}
         >
-          Next → Pick a time & date
-        </button>
+          {t('lbl_next_pick_time')}
+        </BrownBtn>
       </div>
     </div>
   );
 };
 
-// BOOK STEP 2: DATE & TIME (HOURLY BREAKDOWN WITH 15-MINUTE SLOTS)
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-// Generate all time slots (9:00 AM to 3:45 PM, 15-minute intervals)
-// GN work ends at 4:00 PM, so last appointment at 3:45 PM
-const generateAllTimeSlots = () => {
-  const slots = [];
-  
-  // 9:00 AM to 11:45 AM (Morning)
-  for (let hour = 9; hour <= 11; hour++) {
-    for (let minute of [0, 15, 30, 45]) {
-      const timeStr = `${hour}:${minute.toString().padStart(2, '0')} AM`;
-      slots.push(timeStr);
-    }
-  }
-  
-  // 12:00 PM to 12:45 PM (Noon)
-  for (let minute of [0, 15, 30, 45]) {
-    const timeStr = `12:${minute.toString().padStart(2, '0')} PM`;
-    slots.push(timeStr);
-  }
-  
-  // 1:00 PM to 3:45 PM (Afternoon)
-  for (let hour = 1; hour <= 3; hour++) {
-    for (let minute of [0, 15, 30, 45]) {
-      const timeStr = `${hour}:${minute.toString().padStart(2, '0')} PM`;
-      slots.push(timeStr);
-    }
-  }
-  
-  return slots; // 28 slots total
-};
-
-const ALL_TIME_SLOTS = generateAllTimeSlots();
-
-// Group slots by hour for display
-const groupSlotsByHour = (slots) => {
-  const grouped = {};
-  
-  slots.forEach(slot => {
-    // Extract hour number for grouping
-    let hourNum = parseInt(slot.split(':')[0]);
-    const isPM = slot.includes('PM');
-    
-    // Convert to 12-hour format for display
-    let displayHour = hourNum;
-    let period = isPM ? 'PM' : 'AM';
-    
-    // Special case for 12 PM
-    if (hourNum === 12 && !isPM) {
-      period = 'AM';
-    }
-    
-    const hourKey = `${displayHour} ${period}`;
-    
-    if (!grouped[hourKey]) {
-      grouped[hourKey] = [];
-    }
-    grouped[hourKey].push(slot);
-  });
-  
-  // Sort hours in chronological order
-  const hourOrder = ['9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM'];
-  const sortedGrouped = {};
-  hourOrder.forEach(hour => {
-    if (grouped[hour]) {
-      sortedGrouped[hour] = grouped[hour];
-    }
-  });
-  
-  return sortedGrouped;
-};
-
-const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
+const BookStep2 = ({ booking, setBooking, onNext, onBack, t }) => {
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -945,13 +922,8 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
   const [bookedSlots, setBookedSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [expandedHours, setExpandedHours] = useState({
-    '9 AM': true,
-    '10 AM': true,
-    '11 AM': true,
-    '12 PM': true,
-    '1 PM': true,
-    '2 PM': true,
-    '3 PM': true
+    '9 AM': true, '10 AM': true, '11 AM': true,
+    '12 PM': true, '1 PM': true, '2 PM': true, '3 PM': true
   });
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -961,37 +933,31 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
     return () => window.removeEventListener('resize', handleResize); 
   }, []);
 
-  // Fetch booked slots for the selected date
   const fetchBookedSlots = async (year, month, day) => {
     if (!year || month === null || !day) return;
-    
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    
     setLoadingSlots(true);
     try {
-      const appointmentsQuery = query(
+      const q = query(
         collection(db, 'appointments'),
         where('date', '==', dateStr),
+        where('gnDiv', '==', userData?.gnDiv),
         where('status', 'in', ['Pending', 'Confirmed'])
       );
-      const snapshot = await getDocs(appointmentsQuery);
-      
+      const snapshot = await getDocs(q);
       const booked = snapshot.docs.map(doc => doc.data().slot).filter(slot => slot);
       setBookedSlots(booked);
-      
-      // If current selected slot is now booked, clear it
       if (selSlot && booked.includes(selSlot)) {
         setSelSlot(null);
         setBooking(p => ({ ...p, slot: null }));
       }
     } catch (error) {
-      console.error('Error fetching booked slots:', error);
+      console.error();
     } finally {
       setLoadingSlots(false);
     }
   };
 
-  // Fetch when selected date changes
   useEffect(() => {
     if (selDay !== null && viewMonth !== null && viewYear !== null) {
       fetchBookedSlots(viewYear, viewMonth, selDay);
@@ -1006,21 +972,13 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
   const prevMonth = () => { 
-    if (viewMonth === 0) { 
-      setViewYear(y => y - 1); 
-      setViewMonth(11); 
-    } else { 
-      setViewMonth(m => m - 1); 
-    } 
+    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); } 
+    else { setViewMonth(m => m - 1); } 
   };
   
   const nextMonth = () => { 
-    if (viewMonth === 11) { 
-      setViewYear(y => y + 1); 
-      setViewMonth(0); 
-    } else { 
-      setViewMonth(m => m + 1); 
-    } 
+    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); } 
+    else { setViewMonth(m => m + 1); } 
   };
 
   const isWeekend = (day) => { 
@@ -1047,46 +1005,42 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
     setBooking(p => ({ ...p, slot })); 
   };
 
-  const selDateLabel = selDay ? `${DAY_NAMES[new Date(viewYear, viewMonth, selDay).getDay()]}, ${MONTHS[viewMonth]} ${selDay}, ${viewYear}` : 'No date selected';
+  const selDateLabel = selDay ? `${DAY_NAMES[new Date(viewYear, viewMonth, selDay).getDay()]}, ${MONTHS[viewMonth]} ${selDay}, ${viewYear}` : t('lbl_no_date_selected');
   const isDateSelected = selDay !== null;
-  
-  // Group slots for display
   const groupedSlots = groupSlotsByHour(ALL_TIME_SLOTS);
   const availableSlotsCount = ALL_TIME_SLOTS.filter(slot => !bookedSlots.includes(slot)).length;
 
   return (
     <div className="p-4 md:p-7 flex-1">
-      <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">Book an appointment</h1>
-      <StepBar step={2} />
+      <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">{t('lbl_book_appointment')}</h1>
+      <StepBar step={2} t={t} />
 
       <div className="bg-user-primary-light border border-user-border rounded-xl p-5 md:p-7 mb-4">
-        <h2 className="text-lg font-extrabold text-user-text mb-5">When would you like to visit?</h2>
+        <h2 className="text-lg font-extrabold text-user-text mb-5">{t('lbl_when_to_visit')}</h2>
 
         <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-5`}>
-          {/* Calendar Section */}
+          {/* Calendar */}
           <div className="flex-1 border border-user-border rounded-xl p-4 md:p-5 bg-user-secondary-light">
             <div className="flex items-center gap-2 mb-4">
               <Icon d={IC.calendar} size={18} color="#B46A02" />
-              <span className="text-sm font-extrabold text-user-text">Select Date</span>
+              <span className="text-sm font-extrabold text-user-text">{t('lbl_select_date')}</span>
             </div>
             <div className="flex items-center justify-between mb-3.5">
               <button onClick={prevMonth} className="w-8 h-8 rounded-full border border-user-border bg-white cursor-pointer flex items-center justify-center">
                 <Icon d={IC.chevL} size={14} color="#888" />
               </button>
-              <span className="ttext-sm font-extrabold text-user-text">{MONTHS[viewMonth]} {viewYear}</span>
+              <span className="text-sm font-extrabold text-user-text">{MONTHS[viewMonth]} {viewYear}</span>
               <button onClick={nextMonth} className="w-8 h-8 rounded-full border border-user-border bg-white cursor-pointer flex items-center justify-center">
                 <Icon d={IC.chevR} size={14} color="#888" />
               </button>
             </div>
             
-            {/* Day headers */}
             <div className="grid grid-cols-7 gap-0.5 mb-2 text-center">
               {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
                 <div key={day} className="text-[11px] font-extrabold text-gray-400 py-1">{day}</div>
               ))}
             </div>
             
-            {/* Calendar days */}
             <div className="grid grid-cols-7 gap-0.5">
               {Array(firstDay).fill(null).map((_, i) => <div key={`empty-${i}`} />)}
               {Array(daysInMonth).fill(null).map((_, i) => {
@@ -1100,11 +1054,9 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
                     key={day} 
                     onClick={() => pickDay(day)} 
                     className={`w-8 h-8 rounded-full mx-auto my-0.5 flex items-center justify-center text-sm font-semibold transition-all ${
-                      picked 
-                        ? 'bg-user-primary text-user-text font-black shadow-sm' 
-                        : disabled 
-                          ? 'text-gray-300 cursor-not-allowed bg-gray-50 dark:bg-transparent' 
-                          : 'text-user-text hover:bg-user-primary-light cursor-pointer'
+                      picked ? 'bg-user-primary text-user-text font-black shadow-sm' 
+                      : disabled ? 'text-gray-300 cursor-not-allowed bg-gray-50' 
+                      : 'text-user-text hover:bg-user-primary-light cursor-pointer'
                     }`}
                   >
                     {day}
@@ -1113,24 +1065,23 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
               })}
             </div>
             
-            {/* Weekend note */}
             <div className="mt-3 text-center text-[10px] text-gray-400 flex items-center justify-center gap-1">
               <Icon d={IC.calendar} size={10} color="#aaa" />
-              <span>Weekends closed</span>
+              <span>{t('lbl_weekends_closed')}</span>
             </div>
           </div>
 
-          {/* Time Slots Section */}
+          {/* Time Slots */}
           <div className="flex-1 border border-user-border rounded-xl p-4 md:p-5 bg-user-secondary-light flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Icon d={IC.clock} size={18} color="#B46A02" />
-                <span className="text-sm font-extrabold text-user-text">Select Time Slot</span>
+                <span className="text-sm font-extrabold text-user-text">{t('lbl_select_time')}</span>
               </div>
               {loadingSlots && (
                 <div className="flex items-center gap-1.5">
                   <div className="w-3.5 h-3.5 rounded-full border-2 border-user-primary border-t-transparent animate-spin" />
-                  <span className="text-[10px] text-gray-400">Checking...</span>
+                  <span className="text-[10px] text-gray-400">{t('lbl_checking')}</span>
                 </div>
               )}
             </div>
@@ -1138,24 +1089,20 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
             {!isDateSelected ? (
               <div className="flex-1 flex flex-col items-center justify-center min-h-[280px] text-center">
                 <Icon d={IC.calendar} size={48} color="#ccc" strokeWidth={1.2} />
-                <p className="text-sm font-semibold text-gray-400 dark:text-gray-500 mt-3">Select a date first</p>
+                <p className="text-sm font-semibold text-gray-400 mt-3">{t('lbl_select_date_first')}</p>
               </div>
             ) : (
               <>
-                {/* Summary bar */}
                 <div className="mb-4 p-2.5 bg-user-surface rounded-lg flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Icon d={IC.info} size={14} color="#888" />
                     <span className="text-xs font-semibold text-user-text-lighter">
-                      {availableSlotsCount} slots available today
+                      {t('lbl_slots_available', { count: availableSlotsCount })}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-400">
-                    15 min per appointment
-                  </div>
+                  <div className="text-xs text-gray-400">{t('lbl_min_per_slot')}</div>
                 </div>
 
-                {/* Hourly breakdown */}
                 <div className="max-h-[400px] overflow-y-auto pr-1">
                   {Object.entries(groupedSlots).map(([hour, slots]) => {
                     const availableInHour = slots.filter(slot => !bookedSlots.includes(slot)).length;
@@ -1164,7 +1111,6 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
                     
                     return (
                       <div key={hour} className="mb-3 border border-gray-100 rounded-lg overflow-hidden">
-                        {/* Hour header */}
                         <button
                           onClick={() => toggleHour(hour)}
                           className="w-full flex items-center justify-between p-3 bg-user-secondary hover:bg-user-background transition-colors"
@@ -1175,12 +1121,11 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
                           </div>
                           <div className="flex items-center gap-2">
                             <span className={`text-xs font-semibold ${availableInHour === 0 ? 'text-red-500' : 'text-green-600'}`}>
-                              {availableInHour}/{totalInHour} available
+                              {availableInHour}/{totalInHour} {t('lbl_available')}
                             </span>
                           </div>
                         </button>
                         
-                        {/* Time slots grid */}
                         {isExpanded && (
                           <div className="p-3 bg-white">
                             <div className="grid grid-cols-2 gap-2">
@@ -1193,11 +1138,9 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
                                     onClick={() => pickSlot(slot)}
                                     disabled={isBooked}
                                     className={`py-2.5 px-2 text-xs font-extrabold text-center rounded-lg transition-all ${
-                                      isSelected
-                                        ? 'bg-user-primary text-user-text'
-                                        : isBooked
-                                          ? 'bg-user-surface text-user-text-lighter border border-dashed border-user-border cursor-not-allowed'
-                                          : 'border border-user-border bg-user-secondary-light text-user-text hover:bg-user-primary-light cursor-pointer'
+                                      isSelected ? 'bg-user-primary text-user-text'
+                                      : isBooked ? 'bg-user-surface text-user-text-lighter border border-dashed border-user-border cursor-not-allowed'
+                                      : 'border border-user-border bg-user-secondary-light text-user-text hover:bg-user-primary-light cursor-pointer'
                                     }`}
                                   >
                                     {slot}
@@ -1212,28 +1155,26 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
                   })}
                 </div>
 
-                {/* Legend */}
                 <div className="flex flex-wrap gap-4 justify-center pt-3 mt-3 border-t border-gray-100">
                   <div className="flex items-center gap-1.5">
                     <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: '#F5C400' }} />
-                    <span className="text-[10px] font-semibold text-gray-500">Selected</span>
+                    <span className="text-[10px] font-semibold text-gray-500">{t('lbl_selected')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3.5 h-3.5 rounded border border-user-border bg-white" />
-                    <span className="text-[10px] font-semibold text-gray-500">Available</span>
+                    <span className="text-[10px] font-semibold text-gray-500">{t('lbl_available')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-3.5 h-3.5 rounded border border-dashed border-gray-300 bg-gray-100" />
-                    <span className="text-[10px] font-semibold text-gray-500">Booked</span>
+                    <span className="text-[10px] font-semibold text-gray-500">{t('lbl_booked')}</span>
                   </div>
                 </div>
 
-                {/* Office hours note */}
                 <div className="mt-3 p-2.5 bg-user-surface rounded-lg">
                   <div className="flex items-center gap-2">
                     <Icon d={IC.info} size={12} color="#3b82f6" />
                     <span className="text-[10px] font-semibold text-user-text-lighter">
-                      Office hours: 9:00 AM - 4:00 PM. Last appointment at 3:45 PM
+                      {t('lbl_office_hours')}
                     </span>
                   </div>
                 </div>
@@ -1242,12 +1183,11 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
           </div>
         </div>
 
-        {/* Selected Date Summary */}
         {isDateSelected && !loadingSlots && (
           <div className="mt-6 p-3 bg-user-primary-light border border-user-border rounded-lg flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-user-text">
               <Icon d={IC.info} size={16} color="#B46A02" /> 
-              {selSlot ? 'Selected time:' : 'Please select a time slot'}
+              {selSlot ? t('lbl_selected_time') : t('lbl_please_select_time')}
             </div>
             <div className="text-sm font-bold text-user-text bg-user-surface px-3 py-1.5 rounded-lg border border-user-border">
               {selDateLabel} {selSlot && <span className="text-user-primary ml-1">- {selSlot}</span>}
@@ -1256,25 +1196,19 @@ const BookStep2 = ({ booking, setBooking, onNext, onBack }) => {
         )}
       </div>
 
-      {/* Navigation Buttons */}
       <div className={`flex justify-between gap-3 mt-4 ${isMobile ? 'flex-col' : 'flex-row'}`}>
         <BrownBtn onClick={onBack} isMobile={isMobile}>
-          ← Back
+          ← {t('lbl_back')}
         </BrownBtn>
-        <BrownBtn 
-          onClick={onNext} 
-          disabled={!selDay || !selSlot} 
-          isMobile={isMobile}
-        >
-          Continue →
+        <BrownBtn onClick={onNext} disabled={!selDay || !selSlot} isMobile={isMobile}>
+          {t('lbl_continue')} →
         </BrownBtn>
       </div>
     </div>
   );
 };
 
-// BOOK STEP 3: REVIEW & SUBMIT
-const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submitting }) => {
+const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submitting, t }) => {
   const [isAgreed, setIsAgreed] = useState(false); 
   const [isMobile, setIsMobile] = useState(false);
 
@@ -1286,29 +1220,25 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
   }, []);
 
   const dateStr = booking.day ? `${MONTHS[booking.month]} ${booking.day}, ${booking.year}` : '—';
-  
-  // Display just the selected time slot (no end time calculation needed)
   const timeStr = booking.slot ? booking.slot : '—';
-  
   const nicMasked = userData?.nic 
     ? userData.nic.slice(0, 3) + 'XXXXXXXXX' + userData.nic.slice(-1)
     : 'XXXXXXXXXXXX';
 
   return (
     <div className="p-4 md:p-7 flex-1">
-      <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">Book an appointment</h1>
-      <StepBar step={3} />
+      <h1 className="text-2xl md:text-3xl font-black text-user-text mb-5">{t('lbl_book_appointment')}</h1>
+      <StepBar step={3} t={t} />
 
       <div className="bg-user-primary-light border border-user-border rounded-xl p-5 md:p-7 mb-6">
-        <h2 className="text-xl md:text-2xl font-black text-user-text mb-5">Review your request</h2>
+        <h2 className="text-xl md:text-2xl font-black text-user-text mb-5">{t('lbl_review_request')}</h2>
 
-        {/* Selected Service Banner */}
         <div className="bg-user-secondary rounded-xl p-4 md:p-3.5 mb-4">
           <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} items-start gap-3`}>
             <Icon d={IC.doc} size={isMobile ? 20 : 18} color="#f0d890" />
             <div>
               <div className="text-[10px] font-extrabold text-yellow-200 uppercase tracking-wider mb-1">
-                Selected Service
+                {t('lbl_selected_service')}
               </div>
               <div className="text-base font-black text-white">
                 {booking.service?.name || '—'}
@@ -1317,14 +1247,12 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
           </div>
         </div>
 
-        {/* Main Content Card */}
         <div className="bg-user-surface border border-user-border rounded-xl p-5 md:p-6">
           <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-6 md:gap-8`}>
-            {/* Left Column - Appointment Details */}
             <div className="flex-1">
               <div className="text-[11px] font-extrabold text-user-text uppercase tracking-wider mb-3.5 flex items-center gap-2">
                 <Icon d={IC.calendar} size={14} color="#B46A02" /> 
-                Appointment Details
+                {t('lbl_appointment_details')}
               </div>
               <div className="flex flex-col gap-3.5">
                 <div className="flex items-center gap-3 flex-wrap">
@@ -1332,7 +1260,7 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
                     <Icon d={IC.calendar} size={16} color="#B46A02" />
                   </div>
                   <div>
-                    <div className="text-[11px] font-semibold text-user-text-lighter mb-0.5">Date</div>
+                    <div className="text-[11px] font-semibold text-user-text-lighter mb-0.5">{t('lbl_date')}</div>
                     <div className="text-sm md:text-base font-bold text-user-text">{dateStr}</div>
                   </div>
                 </div>
@@ -1342,7 +1270,7 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
                     <Icon d={IC.clock} size={16} color="#B46A02" />
                   </div>
                   <div>
-                    <div className="text-[11px] font-semibold text-user-text-lighter mb-0.5">Time</div>
+                    <div className="text-[11px] font-semibold text-user-text-lighter mb-0.5">{t('lbl_time')}</div>
                     <div className="text-sm md:text-base font-bold text-user-text">{timeStr}</div>
                   </div>
                 </div>
@@ -1352,57 +1280,51 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
                     <Icon d={IC.location} size={16} color="#B46A02" />
                   </div>
                   <div>
-                    <div className="text-[11px] font-semibold text-user-text-lighter mb-0.5">Location</div>
+                    <div className="text-[11px] font-semibold text-user-text-lighter mb-0.5">{t('lbl_location')}</div>
                     <div className="text-sm md:text-base font-bold text-user-text">
-                      {userData?.dsDiv ? `Grama Niladhari Office, ${userData.dsDiv}` : 'Grama Niladhari Office'}
+                      {userData?.dsDiv ? `${t('lbl_gn_office')}, ${userData.dsDiv}` : t('lbl_gn_office')}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Divider */}
             {!isMobile && <div className="w-px bg-yellow-200 mx-2" />}
 
-            {/* Right Column - Applicant Information */}
             <div className="flex-1">
               <div className="text-[11px] font-extrabold text-user-text uppercase tracking-wider mb-3.5 flex items-center gap-2">
                 <Icon d={IC.profile} size={14} color="#B46A02" /> 
-                Applicant Information
+                {t('lbl_applicant_info')}
               </div>
               <div className="flex flex-col gap-3.5">
                 <div>
-                  <div className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">Full Name</div>
-                  <div className="text-sm md:text-base font-extrabold text-gray-800 dark:text-gray-400">
+                  <div className="text-[11px] font-semibold text-gray-500 mb-1">{t('lbl_full_name')}</div>
+                  <div className="text-sm md:text-base font-extrabold text-gray-800">
                     {userData?.fullName || currentUser?.displayName || 'User'}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">NIC Number</div>
-                  <div className="text-sm md:text-base font-semibold text-gray-600 dark:text-gray-400 font-mono">
-                    {nicMasked}
-                  </div>
+                  <div className="text-[11px] font-semibold text-gray-500 mb-1">{t('lbl_nic')}</div>
+                  <div className="text-sm md:text-base font-semibold text-gray-600 font-mono">{nicMasked}</div>
                 </div>
                 <div>
-                  <div className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1">Mobile Number</div>
-                  <div className="text-sm md:text-base font-semibold text-gray-600 dark:text-gray-400">
-                    {userData?.mobile || currentUser?.phoneNumber || 'Not provided'}
+                  <div className="text-[11px] font-semibold text-gray-500 mb-1">{t('lbl_mobile')}</div>
+                  <div className="text-sm md:text-base font-semibold text-gray-600">
+                    {userData?.mobile || currentUser?.phoneNumber || t('lbl_not_provided')}
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Mobile Divider */}
           {isMobile && <div className="h-px bg-yellow-200 my-5" />}
 
-          {/* Additional Notes */}
           {booking.notes && (
             <>
               <div className="mt-5">
                 <div className="text-[11px] font-extrabold text-yellow-700 uppercase tracking-wider mb-2.5 flex items-center gap-2">
                   <Icon d={IC.message} size={14} color="#B46A02" /> 
-                  Additional Notes
+                  {t('lbl_additional_notes')}
                 </div>
                 <div className="bg-user-primary-light p-3 md:p-4 rounded-lg border-l-3 border-user-primary text-sm font-semibold text-user-text italic">
                   "{booking.notes}"
@@ -1412,7 +1334,6 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
             </>
           )}
 
-          {/* Terms & Conditions Checkbox */}
           <div className={`mt-5 flex items-start gap-3 ${isMobile ? 'bg-user-primary-light p-4 rounded-xl border border-user-border' : ''}`}>
             <input 
               type="checkbox" 
@@ -1422,31 +1343,25 @@ const BookStep3 = ({ booking, userData, currentUser, onBack, onSubmit, submittin
               className="w-5 h-5 accent-user-primary mt-0.5 cursor-pointer flex-shrink-0" 
             />
             <label htmlFor="agreementCheckbox" className="text-xs font-semibold text-user-text leading-relaxed cursor-pointer">
-              I confirm that the information provided is accurate and I agree to the appointment terms.
+              {t('lbl_terms_confirm')}
             </label>
           </div>
         </div>
       </div>
 
-      {/* Navigation Buttons */}
       <div className={`flex justify-between gap-3 ${isMobile ? 'flex-col' : 'flex-row'}`}>
         <BrownBtn onClick={onBack} isMobile={isMobile}>
-          ← Back
+          ← {t('lbl_back')}
         </BrownBtn>
-        <BrownBtn 
-          onClick={onSubmit} 
-          disabled={submitting || !isAgreed} 
-          isMobile={isMobile}
-        >
-          {submitting ? 'Submitting...' : 'Submit appointment request'}
+        <BrownBtn onClick={onSubmit} disabled={submitting || !isAgreed} isMobile={isMobile}>
+          {submitting ? t('lbl_submitting') : t('lbl_submit_request')}
         </BrownBtn>
       </div>
     </div>
   );
 };
 
-// SCREEN — SUCCESS
-const BookSuccess = ({ onBack }) => {
+const BookSuccess = ({ onBack, t }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
   useEffect(() => {
@@ -1457,30 +1372,16 @@ const BookSuccess = ({ onBack }) => {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center min-h-[70vh] p-7">
-      <div className="bg-user-surface border border-gray-200 dark:border-gray-700 rounded-2xl p-8 md:p-12 text-center max-w-md w-full mx-auto shadow-sm">
-        
-        {/* Success Icon */}
-        <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-600/30 flex items-center justify-center mx-auto mb-5">
+      <div className="bg-user-surface border border-gray-200 rounded-2xl p-8 md:p-12 text-center max-w-md w-full mx-auto shadow-sm">
+        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-5">
           <Icon d={IC.success} size={36} color="#1a7a3a" strokeWidth={2.5} />
         </div>
-        
-        {/* Title */}
-        <h2 className="text-xl md:text-2xl font-black user-text mb-3">
-          Appointment Requested!
-        </h2>
-        
-        {/* Message */}
-        <p className="text-sm text-user-text-light font-semibold leading-relaxed mb-2">
-          Your appointment request has been submitted.
-        </p>
-        <p className="text-sm text-user-text-light font-semibold leading-relaxed mb-7">
-          You will receive a confirmation once the GN Officer approves it.
-        </p>
-        
-        {/* Button */}
+        <h2 className="text-xl md:text-2xl font-black user-text mb-3">{t('lbl_appointment_requested')}</h2>
+        <p className="text-sm text-user-text-light font-semibold leading-relaxed mb-2">{t('lbl_appointment_submitted')}</p>
+        <p className="text-sm text-user-text-light font-semibold leading-relaxed mb-7">{t('lbl_appointment_waiting')}</p>
         <div className="flex justify-center">
           <YellowBtn onClick={onBack} isMobile={isMobile}>
-            ← Back to My Appointments
+            ← {t('lbl_back_to_appointments')}
           </YellowBtn>
         </div>
       </div>
@@ -1488,46 +1389,14 @@ const BookSuccess = ({ onBack }) => {
   );
 };
 
-// Cancel Confirmation Modal
-const CancelConfirmModal = ({ isOpen, onClose, onConfirm, appointment }) => {
-  if (!isOpen) return null;
-
-  return (
-    <>
-      <div onClick={onClose} className="fixed inset-0 bg-black/45 z-[200]" />
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[201] w-full max-w-[400px] bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className="p-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </div>
-          <h3 className="text-xl font-black text-user-text mb-2">Cancel Appointment?</h3>
-          <p className="text-sm text-user-text-lighter mb-6">
-            Are you sure you want to cancel this appointment? This action cannot be undone.
-          </p>
-          <div className="flex gap-3">
-            <button onClick={onClose} className="flex-1 py-3 rounded-round border border-user-border bg-white text-sm font-bold cursor-pointer">
-              No, Keep
-            </button>
-            <button onClick={onConfirm} className="flex-1 py-3 rounded-round bg-red-500 text-sm font-bold text-white cursor-pointer hover:bg-red-600">
-              Yes, Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-};
-
-// MAIN COMPONENT
 const Appointments = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState('en');
+  const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'en');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -1538,33 +1407,43 @@ const Appointments = () => {
   const [filteredPages, setFilteredPages] = useState([]);
   const [booking, setBooking] = useState({ service: null, notes: '', day: null, month: null, year: null, slot: null });
 
+  useEffect(() => {
+    setCurrentLanguage(i18n.language);
+  }, [i18n.language]);
+
   const handleLanguageChange = (langCode) => {
     setCurrentLanguage(langCode);
-    console.log('Language changed to:', langCode);
+    i18n.changeLanguage(langCode);
   };
 
-  useEffect(() => { const handle = () => setIsMobile(window.innerWidth <= 768); window.addEventListener('resize', handle); return () => window.removeEventListener('resize', handle); }, []);
+  useEffect(() => { 
+    const handle = () => setIsMobile(window.innerWidth <= 768); 
+    window.addEventListener('resize', handle); 
+    return () => window.removeEventListener('resize', handle); 
+  }, []);
   
-  useEffect(() => { const handleClickOutside = () => { setShowSearchResults(false); setShowProfileMenu(false); }; document.addEventListener('click', handleClickOutside); return () => document.removeEventListener('click', handleClickOutside); }, []);
+  useEffect(() => { 
+    const handleClickOutside = () => { setShowSearchResults(false); setShowProfileMenu(false); }; 
+    document.addEventListener('click', handleClickOutside); 
+    return () => document.removeEventListener('click', handleClickOutside); 
+  }, []);
 
-  // Filter pages for search
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredPages([]);
-      return;
-    }
+    if (!searchQuery.trim()) { setFilteredPages([]); return; }
     const query = searchQuery.toLowerCase();
-    const filtered = PAGE_ACTIONS.filter(page =>
-      page.name.toLowerCase().includes(query)
-    );
-    setFilteredPages(filtered);
-  }, [searchQuery]);
+    const allPages = PAGE_ACTIONS_KEYS.map(p => ({
+      ...p,
+      name: p.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${p.key}`)
+    }));
+    setFilteredPages(allPages.filter(p => p.name.toLowerCase().includes(query)));
+  }, [searchQuery, t]);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
-        try { const snap = await getDoc(doc(db, 'users', user.uid)); if (snap.exists()) setUserData(snap.data()); } catch (e) { console.warn(e.message); }
+        try { const snap = await getDoc(doc(db, 'users', user.uid)); if (snap.exists()) setUserData(snap.data()); } 
+        catch (e) { console.warn(e.message); }
       } else { navigate('/login'); }
       setAuthLoading(false);
     });
@@ -1633,7 +1512,11 @@ const Appointments = () => {
 
       setScreen('success');
       setRefreshKey(k => k + 1);
-    } catch (e) { console.error('Submit error:', e.message); alert('Failed to submit. Please try again.'); } finally { setSubmitting(false); }
+    } catch (e) { 
+      alert(t('lbl_submit_error')); 
+    } finally { 
+      setSubmitting(false); 
+    }
   };
 
   const chipName = userData?.username || userData?.fullName || currentUser?.email?.split('@')[0] || 'User';
@@ -1641,10 +1524,10 @@ const Appointments = () => {
   if (authLoading) return <PageLoadingSkeleton />;
 
   return (
-    <div className="user-module min-h-screen flex flex-col font-sans bg-user-background">
+    <div key={i18n.language} className="user-module min-h-screen flex flex-col font-sans bg-user-background">
       <div className="flex-1 flex">
-        {!isMobile && <DesktopSidebar activePage="appointments" navigate={navigate} onLogout={handleLogout} />}
-        <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} activePage="appointments" navigate={navigate} onLogout={handleLogout} />
+        {!isMobile && <DesktopSidebar activePage="appointments" navigate={navigate} onLogout={handleLogout} t={t} />}
+        <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} activePage="appointments" navigate={navigate} onLogout={handleLogout} t={t} />
 
         <div className="flex-1 flex flex-col min-w-0">
           {/* Desktop Topbar */}
@@ -1663,6 +1546,7 @@ const Appointments = () => {
               handleLogout={handleLogout}
               userData={userData}
               currentUser={currentUser}
+              t={t}
             />
           )}
 
@@ -1673,17 +1557,17 @@ const Appointments = () => {
             navigate={navigate}
             currentLanguage={currentLanguage}
             onLanguageChange={handleLanguageChange}
+            t={t}
           />
 
           {/* Mobile Content */}
           <div className="mobile-content md:hidden flex-1 bg-user-secondary-light overflow-y-auto">
-            {/* Search Bar */}
             <div className="pt-3 px-3.5 relative">
               <div className="flex items-center gap-2.5 bg-white border border-user-border rounded-3xl px-4 py-2.5">
                 <Icon d={IC.search} size={16} color="#aaa" />
                 <input
                   type="text"
-                  placeholder="Search for a page..."
+                  placeholder={t('lbl_search_page')}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -1713,7 +1597,7 @@ const Appointments = () => {
                       <Icon d={page.icon} size={18} color="#B46A02" />
                       <div>
                         <div className="text-sm font-bold text-user-text">{page.name}</div>
-                        <div className="text-[11px] text-user-text-lighter">Click to go</div>
+                        <div className="text-[11px] text-user-text-lighter">{t('lbl_click_to_go')}</div>
                       </div>
                     </button>
                   ))}
@@ -1721,7 +1605,6 @@ const Appointments = () => {
               )}
             </div>
 
-            {/* Mobile Appointments Content */}
             <div className="p-3.5 pb-[90px]">
               {screen === 'list' && (
                 <AppointmentsList 
@@ -1731,6 +1614,7 @@ const Appointments = () => {
                     setBooking({ service: null, notes: '', day: null, month: null, year: null, slot: null }); 
                     setScreen('step1'); 
                   }} 
+                  t={t}
                 />
               )}
               {screen === 'step1' && (
@@ -1739,6 +1623,7 @@ const Appointments = () => {
                   setBooking={setBooking} 
                   onNext={() => setScreen('step2')} 
                   onCancel={() => setScreen('list')} 
+                  t={t}
                 />
               )}
               {screen === 'step2' && (
@@ -1747,6 +1632,7 @@ const Appointments = () => {
                   setBooking={setBooking} 
                   onNext={() => setScreen('step3')} 
                   onBack={() => setScreen('step1')} 
+                  t={t}
                 />
               )}
               {screen === 'step3' && (
@@ -1757,23 +1643,27 @@ const Appointments = () => {
                   onBack={() => setScreen('step2')} 
                   onSubmit={handleSubmit} 
                   submitting={submitting} 
+                  t={t}
                 />
               )}
-              {screen === 'success' && <BookSuccess onBack={() => setScreen('list')} />}
+              {screen === 'success' && <BookSuccess onBack={() => setScreen('list')} t={t} />}
             </div>
           </div>
 
           {/* Desktop Content */}
           <div className="hidden md:block flex-1">
-            {screen === 'list' && <AppointmentsList currentUser={currentUser} refreshKey={refreshKey} onBook={() => { setBooking({ service: null, notes: '', day: null, month: null, year: null, slot: null }); setScreen('step1'); }} />}
-            {screen === 'step1' && <BookStep1 booking={booking} setBooking={setBooking} onNext={() => setScreen('step2')} onCancel={() => setScreen('list')} />}
-            {screen === 'step2' && <BookStep2 booking={booking} setBooking={setBooking} onNext={() => setScreen('step3')} onBack={() => setScreen('step1')} />}
-            {screen === 'step3' && <BookStep3 booking={booking} userData={userData} currentUser={currentUser} onBack={() => setScreen('step2')} onSubmit={handleSubmit} submitting={submitting} />}
-            {screen === 'success' && <BookSuccess onBack={() => setScreen('list')} />}
+            {screen === 'list' && <AppointmentsList currentUser={currentUser} refreshKey={refreshKey} onBook={() => { setBooking({ service: null, notes: '', day: null, month: null, year: null, slot: null }); setScreen('step1'); }} t={t} />}
+            {screen === 'step1' && <BookStep1 booking={booking} setBooking={setBooking} onNext={() => setScreen('step2')} onCancel={() => setScreen('list')} t={t} />}
+            {screen === 'step2' && <BookStep2 booking={booking} setBooking={setBooking} onNext={() => setScreen('step3')} onBack={() => setScreen('step1')} t={t} />}
+            {screen === 'step3' && <BookStep3 booking={booking} userData={userData} currentUser={currentUser} onBack={() => setScreen('step2')} onSubmit={handleSubmit} submitting={submitting} t={t} />}
+            {screen === 'success' && <BookSuccess onBack={() => setScreen('list')} t={t} />}
           </div>
         </div>
       </div>
-      <footer className="bg-[#6A2301] text-white text-center py-3 px-4 text-sm font-semibold">© 2026 Smart Grama Sewa. All rights reserved.</footer>
+      
+      <footer className="bg-[#6A2301] text-white text-center py-3 px-4 text-sm font-semibold">
+        © 2026 Smart Grama Sewa. All rights reserved.
+      </footer>
 
       <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

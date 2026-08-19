@@ -3,8 +3,10 @@ import { Navigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../../firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { useTranslation } from "react-i18next";
 
 const ProtectedRoute = ({ children }) => {
+  const { t } = useTranslation();
   const [user, setUser] = useState(undefined);
   const [status, setStatus] = useState(null);
 
@@ -32,7 +34,7 @@ const ProtectedRoute = ({ children }) => {
       <div className="min-h-screen flex items-center justify-center bg-[#F5F0DC]">
         <div className="text-center">
           <img src="/logo.png" alt="logo" className="h-16 mx-auto mb-4 animate-pulse" />
-          <p className="text-[#8B4513] font-semibold text-sm">Loading...</p>
+          <p className="text-[#8B4513] font-semibold text-sm">{t("loading")}</p>
         </div>
       </div>
     );
