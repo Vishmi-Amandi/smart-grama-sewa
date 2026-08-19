@@ -310,7 +310,7 @@ const NotificationBell = () => {
     } else {
       markAsRead(n.id);
       setIsOpen(false);
-      navigate('/announcements');
+      navigate('/announcements', { state: { announcementId: n.id } });
     }
   };
 

@@ -55,13 +55,17 @@ import FAQ from './modules/home/FAQ';
 // ===== GLOBAL CHATBOT OPENER =====
 window.openChatbot = () => window.dispatchEvent(new CustomEvent('open-chatbot'));
 
-// ===== CHATBOT PAGE - opens widget and stays here =====
+// ===== CHATBOT PAGE - opens widget and returns to previous/dashboard page =====
 const ChatbotPage = () => {
+  const navigate = useNavigate();
   useEffect(() => {
-    // Dispatch event so the ChatbotWidget opens
     window.dispatchEvent(new CustomEvent('open-chatbot'));
-  }, []);
-  // Render nothing – the floating ChatbotWidget handles the UI
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
   return null;
 };
 

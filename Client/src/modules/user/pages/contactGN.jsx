@@ -280,7 +280,7 @@ const ContactGN = () => {
                 iconPath={item.icon} 
                 label={item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`)}
                 active={false}
-                onClick={() => navigate(item.path)}
+                onClick={() => item.key === 'ai_assistant' ? window.openChatbot?.() : navigate(item.path)}
               />
             ))}
           </div>
@@ -314,7 +314,7 @@ const ContactGN = () => {
                   iconPath={item.icon} 
                   label={item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`)}
                   active={false}
-                  onClick={() => { navigate(item.path); setMobileMenuOpen(false); }}
+                  onClick={() => { if (item.key === 'ai_assistant') { window.openChatbot?.(); setMobileMenuOpen(false); return; } navigate(item.path); setMobileMenuOpen(false); }}
                 />
               ))}
               <div className="border-t border-white/20 my-3 pt-3">

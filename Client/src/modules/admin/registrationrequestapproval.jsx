@@ -116,7 +116,7 @@ function Topbar({ adminName }) {
         style={{ borderColor: '#C8B89A', color: COLORS.text, background: '#FFF9F0' }}>
         English <ChevronDown size={14} />
       </button>
-      <button className="relative w-10 h-10 rounded-full flex items-center justify-center border"
+      <button onClick={() => navigate('/admin/announcements')} title="Notifications / Announcements" className="relative w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer hover:bg-amber-100 transition"
         style={{ borderColor: '#C8B89A', background: '#FFF9F0' }}>
         <Bell size={18} style={{ color: COLORS.primary }} />
         <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"

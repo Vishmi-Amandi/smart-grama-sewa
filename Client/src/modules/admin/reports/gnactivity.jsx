@@ -1261,7 +1261,7 @@ function Topbar() {
         style={{ borderColor: '#C8B89A', color: C.text, background: C.inputBg }}>
         English <ChevronDown size={14} />
       </button>
-      <button className="relative w-10 h-10 rounded-full flex items-center justify-center border"
+      <button onClick={() => navigate('/admin/announcements')} title="Notifications / Announcements" className="relative w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer hover:bg-amber-100 transition"
         style={{ borderColor: '#C8B89A', background: C.inputBg }}>
         <Icon.Bell size={18} color={C.primary} />
         <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full" style={{ background: C.accent }} />

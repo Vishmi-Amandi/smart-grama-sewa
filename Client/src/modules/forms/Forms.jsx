@@ -85,7 +85,7 @@ const DesktopSidebar = ({ activePage, navigate, onLogout, t }) => {
         {navItems.map((item) => (
           <NavItem key={item.key} iconPath={item.icon} label={item.label}
             active={activePage === item.key}
-            onClick={() => navigate(item.path)} />
+            onClick={() => item.key === 'ai' ? window.openChatbot?.() : navigate(item.path)} />
         ))}
       </div>
       <div className="p-3 pt-2 border-t border-black/10">
@@ -128,10 +128,7 @@ const DesktopTopbar = ({ chipName, searchQuery, setSearchQuery, showResults, set
       onLanguageChange={onLanguageChange}
     />
     
-    <div className="w-9 h-9 rounded-full bg-user-secondary-light dark:bg-user-secondary-light border border-user-border dark:border-user-border flex items-center justify-center cursor-pointer relative transition-colors hover:border-user-primary">
-      <Icon d={IC.bell} size={18} color="#5a3a00" />
-      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-white" />
-    </div>
+    <NotificationBell />
     
     <div className="relative">
       <button 
