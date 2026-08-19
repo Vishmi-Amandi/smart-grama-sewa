@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, query, orderBy, getDocs, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
@@ -566,6 +566,7 @@ const TABS = ['All', 'Urgent', 'Important', 'Information', 'Unread'];
 const Announcements = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -711,6 +712,17 @@ const Announcements = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, userData]);
+
+  // Open target announcement modal if navigated from notification bell
+  useEffect(() => {
+    if (location.state?.announcementId && announcements.length > 0) {
+      const target = announcements.find(a => a.id === location.state.announcementId);
+      if (target) {
+        setSelAnn(target);
+        markAsRead(target.id);
+      }
+    }
+  }, [location.state, announcements]);
 
   const markAsRead = async (annId) => {
     if (readIds.has(annId)) return;

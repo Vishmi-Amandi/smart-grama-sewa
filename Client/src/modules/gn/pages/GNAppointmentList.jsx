@@ -196,18 +196,52 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
       );
       if (selected?.id === appointment.id)
         setSelected((s) => ({ ...s, status: "Confirmed", date, slotTime }));
+
+      // Notify the citizen that their appointment is confirmed
+      fetch('/api/appointments/notify-confirmed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: appointment.uid,
+          service: appointment.service,
+          date: appointment.date,
+          slot: appointment.slot,
+          appointmentId: appointment.id,
+          gnDiv: appointment.gnDiv || '',
+        }),
+      }).catch(err => console.warn('notify-confirmed failed:', err));
+
     } catch (err) {
       console.error("Confirm error:", err);
     }
   };
 
-  const handleCancel = async (id) => {
+  const handleCancel = async (appointment) => {
+    const apptId = typeof appointment === 'string' ? appointment : appointment.id;
+    const apptData = typeof appointment === 'object' ? appointment : appointments.find(a => a.id === apptId);
     try {
-      await updateDoc(doc(db, "appointments", id), { status: "Cancelled" });
+      await updateDoc(doc(db, "appointments", apptId), {
+        status: "Cancelled",
+      });
       setAppointments((prev) =>
-        prev.map((a) => (a.id === id ? { ...a, status: "Cancelled" } : a))
+        prev.map((a) => (a.id === apptId ? { ...a, status: "Cancelled" } : a))
       );
-      if (selected?.id === id) setSelected((s) => ({ ...s, status: "Cancelled" }));
+      if (selected?.id === apptId) setSelected((s) => ({ ...s, status: "Cancelled" }));
+
+      if (apptData?.uid) {
+        fetch('/api/appointments/notify-cancelled', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: apptData.uid,
+            service: apptData.service || 'Appointment',
+            date: apptData.date || '',
+            slot: apptData.slot || '',
+            appointmentId: apptId,
+            cancelledBy: 'the GN Officer',
+          }),
+        }).catch(err => console.warn('notify-cancelled failed:', err));
+      }
     } catch (err) {
       console.error("Cancel error:", err);
     }

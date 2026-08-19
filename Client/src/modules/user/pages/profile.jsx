@@ -229,7 +229,7 @@ const MobileSidebar = ({ isOpen, onClose, navigate, onLogout, currentPath, t }) 
             iconPath={item.icon} 
             label={item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`)}
             active={currentPath === item.path}
-            onClick={() => { navigate(item.path); onClose(); }} 
+            onClick={() => { if (item.key === 'ai_assistant') { window.openChatbot?.(); onClose(); return; } navigate(item.path); onClose(); }} 
           />
         ))}
         <div className="border-t border-white/20 my-3 pt-3">
@@ -274,7 +274,7 @@ const DesktopSidebar = ({ navigate, onLogout, currentPath, t }) => {
             iconPath={item.icon} 
             label={item.key === 'ai_assistant' ? t('lbl_ai_assistant') : t(`lbl_${item.key}`)}
             active={currentPath === item.path}
-            onClick={() => navigate(item.path)} 
+            onClick={() => item.key === 'ai_assistant' ? window.openChatbot?.() : navigate(item.path)} 
           />
         ))}
       </div>

@@ -66,6 +66,16 @@ const GNChangeGNDivision = ({ gnStatus, theme }) => {
         status: "Pending",
         createdAt: serverTimestamp(),
       });
+
+      // Write notification to officer's notifications subcollection
+      await addDoc(collection(db, "gn_officers", user.uid, "notifications"), {
+        type: 'transfer_submitted',
+        title: '📋 GN Division Transfer Requested',
+        body: `Your division transfer request from "${form.fromDivision}" to "${form.toDivision}" (${form.toDistrict}) has been submitted and is pending Admin review.`,
+        read: false,
+        createdAt: serverTimestamp(),
+      }).catch(err => console.warn("Transfer notification error:", err));
+
       await logActivity(
         "transfer",
         "Submitted",

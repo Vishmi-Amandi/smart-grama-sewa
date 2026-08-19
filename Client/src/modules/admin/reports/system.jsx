@@ -1,3 +1,6 @@
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
@@ -78,28 +81,49 @@ function getLast7Days() {
 }
 
 // ─── Export Buttomn ─────────────────────────────────────────────────────────────────
-function exportToCSV(data, filename = "report.csv") {
+function exportToPDF(data, filename = "report.pdf", title = "Report") {
   if (!data || data.length === 0) {
     alert("No data to export");
     return;
   }
 
+  const doc = new jsPDF();
+
+  // Title
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text(title, 14, 15);
+
+  // Date
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(
+    `Generated: ${new Date().toLocaleDateString("en-LK")}`,
+    14,
+    22
+  );
+
   const headers = Object.keys(data[0]);
 
-  const csvRows = [
-    headers.join(","), // header row
-    ...data.map(row =>
-      headers.map(field => JSON.stringify(row[field] ?? "")).join(",")
-    )
-  ];
+  const rows = data.map(row =>
+    headers.map(field => row[field] ?? "")
+  );
 
-  const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
+  autoTable(doc, {
+    head: [headers],
+    body: rows,
+    startY: 28,
+    theme: "grid",
+    styles: {
+      fontSize: 8,
+      cellPadding: 3,
+    },
+    headStyles: {
+      fontStyle: "bold",
+    },
+  });
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
+  doc.save(filename);
 }
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
@@ -187,8 +211,8 @@ function Sidebar({ onLogout }) {
           <NavItem icon={Calendar} label="Appointment Calendar" bold onClick={() => navigate("/admin/calendar")} />
         </li>
         <li className="pt-2">
-          <NavItem icon={TrendingUp} label="Statistical Changes" bold 
-            onClick={() => navigate('/admin/statistical-changes')} />
+          <NavItem icon={TrendingUp} label="Statistical Changes" bold
+            onClick={() => navigate('/admin/staticalchanges')} />
         </li>
       </ul>
 
@@ -222,7 +246,7 @@ function Topbar() {
         style={{ borderColor: '#C8B89A', color: COLORS.text, background: COLORS.inputBg }}>
         English <ChevronDown size={14} />
       </button>
-      <button className="relative w-10 h-10 rounded-full flex items-center justify-center border"
+      <button onClick={() => navigate('/admin/announcements')} title="Notifications / Announcements" className="relative w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer hover:bg-amber-100 transition"
         style={{ borderColor: '#C8B89A', background: COLORS.inputBg }}>
         <Icon.Bell size={18} color={COLORS.primary} />
         <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full" style={{ background: COLORS.accent }} />
@@ -353,18 +377,22 @@ function UserStatisticsReport({ startDate, endDate, sort }) {
 
   // Export function
   function handleExport() {
-  if (!data) return;
+    if (!data) return;
 
-  const exportData = data.filteredGN.map(u => ({
-    Name: u.fullName || '',
-    Division: u.gnDivisionName || u.gnDiv || '',
-    District: u.district || '',
-    Registered: fmtDate(toDate(u.createdAt)),
-    Role: u.role || ''
-  }));
+    const exportData = data.filteredGN.map(u => ({
+      Name: u.fullName || '',
+      Division: u.gnDivisionName || u.gnDiv || '',
+      District: u.district || '',
+      Registered: fmtDate(toDate(u.createdAt)),
+      Role: u.role || ''
+    }));
 
-  exportToCSV(exportData, "user_statistics_report.csv");
-}
+    exportToPDF(
+  exportData,
+  "user_statistics_report.pdf",
+  "User Statistics Report"
+);
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -374,7 +402,7 @@ function UserStatisticsReport({ startDate, endDate, sort }) {
         <button onClick={handleExport}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
           style={{ background: COLORS.primary, color: COLORS.white }}>
-          <Download size={14} /> Export Report 
+          <Download size={14} /> Export Report
         </button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -495,27 +523,31 @@ function AppointmentSummaryReport({ startDate, endDate, sort }) {
   if (loading) return <div className="flex flex-col gap-4"><div className="grid grid-cols-4 gap-4">{[1, 2, 3, 4].map(i => <Skeleton key={i} h={110} />)}</div><Skeleton h={260} /></div>;
   if (!data) return <p style={{ color: COLORS.textMuted }}>No data available.</p>;
 
-    // Export function
-function handleExport() {
-  if (!data) return;
+  // Export function
+  function handleExport() {
+    if (!data) return;
 
-  const exportData = data.appts.map(a => ({
-    Name: a.fullName || '',
-    NIC: a.nic || '',
-    Service: a.service || '',
-    GN_Division: a.gnDiv || '',
-    Date: a.date || '',
-    Slot: a.slot || '',
-    Status: a.status || ''
-  }));
+    const exportData = data.appts.map(a => ({
+      Name: a.fullName || '',
+      NIC: a.nic || '',
+      Service: a.service || '',
+      GN_Division: a.gnDiv || '',
+      Date: a.date || '',
+      Slot: a.slot || '',
+      Status: a.status || ''
+    }));
 
-  exportToCSV(exportData, "appointment_summary_report.csv");
-}
+    exportToPDF(
+  exportData,
+  "appointment_summary_report.pdf",
+  "Appointment Summary Report"
+);
+  }
   return (
     <div className="flex flex-col gap-6">
       {/*Export Button*/}
       <div className="flex justify-between items-center">
-        <SectionHead title="Appointment Summary Report" />        
+        <SectionHead title="Appointment Summary Report" />
         <button onClick={handleExport}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
           style={{ background: COLORS.primary, color: COLORS.white }}>
@@ -662,25 +694,29 @@ function SystemUsageReport({ startDate, endDate, sort }) {
   if (loading) return <div className="flex flex-col gap-4"><div className="grid grid-cols-3 gap-4">{[1, 2, 3].map(i => <Skeleton key={i} h={110} />)}</div><Skeleton h={260} /><Skeleton h={260} /></div>;
   if (!data) return <p style={{ color: COLORS.textMuted }}>No data available.</p>;
 
-// Export Function
-function handleExport() {
-  if (!data) return;
+  // Export Function
+  function handleExport() {
+    if (!data) return;
 
-  const exportData = data.logs.map(l => ({
-    UserID: l.uid || '',
-    Action: l.action || l.type || '',
-    Description: l.description || '',
-    Date: fmtDate(toDate(l.createdAt))
-  }));
+    const exportData = data.logs.map(l => ({
+      UserID: l.uid || '',
+      Action: l.action || l.type || '',
+      Description: l.description || '',
+      Date: fmtDate(toDate(l.createdAt))
+    }));
 
-  exportToCSV(exportData, "system_usage_report.csv");
-}
+    exportToPDF(
+  exportData,
+  "system_usage_report.pdf",
+  "System Usage Report"
+);
+  }
   return (
     <div className="flex flex-col gap-6">
-            {/*Export Button*/}
+      {/*Export Button*/}
       <div className="flex justify-between items-center">
-        <SectionHead title="System Usage Report" />       
-         <button
+        <SectionHead title="System Usage Report" />
+        <button
           onClick={handleExport}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
           style={{ background: COLORS.primary, color: COLORS.white }}>
@@ -791,27 +827,31 @@ function ActivityTrendReport({ startDate, endDate, sort }) {
 
   // Export Function
   function handleExport() {
-  if (!data) return;
+    if (!data) return;
 
-  const source = view === 'daily' ? data.daily : data.weekly;
+    const source = view === 'daily' ? data.daily : data.weekly;
 
-  const exportData = source.map(d => ({
-    Period: d.date,
-    Logs: d.logs,
-    Appointments: d.appts,
-    NewUsers: d.users
-  }));
+    const exportData = source.map(d => ({
+      Period: d.date,
+      Logs: d.logs,
+      Appointments: d.appts,
+      NewUsers: d.users
+    }));
 
-  exportToCSV(exportData, "activity_trend_report.csv");
-}
+    exportToPDF(
+  exportData,
+  "activity_trend_report.pdf",
+  "Activity Trend Report"
+);
+  }
   return (
     <div className="flex flex-col gap-6">
 
 
       {/*Export Button*/}
       <div className="flex justify-between items-center">
-        <SectionHead title="Activity Trend Report" />      
-          <button
+        <SectionHead title="Activity Trend Report" />
+        <button
           onClick={handleExport}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
           style={{ background: COLORS.primary, color: COLORS.white }}>
@@ -902,24 +942,28 @@ function SystemHealthReport({ startDate, endDate, sort }) {
   const errorRate = data.logs.length ? ((data.errors.length / data.logs.length) * 100).toFixed(1) : '0.0';
 
   // Export Function
-function handleExport() {
-  if (!data) return;
+  function handleExport() {
+    if (!data) return;
 
-  const exportData = data.logs.map(l => ({
-    Title: l.title || '',
-    Action: l.action || '',
-    Type: l.type || '',
-    Description: l.description || '',
-    Date: fmtDate(toDate(l.createdAt))
-  }));
+    const exportData = data.logs.map(l => ({
+      Title: l.title || '',
+      Action: l.action || '',
+      Type: l.type || '',
+      Description: l.description || '',
+      Date: fmtDate(toDate(l.createdAt))
+    }));
 
-  exportToCSV(exportData, "system_health_report.csv");
-}
+    exportToPDF(
+  exportData,
+  "system_health_report.pdf",
+  "System Health Report"
+);
+  }
   return (
     <div className="flex flex-col gap-6">
       {/*Export Button*/}
       <div className="flex justify-between items-center">
-        <SectionHead title="System Health Report" />        
+        <SectionHead title="System Health Report" />
         <button
           onClick={handleExport}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
@@ -1011,7 +1055,7 @@ export default function AdminSystemPerformanceReports() {
   const activeLabel = SUB_REPORTS.find(r => r.id === activeReport)?.label || '';
 
   const renderReport = () => {
-    const props = { startDate, endDate, sort};
+    const props = { startDate, endDate, sort };
     switch (activeReport) {
       case 'user-stats': return <UserStatisticsReport    {...props} />;
       case 'appt-summary': return <AppointmentSummaryReport {...props} />;

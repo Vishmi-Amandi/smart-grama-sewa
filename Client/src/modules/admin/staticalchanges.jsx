@@ -110,7 +110,7 @@ function Sidebar({ onLogout }) {
         </li>
         <li className="pt-2">
           <NavItem icon={TrendingUp} label="Statistical Changes" bold active
-            onClick={() => navigate('/admin/statistical-changes')} />
+            onClick={() => navigate('/admin/staticalchanges')} />
         </li>
       </ul>
 
@@ -147,7 +147,7 @@ function Topbar({ adminName }) {
         style={{ borderColor: COLORS.inputBorder, color: COLORS.text, background: COLORS.inputBg }}>
         English <ChevronDown size={14} />
       </button>
-      <button className="relative w-10 h-10 rounded-full flex items-center justify-center border"
+      <button onClick={() => navigate('/admin/announcements')} title="Notifications / Announcements" className="relative w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer hover:bg-amber-100 transition"
         style={{ borderColor: COLORS.inputBorder, background: COLORS.inputBg }}>
         <Bell size={18} style={{ color: COLORS.primary }} />
         <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"

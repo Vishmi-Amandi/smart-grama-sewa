@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { auth } from '../../firebase';
+import { auth, db } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { collection, query, orderBy, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './ChatbotWidget.css';
 
@@ -64,7 +65,7 @@ const ChatbotWidget = () => {
   const [messages, setMessages] = useState([
     { 
       sender: 'bot', 
-      text: 'Welcome to Smart Grama Sewa! Please select your preferred language. / ස්මාර්ට් ග්‍රාම සේවා වෙත සාදරයෙන් පිළිගනිමු! කරුණාකර ඔබගේ භාෂාව තෝරන්න. / ஸ்மார்ட் கிராம சேவாவிற்கு வரவேற்கிறோம்! உங்கள் மொழியை தேர்ந்தெடுக்கவும்.',
+      text: 'Welcome to Smart Grama Sewa! Please select your preferred language. / ස්මාර්ට් ග්‍රාම සේවා වෙත සාදරයෙන් පිළිගනිමු! කරුණාකර ඔබගේ භාෂාව තෝරන්න. / ஸ்மார்ட் கிராம சேவාවிற்கு வரவேற்கிறோம்! உங்கள் மொழியை தேர்ந்தெடுக்கவும்.',
       options: [
         { label: 'English', value: 'en' },
         { label: 'සිංහල', value: 'si' },
@@ -105,7 +106,7 @@ const ChatbotWidget = () => {
     setMessages([
       { 
         sender: 'bot', 
-        text: 'Welcome to Smart Grama Sewa! Please select your preferred language. / ස්මාර්ට් ග්‍රාම සේවා වෙත සාදරයෙන් පිළිගනිමු! කරුණාකර ඔබගේ භාෂාව තෝරන්න. / ஸ்மார்ட் கிராம சேவாவிற்கு வரவேற்கிறோம்! உங்கள் மொழியை தேர்ந்தெடுக்கவும்.',
+        text: 'Welcome to Smart Grama Sewa! Please select your preferred language. / ස්මාර්ට් ග්‍රාම සේවා වෙත සාදරයෙන් පිළිගනිමු! කරුණාකර ඔබගේ භාෂාව තෝරන්න. / ஸ்மார்ட் கிராம சேවාවிற்கு வரவேற்கிறோம்! உங்கள் மொழியை தேர்ந்தெடுக்கவும்.',
         options: [
           { label: 'English', value: 'en' },
           { label: 'සිංහල', value: 'si' },
@@ -128,38 +129,68 @@ const ChatbotWidget = () => {
     return () => window.removeEventListener('open-chatbot', handleOpenChatbot);
   }, []);
 
-  // Update initial message when language changes, if it's the only message
-  // (Removed since we now handle it in handleLanguageSelect)
-
   const loadHistory = async () => {
     if (!currentUser) return;
     setLoadingHistory(true);
     try {
-      const response = await fetch(`/api/chat/history/${currentUser.uid}`);
-      if (response.ok) {
-        const historyData = await response.json();
-        
-        const historyMessages = [];
-        historyData.forEach(item => {
-          historyMessages.push({ sender: 'user', text: item.question });
-          if (item.botResponse) {
-            historyMessages.push({ 
-              sender: 'bot', 
-              text: item.botResponse.answer, 
-              formLink: item.botResponse.form 
-            });
+      let historyData = [];
+
+      // 1. Attempt to fetch via API
+      try {
+        const response = await fetch(`/api/chat/history/${currentUser.uid}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            historyData = data;
           }
-        });
-        
-        if (historyMessages.length > 0) {
-          setMessages(prev => [
-            ...historyMessages, 
-            { sender: 'bot', text: '--- End of Previous Chats ---' }, 
-            ...prev
-          ]);
         }
-        setHistoryLoaded(true);
+      } catch (err) {
+        console.warn("API load history warning:", err);
       }
+
+      // 2. Fallback to direct client-side Firestore if API returned no data
+      if (historyData.length === 0) {
+        try {
+          const q = query(
+            collection(db, 'users', currentUser.uid, 'chats'),
+            orderBy('timestamp', 'asc')
+          );
+          const snap = await getDocs(q);
+          snap.forEach(docSnap => {
+            historyData.push({ id: docSnap.id, ...docSnap.data() });
+          });
+        } catch (firestoreErr) {
+          console.warn("Client Firestore history fetch error:", firestoreErr);
+        }
+      }
+
+      const historyMessages = [];
+      historyData.forEach(item => {
+        if (item.question) {
+          historyMessages.push({ sender: 'user', text: item.question });
+        }
+        if (item.botResponse) {
+          historyMessages.push({ 
+            sender: 'bot', 
+            text: item.botResponse.answer, 
+            formLink: item.botResponse.form 
+          });
+        }
+      });
+      
+      if (historyMessages.length > 0) {
+        setMessages(prev => [
+          ...historyMessages, 
+          { sender: 'bot', text: '--- End of Previous Chats ---' }, 
+          ...prev
+        ]);
+      } else {
+        setMessages(prev => [
+          ...prev,
+          { sender: 'bot', text: 'No previous chat history found.' }
+        ]);
+      }
+      setHistoryLoaded(true);
     } catch (error) {
       console.error("Failed to load history:", error);
     } finally {
@@ -190,8 +221,6 @@ const ChatbotWidget = () => {
   const handleLanguageSelect = (langValue) => {
     setLanguage(langValue);
     
-    // Remove the options from the first message so they can't be clicked again,
-    // and append the user's choice and bot's initial translated greeting.
     setMessages(prev => {
       const updatedMessages = [...prev];
       if (updatedMessages[0].options) {
@@ -216,17 +245,13 @@ const ChatbotWidget = () => {
     // Check for language change commands
     const lowerQuestion = question.toLowerCase();
     let newLang = null;
-    let langName = '';
     
     if (lowerQuestion === 'english' || lowerQuestion === 'en') {
       newLang = 'en';
-      langName = 'English';
     } else if (lowerQuestion === 'sinhala' || lowerQuestion === 'සිංහල' || lowerQuestion === 'si') {
       newLang = 'si';
-      langName = 'සිංහල';
     } else if (lowerQuestion === 'tamil' || lowerQuestion === 'தமிழ்' || lowerQuestion === 'ta') {
       newLang = 'ta';
-      langName = 'தமிழ்';
     }
 
     if (newLang) {
@@ -275,6 +300,15 @@ const ChatbotWidget = () => {
 
       if (response.ok) {
         setMessages(prev => [...prev, { sender: 'bot', text: data.answer, formLink: data.form }]);
+        
+        // Save chat interaction to Firestore client SDK for logged-in user
+        if (currentUser) {
+          addDoc(collection(db, 'users', currentUser.uid, 'chats'), {
+            question: question,
+            botResponse: data,
+            timestamp: serverTimestamp()
+          }).catch(err => console.warn("Could not save chat interaction:", err));
+        }
       } else {
         setMessages(prev => [...prev, { sender: 'bot', text: "Sorry, I'm having trouble connecting to the server right now." }]);
       }

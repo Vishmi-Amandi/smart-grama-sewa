@@ -1,12 +1,244 @@
-import { useEffect, useState } from "react";
-import { LayoutDashboard, CalendarDays, Clock, Megaphone, Search, User, Settings, LogOut, Menu, X } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { LayoutDashboard, CalendarDays, Clock, Megaphone, Search, User, Settings, LogOut, ArrowRightLeft, Menu, X } from "lucide-react";
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, orderBy, limit, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { useTranslation } from 'react-i18next';
 
+// ─── GN Officer Notification Bell ────────────────────────────────────────────
+const GNNotificationBell = ({ theme }) => {
+  const navigate = useNavigate();
+  const [personalNotifs, setPersonalNotifs] = useState([]);
+  const [adminNotifs, setAdminNotifs] = useState([]);
+  const [readAnnouncements, setReadAnnouncements] = useState(new Set());
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [shaking, setShaking] = useState(false);
+  const isFirstLoad = useRef(true);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => { 
+      setCurrentUser(user || null);
+      if (user) {
+        try {
+          const officerSnap = await getDoc(doc(db, 'gn_officers', user.uid));
+          if (officerSnap.exists()) {
+            const data = officerSnap.data();
+            setReadAnnouncements(new Set(data.readAnnouncements || []));
+          }
+        } catch (e) {
+          console.warn('GN officer data fetch error:', e.message);
+        }
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  // 1. Real-time personal notifications for GN Officer
+  useEffect(() => {
+    if (!currentUser) return;
+    isFirstLoad.current = true;
+    const q = query(
+      collection(db, 'gn_officers', currentUser.uid, 'notifications'),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const items = snap.docs.map(d => ({ 
+        id: d.id, 
+        ...d.data(), 
+        createdAt: d.data().createdAt?.toDate?.() || null,
+        isPersonal: true 
+      }));
+      if (!isFirstLoad.current) {
+        const hasNew = snap.docChanges().some(c => c.type === 'added');
+        if (hasNew) { setShaking(true); setTimeout(() => setShaking(false), 700); }
+      } else { isFirstLoad.current = false; }
+      setPersonalNotifs(items);
+    });
+    return () => unsub();
+  }, [currentUser]);
+
+  // 2. Real-time Admin Announcements targeting all_users or gn_officers
+  useEffect(() => {
+    if (!currentUser) return;
+    const q = query(
+      collection(db, 'announcements'),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const items = snap.docs
+        .filter(d => {
+          const data = d.data();
+          const cat = data.category || '';
+          const status = data.status || '';
+          const isTargeted = ['all_users', 'gn_officers'].includes(cat);
+          const isActive = ['published', 'Active', ''].includes(status);
+          return isTargeted && isActive;
+        })
+        .map(d => {
+          const data = d.data();
+          return {
+            id: d.id,
+            type: 'admin_notice',
+            title: data.title || 'Admin Announcement',
+            body: data.description || data.body || '',
+            createdAt: data.publishedAt?.toDate?.() || data.createdAt?.toDate?.() || null,
+            isPersonal: false,
+          };
+        });
+      setAdminNotifs(items);
+    }, (err) => console.warn("Admin announcements listener warning:", err));
+
+    return () => unsub();
+  }, [currentUser]);
+
+  useEffect(() => {
+    const handler = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false); };
+    if (isOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isOpen]);
+
+  const markAsRead = async (n) => {
+    if (!currentUser) return;
+    if (n.isPersonal) {
+      try { 
+        await updateDoc(doc(db, 'gn_officers', currentUser.uid, 'notifications', n.id), { read: true }); 
+      } catch (e) { 
+        console.warn('GN mark read:', e.message); 
+      }
+    } else {
+      setReadAnnouncements(prev => new Set([...prev, n.id]));
+      try {
+        await updateDoc(doc(db, 'gn_officers', currentUser.uid), {
+          readAnnouncements: arrayUnion(n.id)
+        });
+      } catch (e) {
+        console.warn('GN mark announcement read:', e.message);
+      }
+    }
+  };
+
+  const TYPE_CONFIG = {
+    new_appointment:       { icon: '📋', color: '#8B4513', bg: '#FEF3C7', nav: '/gn-appointments' },
+    appointment_cancelled: { icon: '❌', color: '#991B1B', bg: '#FEE2E2', nav: '/gn-appointments' },
+    transfer_submitted:    { icon: '📋', color: '#8B4513', bg: '#FEF3C7', nav: '/change-gn-request-status' },
+    transfer_approved:     { icon: '✅', color: '#065F46', bg: '#D1FAE5', nav: '/change-gn-request-status' },
+    transfer_rejected:     { icon: '❌', color: '#991B1B', bg: '#FEE2E2', nav: '/change-gn-request-status' },
+    admin_notice:          { icon: '📢', color: '#D97706', bg: '#FEF3C7', nav: '/gn-dashboard' },
+    announcement:          { icon: '📢', color: '#D97706', bg: '#FEF3C7', nav: '/gn-dashboard' },
+  };
+  const getTypeConfig = (type) => TYPE_CONFIG[type] || { icon: '🔔', color: '#8B4513', bg: '#FEF3C7', nav: '/gn-dashboard' };
+
+  // Combine personal notifications and admin notices
+  const notifications = [
+    ...personalNotifs,
+    ...adminNotifs.map(a => ({ ...a, read: readAnnouncements.has(a.id) }))
+  ].sort((a, b) => {
+    const aTime = a.createdAt ? a.createdAt.getTime() : 0;
+    const bTime = b.createdAt ? b.createdAt.getTime() : 0;
+    return bTime - aTime;
+  });
+
+  const unread = notifications.filter(n => !n.read).length;
+
+  const timeAgo = (date) => {
+    if (!date) return '';
+    const mins = Math.floor((Date.now() - date.getTime()) / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    if (mins < 1440) return `${Math.floor(mins/60)}h ago`;
+    return `${Math.floor(mins/1440)}d ago`;
+  };
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+        className={`relative p-2 rounded-full transition-colors ${shaking ? 'animate-bounce' : ''} ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+        aria-label="GN Notifications"
+      >
+        <span style={{ fontSize: '20px' }}>🔔</span>
+        {unread > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+            {unread > 99 ? '99+' : unread}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <div
+          className={`absolute right-0 mt-2 w-80 rounded-2xl shadow-2xl border z-50 overflow-hidden flex flex-col ${
+            theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'
+          }`}
+          style={{ maxHeight: '420px' }}
+        >
+          <div className={`px-4 py-3 border-b text-sm font-bold ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
+            Notifications {unread > 0 && <span style={{ color: '#8B4513' }}>({unread})</span>}
+          </div>
+          <div className="overflow-y-auto flex-1">
+            {notifications.length === 0 ? (
+              <div className="px-4 py-8 text-center">
+                <div style={{ fontSize: '28px', marginBottom: '8px' }}>🔔</div>
+                <p className="text-sm text-gray-400 font-semibold">No notifications yet</p>
+                <p className="text-xs text-gray-400 mt-1">New updates will appear here</p>
+              </div>
+            ) : (
+              notifications.slice(0, 15).map(n => {
+                const cfg = getTypeConfig(n.type);
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => { markAsRead(n); setIsOpen(false); navigate(cfg.nav); }}
+                    className={`flex gap-3 px-4 py-3 cursor-pointer border-b transition-colors ${
+                      theme === 'dark' ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-50 hover:bg-gray-50'
+                    } ${!n.read ? (theme === 'dark' ? 'bg-gray-700/50' : '') : ''}`}
+                    style={{
+                      borderLeft: !n.read ? `3px solid ${cfg.color}` : '3px solid transparent',
+                      background: !n.read ? `${cfg.bg}50` : undefined,
+                    }}
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ background: cfg.bg }}>
+                      <span style={{ fontSize: '15px' }}>{cfg.icon}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold truncate"
+                        style={{ color: !n.read ? cfg.color : theme === 'dark' ? '#fff' : '#1f2937' }}>
+                        {n.title}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5"
+                        style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {(n.body || '').slice(0, 110)}
+                      </div>
+                      <div className="text-[10px] text-gray-400 mt-1">{timeAgo(n.createdAt)}</div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          {notifications.length > 0 && (
+            <button
+              onClick={() => { setIsOpen(false); navigate('/gn-dashboard'); }}
+              className="w-full py-2.5 text-xs font-bold text-[#8B4513] border-t hover:bg-amber-50 transition-colors"
+              style={{ borderColor: theme === 'dark' ? '#374151' : '#f0f0f0' }}
+            >
+              View Dashboard & Notices →
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+// ────────────────────────────────────────────────────────────────────────────
+
 export const getThemeClasses = (theme) => ({
+
   bg: theme === "dark" ? "bg-gray-900" : "bg-[#F5F0DC]",
   card: theme === "dark" ? "bg-gray-800 text-white" : "bg-white text-gray-800",
   text: theme === "dark" ? "text-white" : "text-gray-800",
@@ -428,8 +660,8 @@ const GNLayout = ({ children, gnStatus, theme }) => {
                 )}
               </div>
 
-              {/* Notification */}
-              <span className={`text-base sm:text-xl cursor-pointer ${theme === "dark" ? "text-gray-200" : "text-gray-500"}`}>🔔</span>
+              {/* GN Notification Bell */}
+              <GNNotificationBell theme={theme} />
 
               {/* User Info */}
               <Link to="/gn-profile" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
