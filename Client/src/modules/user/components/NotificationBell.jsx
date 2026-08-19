@@ -32,6 +32,7 @@ const PRIORITY_CONFIG = {
 const APPT_TYPE_CONFIG = {
   appointment_new:       { icon: '📋', color: '#b45309', label: 'Appointment' },
   appointment_confirmed: { icon: '✅', color: '#1a7a3a', label: 'Confirmed' },
+  appointment_cancelled: { icon: '❌', color: '#c0392b', label: 'Cancelled' },
   appointment_reminder:  { icon: '⏰', color: '#7c3aed', label: 'Reminder' },
   new_appointment:       { icon: '🔔', color: '#1a4a8a', label: 'New Request' },
 };

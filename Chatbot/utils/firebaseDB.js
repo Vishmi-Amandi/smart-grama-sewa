@@ -215,10 +215,16 @@ async function createNotification(parentCollection, docId, notification) {
  */
 async function getGNOfficerByDivision(gnDivisionName) {
   try {
-    const snap = await db.collection('gn_officers')
-      .where('gnDivisionName', '==', gnDivisionName)
+    let snap = await db.collection('gn_officers')
+      .where('gnDiv', '==', gnDivisionName)
       .limit(1)
       .get();
+    if (snap.empty) {
+      snap = await db.collection('gn_officers')
+        .where('gnDivisionName', '==', gnDivisionName)
+        .limit(1)
+        .get();
+    }
     if (snap.empty) return null;
     const docSnap = snap.docs[0];
     return { uid: docSnap.id, ...docSnap.data() };

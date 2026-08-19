@@ -81,14 +81,31 @@ useEffect(() => {
   }
 };
 
-const handleCancel = async (id) => {
+const handleCancel = async (appointment) => {
+  const apptId = typeof appointment === 'string' ? appointment : appointment.id;
+  const apptData = typeof appointment === 'object' ? appointment : appointments.find(a => a.id === apptId);
   try {
-    await updateDoc(doc(db, "appointments", id), {
+    await updateDoc(doc(db, "appointments", apptId), {
       status: "Cancelled",
     });
     setAppointments((prev) =>
-      prev.map((a) => a.id === id ? { ...a, status: "Cancelled" } : a)
+      prev.map((a) => a.id === apptId ? { ...a, status: "Cancelled" } : a)
     );
+
+    if (apptData?.uid) {
+      fetch('/api/appointments/notify-cancelled', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: apptData.uid,
+          service: apptData.service || 'Appointment',
+          date: apptData.date || '',
+          slot: apptData.slot || '',
+          appointmentId: apptId,
+          cancelledBy: 'the GN Officer',
+        }),
+      }).catch(err => console.warn('notify-cancelled failed:', err));
+    }
   } catch (err) {
     console.error("Cancel error:", err);
   }

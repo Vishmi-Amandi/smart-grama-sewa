@@ -294,11 +294,11 @@ export default function TransferRequestApproval() {
       );
       const officerSnap = await getDocs(officerQuery);
 
+      let targetOfficerId = request.uid;
       if (!officerSnap.empty) {
-        const officerDoc = officerSnap.docs[0];
-
+        targetOfficerId = officerSnap.docs[0].id;
         // 2. Update gn_officers with new division/district details
-        await updateDoc(doc(db, 'gn_officers', officerDoc.id), {
+        await updateDoc(doc(db, 'gn_officers', targetOfficerId), {
           gnDivision:             request.toDivision   || '',
           gnDivisionName:         request.toDivision   || '',
           gnDiv:                  request.toDivision   || '',
@@ -307,10 +307,12 @@ export default function TransferRequestApproval() {
           dsDiv:                  request.toDistrict   || '',
           gnCode:                 '',
           province:               '',
-        });
+        }).catch(err => console.warn('gn_officers doc update warning:', err));
+      }
 
-        // 3. Send in-app notification to the GN officer's personal notifications sub-collection
-        const notifRef = doc(collection(db, 'gn_officers', officerDoc.id, 'notifications'));
+      // 3. Send in-app notification to the GN officer's personal notifications sub-collection
+      if (targetOfficerId) {
+        const notifRef = doc(collection(db, 'gn_officers', targetOfficerId, 'notifications'));
         await setDoc(notifRef, {
           type:      'transfer_approved',
           title:     '✅ Transfer Request Approved',
@@ -349,10 +351,10 @@ export default function TransferRequestApproval() {
         where('uid', '==', request.uid)
       );
       const officerSnap = await getDocs(officerQuery);
+      const targetOfficerId = (!officerSnap.empty) ? officerSnap.docs[0].id : request.uid;
 
-      if (!officerSnap.empty) {
-        const officerDoc = officerSnap.docs[0];
-        const notifRef = doc(collection(db, 'gn_officers', officerDoc.id, 'notifications'));
+      if (targetOfficerId) {
+        const notifRef = doc(collection(db, 'gn_officers', targetOfficerId, 'notifications'));
         await setDoc(notifRef, {
           type:      'transfer_rejected',
           title:     '❌ Transfer Request Rejected',

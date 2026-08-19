@@ -172,10 +172,10 @@ app.post('/api/notifications/unsubscribe', async (req, res) => {
  * Writes in-app notifications to both the citizen and the GN officer.
  */
 app.post('/api/appointments/notify-new', async (req, res) => {
-  const { userId, gnDiv, service, date, slot, fullName, appointmentId } = req.body;
+  const { userId, gnDiv = '', service, date, slot, fullName, appointmentId } = req.body;
 
-  if (!userId || !gnDiv || !service) {
-    return res.status(400).json({ error: 'userId, gnDiv, and service are required.' });
+  if (!userId || !service) {
+    return res.status(400).json({ error: 'userId and service are required.' });
   }
 
   try {
@@ -185,21 +185,23 @@ app.post('/api/appointments/notify-new', async (req, res) => {
       title: '📋 Appointment Requested',
       body: `Your appointment request for "${service}" on ${date} at ${slot} has been submitted. Awaiting GN Officer approval.`,
       appointmentId: appointmentId || '',
-      gnDiv,
+      gnDiv: gnDiv || '',
     });
 
-    // 2. Find the GN officer for this division and notify them
-    const officer = await getGNOfficerByDivision(gnDiv);
-    if (officer) {
-      await createNotification('gn_officers', officer.uid, {
-        type: 'new_appointment',
-        title: '🔔 New Appointment Request',
-        body: `${fullName || 'A citizen'} has requested an appointment for "${service}" on ${date} at ${slot}. Please review and confirm.`,
-        appointmentId: appointmentId || '',
-        citizenId: userId,
-      });
-    } else {
-      console.warn(`No GN officer found for division: ${gnDiv}`);
+    // 2. Find the GN officer for this division and notify them (if division provided)
+    if (gnDiv) {
+      const officer = await getGNOfficerByDivision(gnDiv);
+      if (officer) {
+        await createNotification('gn_officers', officer.uid, {
+          type: 'new_appointment',
+          title: '🔔 New Appointment Request',
+          body: `${fullName || 'A citizen'} has requested an appointment for "${service}" on ${date} at ${slot}. Please review and confirm.`,
+          appointmentId: appointmentId || '',
+          citizenId: userId,
+        });
+      } else {
+        console.warn(`No GN officer found for division: ${gnDiv}`);
+      }
     }
 
     res.status(200).json({ success: true, message: 'Appointment notifications sent.' });
@@ -234,6 +236,35 @@ app.post('/api/appointments/notify-confirmed', async (req, res) => {
   } catch (error) {
     console.error('Error sending appointment-confirmed notification:', error);
     res.status(500).json({ error: 'Failed to send confirmation notification.' });
+  }
+});
+
+/**
+ * POST /api/appointments/notify-cancelled
+ * Called when an appointment is cancelled.
+ * Writes a cancellation notification to the citizen.
+ */
+app.post('/api/appointments/notify-cancelled', async (req, res) => {
+  const { userId, service, date, slot, appointmentId, gnDiv, cancelledBy } = req.body;
+
+  if (!userId || !service) {
+    return res.status(400).json({ error: 'userId and service are required.' });
+  }
+
+  try {
+    const byText = cancelledBy ? ` by ${cancelledBy}` : '';
+    await createNotification('users', userId, {
+      type: 'appointment_cancelled',
+      title: '❌ Appointment Cancelled',
+      body: `Your appointment for "${service}" on ${date || ''} at ${slot || ''} has been cancelled${byText}.`,
+      appointmentId: appointmentId || '',
+      gnDiv: gnDiv || '',
+    });
+
+    res.status(200).json({ success: true, message: 'Cancellation notification sent.' });
+  } catch (error) {
+    console.error('Error sending appointment-cancelled notification:', error);
+    res.status(500).json({ error: 'Failed to send cancellation notification.' });
   }
 });
 
