@@ -581,6 +581,38 @@ const AppointmentsList = ({ currentUser, refreshKey = 0, onBook, t }) => {
       setAppts(prev => prev.map(a => a.id === pendingCancelAppt.id ? { ...a, status: 'Cancelled' } : a));
       setSelAppt(prev => prev?.id === pendingCancelAppt.id ? { ...prev, status: 'Cancelled' } : prev);
 
+      // In-app notification to the citizen
+      await addDoc(collection(db, 'users', currentUser.uid, 'notifications'), {
+        type: 'appointment_cancelled',
+        title: '❌ Appointment Cancelled',
+        body: `You cancelled your appointment for "${pendingCancelAppt.title}" on ${pendingCancelAppt.date} at ${pendingCancelAppt.time}.`,
+        appointmentId: pendingCancelAppt.id,
+        gnDiv: pendingCancelAppt.gnDiv || userData?.gnDiv || '',
+        read: false,
+        createdAt: serverTimestamp(),
+      }).catch(err => console.warn('Citizen cancel notif write error:', err));
+
+      // In-app notification to the GN officer
+      const cancelGnDiv = (pendingCancelAppt.gnDiv || userData?.gnDiv || '').trim();
+      if (cancelGnDiv) {
+        try {
+          const gnSnap = await getDocs(query(collection(db, 'gn_officers'), where('gnDiv', '==', cancelGnDiv)));
+          gnSnap.forEach(gnDoc => {
+            addDoc(collection(db, 'gn_officers', gnDoc.id, 'notifications'), {
+              type: 'appointment_cancelled',
+              title: '❌ Appointment Cancelled by Citizen',
+              body: `${userData?.fullName || currentUser.displayName || 'A citizen'} cancelled their appointment for "${pendingCancelAppt.title}" on ${pendingCancelAppt.date} at ${pendingCancelAppt.time}.`,
+              appointmentId: pendingCancelAppt.id,
+              citizenId: currentUser.uid,
+              read: false,
+              createdAt: serverTimestamp(),
+            }).catch(err => console.warn('GN cancel direct notif write error:', err));
+          });
+        } catch (err) {
+          console.warn('Fetch GN officer error on cancel:', err);
+        }
+      }
+
       fetch('/api/appointments/notify-cancelled', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1493,10 +1525,13 @@ const Appointments = () => {
       }).catch(err => console.warn('notify-new failed:', err));
 
       // Also query and write directly to GN Officer's notifications collection for instant feedback
-      if (userData?.gnDiv) {
-        getDocs(query(collection(db, 'gn_officers'), where('gnDiv', '==', userData.gnDiv)))
-          .then(gnSnap => {
-            gnSnap.forEach(gnDoc => {
+      const targetGnDiv = (userData?.gnDiv || '').trim();
+      if (targetGnDiv) {
+        try {
+          const gnSnap = await getDocs(query(collection(db, 'gn_officers'), where('gnDiv', '==', targetGnDiv)));
+          const gnNotifs = [];
+          gnSnap.forEach(gnDoc => {
+            gnNotifs.push(
               addDoc(collection(db, 'gn_officers', gnDoc.id, 'notifications'), {
                 type: 'new_appointment',
                 title: '🔔 New Appointment Request',
@@ -1505,9 +1540,13 @@ const Appointments = () => {
                 citizenId: currentUser.uid,
                 read: false,
                 createdAt: serverTimestamp(),
-              }).catch(err => console.warn('GN direct notif write error:', err));
-            });
-          }).catch(err => console.warn('Fetch GN officer error:', err));
+              }).catch(err => console.warn('GN direct notif write error:', err))
+            );
+          });
+          await Promise.all(gnNotifs);
+        } catch (err) {
+          console.warn('Fetch GN officer error:', err);
+        }
       }
 
       setScreen('success');

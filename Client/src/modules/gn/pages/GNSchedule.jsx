@@ -3,7 +3,7 @@ import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { auth, db } from "../../firebase";
 import {
   collection, query, where, getDocs, doc, updateDoc,
-  getDoc, setDoc,
+  getDoc, setDoc, addDoc, serverTimestamp,
 } from "firebase/firestore";
 import {
   ChevronLeft, ChevronRight, CheckCircle, XCircle,
@@ -919,14 +919,65 @@ const GNSchedule = ({ gnStatus, theme }) => {
       await updateDoc(doc(db, "appointments", appt.id), { status: "Confirmed" });
       setAppointments((prev) => prev.map((a) => a.id === appt.id ? { ...a, status: "Confirmed" } : a));
       setModal((m) => m ? { ...m, appt: { ...m.appt, status: "Confirmed" } } : null);
+
+      if (appt?.uid) {
+        await addDoc(collection(db, "users", appt.uid, "notifications"), {
+          type: "appointment_confirmed",
+          title: "✅ Appointment Approved",
+          body: `Your appointment for "${appt.service || 'Service'}" on ${appt.date || ''}${appt.slot ? ` at ${appt.slot}` : ''} has been approved by the Grama Niladhari officer.`,
+          appointmentId: appt.id,
+          gnDiv: appt.gnDiv || '',
+          read: false,
+          createdAt: serverTimestamp(),
+        }).catch(err => console.warn("Citizen direct notif write error:", err));
+
+        fetch('/api/appointments/notify-confirmed', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: appt.uid,
+            service: appt.service || 'Appointment',
+            date: appt.date || '',
+            slot: appt.slot || '',
+            appointmentId: appt.id,
+            gnDiv: appt.gnDiv || '',
+          }),
+        }).catch(err => console.warn('notify-confirmed failed:', err));
+      }
     } catch (err) { console.error("Confirm error:", err); }
   };
 
   const handleCancel = async (id) => {
     try {
+      const appt = appointments.find((a) => a.id === id);
       await updateDoc(doc(db, "appointments", id), { status: "Cancelled" });
       setAppointments((prev) => prev.map((a) => a.id === id ? { ...a, status: "Cancelled" } : a));
       setModal((m) => m ? { ...m, appt: { ...m.appt, status: "Cancelled" } } : null);
+
+      if (appt?.uid) {
+        await addDoc(collection(db, "users", appt.uid, "notifications"), {
+          type: "appointment_cancelled",
+          title: "❌ Appointment Rejected / Cancelled",
+          body: `Your appointment for "${appt.service || 'Service'}" on ${appt.date || ''}${appt.slot ? ` at ${appt.slot}` : ''} has been rejected or cancelled by the Grama Niladhari officer.`,
+          appointmentId: id,
+          gnDiv: appt.gnDiv || '',
+          read: false,
+          createdAt: serverTimestamp(),
+        }).catch(err => console.warn("Citizen direct notif write error:", err));
+
+        fetch('/api/appointments/notify-cancelled', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: appt.uid,
+            service: appt.service || 'Appointment',
+            date: appt.date || '',
+            slot: appt.slot || '',
+            appointmentId: id,
+            cancelledBy: 'the GN Officer',
+          }),
+        }).catch(err => console.warn('notify-cancelled failed:', err));
+      }
     } catch (err) { console.error("Cancel error:", err); }
   };
 

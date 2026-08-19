@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { auth, db } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, orderBy, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, query, orderBy, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './ChatbotWidget.css';
 
@@ -65,7 +65,7 @@ const ChatbotWidget = () => {
   const [messages, setMessages] = useState([
     { 
       sender: 'bot', 
-      text: 'Welcome to Smart Grama Sewa! Please select your preferred language. / ස්මාර්ට් ග්‍රාම සේවා වෙත සාදරයෙන් පිළිගනිමු! කරුණාකර ඔබගේ භාෂාව තෝරන්න. / ஸ்மார்ட் கிராம சேவාවிற்கு வரவேற்கிறோம்! உங்கள் மொழியை தேர்ந்தெடுக்கவும்.',
+      text: 'Welcome to Smart Grama Sewa! Please select your preferred language. / ස්මාර්ට් ග්‍රාම සේවා වෙත සාදරයෙන් පිළිගනිමු! කරුණාකර ඔබගේ භාෂාව තෝරන්න. / ஸ்மார்ட் கிராம சேவாவிற்கு வரவேற்கிறோம்! உங்கள் மொழியை தேர்ந்தெடுக்கவும்.',
       options: [
         { label: 'English', value: 'en' },
         { label: 'සිංහල', value: 'si' },
@@ -76,6 +76,8 @@ const ChatbotWidget = () => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const [roleLoaded, setRoleLoaded] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const chatBoxRef = useRef(null);
@@ -86,12 +88,32 @@ const ChatbotWidget = () => {
   const isCustomized = currentUser && !isPublicPage;
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
         localStorage.setItem('chatbotUserId', user.uid);
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+            setUserRole(userDoc.data().role || 'citizen');
+          } else {
+            const gnDoc = await getDoc(doc(db, "gn_officers", user.uid));
+            if (gnDoc.exists()) {
+              setUserRole(gnDoc.data().role || 'gn_officer');
+            } else {
+              setUserRole(null);
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching user role for chatbot:", err);
+          setUserRole(null);
+        } finally {
+          setRoleLoaded(true);
+        }
       } else {
         setCurrentUser(null);
+        setUserRole(null);
+        setRoleLoaded(true);
         localStorage.removeItem('chatbotUserId');
       }
     });
@@ -106,7 +128,7 @@ const ChatbotWidget = () => {
     setMessages([
       { 
         sender: 'bot', 
-        text: 'Welcome to Smart Grama Sewa! Please select your preferred language. / ස්මාර්ට් ග්‍රාම සේවා වෙත සාදරයෙන් පිළිගනිමු! කරුණාකර ඔබගේ භාෂාව තෝරන්න. / ஸ்மார்ட் கிராம சேවාවிற்கு வரவேற்கிறோம்! உங்கள் மொழியை தேர்ந்தெடுக்கவும்.',
+        text: 'Welcome to Smart Grama Sewa! Please select your preferred language. / ස්මාර්ට් ග්‍රාම සේවා වෙත සාදරයෙන් පිළිගනිමු! කරුණාකර ඔබගේ භාෂාව තෝරන්න. / ஸ்மார்ட் கிராம சேவாவிற்கு வரவேற்கிறோம்! உங்கள் மொழியை தேர்ந்தெடுக்கவும்.',
         options: [
           { label: 'English', value: 'en' },
           { label: 'සිංහල', value: 'si' },
@@ -318,6 +340,15 @@ const ChatbotWidget = () => {
       setMessages(prev => [...prev, { sender: 'bot', text: "Network error. Please try again later." }]);
     }
   };
+
+  // Chatbot should be available ONLY in citizen accounts
+  const isGNRoute = location.pathname.startsWith('/gn-') || 
+                    location.pathname === '/change-gn-request-status';
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
+  if (isGNRoute || isAdminRoute || !roleLoaded || !currentUser || userRole !== 'citizen') {
+    return null;
+  }
 
   return (
     <>
