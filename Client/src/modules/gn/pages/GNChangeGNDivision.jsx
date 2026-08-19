@@ -135,16 +135,11 @@ const GNChangeGNDivision = ({ gnStatus, theme }) => {
           <p className={`text-xs sm:text-sm mb-5 sm:mb-6 text-center ${tTheme.subtext}`}>
             {t("request_submitted_desc")}
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex justify-center">
             <button
               onClick={() => navigate("/gn-dashboard")}
-              className={`border ${tTheme.border} font-semibold px-5 sm:px-6 py-2 rounded-xl text-center ${tTheme.text} transition`}>
-              {t("back_to_dashboard")}
-            </button>
-            <button
-              onClick={() => navigate("/gn-dashboard", { state: { openDivisionModal: true } })}
               className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-5 sm:px-6 py-2 rounded-xl transition text-center">
-              {t("view_request_status")}
+              {t("back_to_dashboard")}
             </button>
           </div>
         </div>
