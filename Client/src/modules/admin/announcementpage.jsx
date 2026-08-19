@@ -171,7 +171,9 @@ function Topbar() {
 
       {/* Bell */}
       <button
-        className="relative w-10 h-10 rounded-full flex items-center justify-center border"
+        onClick={() => navigate('/admin/announcements')}
+        title="Notifications / Announcements"
+        className="relative w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer hover:bg-amber-100 transition"
         style={{ borderColor: "#C8B89A", background: "#FFF9F0" }}
       >
         <Bell size={18} color={COLORS.primary} />

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { db } from '../../firebase';
 import {
-  collection, getDocs, doc, updateDoc, addDoc, Timestamp, query, where
+  collection, getDocs, doc, updateDoc, setDoc, Timestamp, query, where
 } from 'firebase/firestore';
 
 // ─── Colors ───────────────────────────────────────────────────────────────
@@ -118,7 +118,7 @@ function Topbar({ adminName }) {
         style={{ borderColor: '#C8B89A', color: COLORS.text, background: '#FFF9F0' }}>
         English <ChevronDown size={14} />
       </button>
-      <button className="relative w-10 h-10 rounded-full flex items-center justify-center border"
+      <button onClick={() => navigate('/admin/announcements')} title="Notifications / Announcements" className="relative w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer hover:bg-amber-100 transition"
         style={{ borderColor: '#C8B89A', background: '#FFF9F0' }}>
         <Bell size={18} style={{ color: COLORS.primary }} />
         <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
@@ -294,30 +294,29 @@ export default function TransferRequestApproval() {
       );
       const officerSnap = await getDocs(officerQuery);
 
+      let targetOfficerId = request.uid;
       if (!officerSnap.empty) {
-        const officerDoc = officerSnap.docs[0];
-
+        targetOfficerId = officerSnap.docs[0].id;
         // 2. Update gn_officers with new division/district details
-        //    We map fromDivision→toDivision and fromDistrict→toDistrict
-        //    and clear/flag officeAddress & officeMobile for the officer to update
-        await updateDoc(doc(db, 'gn_officers', officerDoc.id), {
+        await updateDoc(doc(db, 'gn_officers', targetOfficerId), {
           gnDivision:             request.toDivision   || '',
           gnDivisionName:         request.toDivision   || '',
           gnDiv:                  request.toDivision   || '',
           district:               request.toDistrict   || '',
           divisionalSecretariat:  request.toDistrict   || '',
           dsDiv:                  request.toDistrict   || '',
-          gnCode:                 '',   // reset; officer updates after transfer
-          province:               '',   // reset; officer updates after transfer
-        });
+          gnCode:                 '',
+          province:               '',
+        }).catch(err => console.warn('gn_officers doc update warning:', err));
+      }
 
-        // 3. Send notification to the GN officer
-        await addDoc(collection(db, 'notifications'), {
-          uid:       request.uid,
-          email:     request.email || '',
-          title:     'Transfer Request Approved',
-          message:   'Your transfer request has been approved. Please update your office address (officeAddress) and office mobile number (officeMobile) in your profile to reflect your new posting.',
+      // 3. Send in-app notification to the GN officer's personal notifications sub-collection
+      if (targetOfficerId) {
+        const notifRef = doc(collection(db, 'gn_officers', targetOfficerId, 'notifications'));
+        await setDoc(notifRef, {
           type:      'transfer_approved',
+          title:     '✅ Transfer Request Approved',
+          body:      `Your division transfer request from "${request.fromDivision || 'your current division'}" to "${request.toDivision}" (${request.toDistrict} District) has been approved by the Admin. Effective date: ${request.effectiveDate || 'N/A'}. Please update your office address and mobile in your profile.`,
           read:      false,
           createdAt: Timestamp.now(),
         });
@@ -338,16 +337,37 @@ export default function TransferRequestApproval() {
     }
   }
 
-  // ── Reject: just update status ──
+  // ── Reject: update status + send rejection notification ──
   async function handleReject(request) {
     const docId = request._docId;
     setActionLoading(p => ({ ...p, [docId]: 'rejected' }));
     try {
+      // 1. Update the transfer request status
       await updateDoc(doc(db, 'gn_change_gn_division', docId), { status: 'rejected' });
+
+      // 2. Find the gn_officer document by uid and send rejection notification
+      const officerQuery = query(
+        collection(db, 'gn_officers'),
+        where('uid', '==', request.uid)
+      );
+      const officerSnap = await getDocs(officerQuery);
+      const targetOfficerId = (!officerSnap.empty) ? officerSnap.docs[0].id : request.uid;
+
+      if (targetOfficerId) {
+        const notifRef = doc(collection(db, 'gn_officers', targetOfficerId, 'notifications'));
+        await setDoc(notifRef, {
+          type:      'transfer_rejected',
+          title:     '❌ Transfer Request Rejected',
+          body:      `Your division transfer request from "${request.fromDivision || 'your current division'}" to "${request.toDivision}" (${request.toDistrict} District) has been rejected by the Admin. Please contact the administration for further clarification.`,
+          read:      false,
+          createdAt: Timestamp.now(),
+        });
+      }
+
       setRequests(prev =>
         prev.map(r => r._docId === docId ? { ...r, status: 'rejected' } : r)
       );
-      showToast('Transfer request rejected.', 'error');
+      showToast('Transfer request rejected. Officer notified.', 'error');
     } catch (e) {
       showToast('Rejection failed: ' + (e.message || 'Unknown error'), 'error');
     } finally {
