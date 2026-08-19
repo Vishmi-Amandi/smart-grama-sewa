@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { auth, db } from "../../firebase";
-import { collection, query, where, getDocs, doc, updateDoc, orderBy, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, orderBy, getDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { X, User, Calendar, Clock, FileText, Phone, MapPin, Hash } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -197,7 +197,20 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
       if (selected?.id === appointment.id)
         setSelected((s) => ({ ...s, status: "Confirmed", date, slotTime }));
 
-      // Notify the citizen that their appointment is confirmed
+      // 1. Direct in-app notification to the citizen
+      if (appointment.uid) {
+        await addDoc(collection(db, "users", appointment.uid, "notifications"), {
+          type: "appointment_confirmed",
+          title: "✅ Appointment Approved",
+          body: `Your appointment for "${appointment.service || 'Service'}" on ${appointment.date || ''}${appointment.slot ? ` at ${appointment.slot}` : ''} has been approved by the Grama Niladhari officer.`,
+          appointmentId: appointment.id,
+          gnDiv: appointment.gnDiv || '',
+          read: false,
+          createdAt: serverTimestamp(),
+        }).catch(err => console.warn("Citizen notif write error:", err));
+      }
+
+      // 2. Notify the citizen via backend endpoint
       fetch('/api/appointments/notify-confirmed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -228,6 +241,20 @@ const GNAppointmentList = ({ gnStatus, theme }) => {
       );
       if (selected?.id === apptId) setSelected((s) => ({ ...s, status: "Cancelled" }));
 
+      // 1. Direct in-app notification to the citizen
+      if (apptData?.uid) {
+        await addDoc(collection(db, "users", apptData.uid, "notifications"), {
+          type: "appointment_cancelled",
+          title: "❌ Appointment Rejected / Cancelled",
+          body: `Your appointment request for "${apptData.service || 'Service'}" on ${apptData.date || ''}${apptData.slot ? ` at ${apptData.slot}` : ''} has been cancelled or rejected by the Grama Niladhari officer.`,
+          appointmentId: apptId,
+          gnDiv: apptData.gnDiv || '',
+          read: false,
+          createdAt: serverTimestamp(),
+        }).catch(err => console.warn("Citizen notif write error:", err));
+      }
+
+      // 2. Notify via backend endpoint
       if (apptData?.uid) {
         fetch('/api/appointments/notify-cancelled', {
           method: 'POST',
