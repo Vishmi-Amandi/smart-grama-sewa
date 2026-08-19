@@ -132,7 +132,7 @@ const GNChangeGNDivision = ({ gnStatus, theme }) => {
               {t("back_to_dashboard")}
             </button>
             <button
-              onClick={() => navigate("/change-gn-request-status")}
+              onClick={() => navigate("/gn-dashboard", { state: { openDivisionModal: true } })}
               className="bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold px-5 sm:px-6 py-2 rounded-xl transition text-center">
               {t("view_request_status")}
             </button>
@@ -141,13 +141,7 @@ const GNChangeGNDivision = ({ gnStatus, theme }) => {
       ) : (
         <div className={`${tTheme.card} rounded-2xl shadow p-4 sm:p-6 md:p-8`}>
 
-          {/* Error */}
-          {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-red-600 text-left">
-              ⚠️ {error}
-            </div>
-          )}
-
+        
           {/* Transfer Details */}
           <div className="mb-5 sm:mb-6">
             <p className={`text-sm font-semibold mb-3 sm:mb-4 flex items-center gap-2 text-left ${tTheme.text}`}>
@@ -327,6 +321,13 @@ const GNChangeGNDivision = ({ gnStatus, theme }) => {
               {t("confirm_checkbox_text")}
             </p>
           </div>
+
+          {/* Error */}
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-red-600 text-left">
+              ⚠️ {error}
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-end gap-3 sm:gap-4">

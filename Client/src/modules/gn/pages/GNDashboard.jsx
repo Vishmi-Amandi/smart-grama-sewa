@@ -1,6 +1,6 @@
 import GNLayout, { getThemeClasses } from "../components/gnlayout";
 import { CalendarCheck, ClipboardList, Megaphone, TrendingUp, AlertCircle, Clock, ArrowRightLeft, Bell, ChevronRight } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { collection, query, where, getDocs, doc, getDoc, orderBy, limit } from "firebase/firestore";
 import { auth, db } from "../../firebase";
@@ -10,6 +10,7 @@ const GNDashboard = ({ gnStatus, theme }) => {
   const { t, i18n } = useTranslation();
   const tTheme = getThemeClasses(theme);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [appointmentStats, setAppointmentStats] = useState({ today: 0, pending: 0 });
   const [announcementStats, setAnnouncementStats] = useState({ total: 0, active: 0 });
@@ -22,25 +23,31 @@ const GNDashboard = ({ gnStatus, theme }) => {
   const [expandedId, setExpandedId] = useState(null);
 
   // ── Fetch division change request ──────────────────────────────────────────
-  useEffect(() => {
-    const fetchRequest = async () => {
-      try {
-        const user = auth.currentUser;
-        if (!user) return;
-        const q = query(
-          collection(db, "gn_change_gn_division"),
-          where("uid", "==", user.uid),
-          orderBy("createdAt", "desc"),
-          limit(1)
-        );
-        const snap = await getDocs(q);
-        if (!snap.empty) setDivisionRequest(snap.docs[0].data());
-      } catch (err) {
-        console.error("Fetch division request error:", err);
+useEffect(() => {
+  const fetchRequest = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const q = query(
+        collection(db, "gn_change_gn_division"),
+        where("uid", "==", user.uid),
+        orderBy("createdAt", "desc"),
+        limit(1)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        setDivisionRequest(snap.docs[0].data());
+        if (location.state?.openDivisionModal) {
+          setShowDivisionModal(true);
+          navigate(location.pathname, { replace: true, state: {} });
+        }
       }
-    };
-    fetchRequest();
-  }, []);
+    } catch (err) {
+      console.error("Fetch division request error:", err);
+    }
+  };
+  fetchRequest();
+}, []);
 
   // ── Fetch admin announcements (all_users + gn_officers, published, not expired) ──
   useEffect(() => {
@@ -405,17 +412,17 @@ const GNDashboard = ({ gnStatus, theme }) => {
                 <p className={`text-sm font-bold ${tTheme.text}`}>{divisionRequest?.toDivision}</p>
                 <p className={`text-xs ${tTheme.subtext}`}>{divisionRequest?.toDistrict}</p>
               </div>
-              <span className={`text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-center ${
-                divisionRequest?.status === "Pending"  ? "bg-yellow-100 text-yellow-700" :
-                divisionRequest?.status === "Approved" ? "bg-green-100 text-green-700"  :
-                divisionRequest?.status === "Rejected" ? "bg-red-100 text-red-600"      :
-                "bg-gray-100 text-gray-500"
-              }`}>
-                {divisionRequest?.status === "Pending"  ? `⏳ ${t('status_pending')}` :
-                 divisionRequest?.status === "Approved" ? `✅ ${t('status_approved')}` :
-                 divisionRequest?.status === "Rejected" ? `❌ ${t('status_rejected')}` :
-                 divisionRequest?.status}
-              </span>
+                <span className={`text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-center ${
+                  divisionRequest?.status?.toLowerCase() === "pending"  ? "bg-yellow-100 text-yellow-700" :
+                  divisionRequest?.status?.toLowerCase() === "approved" ? "bg-green-100 text-green-700"  :
+                  divisionRequest?.status?.toLowerCase() === "rejected" ? "bg-red-100 text-red-600"      :
+                  "bg-gray-100 text-gray-500"
+                }`}>
+                  {divisionRequest?.status?.toLowerCase() === "pending"  ? `⏳ ${t('status_pending')}` :
+                  divisionRequest?.status?.toLowerCase() === "approved" ? `✅ ${t('status_approved')}` :
+                  divisionRequest?.status?.toLowerCase() === "rejected" ? `❌ ${t('status_rejected')}` :
+                  divisionRequest?.status}
+                </span>
             </div>
 
             <p className={`text-xs ${tTheme.subtext} mb-4`}>
@@ -424,17 +431,17 @@ const GNDashboard = ({ gnStatus, theme }) => {
               }) || "—"}
             </p>
 
-            {divisionRequest?.status === "Pending" && (
+           {divisionRequest?.status?.toLowerCase() === "pending" && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-3 sm:px-4 py-3 mb-4">
                 <p className="text-xs text-yellow-700 font-semibold">{t('lbl_under_review')}</p>
               </div>
             )}
-            {divisionRequest?.status === "Approved" && (
+            {divisionRequest?.status?.toLowerCase() === "approved" && (
               <div className="bg-green-50 border border-green-200 rounded-xl px-3 sm:px-4 py-3 mb-4">
                 <p className="text-xs text-green-700 font-semibold">{t('lbl_approved_message')}</p>
               </div>
             )}
-            {divisionRequest?.status === "Rejected" && (
+            {divisionRequest?.status?.toLowerCase() === "rejected" && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-3 sm:px-4 py-3 mb-4">
                 <p className="text-xs text-red-600 font-semibold">{t('lbl_rejected_message')}</p>
               </div>
@@ -445,7 +452,7 @@ const GNDashboard = ({ gnStatus, theme }) => {
                 className={`flex-1 border ${tTheme.border} ${tTheme.subtext} font-semibold py-2 rounded-xl hover:bg-gray-50 transition text-sm`}>
                 {t('lbl_close')}
               </button>
-              {divisionRequest?.status === "Rejected" && (
+              {divisionRequest?.status?.toLowerCase() === "rejected" && (
                 <button onClick={() => { setShowDivisionModal(false); navigate("/gn-change-gn-division"); }}
                   className="flex-1 bg-[#E5A800] hover:bg-[#cc9600] text-black font-semibold py-2 rounded-xl transition text-sm">
                   {t('btn_new_request')}
