@@ -5,10 +5,11 @@ import {
   User, Activity, Megaphone, Calendar, Bell, LogOut, Search,
   ChevronDown, CheckCircle, XCircle, TrendingUp 
 } from 'lucide-react';
-import { db } from '../../firebase';
+import { auth, db } from '../../firebase';
+import { signOut } from 'firebase/auth';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 
-// ─── Colors ───────────────────────────────────────────────────────────────
+//  Colors 
 const COLORS = {
   bg:        '#F5F0E1',
   primary:   '#7A2828',
@@ -20,7 +21,7 @@ const COLORS = {
   cardDark:  '#3D1500',
 };
 
-// ─── Nav Item ─────────────────────────────────────────────────────────────
+//  Nav Item 
 function NavItem({ icon: Icon, label, active, bold, onClick }) {
   return (
     <li onClick={onClick}
@@ -36,7 +37,7 @@ function NavItem({ icon: Icon, label, active, bold, onClick }) {
   );
 }
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────
+//  Sidebar 
 function Sidebar({ onLogout }) {
   const navigate = useNavigate();
   return (
@@ -95,7 +96,7 @@ function Sidebar({ onLogout }) {
   );
 }
 
-// ─── Topbar ───────────────────────────────────────────────────────────────
+//  Topbar 
 function Topbar({ adminName }) {
   const [searchVal, setSearchVal] = useState('');
   return (
@@ -112,10 +113,7 @@ function Topbar({ adminName }) {
           onChange={(e) => setSearchVal(e.target.value)}
         />
       </div>
-      <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
-        style={{ borderColor: '#C8B89A', color: COLORS.text, background: '#FFF9F0' }}>
-        English <ChevronDown size={14} />
-      </button>
+      
       <button onClick={() => navigate('/admin/announcements')} title="Notifications / Announcements" className="relative w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer hover:bg-amber-100 transition"
         style={{ borderColor: '#C8B89A', background: '#FFF9F0' }}>
         <Bell size={18} style={{ color: COLORS.primary }} />
@@ -137,7 +135,7 @@ function Topbar({ adminName }) {
   );
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
+//  Helpers 
 function formatDate(val) {
   if (!val) return '—';
   if (val?.toDate) return val.toDate().toLocaleDateString('en-GB');
@@ -161,7 +159,7 @@ function StatusBadge({ status }) {
   );
 }
 
-// ─── Confirm Modal ────────────────────────────────────────────────────────
+//  Confirm Modal 
 function ConfirmModal({ modal, onConfirm, onCancel }) {
   if (!modal) return null;
   const isApprove = modal.action === 'approved';
@@ -199,8 +197,11 @@ function ConfirmModal({ modal, onConfirm, onCancel }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────
+//  Main Page 
 export default function RegistrationRequestApproval() {
+
+  const navigate = useNavigate();
+
   const [officers,      setOfficers]      = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState(null);
@@ -208,27 +209,46 @@ export default function RegistrationRequestApproval() {
   const [confirmModal,  setConfirmModal]  = useState(null);
   const [toast,         setToast]         = useState(null);
 
-  // ── Fetch ──
-  useEffect(() => {
-    (async () => {
-      try {
-        const snap = await getDocs(collection(db, 'gn_officers'));
-        setOfficers(snap.docs.map(d => ({ _docId: d.id, ...d.data() })));
-      } catch (e) {
-        setError(e.message || 'Failed to load data.');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  };
 
-  // ── Toast ──
+  //  Fetch 
+useEffect(() => {
+  (async () => {
+    try {
+      const snap = await getDocs(collection(db, 'gn_officers'));
+      
+      // Get officers data
+      const officersData = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+      
+      officersData.sort((a, b) => {
+        const dateA = a.createdAt?.toDate?.() || new Date(0);
+        const dateB = b.createdAt?.toDate?.() || new Date(0);
+        return dateB - dateA; 
+      });
+      
+      setOfficers(officersData);
+    } catch (e) {
+      setError(e.message || 'Failed to load data.');
+    } finally {
+      setLoading(false);
+    }
+  })();
+}, []);
+
+  //  Toast 
   function showToast(msg, type = 'success') {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   }
 
-  // ── Update status ──
+  //  Update status 
   async function handleStatusUpdate(docId, newStatus) {
     setActionLoading(p => ({ ...p, [docId]: newStatus }));
     try {
@@ -249,16 +269,16 @@ export default function RegistrationRequestApproval() {
 
   const TABLE_COLS = [
     { label: 'User id',        key: 'uid',                   render: o => o.uid || o._docId || '—' },
-    { label: 'user name',      key: 'fullName',              render: o => o.fullName || '—' },
-    { label: 'gender',         key: 'gender',                render: o => o.gender || '—' },
-    { label: 'gn division',    key: 'gnDivision',            render: o => o.gnDivision || o.gnDivisionName || '—' },
-    { label: 'ds division',    key: 'divisionalSecretariat', render: o => o.divisionalSecretariat || o.dsDiv || '—' },
-    { label: 'district',       key: 'district',              render: o => o.district || '—' },
-    { label: 'province',       key: 'province',              render: o => o.province || '—' },
-    { label: 'contact number', key: 'mobile',                render: o => o.mobile || '—' },
-    { label: 'email',          key: 'email',                 render: o => o.email || '—' },
-    { label: 'requested date', key: 'createdAt',             render: o => formatDate(o.createdAt) },
-    { label: 'status',         key: 'status',                render: o => <StatusBadge status={o.status} /> },
+    { label: 'User name',      key: 'fullName',              render: o => o.fullName || '—' },
+    { label: 'Gender',         key: 'gender',                render: o => o.gender || '—' },
+    { label: 'Gn division',    key: 'gnDivision',            render: o => o.gnDivision || o.gnDiv || '—' },
+    { label: 'Ds division',    key: 'divisionalSecretariat', render: o => o.divisionalSecretariat || o.dsDiv || '—' },
+    { label: 'District',       key: 'district',              render: o => o.district || '—' },
+    { label: 'Province',       key: 'province',              render: o => o.province || '—' },
+    { label: 'Contact number', key: 'mobile',                render: o => o.mobile || '—' },
+    { label: 'Email',          key: 'email',                 render: o => o.email || '—' },
+    { label: 'Requested date', key: 'createdAt',             render: o => formatDate(o.createdAt) },
+    { label: 'Status',         key: 'status',                render: o => <StatusBadge status={o.status} /> },
   ];
 
   return (
@@ -286,7 +306,7 @@ export default function RegistrationRequestApproval() {
       />
 
       {/* Sidebar */}
-      <Sidebar onLogout={() => {}} />
+      <Sidebar onLogout={handleLogout} />
 
       {/* Right side */}
       <div className="flex flex-col flex-1 overflow-hidden">
@@ -332,7 +352,7 @@ export default function RegistrationRequestApproval() {
                       ))}
                       <th className="px-4 py-3 text-left font-semibold text-white"
                         style={{ fontSize: 12 }}>
-                        action
+                        Action
                       </th>
                     </tr>
                   </thead>

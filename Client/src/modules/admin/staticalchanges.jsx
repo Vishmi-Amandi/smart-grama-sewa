@@ -1,4 +1,4 @@
-// Client/src/modules/admin/statisticalChanges.jsx
+
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -16,7 +16,7 @@ import {
   Users, Shield, TrendingUp, Info, Clock, Edit3,
 } from 'lucide-react';
 
-// ─── Theme (matches dashboard) ────────────────────────────────────────────
+//  Theme (matches dashboard) 
 const COLORS = {
   primary:   '#7B2D00',
   accent:    '#F5A623',
@@ -31,7 +31,7 @@ const COLORS = {
   inputBorder: '#C8B89A',
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
+//  Helpers 
 function fmtNumber(n) {
   if (!n && n !== 0) return '—';
   return Number(n).toLocaleString();
@@ -51,7 +51,7 @@ function digitsOnly(val) {
   return val.replace(/[^0-9]/g, '');
 }
 
-// ─── Nav Item ─────────────────────────────────────────────────────────────
+//  Nav Item 
 function NavItem({ icon: Icon, label, active, bold, onClick }) {
   return (
     <li onClick={onClick}
@@ -67,7 +67,7 @@ function NavItem({ icon: Icon, label, active, bold, onClick }) {
   );
 }
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────
+//  Sidebar 
 function Sidebar({ onLogout }) {
   const navigate = useNavigate();
   return (
@@ -126,7 +126,7 @@ function Sidebar({ onLogout }) {
   );
 }
 
-// ─── Topbar ───────────────────────────────────────────────────────────────
+//  Topbar 
 function Topbar({ adminName }) {
   const [searchVal, setSearchVal] = useState('');
   return (
@@ -143,10 +143,6 @@ function Topbar({ adminName }) {
           onChange={(e) => setSearchVal(e.target.value)}
         />
       </div>
-      <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
-        style={{ borderColor: COLORS.inputBorder, color: COLORS.text, background: COLORS.inputBg }}>
-        English <ChevronDown size={14} />
-      </button>
       <button onClick={() => navigate('/admin/announcements')} title="Notifications / Announcements" className="relative w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer hover:bg-amber-100 transition"
         style={{ borderColor: COLORS.inputBorder, background: COLORS.inputBg }}>
         <Bell size={18} style={{ color: COLORS.primary }} />
@@ -168,8 +164,8 @@ function Topbar({ adminName }) {
   );
 }
 
-// ─── Stat Preview Card ────────────────────────────────────────────────────
-// Shows a live preview of what the dashboard donut will look like
+//  Stat Preview Card 
+// Shows a preview of what the dashboard donut will look like
 function PreviewCard({ label, current, target, color }) {
   const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
   const r = 30;
@@ -208,7 +204,7 @@ function PreviewCard({ label, current, target, color }) {
   );
 }
 
-// ─── Input Field ──────────────────────────────────────────────────────────
+//  Input Field 
 function StatInput({ label, description, value, onChange, icon: Icon, placeholder, error }) {
   return (
     <div className="flex flex-col gap-2">
@@ -240,7 +236,7 @@ function StatInput({ label, description, value, onChange, icon: Icon, placeholde
   );
 }
 
-// ─── History Row ──────────────────────────────────────────────────────────
+//  History Row 
 function HistoryRow({ entry, isLatest }) {
   return (
     <div className="flex items-start gap-3 py-3 border-b last:border-0"
@@ -277,7 +273,7 @@ function HistoryRow({ entry, isLatest }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────
+//  Main Page 
 export default function AdminStatisticalChanges() {
   const navigate = useNavigate();
 
@@ -306,7 +302,7 @@ export default function AdminStatisticalChanges() {
   const [errors,     setErrors]     = useState({});
   const [isDirty,    setIsDirty]    = useState(false);
 
-  // ── Auth + admin name ──────────────────────────────────────────────────
+  //  Auth + admin name 
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (user) => {
       if (!user) { navigate('/login'); return; }
@@ -322,7 +318,7 @@ export default function AdminStatisticalChanges() {
     return () => unsub();
   }, [navigate]);
 
-  // ── Load system_stats/config + history ────────────────────────────────
+  //  Load system_stats/config + history 
   useEffect(() => {
     (async () => {
       try {
@@ -381,7 +377,7 @@ export default function AdminStatisticalChanges() {
     setIsDirty(popChanged || gnChanged);
   }, [formPopulation, formWorkingGn, savedPopulation, savedWorkingGn]);
 
-  // ── Validate ────────────────────────────────────────────────────────────
+  //  Validate 
   function validate() {
     const errs = {};
     if (!formPopulation || Number(formPopulation) === 0)
@@ -393,7 +389,7 @@ export default function AdminStatisticalChanges() {
     return errs;
   }
 
-  // ── Save ─────────────────────────────────────────────────────────────
+  //  Save 
   async function handleSave() {
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
@@ -454,7 +450,7 @@ export default function AdminStatisticalChanges() {
     }
   }
 
-  // ── Reset form to last saved values ───────────────────────────────────
+  //  Reset form to last saved values 
   function handleReset() {
     setFormPopulation(savedPopulation > 0 ? String(savedPopulation) : '');
     setFormWorkingGn(savedWorkingGn > 0 ? String(savedWorkingGn) : '');
@@ -462,7 +458,7 @@ export default function AdminStatisticalChanges() {
     setSaveStatus(null);
   }
 
-  // ── Logout ─────────────────────────────────────────────────────────────
+  //  Logout 
   const handleLogout = async () => {
     try { await signOut(auth); navigate('/login'); }
     catch (err) { console.error('Logout failed:', err); }
@@ -504,7 +500,7 @@ export default function AdminStatisticalChanges() {
           ) : (
             <div className="flex gap-6 flex-wrap items-start">
 
-              {/* ── Left column: form ──────────────────────────────────── */}
+              {/*  Left column: form  */}
               <div className="flex flex-col gap-5 flex-1 min-w-[320px]">
 
                 {/* Info notice */}
@@ -620,7 +616,7 @@ export default function AdminStatisticalChanges() {
                 </div>
               </div>
 
-              {/* ── Right column: live preview + history ───────────────── */}
+              {/*  Right column: live preview + history  */}
               <div className="flex flex-col gap-5" style={{ width: '300px', minWidth: '260px' }}>
 
                 {/* Live preview */}

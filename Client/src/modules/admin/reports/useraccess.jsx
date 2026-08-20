@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import * as Icon from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { signOut } from 'firebase/auth';
+import { auth, db } from '../../../firebase';
 import {
     LineChart, Line, BarChart, Bar, AreaChart, Area,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -20,17 +22,17 @@ import { getFirestore, collection, getDocs } from "firebase/firestore";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-// ─── Firebase ────────────────────────────────────────────────────────────────
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// // ─── Firebase ────────────────────────────────────────────────────────────────
+// const firebaseConfig = {
+//     apiKey: "YOUR_API_KEY",
+//     authDomain: "YOUR_AUTH_DOMAIN",
+//     projectId: "YOUR_PROJECT_ID",
+//     storageBucket: "YOUR_STORAGE_BUCKET",
+//     messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+//     appId: "YOUR_APP_ID"
+// };
+// const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+// const db = getFirestore(app);
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 const COLORS = {
@@ -367,68 +369,132 @@ function LoginHistoryReport({ gn, startDate, endDate, sort }) {
         async function load() {
             setLoading(true);
             try {
-                const snap = await getDocs(collection(db, 'activity_logs'));
-                let logs = snap.docs.map(d => ({ ...d.data(), id: d.id }))
-                    .filter(l => l.uid === (gn.uid || gn.id));
-
-                const loginLogs = logs.filter(l => (l.action || l.type || '').toLowerCase().includes('login'));
-                const failedLogs = loginLogs.filter(l => (l.action || l.type || '').toLowerCase().includes('fail') || (l.description || '').toLowerCase().includes('fail'));
-
-                if (startDate) loginLogs.splice(0, loginLogs.length, ...loginLogs.filter(l => toDate(l.createdAt) >= new Date(startDate)));
-                if (endDate) { const ed = new Date(endDate); ed.setHours(23, 59, 59); loginLogs.splice(0, loginLogs.length, ...loginLogs.filter(l => toDate(l.createdAt) <= ed)); }
-
-                loginLogs.sort(sort === 'oldest'
+                // Get all GN officers to see their login history
+                const snap = await getDocs(collection(db, 'gn_officers'));
+                const allGns = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+                
+                // Find the current GN's login history
+                const currentGn = allGns.find(g => (g.uid || g.id) === (gn.uid || gn.id));
+                
+                // Get login history from the gn_officers document
+                const loginHistory = currentGn?.loginHistory || [];
+                
+                // Create mock data for the report
+                const mockLoginLogs = loginHistory.length > 0 ? loginHistory.map((entry, index) => ({
+                    id: `login-${index}`,
+                    title: 'GN Login',
+                    action: 'login',
+                    type: 'authentication',
+                    description: `GN ${currentGn?.fullName} logged in`,
+                    createdAt: entry,
+                    uid: gn.uid,
+                    status: 'success'
+                })) : [];
+                
+                // If no login history array exists, use lastLogin
+                if (mockLoginLogs.length === 0 && currentGn?.lastLogin) {
+                    mockLoginLogs.push({
+                        id: 'last-login',
+                        title: 'Last Login',
+                        action: 'login',
+                        type: 'authentication',
+                        description: `GN ${currentGn?.fullName} last logged in`,
+                        createdAt: currentGn.lastLogin,
+                        uid: gn.uid,
+                        status: 'success'
+                    });
+                }
+                
+                // Apply date filters
+                let filteredLogs = [...mockLoginLogs];
+                if (startDate) {
+                    filteredLogs = filteredLogs.filter(l => {
+                        const date = toDate(l.createdAt);
+                        return date && date >= new Date(startDate);
+                    });
+                }
+                if (endDate) {
+                    const ed = new Date(endDate);
+                    ed.setHours(23, 59, 59);
+                    filteredLogs = filteredLogs.filter(l => {
+                        const date = toDate(l.createdAt);
+                        return date && date <= ed;
+                    });
+                }
+                
+                // Sort
+                filteredLogs.sort(sort === 'oldest'
                     ? (a, b) => (toDate(a.createdAt) || 0) - (toDate(b.createdAt) || 0)
                     : (a, b) => (toDate(b.createdAt) || 0) - (toDate(a.createdAt) || 0));
-
-                // Daily login trend (last 30 days)
+                
+                // Daily login trend
                 const days30 = Array.from({ length: 30 }, (_, i) => {
-                    const d = new Date(); d.setDate(d.getDate() - (29 - i));
+                    const d = new Date();
+                    d.setDate(d.getDate() - (29 - i));
                     return d.toISOString().slice(0, 10);
                 });
+                
                 const dailyTrend = days30.map(day => ({
                     date: day.slice(5),
-                    logins: loginLogs.filter(l => toDate(l.createdAt)?.toISOString().slice(0, 10) === day).length,
+                    logins: filteredLogs.filter(l => {
+                        const d = toDate(l.createdAt);
+                        return d && d.toISOString().slice(0, 10) === day;
+                    }).length,
                 }));
-
+                
                 // Hour distribution
                 const hourBuckets = Array(24).fill(0);
-                loginLogs.forEach(l => { const d = toDate(l.createdAt); if (d) hourBuckets[d.getHours()]++; });
-                const hourData = Array.from({ length: 24 }, (_, h) => ({
-                    hour: `${String(h).padStart(2, '0')}:00`, logins: hourBuckets[h]
-                })).filter((_, h) => h >= 5 && h <= 23);
-
-                setData({
-                    loginLogs, failedLogs, dailyTrend, hourData,
-                    total: loginLogs.length,
-                    failed: failedLogs.length,
-                    lastLogin: toDate(gn.lastLogin),
+                filteredLogs.forEach(l => {
+                    const d = toDate(l.createdAt);
+                    if (d) hourBuckets[d.getHours()]++;
                 });
-            } catch (e) { console.error(e); }
+                const hourData = Array.from({ length: 24 }, (_, h) => ({
+                    hour: `${String(h).padStart(2, '0')}:00`,
+                    logins: hourBuckets[h]
+                })).filter((_, h) => h >= 5 && h <= 23);
+                
+                // 🔥 UPDATE: Use ORIGINAL logic ONLY for lastLogin
+                // Get lastLogin directly from the gn object (original logic)
+                const originalLastLogin = toDate(gn.lastLogin); // ← THIS IS THE CHANGE
+                
+                setData({
+                    loginLogs: filteredLogs,          // New logic
+                    failedLogs: [],                   // New logic
+                    dailyTrend,                       // New logic
+                    hourData,                         // New logic
+                    total: filteredLogs.length,      // New logic
+                    failed: 0,                       // New logic
+                    lastLogin: originalLastLogin,    // ← ORIGINAL LOGIC for lastLogin
+                });
+            } catch (e) {
+                console.error(e);
+                setData({ 
+                    loginLogs: [], 
+                    failedLogs: [], 
+                    dailyTrend: [], 
+                    hourData: [], 
+                    total: 0, 
+                    failed: 0, 
+                    lastLogin: null 
+                });
+            }
             setLoading(false);
         }
         load();
     }, [gn, startDate, endDate, sort]);
-
-    if (!gn) return <NoGNSelected />;
-    if (loading) return <div className="flex flex-col gap-4"><div className="grid grid-cols-3 gap-4">{[1, 2, 3].map(i => <Sk key={i} h={110} />)}</div><Sk h={260} /><Sk h={240} /></div>;
-    if (!data) return <p style={{ color: COLORS.textMuted }}>No data.</p>;
-
+    
     // Export function
     function handleExport() {
         if (!data) return;
 
-        const exportData = data.loginLogs.map(l => {
-            const isFail = (l.action || l.type || '').toLowerCase().includes('fail') || (l.description || '').toLowerCase().includes('fail');
-            return {
-                Title: l.title || 'Login Event',
-                Action: l.action || '',
-                Type: l.type || '',
-                Description: l.description || '',
-                DateTime: fmtDateTime(toDate(l.createdAt)),
-                Status: isFail ? 'failed' : 'success'
-            };
-        });
+        const exportData = data.loginLogs.map(l => ({
+            Title: l.title || 'Login Event',
+            Action: l.action || '',
+            Type: l.type || '',
+            Description: l.description || '',
+            DateTime: fmtDateTime(toDate(l.createdAt)),
+            Status: l.status || 'success'
+        }));
 
         exportToPDF(
             exportData,
@@ -436,6 +502,10 @@ function LoginHistoryReport({ gn, startDate, endDate, sort }) {
             `Login History Report — ${gn.fullName || ''}`
         );
     }
+
+    if (!gn) return <NoGNSelected />;
+    if (loading) return <div className="flex flex-col gap-4"><div className="grid grid-cols-3 gap-4">{[1, 2, 3].map(i => <Sk key={i} h={110} />)}</div><Sk h={260} /><Sk h={240} /></div>;
+    if (!data) return <p style={{ color: COLORS.textMuted }}>No data.</p>;
 
     return (
         <div className="flex flex-col gap-6">
@@ -454,7 +524,13 @@ function LoginHistoryReport({ gn, startDate, endDate, sort }) {
                 <StatCard label="Success Rate"
                     value={data.total > 0 ? `${Math.round(((data.total - data.failed) / data.total) * 100)}%` : '—'}
                     icon={CheckCircle} accent={COLORS.successBg} sub="Successful logins" trend="up" />
-                <StatCard label="Last Login" value={fmtDate(data.lastLogin)} icon={Clock} accent="#fdf0e0" sub="Most recent session" />
+                <StatCard 
+                    label="Last Login" 
+                    value={fmtDate(data.lastLogin)}  // ← Now uses ORIGINAL logic
+                    icon={Clock} 
+                    accent="#fdf0e0" 
+                    sub="Most recent session" 
+                />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1329,10 +1405,7 @@ function Topbar() {
                     style={{ borderColor: '#C8B89A', background: COLORS.inputBg, color: COLORS.text }}
                     placeholder="search..." value={searchVal} onChange={e => setSearchVal(e.target.value)} />
             </div>
-            <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
-                style={{ borderColor: '#C8B89A', color: COLORS.text, background: COLORS.inputBg }}>
-                English <ChevronDown size={14} />
-            </button>
+            
             <button onClick={() => navigate('/admin/announcements')} title="Notifications / Announcements" className="relative w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer hover:bg-amber-100 transition"
                 style={{ borderColor: '#C8B89A', background: COLORS.inputBg }}>
                 <Icon.Bell size={18} color={COLORS.primary} />
@@ -1349,6 +1422,9 @@ function Topbar() {
 // MAIN PAGE
 // ═══════════════════════════════════════════════════════════════════════════
 export default function AdminIndividualGNUserAccessReports() {
+
+    const navigate = useNavigate();
+
     const [gnList, setGnList] = useState([]);
     const [selectedGN, setSelectedGN] = useState(null);
     const [activeReport, setActiveReport] = useState('login-history');
@@ -1356,6 +1432,15 @@ export default function AdminIndividualGNUserAccessReports() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [applied, setApplied] = useState({ sort: 'newest', start: '', end: '' });
+
+    const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  };
 
     // Load GN list once
     useEffect(() => {
@@ -1385,9 +1470,9 @@ export default function AdminIndividualGNUserAccessReports() {
     };
 
     return (
-        <div className="flex h-screen overflow-hidden" style={{ background: COLORS.bg, fontFamily: "'Segoe UI',sans-serif" }}>
+        <div className="flex min-h-screen" style={{ background: COLORS.bg, fontFamily: "'Segoe UI',sans-serif" }}>
             <style>{`@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}`}</style>
-            <Sidebar onLogout={() => { }} />
+            <Sidebar onLogout={handleLogout} />
 
             <div className="flex flex-col flex-1 overflow-hidden">
                 <Topbar />

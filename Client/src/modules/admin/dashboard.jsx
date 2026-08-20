@@ -21,7 +21,7 @@ import {
   CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 
-// ─── Theme ────────────────────────────────────────────────────────────────
+//  Theme 
 const COLORS = {
   primary:   '#7B2D00',
   accent:    '#F5A623',
@@ -33,7 +33,7 @@ const COLORS = {
   white:     '#FFFFFF',
 };
 
-// ─── activity_logs.type → icon / colour ──────────────────────────────────
+//  activity_logs.type → icon / colour 
 const ACTIVITY_META = {
   approved:    { icon: CheckCircle,    color: '#22c55e' },
   registered:  { icon: CheckCircle,    color: '#22c55e' },
@@ -48,7 +48,7 @@ const ACTIVITY_META = {
 // Default fallback for unknown types
 const DEFAULT_ACTIVITY_META = { icon: Activity, color: '#60a5fa' };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
+//  Helpers 
 function timeAgo(timestamp) {
   if (!timestamp) return '';
   const ts   = timestamp.toDate ? timestamp.toDate().getTime() : Number(timestamp);
@@ -69,7 +69,7 @@ function todayDateString() {
   return d.toISOString().split('T')[0];
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────
+//   Skeleton  
 function Skeleton({ className = '' }) {
   return (
     <div className={`animate-pulse rounded-lg ${className}`}
@@ -77,7 +77,7 @@ function Skeleton({ className = '' }) {
   );
 }
 
-// ─── Error Banner ─────────────────────────────────────────────────────────
+//  Error Banner  
 function ErrorBanner({ message }) {
   return (
     <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs"
@@ -88,7 +88,7 @@ function ErrorBanner({ message }) {
   );
 }
 
-// ─── Simple Number Card ──────────────────────────────────────────────────
+//  Simple Number Card 
 function SimpleStatCard({ label, value, sub, icon: Icon, loading,
   secondaryValue, secondaryLabel, secondaryLoading }) {
   return (
@@ -132,7 +132,7 @@ function SimpleStatCard({ label, value, sub, icon: Icon, loading,
   );
 }
 
-// ─── Donut Chart ──────────────────────────────────────────────────────────
+//  Donut Chart  
 function DonutChart({ pct }) {
   const r    = 38;
   const circ = 2 * Math.PI * r;
@@ -156,7 +156,7 @@ function DonutChart({ pct }) {
   );
 }
 
-// ─── Stat Card (with donut) ────────────────────────────────────────────────
+//  Stat Card (with donut) 
 function StatCard({ label, value, pct, sub, loading }) {
   return (
     <div className="flex flex-col gap-3 rounded-2xl p-5 flex-1 min-w-[180px]"
@@ -179,7 +179,7 @@ function StatCard({ label, value, pct, sub, loading }) {
   );
 }
 
-// ─── Nav Item ─────────────────────────────────────────────────────────────
+//  Nav Item  
 function NavItem({ icon: Icon, label, active, bold, onClick }) {
   return (
     <li onClick={onClick}
@@ -195,7 +195,7 @@ function NavItem({ icon: Icon, label, active, bold, onClick }) {
   );
 }
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────
+//  Sidebar  
 function Sidebar({ onLogout }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -259,7 +259,7 @@ function Sidebar({ onLogout }) {
   );
 }
 
-// ─── Topbar ───────────────────────────────────────────────────────────────
+//  Topbar  
 function Topbar({ adminName }) {
   const { t, i18n } = useTranslation();
   const [searchVal, setSearchVal] = useState('');
@@ -290,26 +290,7 @@ function Topbar({ adminName }) {
           onChange={(e) => setSearchVal(e.target.value)}
         />
       </div>
-      
-      {/* Language Switcher Dropdown */}
-      <div className="relative">
-        <button 
-          onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border transition-all active:scale-95"
-          style={{ borderColor: '#C8B89A', color: COLORS.text, background: '#FFF9F0' }}
-        >
-          {currentLanguageLabel()} <ChevronDown size={14} />
-        </button>
-        {dropdownOpen && (
-          <div className="absolute right-0 mt-2 w-32 rounded-xl border shadow-lg overflow-hidden z-50"
-               style={{ background: '#FFF9F0', borderColor: '#C8B89A' }}>
-            <button onClick={() => toggleLanguage('en')} className="w-full text-left px-4 py-2 text-sm text-[#2C1200] hover:bg-amber-100 font-semibold transition-colors">English</button>
-            <button onClick={() => toggleLanguage('si')} className="w-full text-left px-4 py-2 text-sm text-[#2C1200] hover:bg-amber-100 font-semibold transition-colors">සිංහල</button>
-            <button onClick={() => toggleLanguage('ta')} className="w-full text-left px-4 py-2 text-sm text-[#2C1200] hover:bg-amber-100 font-semibold transition-colors">தமிழ்</button>
-          </div>
-        )}
-      </div>
-
+            
       <button onClick={() => navigate('/admin/announcements')} title="Notifications / Announcements" className="relative w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer hover:bg-amber-100 transition"
         style={{ borderColor: '#C8B89A', background: '#FFF9F0' }}>
         <Bell size={18} style={{ color: COLORS.primary }} />
@@ -331,7 +312,7 @@ function Topbar({ adminName }) {
   );
 }
 
-// ─── Main Admin Dashboard ─────────────────────────────────────────────────
+//  Main Admin Dashboard 
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();

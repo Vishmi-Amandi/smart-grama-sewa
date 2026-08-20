@@ -242,10 +242,7 @@ function Topbar() {
           style={{ borderColor: '#C8B89A', background: COLORS.inputBg, color: COLORS.text }}
           placeholder="search..." value={searchVal} onChange={(e) => setSearchVal(e.target.value)} />
       </div>
-      <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
-        style={{ borderColor: '#C8B89A', color: COLORS.text, background: COLORS.inputBg }}>
-        English <ChevronDown size={14} />
-      </button>
+      
       <button onClick={() => navigate('/admin/announcements')} title="Notifications / Announcements" className="relative w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer hover:bg-amber-100 transition"
         style={{ borderColor: '#C8B89A', background: COLORS.inputBg }}>
         <Icon.Bell size={18} color={COLORS.primary} />
@@ -388,10 +385,10 @@ function UserStatisticsReport({ startDate, endDate, sort }) {
     }));
 
     exportToPDF(
-  exportData,
-  "user_statistics_report.pdf",
-  "User Statistics Report"
-);
+      exportData,
+      "user_statistics_report.pdf",
+      "User Statistics Report"
+    );
   }
 
   return (
@@ -435,7 +432,7 @@ function UserStatisticsReport({ startDate, endDate, sort }) {
         <table className="w-full text-sm" style={{ background: COLORS.white }}>
           <thead>
             <tr style={{ background: COLORS.bg, color: COLORS.textMuted, fontSize: 11 }}>
-              {['Full Name', 'GN Division', 'District', 'Registered', 'Status'].map(h => (
+              {['Full Name', 'GN Division', 'DS Division', 'Registered', 'Status'].map(h => (
                 <th key={h} className="px-4 py-2 text-left font-semibold">{h}</th>
               ))}
             </tr>
@@ -448,7 +445,7 @@ function UserStatisticsReport({ startDate, endDate, sort }) {
               }}>
                 <td className="px-4 py-2.5 font-medium" style={{ color: COLORS.darkest }}>{gn.fullName || '—'}</td>
                 <td className="px-4 py-2.5" style={{ color: COLORS.text }}>{gn.gnDivisionName || gn.gnDiv || '—'}</td>
-                <td className="px-4 py-2.5" style={{ color: COLORS.text }}>{gn.district || '—'}</td>
+                <td className="px-4 py-2.5" style={{ color: COLORS.text }}>{gn.divisionalSecretariat || '—'}</td>
                 <td className="px-4 py-2.5 text-xs" style={{ color: COLORS.textMuted }}>{fmtDate(toDate(gn.createdAt))}</td>
                 <td className="px-4 py-2.5">
                   <span className="px-2 py-0.5 rounded-full text-xs font-semibold"
@@ -538,10 +535,10 @@ function AppointmentSummaryReport({ startDate, endDate, sort }) {
     }));
 
     exportToPDF(
-  exportData,
-  "appointment_summary_report.pdf",
-  "Appointment Summary Report"
-);
+      exportData,
+      "appointment_summary_report.pdf",
+      "Appointment Summary Report"
+    );
   }
   return (
     <div className="flex flex-col gap-6">
@@ -654,6 +651,32 @@ function SystemUsageReport({ startDate, endDate, sort }) {
       try {
         const snap = await getDocs(collection(db, 'activity_logs'));
         let logs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+        // total login logic
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        // GN logins
+        const gnSnap = await getDocs(
+          query(
+            collection(db, 'gn_officers'),
+            where('lastLogin', '>=', todayStart),
+            where('lastLogin', '<=', todayEnd)
+          )
+        );
+
+        // Citizen logins
+        const userSnap = await getDocs(
+          query(
+            collection(db, 'users'),
+            where('lastLogin', '>=', todayStart),
+            where('lastLogin', '<=', todayEnd)
+          )
+        );
+
+        const totalLogins = gnSnap.size + userSnap.size;
         if (startDate) logs = logs.filter(l => toDate(l.createdAt) >= new Date(startDate));
         if (endDate) { const ed = new Date(endDate); ed.setHours(23, 59, 59); logs = logs.filter(l => toDate(l.createdAt) <= ed); }
         const sortFn = sort === 'oldest' ? (a, b) => (toDate(a.createdAt) || 0) - (toDate(b.createdAt) || 0) : (a, b) => (toDate(b.createdAt) || 0) - (toDate(a.createdAt) || 0);
@@ -681,7 +704,7 @@ function SystemUsageReport({ startDate, endDate, sort }) {
 
         setData({
           logs, loginLogs, daily, peakHours,
-          totalLogins: loginLogs.length,
+          totalLogins,
           uniqueUsers: new Set(loginLogs.map(l => l.uid)).size,
           totalActivity: logs.length
         });
@@ -706,10 +729,10 @@ function SystemUsageReport({ startDate, endDate, sort }) {
     }));
 
     exportToPDF(
-  exportData,
-  "system_usage_report.pdf",
-  "System Usage Report"
-);
+      exportData,
+      "system_usage_report.pdf",
+      "System Usage Report"
+    );
   }
   return (
     <div className="flex flex-col gap-6">
@@ -839,10 +862,10 @@ function ActivityTrendReport({ startDate, endDate, sort }) {
     }));
 
     exportToPDF(
-  exportData,
-  "activity_trend_report.pdf",
-  "Activity Trend Report"
-);
+      exportData,
+      "activity_trend_report.pdf",
+      "Activity Trend Report"
+    );
   }
   return (
     <div className="flex flex-col gap-6">
@@ -954,10 +977,10 @@ function SystemHealthReport({ startDate, endDate, sort }) {
     }));
 
     exportToPDF(
-  exportData,
-  "system_health_report.pdf",
-  "System Health Report"
-);
+      exportData,
+      "system_health_report.pdf",
+      "System Health Report"
+    );
   }
   return (
     <div className="flex flex-col gap-6">
@@ -1038,11 +1061,22 @@ function SystemHealthReport({ startDate, endDate, sort }) {
 // MAIN PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function AdminSystemPerformanceReports() {
+
+  const navigate = useNavigate();
+
   const [activeReport, setActiveReport] = useState('user-stats');
   const [sort, setSort] = useState('newest');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [applied, setApplied] = useState({ sort: 'newest', start: '', end: '' });
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  };
 
   function handleApply() {
     setApplied({ sort, start: startDate, end: endDate });
@@ -1067,9 +1101,9 @@ export default function AdminSystemPerformanceReports() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: COLORS.bg, fontFamily: "'Segoe UI',sans-serif" }}>
+    <div className="flex min-h-screen" style={{ background: COLORS.bg, fontFamily: "'Segoe UI',sans-serif" }}>
       <style>{`@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}`}</style>
-      <Sidebar onLogout={() => { }} />
+      <Sidebar onLogout={handleLogout} />
 
       <div className="flex flex-col flex-1 overflow-hidden">
         <Topbar />

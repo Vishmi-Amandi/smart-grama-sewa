@@ -15,7 +15,7 @@ import {
   Loader2, AlertCircle, LogOut,
 } from 'lucide-react';
 
-// ─── Design tokens (matches your existing COLORS object) ──────────────────────
+//  Design tokens (matches your existing COLORS object) 
 const COLORS = {
   bg: "#FFF9F0",
   primary: "#92400e",   // amber-800
@@ -26,7 +26,7 @@ const COLORS = {
   cardDark: '#3D1500',
 };
 
-// ─── Data constants ───────────────────────────────────────────────────────────
+//  Data constants 
 const CATEGORIES = [
   { value: "all_users", label: "All Users" },
   { value: "residents", label: "Citizens" },
@@ -55,7 +55,7 @@ const STATUS_BADGE = {
   scheduled: "bg-blue-100 text-blue-700 border-blue-200",
 };
 
-// ─── Nav Item ─────────────────────────────────────────────────────────────
+//  Nav Item 
 function NavItem({ icon: Icon, label, active, bold, onClick }) {
   return (
     <li onClick={onClick}
@@ -71,7 +71,7 @@ function NavItem({ icon: Icon, label, active, bold, onClick }) {
   );
 }
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────
+//  Sidebar 
 function Sidebar({ onLogout }) {
   const navigate = useNavigate();
   return (
@@ -118,10 +118,6 @@ function Sidebar({ onLogout }) {
           <NavItem icon={TrendingUp} label="Statistical Changes" bold 
             onClick={() => navigate('/admin/staticalchanges')} />
         </li>
-        {/* <li className="px-4 pt-1">
-          <NavItem icon={Bell} label="Notifications" bold
-            onClick={() => navigate('/admin/notifications')} />
-        </li> */}
       </ul>
 
       {/* Logout */}
@@ -137,7 +133,7 @@ function Sidebar({ onLogout }) {
   );
 }
 
-// ─── Topbar — exactly your shared code ───────────────────────────────────────
+//  Topbar — exactly your shared code 
 function Topbar() {
   const [searchVal, setSearchVal] = useState("");
   return (
@@ -160,14 +156,6 @@ function Topbar() {
           onChange={(e) => setSearchVal(e.target.value)}
         />
       </div>
-
-      {/* Language */}
-      <button
-        className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
-        style={{ borderColor: "#C8B89A", color: COLORS.text, background: "#FFF9F0" }}
-      >
-        English <ChevronDown size={14} />
-      </button>
 
       {/* Bell */}
       <button
@@ -194,7 +182,7 @@ function Topbar() {
   );
 }
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
+//  Toast 
 function Toast({ msg, type, onClose }) {
   useEffect(() => {
     const t = setTimeout(onClose, 3300);
@@ -213,7 +201,7 @@ function Toast({ msg, type, onClose }) {
   );
 }
 
-// ─── Confirm Dialog ───────────────────────────────────────────────────────────
+//  Confirm Dialog 
 function ConfirmDialog({ onConfirm, onCancel }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center">
@@ -235,7 +223,7 @@ function ConfirmDialog({ onConfirm, onCancel }) {
   );
 }
 
-// ─── Announcement Form ────────────────────────────────────────────────────────
+//  Announcement Form 
 function AnnouncementForm({ initial, onSubmit, onCancel, submitting }) {
   const blank = { category: "", title: "", description: "", priority: "normal", status: "published", expiryDate: "" };
   const [form, setForm] = useState(initial || blank);
@@ -366,7 +354,7 @@ function AnnouncementForm({ initial, onSubmit, onCancel, submitting }) {
   );
 }
 
-// ─── Announcement Card ────────────────────────────────────────────────────────
+//  Announcement Card 
 function AnnouncementCard({ ann, onEdit, onDelete, fmtDate }) {
   return (
     <div className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow group flex gap-3 p-4 items-start"
@@ -406,10 +394,10 @@ function AnnouncementCard({ ann, onEdit, onDelete, fmtDate }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+//  Main Page 
 export default function AdminAnnouncementPage() {
   const [activeNav, setActiveNav] = useState("announcements");
-  const [view, setView] = useState("form"); // "form" | "list"
+  const [view, setView] = useState("form"); 
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);

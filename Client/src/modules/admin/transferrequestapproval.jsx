@@ -5,12 +5,13 @@ import {
   User, Activity, Megaphone, Calendar, Bell, LogOut, Search,
   ChevronDown, CheckCircle, XCircle, Download, FileText, TrendingUp 
 } from 'lucide-react';
-import { db } from '../../firebase';
+import { auth, db } from '../../firebase';
+import { signOut } from 'firebase/auth';
 import {
   collection, getDocs, doc, updateDoc, setDoc, Timestamp, query, where
 } from 'firebase/firestore';
 
-// ─── Colors ───────────────────────────────────────────────────────────────
+//  Colors 
 const COLORS = {
   bg:        '#F5F0E1',
   primary:   '#7A2828',
@@ -22,7 +23,7 @@ const COLORS = {
   cardDark:  '#3D1500',
 };
 
-// ─── Nav Item ─────────────────────────────────────────────────────────────
+//  Nav Item 
 function NavItem({ icon: Icon, label, active, bold, onClick }) {
   return (
     <li onClick={onClick}
@@ -38,7 +39,7 @@ function NavItem({ icon: Icon, label, active, bold, onClick }) {
   );
 }
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────
+//  Sidebar 
 function Sidebar({ onLogout }) {
   const navigate = useNavigate();
   return (
@@ -97,7 +98,7 @@ function Sidebar({ onLogout }) {
   );
 }
 
-// ─── Topbar ───────────────────────────────────────────────────────────────
+//  Topbar 
 function Topbar({ adminName }) {
   const [searchVal, setSearchVal] = useState('');
   return (
@@ -114,10 +115,7 @@ function Topbar({ adminName }) {
           onChange={(e) => setSearchVal(e.target.value)}
         />
       </div>
-      <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
-        style={{ borderColor: '#C8B89A', color: COLORS.text, background: '#FFF9F0' }}>
-        English <ChevronDown size={14} />
-      </button>
+      
       <button onClick={() => navigate('/admin/announcements')} title="Notifications / Announcements" className="relative w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer hover:bg-amber-100 transition"
         style={{ borderColor: '#C8B89A', background: '#FFF9F0' }}>
         <Bell size={18} style={{ color: COLORS.primary }} />
@@ -139,7 +137,7 @@ function Topbar({ adminName }) {
   );
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
+//  Helpers 
 function formatDate(val) {
   if (!val) return '—';
   if (val?.toDate) return val.toDate().toLocaleDateString('en-GB');
@@ -164,7 +162,7 @@ function StatusBadge({ status }) {
   );
 }
 
-// ─── Confirm Modal ────────────────────────────────────────────────────────
+//  Confirm Modal 
 function ConfirmModal({ modal, onConfirm, onCancel }) {
   if (!modal) return null;
   const isApprove = modal.action === 'approved';
@@ -210,7 +208,7 @@ function ConfirmModal({ modal, onConfirm, onCancel }) {
   );
 }
 
-// ─── Reason Modal ────────────────────────────────────────────────────────
+//  Reason Modal 
 function ReasonModal({ text, onClose }) {
   if (!text) return null;
   return (
@@ -235,8 +233,11 @@ function ReasonModal({ text, onClose }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────
+//  Main Page 
 export default function TransferRequestApproval() {
+
+  const navigate = useNavigate();
+
   const [requests,      setRequests]      = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState(null);
@@ -245,49 +246,66 @@ export default function TransferRequestApproval() {
   const [reasonModal,   setReasonModal]   = useState(null);
   const [toast,         setToast]         = useState(null);
 
-  // ── Fetch transfer requests + officer fullNames ──
-  useEffect(() => {
-    (async () => {
-      try {
-        const [transferSnap, officerSnap] = await Promise.all([
-          getDocs(collection(db, 'gn_change_gn_division')),
-          getDocs(collection(db, 'gn_officers')),
-        ]);
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  };
 
-        // Build uid → fullName lookup from gn_officers
-        const nameMap = {};
-        officerSnap.docs.forEach(d => {
-          const data = d.data();
-          if (data.uid) nameMap[data.uid] = data.fullName || '';
-        });
+  //  Fetch transfer requests + officer fullNames 
+useEffect(() => {
+  (async () => {
+    try {
+      const [transferSnap, officerSnap] = await Promise.all([
+        getDocs(collection(db, 'gn_change_gn_division')),
+        getDocs(collection(db, 'gn_officers')),
+      ]);
 
-        setRequests(
-          transferSnap.docs.map(d => ({
-            _docId: d.id,
-            ...d.data(),
-            _fullName: nameMap[d.data().uid] || '',
-          }))
-        );
-      } catch (e) {
-        setError(e.message || 'Failed to load transfer requests.');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+      
+      const nameMap = {};
+      officerSnap.docs.forEach(d => {
+        const data = d.data();
+        if (data.uid) nameMap[data.uid] = data.fullName || '';
+      });
 
-  // ── Toast ──
+      // Get requests and sort by createdAt 
+      const requestsData = transferSnap.docs.map(d => ({
+        _docId: d.id,
+        ...d.data(),
+        _fullName: nameMap[d.data().uid] || '',
+      }));
+
+      // Sort by createdAt in descending order 
+      requestsData.sort((a, b) => {
+        const dateA = a.createdAt?.toDate?.() || new Date(0);
+        const dateB = b.createdAt?.toDate?.() || new Date(0);
+        return dateB - dateA; 
+      });
+
+      setRequests(requestsData);
+    } catch (e) {
+      setError(e.message || 'Failed to load transfer requests.');
+    } finally {
+      setLoading(false);
+    }
+  })();
+}, []);
+
+  //  Toast 
   function showToast(msg, type = 'success') {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 4000);
   }
 
-  // ── Approve: update transfer request + gn_officer fields + send notification ──
+  //  Approve - update transfer request + gn_officer fields + send notification 
   async function handleApprove(request) {
     const docId = request._docId;
     setActionLoading(p => ({ ...p, [docId]: 'approved' }));
     try {
-      // 1. Find the gn_officer document by uid
+      // 1. Find the gnofficer document by uid
       const officerQuery = query(
         collection(db, 'gn_officers'),
         where('uid', '==', request.uid)
@@ -297,7 +315,7 @@ export default function TransferRequestApproval() {
       let targetOfficerId = request.uid;
       if (!officerSnap.empty) {
         targetOfficerId = officerSnap.docs[0].id;
-        // 2. Update gn_officers with new division/district details
+        // 2. Update gnofficers with new division/district details
         await updateDoc(doc(db, 'gn_officers', targetOfficerId), {
           gnDivision:             request.toDivision   || '',
           gnDivisionName:         request.toDivision   || '',
@@ -337,7 +355,7 @@ export default function TransferRequestApproval() {
     }
   }
 
-  // ── Reject: update status + send rejection notification ──
+  //  Reject: update status + send rejection notification 
   async function handleReject(request) {
     const docId = request._docId;
     setActionLoading(p => ({ ...p, [docId]: 'rejected' }));
@@ -375,7 +393,7 @@ export default function TransferRequestApproval() {
     }
   }
 
-  // ── Handle confirm ──
+  //  Handle confirm 
   function handleConfirm() {
     const { request, action } = confirmModal;
     setConfirmModal(null);
@@ -514,7 +532,7 @@ export default function TransferRequestApproval() {
       />
 
       {/* Sidebar */}
-      <Sidebar onLogout={() => {}} />
+      <Sidebar onLogout={handleLogout} />
 
       {/* Right side */}
       <div className="flex flex-col flex-1 overflow-hidden">

@@ -1,18 +1,4 @@
-/**
- * AppointmentCalendarPage.jsx  — Admin Calendar with GN Officer filter
- *
- * Filter flow:
- *   Province → District → DS Division → GN Division/Officer
- *   All options loaded from /gn_officers collection.
- *   On "Apply Filters" → fetch /appointments where gnDiv == selectedGnDiv.
- *
- * Firebase collections:
- *   /gn_officers  — province, district, dsDiv, gnDiv, fullName, gnCode
- *   /appointments — date, slot ("03:30 PM"), gnDiv, fullName, service, status
- *
- * Required Firestore composite index:
- *   appointments | gnDiv ASC | date ASC
- */
+
 
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -21,59 +7,59 @@ import { auth, db } from "../../firebase";
 import {
   LayoutDashboard, UserCheck, ArrowLeftRight, BarChart2,
   User, Activity, Megaphone, LogOut, Search, ChevronDown,
-  Bell, Calendar, Filter, X, ChevronRight,
+  Bell, Calendar, Filter, X, ChevronRight, TrendingUp
 } from "lucide-react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 
-// ─── Color tokens ─────────────────────────────────────────────────────────────
+//  Color tokens 
 const COLORS = {
-  primary:   "#7B2D00",
-  accent:    "#F5A623",
-  bg:        "#F5F0E8",
-  dark:      "#6B2400",
-  darker:    "#3D1500",
-  darkest:   "#2C1200",
-  muted:     "#7A5C44",
-  white:     "#FFFFFF",
-  cardDark:  "#3D1500",
-  text:      "#2C1200",
+  primary: "#7B2D00",
+  accent: "#F5A623",
+  bg: "#F5F0E8",
+  dark: "#6B2400",
+  darker: "#3D1500",
+  darkest: "#2C1200",
+  muted: "#7A5C44",
+  white: "#FFFFFF",
+  cardDark: "#3D1500",
+  text: "#2C1200",
   textMuted: "#7A5C44",
-  cream:     "#FFF9F0",
-  border:    "#DDD0BC",
+  cream: "#FFF9F0",
+  border: "#DDD0BC",
 };
 
-// ─── Calendar slot constants ──────────────────────────────────────────────────
+//  Calendar slot constants 
 const AM_SLOTS = [
-  "8:30–8:45","8:45–9:00","9:00–9:15","9:15–9:30",
-  "9:30–9:45","9:45–10:00","10:00–10:15","10:15–10:30",
-  "10:30–10:45","10:45–11:00","11:00–11:15","11:15–11:30",
-  "11:30–11:45","11:45–12:00","12:00–12:15","12:15–12:30",
+  "8:30–8:45", "8:45–9:00", "9:00–9:15", "9:15–9:30",
+  "9:30–9:45", "9:45–10:00", "10:00–10:15", "10:15–10:30",
+  "10:30–10:45", "10:45–11:00", "11:00–11:15", "11:15–11:30",
+  "11:30–11:45", "11:45–12:00", "12:00–12:15", "12:15–12:30",
 ];
 const PM_SLOTS = [
-  "1:00–1:15","1:15–1:30","1:30–1:45","1:45–2:00",
-  "2:00–2:15","2:15–2:30","2:30–2:45","2:45–3:00",
-  "3:00–3:15","3:15–3:30","3:30–3:45","3:45–4:00",
+  "1:00–1:15", "1:15–1:30", "1:30–1:45", "1:45–2:00",
+  "2:00–2:15", "2:15–2:30", "2:30–2:45", "2:45–3:00",
+  "3:00–3:15", "3:15–3:30", "3:30–3:45", "3:45–4:00",
 ];
 const ALL_SLOTS = [...AM_SLOTS, null, ...PM_SLOTS];
-const DAY_NAMES = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-const MONTHS    = [
-  "January","February","March","April","May","June",
-  "July","August","September","October","November","December",
+const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
-// ─── Status config ────────────────────────────────────────────────────────────
+//  Status config 
 const STATUS_CONFIG = {
-  booked:    { bg: COLORS.primary, text: COLORS.white,   label: "Booked"    },
-  confirmed: { bg: COLORS.dark,    text: COLORS.white,   label: "Confirmed" },
-  completed: { bg: COLORS.darker,  text: COLORS.white,   label: "Completed" },
-  pending:   { bg: COLORS.accent,  text: COLORS.darkest, label: "Pending"   },
-  cancelled: { bg: COLORS.muted,   text: COLORS.white,   label: "Cancelled" },
+  booked: { bg: COLORS.primary, text: COLORS.white, label: "Booked" },
+  confirmed: { bg: COLORS.dark, text: COLORS.white, label: "Confirmed" },
+  completed: { bg: COLORS.darker, text: COLORS.white, label: "Completed" },
+  pending: { bg: COLORS.accent, text: COLORS.darkest, label: "Pending" },
+  cancelled: { bg: COLORS.muted, text: COLORS.white, label: "Cancelled" },
 };
 function normaliseStatus(raw) {
   return (raw ?? "booked").toLowerCase();
 }
 
-// ─── Slot converter: "03:30 PM" → "3:30–3:45" ────────────────────────────────
+//  Slot converter: "03:30 PM" → "3:30–3:45" 
 function convertSlot(slotStr) {
   if (!slotStr || typeof slotStr !== "string") return null;
   const parts = slotStr.trim().split(" ");
@@ -85,18 +71,18 @@ function convertSlot(slotStr) {
   if (meridiem === "PM" && hours !== 12) hours += 12;
   if (meridiem === "AM" && hours === 12) hours = 0;
   const start = new Date(2000, 0, 1, hours, mins, 0);
-  const end   = new Date(start.getTime() + 15 * 60 * 1000);
+  const end = new Date(start.getTime() + 15 * 60 * 1000);
   const fmt = (d) => {
     const h12 = d.getHours() % 12 === 0 ? 12 : d.getHours() % 12;
-    const m   = d.getMinutes().toString().padStart(2, "0");
+    const m = d.getMinutes().toString().padStart(2, "0");
     return `${h12}:${m}`;
   };
   return `${fmt(start)}–${fmt(end)}`;
 }
 
-// ─── Date helpers ─────────────────────────────────────────────────────────────
+//  Date helpers 
 function toDateStr(date) { return date.toISOString().split("T")[0]; }
-function isToday(date)   { return toDateStr(date) === toDateStr(new Date()); }
+function isToday(date) { return toDateStr(date) === toDateStr(new Date()); }
 function getWeekDates(anchor) {
   const d = new Date(anchor);
   const mon = new Date(d);
@@ -113,47 +99,37 @@ function formatMonthYear(dates) {
   return `${sm} ${s.getFullYear()}`;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // FILTER PANEL
-// ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Cascading filter: Province → District → DS Division → GN Division
- *
- * Props:
- *   officers      {Array}   — all GN officers from Firestore
- *   onApply       {fn}      — called with selectedGnDiv and selectedOfficer
- *   applied       {object}  — current applied filter state (for display)
- */
 function FilterPanel({ officers, onApply, applied }) {
-  const [province,  setProvince]  = useState(applied?.province  || "");
-  const [district,  setDistrict]  = useState(applied?.district  || "");
-  const [dsDiv,     setDsDiv]     = useState(applied?.dsDiv     || "");
-  const [gnDiv,     setGnDiv]     = useState(applied?.gnDiv     || "");
-  const [open,      setOpen]      = useState(false);
+  const [province, setProvince] = useState(applied?.province || "");
+  const [district, setDistrict] = useState(applied?.district || "");
+  const [dsDiv, setDsDiv] = useState(applied?.dsDiv || "");
+  const [gnDiv, setGnDiv] = useState(applied?.gnDiv || "");
+  const [open, setOpen] = useState(false);
 
   // Derive cascading option lists from officers array
   const provinces = [...new Set(officers.map(o => o.province).filter(Boolean))].sort();
   const districts = [...new Set(
     officers.filter(o => !province || o.province === province)
-            .map(o => o.district).filter(Boolean)
+      .map(o => o.district).filter(Boolean)
   )].sort();
   // FIX: /gn_officers stores this field as "divisionalSecretariat", not "dsDiv".
   // "dsDiv" only exists on /appointments documents — a different collection.
   const dsDivs = [...new Set(
     officers.filter(o => (!province || o.province === province) && (!district || o.district === district))
-            .map(o => o.divisionalSecretariat).filter(Boolean)
+      .map(o => o.divisionalSecretariat).filter(Boolean)
   )].sort();
   const gnOfficers = officers.filter(o =>
     (!province || o.province === province) &&
     (!district || o.district === district) &&
-    (!dsDiv    || o.divisionalSecretariat === dsDiv)
+    (!dsDiv || o.divisionalSecretariat === dsDiv)
   ).sort((a, b) => (a.fullName || "").localeCompare(b.fullName || ""));
 
   // Reset downstream when upstream changes
   const handleProvince = (v) => { setProvince(v); setDistrict(""); setDsDiv(""); setGnDiv(""); };
   const handleDistrict = (v) => { setDistrict(v); setDsDiv(""); setGnDiv(""); };
-  const handleDsDiv    = (v) => { setDsDiv(v);    setGnDiv(""); };
+  const handleDsDiv = (v) => { setDsDiv(v); setGnDiv(""); };
 
   const handleApply = () => {
     const officer = gnDiv ? gnOfficers.find(o => o.gnDiv === gnDiv) : null;
@@ -171,9 +147,9 @@ function FilterPanel({ officers, onApply, applied }) {
   const filterLabel = applied?.officer
     ? `${applied.officer.fullName} · ${applied.gnDiv}`
     : applied?.dsDiv ? applied.dsDiv
-    : applied?.district ? applied.district
-    : applied?.province ? applied.province
-    : null;
+      : applied?.district ? applied.district
+        : applied?.province ? applied.province
+          : null;
 
   return (
     <div style={{ marginBottom: 16 }}>
@@ -249,10 +225,10 @@ function FilterPanel({ officers, onApply, applied }) {
               marginBottom: 16, flexWrap: "wrap",
             }}>
               {[
-                { label: "Province",    value: province  },
-                { label: "District",    value: district  },
-                { label: "DS Division", value: dsDiv     },
-                { label: "GN Officer",  value: gnDiv     },
+                { label: "Province", value: province },
+                { label: "District", value: district },
+                { label: "DS Division", value: dsDiv },
+                { label: "GN Officer", value: gnDiv },
               ].map(({ label, value }, i) => (
                 <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   {i > 0 && <ChevronRight size={12} color={COLORS.muted} />}
@@ -362,15 +338,15 @@ function FilterPanel({ officers, onApply, applied }) {
               <div style={{ fontSize: 12, color: COLORS.muted }}>
                 {gnDiv
                   ? <>Will show appointments for <strong style={{ color: COLORS.darkest }}>
-                      {gnOfficers.find(o => o.gnDiv === gnDiv)?.fullName ?? gnDiv}
-                    </strong></>
+                    {gnOfficers.find(o => o.gnDiv === gnDiv)?.fullName ?? gnDiv}
+                  </strong></>
                   : dsDiv
-                  ? <>{gnOfficers.length} GN officer{gnOfficers.length !== 1 ? "s" : ""} in {dsDiv}</>
-                  : district
-                  ? <>{dsDivs.length} DS division{dsDivs.length !== 1 ? "s" : ""} in {district}</>
-                  : province
-                  ? <>{districts.length} district{districts.length !== 1 ? "s" : ""} in {province}</>
-                  : "Select a province to begin filtering"}
+                    ? <>{gnOfficers.length} GN officer{gnOfficers.length !== 1 ? "s" : ""} in {dsDiv}</>
+                    : district
+                      ? <>{dsDivs.length} DS division{dsDivs.length !== 1 ? "s" : ""} in {district}</>
+                      : province
+                        ? <>{districts.length} district{districts.length !== 1 ? "s" : ""} in {province}</>
+                        : "Select a province to begin filtering"}
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button
@@ -459,18 +435,15 @@ function FilterSelect({ label, value, onChange, options, placeholder, disabled, 
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // NAV ITEM
-// ═══════════════════════════════════════════════════════════════════════════════
 function NavItem({ icon: Icon, label, active, bold, onClick }) {
   return (
     <li
       onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer transition-all ${
-        active ? "bg-amber-700 text-white font-bold"
-        : bold  ? "text-amber-900 font-bold hover:bg-amber-100"
-                : "text-amber-800 hover:bg-amber-100"
-      }`}
+      className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer transition-all ${active ? "bg-amber-700 text-white font-bold"
+          : bold ? "text-amber-900 font-bold hover:bg-amber-100"
+            : "text-amber-800 hover:bg-amber-100"
+        }`}
       style={{ fontSize: bold && !Icon ? "0.85rem" : "0.82rem" }}
     >
       {Icon && <Icon size={16} className={active ? "text-white" : "text-amber-700"} />}
@@ -479,9 +452,7 @@ function NavItem({ icon: Icon, label, active, bold, onClick }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // SIDEBAR
-// ═══════════════════════════════════════════════════════════════════════════════
 function Sidebar({ onLogout }) {
   const navigate = useNavigate();
   return (
@@ -498,7 +469,7 @@ function Sidebar({ onLogout }) {
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
           GN management
         </li>
-        <NavItem icon={UserCheck}      label="Registration Requests"
+        <NavItem icon={UserCheck} label="Registration Requests"
           onClick={() => navigate("/admin/registrationrequestapproval")} />
         <NavItem icon={ArrowLeftRight} label="Transfer Request"
           onClick={() => navigate("/admin/transferrequestapproval")} />
@@ -507,17 +478,21 @@ function Sidebar({ onLogout }) {
         </li>
         <NavItem icon={BarChart2} label="System reports"
           onClick={() => navigate("/admin/reports/system")} />
-        <NavItem icon={User}      label="Individual user access"
+        <NavItem icon={User} label="Individual user access"
           onClick={() => navigate("/admin/reports/user-access")} />
-        <NavItem icon={Activity}  label="GN activity reports"
+        <NavItem icon={Activity} label="GN activity reports"
           onClick={() => navigate("/admin/reports/gn-activity")} />
         <li className="pt-4">
           <NavItem icon={Megaphone} label="Announcements" bold
             onClick={() => navigate("/admin/announcements")} />
         </li>
-        <li className="pt-1">
+        <li className="pt-4">
           <NavItem icon={Calendar} label="Appointment Calendar" bold active
             onClick={() => navigate("/admin/calendar")} />
+        </li>
+        <li className="pt-2">
+          <NavItem icon={TrendingUp} label="Statistical Changes" bold
+            onClick={() => navigate("/admin/staticalchanges")} />
         </li>
       </ul>
       <div className="px-3 pt-4 border-t" style={{ borderColor: "#DDD0BC" }}>
@@ -533,9 +508,7 @@ function Sidebar({ onLogout }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // TOPBAR
-// ═══════════════════════════════════════════════════════════════════════════════
 function Topbar() {
   const [searchVal, setSearchVal] = useState("");
   return (
@@ -554,12 +527,6 @@ function Topbar() {
           onChange={e => setSearchVal(e.target.value)}
         />
       </div>
-      <button
-        className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
-        style={{ borderColor: "#C8B89A", color: COLORS.text, background: COLORS.cream }}
-      >
-        English <ChevronDown size={14} />
-      </button>
       <button
         onClick={() => navigate('/admin/announcements')}
         title="Notifications / Announcements"
@@ -580,15 +547,13 @@ function Topbar() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // CALENDAR LEGEND
-// ═══════════════════════════════════════════════════════════════════════════════
 function CalendarLegend({ count }) {
   const items = [
-    { color: COLORS.primary, label: "Booked"    },
-    { color: COLORS.accent,  label: "Pending"   },
-    { color: COLORS.darker,  label: "Completed" },
-    { color: COLORS.muted,   label: "Cancelled" },
+    { color: COLORS.primary, label: "Booked" },
+    { color: COLORS.accent, label: "Pending" },
+    { color: COLORS.darker, label: "Completed" },
+    { color: COLORS.muted, label: "Cancelled" },
   ];
   return (
     <div className="flex items-center justify-between flex-wrap gap-3 px-4 py-3"
@@ -609,20 +574,22 @@ function CalendarLegend({ count }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // APPOINTMENT CELL
-// ═══════════════════════════════════════════════════════════════════════════════
 function ApptCell({ appts, isBreak }) {
   const [hov, setHov] = useState(false);
   if (isBreak) return (
-    <td style={{ height: 8, background: COLORS.bg,
-      borderBottom: `1px dashed ${COLORS.muted}33`, padding: 0 }} />
+    <td style={{
+      height: 8, background: COLORS.bg,
+      borderBottom: `1px dashed ${COLORS.muted}33`, padding: 0
+    }} />
   );
   if (!appts || appts.length === 0) return (
-    <td style={{ height: 34, borderBottom: `1px solid ${COLORS.muted}18`,
-      borderRight: `1px solid ${COLORS.muted}18` }} />
+    <td style={{
+      height: 34, borderBottom: `1px solid ${COLORS.muted}18`,
+      borderRight: `1px solid ${COLORS.muted}18`
+    }} />
   );
-  const a   = appts[0];
+  const a = appts[0];
   const cfg = STATUS_CONFIG[normaliseStatus(a.status)] ?? STATUS_CONFIG.booked;
   return (
     <td
@@ -638,19 +605,25 @@ function ApptCell({ appts, isBreak }) {
         filter: hov ? "brightness(0.9)" : "none", transition: "filter 0.12s",
       }}
     >
-      <div style={{ fontSize: 9.5, fontWeight: 600, color: cfg.text,
-        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+      <div style={{
+        fontSize: 9.5, fontWeight: 600, color: cfg.text,
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
+      }}>
         {a.fullName}
       </div>
       {a.service && (
-        <div style={{ fontSize: 8.5, color: cfg.text, opacity: 0.75,
-          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div style={{
+          fontSize: 8.5, color: cfg.text, opacity: 0.75,
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
+        }}>
           {a.service}
         </div>
       )}
       {appts.length > 1 && (
-        <span style={{ position: "absolute", top: 2, right: 3,
-          fontSize: 8, color: cfg.text, fontWeight: 700 }}>
+        <span style={{
+          position: "absolute", top: 2, right: 3,
+          fontSize: 8, color: cfg.text, fontWeight: 700
+        }}>
           +{appts.length - 1}
         </span>
       )}
@@ -658,15 +631,13 @@ function ApptCell({ appts, isBreak }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // CALENDAR COMPONENT
-// ═══════════════════════════════════════════════════════════════════════════════
 function AppointmentCalendar({ appliedFilter }) {
-  const [currentDate,  setCurrentDate]  = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
-  const [loading,      setLoading]      = useState(false);
-  const [error,        setError]        = useState(null);
-  const [view,         setView]         = useState("week");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [view, setView] = useState("week");
 
   const weekDates = getWeekDates(currentDate);
 
@@ -680,12 +651,12 @@ function AppointmentCalendar({ appliedFilter }) {
     setError(null);
     try {
       const startStr = toDateStr(weekDates[0]);
-      const endStr   = toDateStr(weekDates[6]);
+      const endStr = toDateStr(weekDates[6]);
       const q = query(
         collection(db, "appointments"),
         where("gnDiv", "==", appliedFilter.gnDiv),
-        where("date",  ">=", startStr),
-        where("date",  "<=", endStr),
+        where("date", ">=", startStr),
+        where("date", "<=", endStr),
       );
       const snap = await getDocs(q);
       setAppointments(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -699,7 +670,6 @@ function AppointmentCalendar({ appliedFilter }) {
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
-  // Build appt lookup: "YYYY-MM-DD__slot-label" → [appts]
   const apptMap = {};
   appointments.forEach(a => {
     const label = convertSlot(a.slot);
@@ -710,11 +680,11 @@ function AppointmentCalendar({ appliedFilter }) {
   });
   const getAppts = (date, slot) => apptMap[`${toDateStr(date)}__${slot}`] ?? [];
 
-  const prevWeek = () => { const d = new Date(currentDate); d.setDate(d.getDate()-7); setCurrentDate(d); };
-  const nextWeek = () => { const d = new Date(currentDate); d.setDate(d.getDate()+7); setCurrentDate(d); };
+  const prevWeek = () => { const d = new Date(currentDate); d.setDate(d.getDate() - 7); setCurrentDate(d); };
+  const nextWeek = () => { const d = new Date(currentDate); d.setDate(d.getDate() + 7); setCurrentDate(d); };
 
-  const totalThisWeek  = appointments.length;
-  const pendingCount   = appointments.filter(a => normaliseStatus(a.status) === "pending").length;
+  const totalThisWeek = appointments.length;
+  const pendingCount = appointments.filter(a => normaliseStatus(a.status) === "pending").length;
   const completedCount = appointments.filter(a => normaliseStatus(a.status) === "completed").length;
 
   // Empty state — no filter applied yet
@@ -820,9 +790,9 @@ function AppointmentCalendar({ appliedFilter }) {
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: "Total This Week", value: totalThisWeek,   bg: COLORS.darkest, text: COLORS.white,   sub: COLORS.accent },
-          { label: "Pending",         value: pendingCount,    bg: "#FFF3DC",       text: COLORS.darkest, sub: COLORS.dark  },
-          { label: "Completed",       value: completedCount,  bg: "#EDE8E0",       text: COLORS.darkest, sub: COLORS.muted },
+          { label: "Total This Week", value: totalThisWeek, bg: COLORS.darkest, text: COLORS.white, sub: COLORS.accent },
+          { label: "Pending", value: pendingCount, bg: "#FFF3DC", text: COLORS.darkest, sub: COLORS.dark },
+          { label: "Completed", value: completedCount, bg: "#EDE8E0", text: COLORS.darkest, sub: COLORS.muted },
         ].map(({ label, value, bg, text, sub }) => (
           <div key={label} className="rounded-xl px-5 py-4"
             style={{ background: bg, border: `1px solid ${COLORS.muted}22` }}>
@@ -853,7 +823,7 @@ function AppointmentCalendar({ appliedFilter }) {
           </div>
           <div className="flex items-center gap-2">
             <div className="flex rounded-lg overflow-hidden" style={{ border: `1px solid ${COLORS.muted}66` }}>
-              {["week","month"].map(v => (
+              {["week", "month"].map(v => (
                 <button key={v} onClick={() => setView(v)}
                   style={{
                     padding: "5px 14px", fontSize: 12, fontWeight: 600,
@@ -908,8 +878,10 @@ function AppointmentCalendar({ appliedFilter }) {
               </colgroup>
               <thead>
                 <tr>
-                  <th style={{ background: COLORS.darker,
-                    borderRight: `2px solid ${COLORS.darkest}55`, padding: "8px 4px" }} />
+                  <th style={{
+                    background: COLORS.darker,
+                    borderRight: `2px solid ${COLORS.darkest}55`, padding: "8px 4px"
+                  }} />
                   {weekDates.map((date, i) => (
                     <th key={i} style={{
                       padding: "7px 3px", textAlign: "center",
@@ -921,7 +893,7 @@ function AppointmentCalendar({ appliedFilter }) {
                       <div style={{ opacity: 0.8, fontSize: 10 }}>{DAY_NAMES[i]}</div>
                       <div style={{ fontSize: 15, fontWeight: 700, marginTop: 1 }}>{date.getDate()}</div>
                       <div style={{ fontSize: 9, opacity: 0.6, marginTop: 1 }}>
-                        {MONTHS[date.getMonth()].slice(0,3)}
+                        {MONTHS[date.getMonth()].slice(0, 3)}
                       </div>
                     </th>
                   ))}
@@ -972,15 +944,13 @@ function AppointmentCalendar({ appliedFilter }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // PAGE
-// ═══════════════════════════════════════════════════════════════════════════════
 export default function AdminCalendar({ onLogout }) {
   const navigate = useNavigate();
 
   // All GN officers (for filter dropdowns)
-  const [officers,       setOfficers]       = useState([]);
-  const [officersLoading,setOfficersLoading]= useState(true);
+  const [officers, setOfficers] = useState([]);
+  const [officersLoading, setOfficersLoading] = useState(true);
 
   // Applied filter state
   const [appliedFilter, setAppliedFilter] = useState({
@@ -1008,7 +978,7 @@ export default function AdminCalendar({ onLogout }) {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden"
+    <div className=" flex min-h-screen"
       style={{ background: COLORS.bg, fontFamily: "'DM Sans','Segoe UI',sans-serif" }}>
 
       <Sidebar onLogout={handleLogout} />

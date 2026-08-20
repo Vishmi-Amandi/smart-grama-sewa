@@ -408,7 +408,7 @@ function GNLoginActivityReport({ start, end, sort }) {
       <TableCard
         title="GN Login Activity Details"
         count={data.gnRows.length}
-        columns={['#', 'Full Name', 'GN Division', 'District', 'Last Login', 'Days Since Login', 'Total Logins', 'Login Freq/Day', 'Status']}
+        columns={['#', 'Full Name', 'GN Division', 'District', 'Last Login', 'Days Since Login', 'Status']}
         rows={data.gnRows.slice(0, 15).map((g, i) => (
           <tr key={g.id} style={{ borderTop: `1px solid ${C.border}`, background: i % 2 === 0 ? C.white : C.bg }}>
             <td className="px-4 py-2.5 text-xs font-bold" style={{ color: C.textMuted }}>{i + 1}</td>
@@ -419,8 +419,6 @@ function GNLoginActivityReport({ start, end, sort }) {
             <td className="px-4 py-2.5 text-xs font-semibold" style={{ color: g.daysAgo > 30 ? C.danger : g.daysAgo > 7 ? C.warn : C.success }}>
               {g.daysAgo === 9999 ? 'Never' : g.daysAgo + ' days ago'}
             </td>
-            <td className="px-4 py-2.5 text-xs text-center font-bold" style={{ color: C.darkest }}>{g.totalLogins}</td>
-            <td className="px-4 py-2.5 text-xs text-center" style={{ color: C.textMuted }}>{g.freq}</td>
             <td className="px-4 py-2.5">
               <Badge label={g.status} type={g.status === 'active' ? 'success' : g.status === 'moderate' ? 'warn' : 'danger'} />
             </td>
@@ -1257,10 +1255,7 @@ function Topbar() {
           style={{ borderColor: '#C8B89A', background: C.inputBg, color: C.text }}
           placeholder="search..." value={searchVal} onChange={e => setSearchVal(e.target.value)} />
       </div>
-      <button className="flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-full border"
-        style={{ borderColor: '#C8B89A', color: C.text, background: C.inputBg }}>
-        English <ChevronDown size={14} />
-      </button>
+      
       <button onClick={() => navigate('/admin/announcements')} title="Notifications / Announcements" className="relative w-10 h-10 rounded-full flex items-center justify-center border cursor-pointer hover:bg-amber-100 transition"
         style={{ borderColor: '#C8B89A', background: C.inputBg }}>
         <Icon.Bell size={18} color={C.primary} />
@@ -1305,7 +1300,7 @@ export default function AdminGNActivityReports() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: C.bg, fontFamily: "'Segoe UI',sans-serif" }}>
+    <div className="flex min-h-screen" style={{ background: C.bg, fontFamily: "'Segoe UI',sans-serif" }}>
       <style>{`@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}`}</style>
       <Sidebar onLogout={() => { }} />
 
