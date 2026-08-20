@@ -24,7 +24,7 @@ Smart Grama Sewa aims to reduce waiting times and improve service delivery in Gr
 ##  Supervision
 
 - **Mentor:** Mr. A.P. Munasinghe - WIA Systems Inc.
-- **Supervisor:** Mrs. K.G.L. Chathamini - Department of Computing and Information Systems
+- **Supervisor:** Mrs. K.T.D. PadmaKumari - Department of Computing and Information Systems
 
 ##  Technology Stack
 
@@ -40,11 +40,6 @@ smart-grama-sewa/<br>
 ├── server/ # Node.js backend<br>
 ├── docs/ # Documentation<br>
 └── README.md
-
-
-##  Getting Started
-
-(Instructions will be added as development progresses)
 
 ##  License
 
