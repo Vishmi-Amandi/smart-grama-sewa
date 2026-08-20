@@ -195,64 +195,60 @@ function NavItem({ icon: Icon, label, active, bold, onClick }) {
   );
 }
 
+
 //  Sidebar  
 function Sidebar({ onLogout }) {
   const navigate = useNavigate();
-  const { t } = useTranslation();
-
   return (
     <aside className="w-64 flex-shrink-0 flex flex-col py-6 px-3 gap-2 border-r"
       style={{ borderColor: '#DDD0BC', background: COLORS.bg }}>
 
-      {/* Logo */}
       <div className="flex items-center gap-2 px-3 mb-6">
-        <img src="/logo2.png" alt="Logo" />
+        <img src="/logo2.png" alt="Smart Grama Sewa" />
       </div>
 
-      {/* Nav links */}
       <ul className="flex flex-col gap-1 flex-1">
-        <NavItem icon={LayoutDashboard} label={t('nav_admin_dashboard')} active 
+        <NavItem icon={LayoutDashboard} label="Dashboard"active
           onClick={() => navigate('/admin/dashboard')} />
 
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
-          {t('nav_gn_management_heading')}
+          Grama Niladhari officer Management
         </li>
-        <NavItem icon={UserCheck}       label={t('nav_reg_requests')}
+        <NavItem icon={UserCheck} label="Registration Requests" 
           onClick={() => navigate('/admin/registrationrequestapproval')} />
-        <NavItem icon={ArrowLeftRight} label={t('nav_trans_requests')}
+        <NavItem icon={ArrowLeftRight} label="Transfer Request"
           onClick={() => navigate('/admin/transferrequestapproval')} />
+
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
-          {t('nav_reports_heading')}
+          Reports
         </li>
-        <NavItem icon={BarChart2} label={t('nav_sys_reports')}
+        <NavItem icon={BarChart2} label="System reports"
           onClick={() => navigate('/admin/reports/system')} />
-        <NavItem icon={User}      label={t('nav_ind_user_access')}
+        <NavItem icon={User} label="Individual user access"
           onClick={() => navigate('/admin/reports/useraccess')} />
-        <NavItem icon={Activity}  label={t('nav_gn_activity_reports')}
+        <NavItem icon={Activity} label="GN activity reports"
           onClick={() => navigate('/admin/reports/gnactivity')} />
 
         <li className="pt-4">
-          <NavItem icon={Megaphone} label={t('nav_announcements')} bold
+          <NavItem icon={Megaphone} label="Announcements" bold
             onClick={() => navigate('/admin/announcements')} />
         </li>
         <li className="pt-4">
-          <NavItem icon={Calendar} label={t('nav_appointment_calendar')} bold
+          <NavItem icon={Calendar} label="Appointment Calendar"bold
             onClick={() => navigate("/admin/calendar")} />
         </li>
         <li className="pt-2">
-          {/* UPDATED KEY: Changed nav_statistical_changes to nav_stat_changes */}
-          <NavItem icon={TrendingUp} label={t('nav_stat_changes')} bold
+          <NavItem icon={TrendingUp} label="Statistical Changes" bold 
             onClick={() => navigate('/admin/staticalchanges')} />
         </li>
       </ul>
 
-      {/* Logout */}
       <div className="px-3 pt-4 border-t" style={{ borderColor: '#DDD0BC' }}>
         <button onClick={onLogout}
           className="flex items-center gap-3 w-full px-4 py-2 rounded-lg text-sm font-bold transition-all hover:bg-red-50"
           style={{ color: '#991B1B' }}>
           <LogOut size={16} />
-          <span>{t('btn_logout')}</span>
+          <span>Logout</span>
         </button>
       </div>
     </aside>

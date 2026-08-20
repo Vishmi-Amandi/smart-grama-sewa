@@ -1363,7 +1363,7 @@ function Sidebar({ onLogout }) {
             </div>
             <ul className="flex flex-col gap-1 flex-1">
                 <NavItem icon={LayoutDashboard} label="Dashboard" bold onClick={() => navigate('/admin/dashboard')} />
-                <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>GN management</li>
+                <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>Grama Niladhari officer Management</li>
                 <NavItem icon={UserCheck} label="Registration Requests" onClick={() => navigate('/admin/registrationrequestapproval')} />
                 <NavItem icon={ArrowLeftRight} label="Transfer Request" onClick={() => navigate('/admin/transferrequestapproval')} />
                 <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>Reports</li>

@@ -467,7 +467,7 @@ function Sidebar({ onLogout }) {
         <NavItem icon={LayoutDashboard} label="Dashboard" bold
           onClick={() => navigate("/admin/dashboard")} />
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
-          GN management
+          Grama Niladhari officer Management
         </li>
         <NavItem icon={UserCheck} label="Registration Requests"
           onClick={() => navigate("/admin/registrationrequestapproval")} />
@@ -479,9 +479,9 @@ function Sidebar({ onLogout }) {
         <NavItem icon={BarChart2} label="System reports"
           onClick={() => navigate("/admin/reports/system")} />
         <NavItem icon={User} label="Individual user access"
-          onClick={() => navigate("/admin/reports/user-access")} />
+          onClick={() => navigate("/admin/reports/useraccess")} />
         <NavItem icon={Activity} label="GN activity reports"
-          onClick={() => navigate("/admin/reports/gn-activity")} />
+          onClick={() => navigate("/admin/reports/gnactivity")} />
         <li className="pt-4">
           <NavItem icon={Megaphone} label="Announcements" bold
             onClick={() => navigate("/admin/announcements")} />

@@ -55,7 +55,7 @@ function Sidebar({ onLogout }) {
           onClick={() => navigate('/admin/dashboard')} />
 
         <li className="px-4 pt-3 pb-1 text-xs font-extrabold" style={{ color: COLORS.primary }}>
-          GN management
+          Grama Niladhari officer Management
         </li>
         <NavItem icon={UserCheck} label="Registration Requests"
           onClick={() => navigate('/admin/registrationrequestapproval')} />
