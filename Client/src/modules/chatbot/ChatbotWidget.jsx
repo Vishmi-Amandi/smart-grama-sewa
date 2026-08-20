@@ -21,18 +21,21 @@ const formList = [
 
 const mapFormLinkToId = (formLink) => {
   if (!formLink) return null;
-  const link = formLink.toLowerCase();
+  if (typeof formLink === 'number') return formLink;
+  const link = String(formLink).toLowerCase();
   if (link.includes('residence')) return 1;
   if (link.includes('character')) return 2;
-  if (link.includes('income') || link.includes('verification')) return 3;
+  if (link.includes('income') || link.includes('verification') || link.includes('mahapola') || link.includes('bursary')) return 3;
   if (link.includes('valuation')) return 4;
   if (link.includes('nic') || link.includes('identity')) return 5;
-  if (link.includes('disabled') || link.includes('samurdhi')) return 6;
+  if (link.includes('disabled') || link.includes('samurdhi') || link.includes('living_funds')) return 6;
   if (link.includes('voter')) return 7;
   if (link.includes('felling') || link.includes('tree')) return 8;
-  if (link.includes('timber')) return 9;
+  if (link.includes('timber') || link.includes('wood')) return 9;
   if (link.includes('business')) return 10;
   if (link.includes('ownership') || link.includes('land')) return 11;
+  const parsed = parseInt(link, 10);
+  if (!isNaN(parsed) && parsed >= 1 && parsed <= 11) return parsed;
   return null;
 };
 
@@ -321,7 +324,12 @@ const ChatbotWidget = () => {
       setIsTyping(false);
 
       if (response.ok) {
-        setMessages(prev => [...prev, { sender: 'bot', text: data.answer, formLink: data.form }]);
+        setMessages(prev => [...prev, { 
+          sender: 'bot', 
+          text: data.answer, 
+          formLink: data.form, 
+          formId: data.formId 
+        }]);
         
         // Save chat interaction to Firestore client SDK for logged-in user
         if (currentUser) {
@@ -405,8 +413,8 @@ const ChatbotWidget = () => {
             <div key={idx} className={`chat-message chat-${msg.sender}-message`}>
               <div className="chat-message-content">
                 {msg.text}
-                {msg.formLink && (() => {
-                  const formId = mapFormLinkToId(msg.formLink);
+                {(msg.formLink || msg.formId) && (() => {
+                  const formId = msg.formId || mapFormLinkToId(msg.formLink);
                   const matchedForm = formList.find(f => f.id === formId);
                   const formTitle = matchedForm ? matchedForm.title : "Form";
                   return (

@@ -19,9 +19,14 @@ const forms = [
     subtitle: "Grama Niladhari Division"
   },
   {
-    filename: "gn_certificate_application.pdf",
-    title: "Grama Niladhari (GN) Certificate Application",
-    subtitle: "General Purpose Certificate"
+    filename: "income_verification_form.pdf",
+    title: "Income Verification Form",
+    subtitle: "For Mahapola, Bursary and Official Applications"
+  },
+  {
+    filename: "valuation_certificate_form.pdf",
+    title: "Application for Property Valuation Certificate",
+    subtitle: "Valuation & Assessment Division"
   },
   {
     filename: "nic_application_form.pdf",
@@ -29,9 +34,24 @@ const forms = [
     subtitle: "Department of Registration of Persons"
   },
   {
+    filename: "samurdhi_application.pdf",
+    title: "Living Funds for Disabled Persons & Samurdhi Application",
+    subtitle: "Department of Samurdhi & Social Services"
+  },
+  {
+    filename: "disabled_funds_form.pdf",
+    title: "Application for Living Funds for Disabled Persons",
+    subtitle: "National Secretariat for Persons with Disabilities"
+  },
+  {
     filename: "voter_registration_form.pdf",
     title: "Voter Registration Application",
     subtitle: "Election Commission of Sri Lanka"
+  },
+  {
+    filename: "tree_felling_permit_form.pdf",
+    title: "Permit Application for Felling Trees",
+    subtitle: "Department of Forest Conservation & Grama Niladhari Division"
   },
   {
     filename: "timber_transport_form.pdf",
@@ -39,14 +59,19 @@ const forms = [
     subtitle: "Forest Department, Sri Lanka"
   },
   {
-    filename: "samurdhi_application.pdf",
-    title: "Samurdhi Beneficiary Application Form",
-    subtitle: "Department of Samurdhi Development"
+    filename: "business_registration_form.pdf",
+    title: "Business Registration Recommendation Application",
+    subtitle: "Divisional Secretariat & GN Office"
   },
   {
-    filename: "income_verification_form.pdf",
-    title: "Income Verification Form",
-    subtitle: "For Mahapola and Bursary Applications"
+    filename: "land_ownership_assessment_form.pdf",
+    title: "Application for Assessment of Ownership of Lands",
+    subtitle: "Land Registry & GN Assessment Branch"
+  },
+  {
+    filename: "gn_certificate_application.pdf",
+    title: "Grama Niladhari (GN) Certificate Application",
+    subtitle: "General Purpose Certificate"
   }
 ];
 

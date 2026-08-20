@@ -229,36 +229,74 @@ const MobileSidebar = ({ isOpen, onClose, activePage, navigate, onLogout, t }) =
 // Search Results Dropdown Component
 const SearchResultsDropdown = ({ searchQuery, showResults, setShowResults, navigate, t }) => {
   const PAGE_ACTIONS = [
-    { name: t('nav.dashboard'), path: '/dashboard', icon: IC.dashboard },
-    { name: t('nav.announcements'), path: '/announcements', icon: IC.announce },
-    { name: t('nav.appointments'), path: '/appointments', icon: IC.appts },
-    { name: t('nav.forms'), path: '/forms', icon: IC.forms },
-    { name: t('nav.ai'), path: null, icon: IC.ai },
-    { name: t('nav.profile'), path: '/profile', icon: IC.profile },
-    { name: t('nav.settings'), path: '/settings', icon: IC.settings },
+    { name: t('nav.dashboard'), path: '/dashboard', icon: IC.dashboard, keywords: ['home', 'main'] },
+    { name: t('nav.announcements'), path: '/announcements', icon: IC.announce, keywords: ['news', 'notices'] },
+    { name: t('nav.appointments'), path: '/appointments', icon: IC.appts, keywords: ['booking', 'meet', 'schedule'] },
+    { name: t('nav.forms'), path: '/forms', icon: IC.forms, keywords: ['applications', 'certificates', 'download'] },
+    { name: t('nav.ai'), path: null, icon: IC.ai, keywords: ['chatbot', 'assistant', 'help'] },
+    { name: t('nav.profile'), path: '/profile', icon: IC.profile, keywords: ['account', 'user', 'me'] },
+    { name: t('nav.settings'), path: '/settings', icon: IC.settings, keywords: ['preferences', 'dark mode', 'theme'] },
   ];
-  const [filteredPages, setFilteredPages] = useState([]);
+
+  const FORM_SEARCH_ITEMS = [
+    { id: 1, name: "Residence Certificate", path: "/forms?select=1", keywords: ['residence', 'residency', 'address proof', 'living', 'staying', 'poddak', 'padinchi', 'vasathi'] },
+    { id: 2, name: "Character Certificate", path: "/forms?select=2", keywords: ['character', 'conduct', 'police report', 'behavior', 'good character', 'charitha'] },
+    { id: 3, name: "Income Certificate", path: "/forms?select=3", keywords: ['income', 'salary', 'earnings', 'mahapola', 'bursary', 'scholarship', 'income verification', 'aadhayam'] },
+    { id: 4, name: "Valuation Certificate", path: "/forms?select=4", keywords: ['valuation', 'property value', 'land value', 'house value', 'asset valuation', 'thakseru'] },
+    { id: 5, name: "Identity Card Application", path: "/forms?select=5", keywords: ['nic', 'identity card', 'id card', 'national id', 'new nic', 'lost nic', 'handunumpatha'] },
+    { id: 6, name: "Living Funds for Disabled Persons", path: "/forms?select=6", keywords: ['disabled', 'disability', 'handicapped', 'special needs', 'living funds', 'samurdhi', 'aswesuma', 'abhaditha'] },
+    { id: 7, name: "Voter Registration Form", path: "/forms?select=7", keywords: ['voter', 'voting', 'electoral', 'election', 'voter list', 'polling', 'chanda'] },
+    { id: 8, name: "Permit for Felling Trees", path: "/forms?select=8", keywords: ['tree', 'trees', 'felling', 'cut tree', 'cutting tree', 'jack tree', 'tree permit', 'gas kapeema'] },
+    { id: 9, name: "Permit for Timber Transportation", path: "/forms?select=9", keywords: ['timber', 'timber transport', 'wood transport', 'logs transport', 'timber permit', 'dawa'] },
+    { id: 10, name: "Business Registration Recommendation", path: "/forms?select=10", keywords: ['business', 'shop', 'trade license', 'enterprise', 'commercial', 'store', 'vyapara'] },
+    { id: 11, name: "Assessments for Ownership of Lands", path: "/forms?select=11", keywords: ['land', 'land ownership', 'ownership assessment', 'deed', 'land assessment', 'idam'] },
+  ];
+
+  const [filteredResults, setFilteredResults] = useState([]);
 
   useEffect(() => {
-    if (!searchQuery.trim()) { setFilteredPages([]); return; }
-    const query = searchQuery.toLowerCase();
-    setFilteredPages(PAGE_ACTIONS.filter(page => page.name.toLowerCase().includes(query)));
+    if (!searchQuery.trim()) { setFilteredResults([]); return; }
+    const query = searchQuery.toLowerCase().trim();
+
+    const matchedPages = PAGE_ACTIONS.filter(page => 
+      page.name.toLowerCase().includes(query) ||
+      page.keywords.some(kw => kw.includes(query) || query.includes(kw))
+    ).map(p => ({ ...p, type: 'page' }));
+
+    const matchedForms = FORM_SEARCH_ITEMS.filter(form => 
+      form.name.toLowerCase().includes(query) ||
+      form.keywords.some(kw => kw.includes(query) || query.includes(kw))
+    ).map(f => ({ ...f, type: 'form', icon: IC.forms }));
+
+    setFilteredResults([...matchedPages, ...matchedForms]);
   }, [searchQuery, t]);
 
-  if (!showResults || filteredPages.length === 0) return null;
+  if (!showResults || filteredResults.length === 0) return null;
 
   return (
-    <div className="absolute top-full left-0 right-0 mt-2 bg-user-surface dark:bg-user-surface rounded-xl shadow-lg border border-user-border dark:border-user-border z-[1000] overflow-hidden">
-      {filteredPages.map((page, idx) => (
+    <div className="absolute top-full left-0 right-0 mt-2 bg-user-surface dark:bg-user-surface rounded-xl shadow-lg border border-user-border dark:border-user-border z-[1000] overflow-hidden max-h-[350px] overflow-y-auto">
+      {filteredResults.map((item, idx) => (
         <button
-          key={page.path}
-          onClick={() => { if (page.path === null) { window.openChatbot?.(); setShowResults(false); return; } navigate(page.path); setShowResults(false); }}
-          className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background dark:hover:bg-user-background ${idx !== filteredPages.length - 1 ? 'border-b border-user-border-light dark:border-user-border' : ''}`}
+          key={item.path || idx}
+          onClick={() => { 
+            if (item.path === null) { 
+              window.openChatbot?.(); 
+              setShowResults(false); 
+              return; 
+            } 
+            navigate(item.path); 
+            setShowResults(false); 
+          }}
+          className={`w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-user-background dark:hover:bg-user-background ${idx !== filteredResults.length - 1 ? 'border-b border-user-border-light dark:border-user-border' : ''}`}
         >
-          <Icon d={page.icon} size={18} color="#B46A02" />
+          <Icon d={item.icon} size={18} color="#B46A02" />
           <div>
-            <div className="text-sm font-bold text-user-text dark:text-user-text">{page.name}</div>
-            <div className="text-[11px] text-user-text-lighter dark:text-user-text-lighter">{t('search.clickToGo', { name: page.name })}</div>
+            <div className="text-sm font-bold text-user-text dark:text-user-text">
+              {item.type === 'form' ? `📝 ${item.name}` : item.name}
+            </div>
+            <div className="text-[11px] text-user-text-lighter dark:text-user-text-lighter">
+              {item.type === 'form' ? 'Click to open and fill form' : t('search.clickToGo', { name: item.name })}
+            </div>
           </div>
         </button>
       ))}
@@ -2100,7 +2138,18 @@ const Forms = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-3 pb-5">
-              {formList.filter(f => tab === 'All' || f.cat === tab).map(form => (
+              {formList
+                .filter(f => tab === 'All' || f.cat === tab)
+                .filter(f => {
+                  if (!searchQuery.trim()) return true;
+                  const q = searchQuery.toLowerCase().trim();
+                  return (
+                    f.title.toLowerCase().includes(q) ||
+                    f.desc.toLowerCase().includes(q) ||
+                    f.cat.toLowerCase().includes(q)
+                  );
+                })
+                .map(form => (
                 <div key={form.id} className="bg-user-surface dark:bg-user-surface border border-user-border dark:border-user-border rounded-xl p-5 flex items-center justify-between shadow-sm">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 bg-user-secondary-light dark:bg-user-secondary-light rounded-xl flex items-center justify-center flex-shrink-0">

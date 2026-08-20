@@ -27,6 +27,51 @@
       "form": "gn_certificate_application.pdf"
     },
     {
+      "question": "How do I get an income certificate?",
+      "answer": "You can apply for an Income Certificate / Verification for Mahapola, bursaries, or official use by completing the income verification form with proof of income and NIC.",
+      "form": "income_verification_form.pdf"
+    },
+    {
+      "question": "How do I apply for a property valuation certificate?",
+      "answer": "To get a Valuation Certificate for your land or property, fill out the valuation form with deed details, boundaries, and survey plan for GN inspection.",
+      "form": "valuation_certificate_form.pdf"
+    },
+    {
+      "question": "Where can I find the application for a new NIC?",
+      "answer": "You can download the application for a new or replacement National Identity Card (NIC) from our forms section.",
+      "form": "nic_application_form.pdf"
+    },
+    {
+      "question": "How do I apply for Living Funds for Disabled Persons?",
+      "answer": "To apply for Living Funds for Disabled Persons or financial assistance, fill out the application form with medical reports and bank details.",
+      "form": "samurdhi_application.pdf"
+    },
+    {
+      "question": "How do I download a voter registration form?",
+      "answer": "The voter registration form can be downloaded directly from our forms section. Please fill it out and return it to the office.",
+      "form": "voter_registration_form.pdf"
+    },
+    {
+      "question": "How do I get a permit for felling trees?",
+      "answer": "To cut down restricted trees like Jack or Breadfruit, you must submit the Tree Felling Permit Application along with land ownership deed and tree details.",
+      "form": "tree_felling_permit_form.pdf"
+    },
+    {
+      "question": "I need a blank form for timber transport.",
+      "answer": "You can download the timber transport application form here. Please ensure all tree species and transport route details are filled before submission.",
+      "form": "timber_transport_form.pdf"
+    },
+    {
+      "question": "How do I get a business registration recommendation?",
+      "answer": "To register a new business, download and submit the Business Registration Recommendation application with your proposed business name and premises details.",
+      "form": "business_registration_form.pdf"
+    },
+    {
+      "question": "How do I get an assessment for ownership of lands?",
+      "answer": "To verify land boundaries and deed ownership, submit the Assessment for Ownership of Lands application to the Grama Niladhari.",
+      "form": "land_ownership_assessment_form.pdf"
+    },
+    {
       "question": "When is the GN in the office today?",
       "answer": "The Grama Niladhari is typically in the office on Tuesdays and Thursdays from 8:30 AM to 12:30 PM, and on Saturdays from 8:30 AM to 12:00 PM.",
       "form": null
@@ -45,21 +90,6 @@
       "question": "What are the office hours?",
       "answer": "The office is open on Tuesdays and Thursdays from 8:30 AM to 12:30 PM, and Saturdays from 8:30 AM to 12:00 PM.",
       "form": null
-    },
-    {
-      "question": "Where can I find the application for a new NIC?",
-      "answer": "You can download the application for a new National Identity Card (NIC) from our forms section.",
-      "form": "nic_application_form.pdf"
-    },
-    {
-      "question": "How do I download a voter registration form?",
-      "answer": "The voter registration form can be downloaded directly from our forms section. Please fill it out and return it to the office.",
-      "form": "voter_registration_form.pdf"
-    },
-    {
-      "question": "I need a blank form for timber transport.",
-      "answer": "You can download the timber transport application form here. Please ensure all details are correctly filled out before submission.",
-      "form": "timber_transport_form.pdf"
     },
     {
       "question": "How do I apply for Samurdhi?",
